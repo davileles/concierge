@@ -109,7 +109,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .res-card-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .res-obs{font-size:12px;color:var(--muted);flex:1}
 
-/* STATUS SELECT inline */
 
 
 /* EMPTY STATE */
@@ -193,7 +192,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <span class="brand-sub">Painel de Gestão</span>
     </div>
   </div>
-  <p class="subtitle">Gerencie reservas, clientes e status das atividades do serviço concierge.</p>
+  <p class="subtitle">Gerencie reservas e clientes do serviço concierge.</p>
 </header>
 
 <!-- SYNC BAR -->
@@ -218,22 +217,22 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 <div class="main-panel active" id="panel-reservas">
 
   <!-- STATS -->
-  <div class="stats-row">
+  <div class="stats-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
     <div class="stat-box">
       <div class="stat-val" id="stat-total">0</div>
       <div class="stat-label">Total de Reservas</div>
     </div>
     <div class="stat-box">
-      <div class="stat-val" style="color:#22c55e" id="stat-confirmado">0</div>
-      <div class="stat-label">Confirmadas</div>
+      <div class="stat-val" style="color:#126eff" id="stat-voo">0</div>
+      <div class="stat-label">Passagens</div>
     </div>
     <div class="stat-box">
-      <div class="stat-val" style="color:#f59e0b" id="stat-pendente">0</div>
-      <div class="stat-label">Pendentes</div>
+      <div class="stat-val" style="color:#f59e0b" id="stat-hotel">0</div>
+      <div class="stat-label">Hospedagens</div>
     </div>
     <div class="stat-box">
-      <div class="stat-val" style="color:#c084fc" id="stat-concluido">0</div>
-      <div class="stat-label">Concluídas</div>
+      <div class="stat-val" style="color:#22c55e" id="stat-outros">0</div>
+      <div class="stat-label">Outros</div>
     </div>
   </div>
 
@@ -250,9 +249,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <span class="filter-chip" data-filter="hotel" onclick="setFilter(this)">🏨 Hotel</span>
     <span class="filter-chip" data-filter="carro" onclick="setFilter(this)">🚗 Carro</span>
     <span class="filter-chip" data-filter="passeio" onclick="setFilter(this)">🎯 Passeio</span>
-    <span class="filter-chip" data-filter="pendente" onclick="setFilter(this,'status')">⏳ Pendente</span>
-    <span class="filter-chip" data-filter="confirmado" onclick="setFilter(this,'status')">✅ Confirmado</span>
-    <span class="filter-chip" data-filter="cancelado" onclick="setFilter(this,'status')">❌ Cancelado</span>
   </div>
 
   <div id="res-grid"></div>
@@ -291,39 +287,52 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Origem</label><input type="text" id="f-origem" placeholder="Ex: GRU – São Paulo"/></div>
         <div class="field"><label>Destino</label><input type="text" id="f-destino" placeholder="Ex: LIS – Lisboa"/></div>
       </div>
+      <div class="sep" style="margin:10px 0 4px"></div>
+      <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✈️ Voo de Ida</p>
       <div class="g2">
         <div class="field"><label>Data de Ida</label><input type="date" id="f-data-ida"/></div>
-        <div class="field"><label>Data de Volta <span class="tag">opcional</span></label><input type="date" id="f-data-volta"/></div>
-      </div>
-      <div class="g3">
-        <div class="field"><label>Horário de Partida</label><input type="time" id="f-hora-partida"/></div>
-        <div class="field"><label>Horário de Chegada</label><input type="time" id="f-hora-chegada"/></div>
-        <div class="field"><label>Cia Aérea</label>
-          <select id="f-cia">
+        <div class="field"><label>Cia Aérea — Ida</label>
+          <select id="f-cia-ida">
             <option value="">Selecione…</option>
-            <option>AA</option>
-            <option>Aerolineas Argentinas</option>
-            <option>Air France</option>
-            <option>Azul</option>
-            <option>British Airways</option>
-            <option>Copa</option>
-            <option>Delta</option>
-            <option>Emirates</option>
-            <option>Gol</option>
-            <option>Iberia</option>
-            <option>KLM</option>
-            <option>LATAM</option>
-            <option>Lufthansa</option>
-            <option>Qatar Airways</option>
-            <option>South African</option>
-            <option>TAP</option>
-            <option>Turkish Airlines</option>
-            <option>United</option>
+            <option>AA</option><option>Aerolineas Argentinas</option><option>Air France</option>
+            <option>Azul</option><option>British Airways</option><option>Copa</option>
+            <option>Delta</option><option>Emirates</option><option>Gol</option>
+            <option>Iberia</option><option>KLM</option><option>LATAM</option>
+            <option>Lufthansa</option><option>Qatar Airways</option><option>South African</option>
+            <option>TAP</option><option>Turkish Airlines</option><option>United</option>
           </select>
         </div>
       </div>
       <div class="g3">
-        <div class="field"><label>Nº do Voo <span class="tag">opcional</span></label><input type="text" id="f-nvoo" placeholder="Ex: LA8002"/></div>
+        <div class="field"><label>Horário de Partida — Ida</label><input type="time" id="f-hora-partida"/></div>
+        <div class="field"><label>Horário de Chegada — Ida</label><input type="time" id="f-hora-chegada"/></div>
+        <div class="field"><label>Nº do Voo — Ida <span class="tag">opcional</span></label><input type="text" id="f-nvoo-ida" placeholder="Ex: LA8002"/></div>
+      </div>
+      <div class="sep" style="margin:10px 0 4px"></div>
+      <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">↩️ Voo de Volta <span class="tag" style="text-transform:none">opcional</span></p>
+      <div class="g2">
+        <div class="field"><label>Data de Volta</label><input type="date" id="f-data-volta"/></div>
+        <div class="field"><label>Cia Aérea — Volta</label>
+          <select id="f-cia-volta">
+            <option value="">Selecione…</option>
+            <option>AA</option><option>Aerolineas Argentinas</option><option>Air France</option>
+            <option>Azul</option><option>British Airways</option><option>Copa</option>
+            <option>Delta</option><option>Emirates</option><option>Gol</option>
+            <option>Iberia</option><option>KLM</option><option>LATAM</option>
+            <option>Lufthansa</option><option>Qatar Airways</option><option>South African</option>
+            <option>TAP</option><option>Turkish Airlines</option><option>United</option>
+          </select>
+        </div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Horário de Partida — Volta</label><input type="time" id="f-hora-partida-volta"/></div>
+        <div class="field"><label>Horário de Chegada — Volta</label><input type="time" id="f-hora-chegada-volta"/></div>
+        <div class="field"><label>Nº do Voo — Volta <span class="tag">opcional</span></label><input type="text" id="f-nvoo-volta" placeholder="Ex: LA8003"/></div>
+      </div>
+      <div class="sep" style="margin:10px 0 12px"></div>
+      </div>
+      <div class="g3" style="display:none">
+        <div class="field"><label>_removed_</label><input type="text" id="f-nvoo" style="display:none"/></div>
         <div class="field"><label>Classe</label>
           <select id="f-classe">
             <option value="">Selecione…</option>
@@ -683,7 +692,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 var reservas = [];
 var clientes = [];
 var activeFilter = 'todos';
-var filterType  = 'tipo'; // 'tipo' ou 'status'
 var deleteTargetId = null;
 var tabAtual = 'reservas';
 
@@ -857,7 +865,7 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-cia','f-nvoo','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
    'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -888,7 +896,6 @@ function salvarReserva() {
     id: id,
     tipo: tipo,
     cliente: cliente,
-    status: 'pendente',
     obs: getVal('f-obs'),
     cadastro: new Date().toISOString().split('T')[0],
   };
@@ -896,10 +903,13 @@ function salvarReserva() {
   if (tipo === 'voo') {
     Object.assign(res, {
       origem: getVal('f-origem'), destino: getVal('f-destino'),
-      dataIda: getVal('f-data-ida'), dataVolta: getVal('f-data-volta'),
+      dataIda: getVal('f-data-ida'),
+      ciaIda: getVal('f-cia-ida'), nvooIda: getVal('f-nvoo-ida'),
       horaPartida: getVal('f-hora-partida'), horaChegada: getVal('f-hora-chegada'),
-      cia: getVal('f-cia'), nvoo: getVal('f-nvoo'), classe: getVal('f-classe'),
-      pnr: getVal('f-pnr'),
+      dataVolta: getVal('f-data-volta'),
+      ciaVolta: getVal('f-cia-volta'), nvooVolta: getVal('f-nvoo-volta'),
+      horaPartidaVolta: getVal('f-hora-partida-volta'), horaChegadaVolta: getVal('f-hora-chegada-volta'),
+      classe: getVal('f-classe'), pnr: getVal('f-pnr'),
       valor: getVal('f-valor'), programa: getVal('f-programa'),
       milhas: getVal('f-milhas'), pax: getVal('f-pax'),
     });
@@ -954,9 +964,9 @@ function resTitle(r) {
 function resCols(r) {
   if (r.tipo==='voo') return [
     ['Cliente', r.cliente],
-    ['Data Ida', fmtDate(r.dataIda) + (r.horaPartida?' '+r.horaPartida:'')],
-    ['Cia / Classe', (r.cia||'—')+(r.classe?' · '+r.classe:'')],
-    ['PNR / Chegada', (r.pnr||'—')+(r.horaChegada?' · chega '+r.horaChegada:'')],
+    ['Ida', fmtDate(r.dataIda)+(r.horaPartida?' '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
+    ['Cia / Classe', (r.ciaIda||r.cia||'—')+(r.classe?' · '+r.classe:'')],
+    ['PNR / Volta', (r.pnr||'—')+(r.dataVolta?' · volta '+fmtDate(r.dataVolta):'')],
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', r.cliente],
@@ -998,9 +1008,8 @@ function fmtDate(d) {
   return s;
 }
 
-function setFilter(el, type) {
+function setFilter(el) {
   activeFilter = el.dataset.filter;
-  filterType = type || 'tipo';
   document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
   el.classList.add('active');
   renderReservas();
@@ -1010,9 +1019,7 @@ function renderReservas() {
   loadReservas();
   var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
   var list = reservas.filter(function(r){
-    var matchFilter = activeFilter === 'todos' ||
-      (filterType === 'tipo'   && r.tipo   === activeFilter) ||
-      (filterType === 'status' && r.status === activeFilter);
+    var matchFilter = activeFilter === 'todos' || r.tipo === activeFilter;
     var matchQ = !q || r.cliente.toLowerCase().includes(q) || resTitle(r).toLowerCase().includes(q);
     return matchFilter && matchQ;
   });
@@ -1056,10 +1063,10 @@ function renderReservas() {
 }
 
 function updateStats() {
-  document.getElementById('stat-total').textContent      = reservas.length;
-  document.getElementById('stat-confirmado').textContent = reservas.filter(function(r){ return r.status==='confirmado'; }).length;
-  document.getElementById('stat-pendente').textContent   = reservas.filter(function(r){ return r.status==='pendente';   }).length;
-  document.getElementById('stat-concluido').textContent  = reservas.filter(function(r){ return r.status==='concluido';  }).length;
+  document.getElementById('stat-total').textContent  = reservas.length;
+  document.getElementById('stat-voo').textContent    = reservas.filter(function(r){ return r.tipo==='voo';     }).length;
+  document.getElementById('stat-hotel').textContent  = reservas.filter(function(r){ return r.tipo==='hotel';   }).length;
+  document.getElementById('stat-outros').textContent = reservas.filter(function(r){ return r.tipo==='carro'||r.tipo==='passeio'; }).length;
 }
 
 function toggleRes(id) {
@@ -1093,10 +1100,13 @@ function editarReserva(id) {
   setVal('f-obs', r.obs||'');
   if (r.tipo==='voo'){
     setVal('f-origem',r.origem); setVal('f-destino',r.destino);
-    setVal('f-data-ida',r.dataIda); setVal('f-data-volta',r.dataVolta);
+    setVal('f-data-ida',r.dataIda);
+    setVal('f-cia-ida',r.ciaIda); setVal('f-nvoo-ida',r.nvooIda);
     setVal('f-hora-partida',r.horaPartida); setVal('f-hora-chegada',r.horaChegada);
-    setVal('f-cia',r.cia); setVal('f-nvoo',r.nvoo); setVal('f-classe',r.classe);
-    setVal('f-pnr',r.pnr);
+    setVal('f-data-volta',r.dataVolta);
+    setVal('f-cia-volta',r.ciaVolta); setVal('f-nvoo-volta',r.nvooVolta);
+    setVal('f-hora-partida-volta',r.horaPartidaVolta); setVal('f-hora-chegada-volta',r.horaChegadaVolta);
+    setVal('f-classe',r.classe); setVal('f-pnr',r.pnr);
     setVal('f-valor',r.valor); setVal('f-programa',r.programa);
     setVal('f-milhas',r.milhas); setVal('f-pax',r.pax);
   } else if (r.tipo==='hotel'){
@@ -1397,7 +1407,8 @@ function gerarMsgVoo(r) {
   linhas.push('🛫 *Partida:* ' + (r.origem||'') + (r.horaPartida ? ' · ' + r.horaPartida : ''));
   linhas.push('🛬 *Chegada:* ' + (r.destino||'') + (r.horaChegada ? ' · ' + r.horaChegada : ''));
   linhas.push('📅 *Data:* ' + dataIda + (dataVolta ? ' → ' + dataVolta : ''));
-  if (r.cia)    linhas.push('✈️ *Cia Aérea:* ' + r.cia + (r.nvoo ? ' · Voo ' + r.nvoo : ''));
+  if (r.ciaIda||r.cia) linhas.push('✈️ *Cia Aérea (Ida):* ' + (r.ciaIda||r.cia) + (r.nvooIda ? ' · Voo ' + r.nvooIda : ''));
+  if (r.ciaVolta) linhas.push('↩️ *Cia Aérea (Volta):* ' + r.ciaVolta + (r.nvooVolta ? ' · Voo ' + r.nvooVolta : ''));
   if (r.classe) linhas.push('💺 *Classe:* ' + r.classe);
   if (r.pnr)   linhas.push('🔑 *Localizador:* ' + r.pnr);
   if (r.programa && r.milhas) linhas.push('🌟 *Milhas:* ' + r.milhas + ' por pax · ' + r.programa);
