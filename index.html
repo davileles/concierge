@@ -292,7 +292,29 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="g3">
         <div class="field"><label>Horário de Partida</label><input type="time" id="f-hora-partida"/></div>
         <div class="field"><label>Horário de Chegada</label><input type="time" id="f-hora-chegada"/></div>
-        <div class="field"><label>Cia Aérea</label><input type="text" id="f-cia" placeholder="Ex: LATAM, TAP"/></div>
+        <div class="field"><label>Cia Aérea</label>
+          <select id="f-cia">
+            <option value="">Selecione…</option>
+            <option>AA</option>
+            <option>Aerolineas Argentinas</option>
+            <option>Air France</option>
+            <option>Azul</option>
+            <option>British Airways</option>
+            <option>Copa</option>
+            <option>Delta</option>
+            <option>Emirates</option>
+            <option>Gol</option>
+            <option>Iberia</option>
+            <option>KLM</option>
+            <option>LATAM</option>
+            <option>Lufthansa</option>
+            <option>Qatar Airways</option>
+            <option>South African</option>
+            <option>TAP</option>
+            <option>Turkish Airlines</option>
+            <option>United</option>
+          </select>
+        </div>
       </div>
       <div class="g3">
         <div class="field"><label>Nº do Voo <span class="tag">opcional</span></label><input type="text" id="f-nvoo" placeholder="Ex: LA8002"/></div>
@@ -306,8 +328,21 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Localizador / PNR</label><input type="text" id="f-pnr" placeholder="Ex: ABC123"/></div>
       </div>
       <div class="g3">
-        <div class="field"><label>Programa da Emissão</label><input type="text" id="f-programa" placeholder="Ex: LATAM Pass, Smiles"/></div>
-        <div class="field"><label>Milhas por Passageiro</label><input type="text" id="f-milhas" placeholder="Ex: 45.000"/></div>
+        <div class="field"><label>Programa da Emissão</label>
+          <select id="f-programa">
+            <option value="">Selecione…</option>
+            <option>AAdvantage</option>
+            <option>Azul Fidelidade</option>
+            <option>Balcão</option>
+            <option>Executive Club</option>
+            <option>Finnair Plus</option>
+            <option>Iberia Plus</option>
+            <option>LATAM Pass</option>
+            <option>Privilege Club</option>
+            <option>Smiles</option>
+          </select>
+        </div>
+        <div class="field"><label>Milhas/R$ por Passageiro</label><input type="text" id="f-milhas" placeholder="Ex: 45.000 ou R$ 1.200"/></div>
         <div class="field"><label>Total de Passageiros</label><input type="number" id="f-pax" min="1" placeholder="Ex: 2"/></div>
       </div>
       <div class="g2">
@@ -1037,12 +1072,18 @@ function renderClientes() {
 }
 
 function cliField(label, val) {
-  return '<div class="cli-field"><div class="cli-field-label">'+label+'</div><div class="cli-field-val">'+(val||'—')+'</div></div>';
+  if (!val) return '<div class="cli-field"><div class="cli-field-label">'+label+'</div><div class="cli-field-val" style="color:var(--muted2)">—</div></div>';
+  var safe = String(val).replace(/\/g,'\\').replace(/'/g,"\'");
+  return '<div class="cli-field">'+
+    '<div class="cli-field-label">'+label+'</div>'+
+    '<div class="cli-field-val" style="display:flex;align-items:flex-start;gap:6px">'+
+      '<span style="flex:1;word-break:break-all">'+val+'</span>'+
+      '<button class="cli-copy" onclick="copiarTexto(''+safe+'')" title="Copiar">📋</button>'+
+    '</div>'+
+  '</div>';
 }
 function cliFieldCopy(label, val) {
-  return '<div class="cli-field"><div class="cli-field-label">'+label+'</div><div class="cli-field-val">'+(val||'—')+
-    (val ? ' <button class="cli-copy" onclick="copiarTexto(\''+val+'\')" title="Copiar">📋</button>' : '') +
-  '</div></div>';
+  return cliField(label, val);
 }
 function escHtml(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
