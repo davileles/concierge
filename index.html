@@ -458,17 +458,39 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
     <div class="sep"></div>
     <div class="card-title" style="margin-bottom:1rem">🗺️ Mapeamento de Colunas</div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Informe a <strong style="color:var(--text)">letra da coluna</strong> correspondente a cada campo na sua planilha (ex: A, B, C…)</p>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Informe a <strong style="color:var(--text)">letra da coluna</strong> correspondente a cada campo na sua planilha (ex: A, B, C…)</p>
+
+    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👤 Dados Pessoais</p>
     <div class="g3">
-      <div class="field"><label>Nome Completo</label><input type="text" id="cfg-col-nome" placeholder="Ex: A" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>E-mail</label><input type="text" id="cfg-col-email" placeholder="Ex: B" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="cfg-col-tel" placeholder="Ex: C" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>CPF</label><input type="text" id="cfg-col-cpf" placeholder="Ex: D" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>Data de Nascimento</label><input type="text" id="cfg-col-nasc" placeholder="Ex: E" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>Passaporte <span class="tag">opcional</span></label><input type="text" id="cfg-col-pass" placeholder="Ex: F" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>Venc. Passaporte <span class="tag">opcional</span></label><input type="text" id="cfg-col-pass-venc" placeholder="Ex: G" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>Programa de Milhas <span class="tag">opcional</span></label><input type="text" id="cfg-col-prog" placeholder="Ex: H" maxlength="2" oninput="saveCfg()"/></div>
-      <div class="field"><label>Nº do Programa <span class="tag">opcional</span></label><input type="text" id="cfg-col-prog-num" placeholder="Ex: I" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Nome do Cliente</label><input type="text" id="cfg-col-nome" placeholder="Ex: A" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="cfg-col-tel" placeholder="Ex: B" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>E-mail</label><input type="text" id="cfg-col-email" placeholder="Ex: C" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>CPF</label><input type="text" id="cfg-col-cpf" placeholder="Ex: D" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Data de Nascimento</label><input type="text" id="cfg-col-nasc" placeholder="Ex: E" maxlength="3" oninput="saveCfg()"/></div>
+    </div>
+
+    <div class="sep"></div>
+    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🏠 Endereço</p>
+    <div class="g3">
+      <div class="field"><label>Logradouro</label><input type="text" id="cfg-col-logradouro" placeholder="Ex: F" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Número</label><input type="text" id="cfg-col-numero" placeholder="Ex: G" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Complemento</label><input type="text" id="cfg-col-complemento" placeholder="Ex: H" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>CEP</label><input type="text" id="cfg-col-cep" placeholder="Ex: I" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Bairro</label><input type="text" id="cfg-col-bairro" placeholder="Ex: J" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Cidade</label><input type="text" id="cfg-col-cidade" placeholder="Ex: K" maxlength="3" oninput="saveCfg()"/></div>
+      <div class="field"><label>Estado</label><input type="text" id="cfg-col-estado" placeholder="Ex: L" maxlength="3" oninput="saveCfg()"/></div>
+    </div>
+
+    <div class="sep"></div>
+    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🔑 Senhas</p>
+    <div class="g3">
+      <div class="field"><label>Senhas / Acessos <span class="tag">texto livre</span></label><input type="text" id="cfg-col-senhas" placeholder="Ex: M" maxlength="3" oninput="saveCfg()"/></div>
+    </div>
+
+    <div class="sep"></div>
+    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👨‍👩‍👧 Acompanhantes</p>
+    <div class="g3">
+      <div class="field"><label>Quem viaja com você? <span class="tag">texto livre</span></label><input type="text" id="cfg-col-acompanhantes" placeholder="Ex: N" maxlength="3" oninput="saveCfg()"/></div>
     </div>
     <div class="field">
       <label>Linha de início dos dados (ex: 2 para pular cabeçalho)</label>
@@ -551,16 +573,21 @@ function loadCfg() {
   var c = JSON.parse(localStorage.getItem('concierge_cfg') || '{}');
   setVal('cfg-url', c.url || '');
   setVal('cfg-aba', c.aba || 'Clientes');
-  setVal('cfg-col-nome',     c.colNome     || 'A');
-  setVal('cfg-col-email',    c.colEmail    || 'B');
-  setVal('cfg-col-tel',      c.colTel      || 'C');
-  setVal('cfg-col-cpf',      c.colCpf      || 'D');
-  setVal('cfg-col-nasc',     c.colNasc     || 'E');
-  setVal('cfg-col-pass',     c.colPass     || 'F');
-  setVal('cfg-col-pass-venc',c.colPassVenc || 'G');
-  setVal('cfg-col-prog',     c.colProg     || 'H');
-  setVal('cfg-col-prog-num', c.colProgNum  || 'I');
-  setVal('cfg-linha',        c.linha       || '2');
+  setVal('cfg-col-nome',          c.colNome         || 'A');
+  setVal('cfg-col-tel',           c.colTel          || 'B');
+  setVal('cfg-col-email',         c.colEmail        || 'C');
+  setVal('cfg-col-cpf',           c.colCpf          || 'D');
+  setVal('cfg-col-nasc',          c.colNasc         || 'E');
+  setVal('cfg-col-logradouro',    c.colLogradouro   || 'F');
+  setVal('cfg-col-numero',        c.colNumero       || 'G');
+  setVal('cfg-col-complemento',   c.colComplemento  || 'H');
+  setVal('cfg-col-cep',           c.colCep          || 'I');
+  setVal('cfg-col-bairro',        c.colBairro       || 'J');
+  setVal('cfg-col-cidade',        c.colCidade       || 'K');
+  setVal('cfg-col-estado',        c.colEstado       || 'L');
+  setVal('cfg-col-senhas',        c.colSenhas       || 'M');
+  setVal('cfg-col-acompanhantes', c.colAcompanhantes|| 'N');
+  setVal('cfg-linha',             c.linha           || '2');
   document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
 }
 
@@ -568,16 +595,21 @@ function saveCfg() {
   var c = {
     url:         getVal('cfg-url'),
     aba:         getVal('cfg-aba') || 'Clientes',
-    colNome:     getVal('cfg-col-nome').toUpperCase() || 'A',
-    colEmail:    getVal('cfg-col-email').toUpperCase() || 'B',
-    colTel:      getVal('cfg-col-tel').toUpperCase() || 'C',
-    colCpf:      getVal('cfg-col-cpf').toUpperCase() || 'D',
-    colNasc:     getVal('cfg-col-nasc').toUpperCase() || 'E',
-    colPass:     getVal('cfg-col-pass').toUpperCase() || 'F',
-    colPassVenc: getVal('cfg-col-pass-venc').toUpperCase() || 'G',
-    colProg:     getVal('cfg-col-prog').toUpperCase() || 'H',
-    colProgNum:  getVal('cfg-col-prog-num').toUpperCase() || 'I',
-    linha:       getVal('cfg-linha') || '2'
+    colNome:          getVal('cfg-col-nome').toUpperCase()          || 'A',
+    colTel:           getVal('cfg-col-tel').toUpperCase()           || 'B',
+    colEmail:         getVal('cfg-col-email').toUpperCase()         || 'C',
+    colCpf:           getVal('cfg-col-cpf').toUpperCase()           || 'D',
+    colNasc:          getVal('cfg-col-nasc').toUpperCase()          || 'E',
+    colLogradouro:    getVal('cfg-col-logradouro').toUpperCase()    || 'F',
+    colNumero:        getVal('cfg-col-numero').toUpperCase()        || 'G',
+    colComplemento:   getVal('cfg-col-complemento').toUpperCase()   || 'H',
+    colCep:           getVal('cfg-col-cep').toUpperCase()           || 'I',
+    colBairro:        getVal('cfg-col-bairro').toUpperCase()        || 'J',
+    colCidade:        getVal('cfg-col-cidade').toUpperCase()        || 'K',
+    colEstado:        getVal('cfg-col-estado').toUpperCase()        || 'L',
+    colSenhas:        getVal('cfg-col-senhas').toUpperCase()        || 'M',
+    colAcompanhantes: getVal('cfg-col-acompanhantes').toUpperCase() || 'N',
+    linha:            getVal('cfg-linha') || '2'
   };
   localStorage.setItem('concierge_cfg', JSON.stringify(c));
 }
@@ -625,15 +657,20 @@ function syncClientes() {
       clientes = d.rows.map(function(row, i){
         return {
           id: 'cli-' + i,
-          nome:     String(row[colIndex(c.colNome)]     || '').trim(),
-          email:    String(row[colIndex(c.colEmail)]    || '').trim(),
-          tel:      String(row[colIndex(c.colTel)]      || '').trim(),
-          cpf:      String(row[colIndex(c.colCpf)]      || '').trim(),
-          nasc:     String(row[colIndex(c.colNasc)]     || '').trim(),
-          pass:     String(row[colIndex(c.colPass)]     || '').trim(),
-          passVenc: String(row[colIndex(c.colPassVenc)] || '').trim(),
-          prog:     String(row[colIndex(c.colProg)]     || '').trim(),
-          progNum:  String(row[colIndex(c.colProgNum)]  || '').trim(),
+          nome:          String(row[colIndex(c.colNome)]          || '').trim(),
+          tel:           String(row[colIndex(c.colTel)]           || '').trim(),
+          email:         String(row[colIndex(c.colEmail)]         || '').trim(),
+          cpf:           String(row[colIndex(c.colCpf)]           || '').trim(),
+          nasc:          String(row[colIndex(c.colNasc)]          || '').trim(),
+          logradouro:    String(row[colIndex(c.colLogradouro)]    || '').trim(),
+          numero:        String(row[colIndex(c.colNumero)]        || '').trim(),
+          complemento:   String(row[colIndex(c.colComplemento)]   || '').trim(),
+          cep:           String(row[colIndex(c.colCep)]           || '').trim(),
+          bairro:        String(row[colIndex(c.colBairro)]        || '').trim(),
+          cidade:        String(row[colIndex(c.colCidade)]        || '').trim(),
+          estado:        String(row[colIndex(c.colEstado)]        || '').trim(),
+          senhas:        String(row[colIndex(c.colSenhas)]        || '').trim(),
+          acompanhantes: String(row[colIndex(c.colAcompanhantes)] || '').trim(),
         };
       }).filter(function(c){ return c.nome; });
       localStorage.setItem('concierge_clientes', JSON.stringify(clientes));
