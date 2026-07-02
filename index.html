@@ -285,13 +285,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Origem</label><input type="text" id="f-origem" placeholder="Ex: GRU – São Paulo"/></div>
         <div class="field"><label>Destino</label><input type="text" id="f-destino" placeholder="Ex: LIS – Lisboa"/></div>
       </div>
-      <div class="g3">
+      <div class="g2">
         <div class="field"><label>Data de Ida</label><input type="date" id="f-data-ida"/></div>
         <div class="field"><label>Data de Volta <span class="tag">opcional</span></label><input type="date" id="f-data-volta"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Horário de Partida</label><input type="time" id="f-hora-partida"/></div>
+        <div class="field"><label>Horário de Chegada</label><input type="time" id="f-hora-chegada"/></div>
         <div class="field"><label>Cia Aérea</label><input type="text" id="f-cia" placeholder="Ex: LATAM, TAP"/></div>
       </div>
       <div class="g3">
-        <div class="field"><label>Nº do Voo</label><input type="text" id="f-nvoo" placeholder="Ex: LA8002"/></div>
+        <div class="field"><label>Nº do Voo <span class="tag">opcional</span></label><input type="text" id="f-nvoo" placeholder="Ex: LA8002"/></div>
         <div class="field"><label>Classe</label>
           <select id="f-classe">
             <option value="">Selecione…</option>
@@ -301,19 +305,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         </div>
         <div class="field"><label>Localizador / PNR</label><input type="text" id="f-pnr" placeholder="Ex: ABC123"/></div>
       </div>
-      <div class="g2">
-        <div class="field"><label>Bagagem Despachada</label>
-          <select id="f-bagagem">
-            <option value="">Não incluída</option>
-            <option>1 mala (23kg)</option><option>2 malas (23kg)</option>
-            <option>1 mala (32kg)</option><option>Incluída – verificar bilhete</option>
-          </select>
-        </div>
-        <div class="field"><label>Valor Pago <span class="tag">R$</span></label><input type="text" id="f-valor" placeholder="Ex: 3.200,00"/></div>
+      <div class="g3">
+        <div class="field"><label>Programa da Emissão</label><input type="text" id="f-programa" placeholder="Ex: LATAM Pass, Smiles"/></div>
+        <div class="field"><label>Milhas por Passageiro</label><input type="text" id="f-milhas" placeholder="Ex: 45.000"/></div>
+        <div class="field"><label>Total de Passageiros</label><input type="number" id="f-pax" min="1" placeholder="Ex: 2"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Programa de Milhas <span class="tag">opcional</span></label><input type="text" id="f-programa" placeholder="Ex: LATAM Pass"/></div>
-        <div class="field"><label>Milhas Utilizadas <span class="tag">opcional</span></label><input type="text" id="f-milhas" placeholder="Ex: 45.000"/></div>
+        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-valor" placeholder="Ex: 320,00"/></div>
       </div>
     </div>
 
@@ -396,15 +394,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <!-- COMUM A TODOS -->
     <div class="sep"></div>
     <div class="g2">
-      <div class="field">
-        <label>Status</label>
-        <select id="f-status">
-          <option value="pendente">⏳ Pendente</option>
-          <option value="confirmado">✅ Confirmado</option>
-          <option value="concluido">🎯 Concluído</option>
-          <option value="cancelado">❌ Cancelado</option>
-        </select>
-      </div>
       <div class="field">
         <label>Data do Cadastro</label>
         <input type="date" id="f-cadastro" readonly style="opacity:.6"/>
@@ -720,11 +709,11 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-cia','f-nvoo','f-classe','f-pnr','f-bagagem','f-valor','f-programa','f-milhas',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-cia','f-nvoo','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
    'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
-   'f-status','f-obs'].forEach(function(id){
+   'f-obs'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
   onTipoChange();
@@ -751,7 +740,7 @@ function salvarReserva() {
     id: id,
     tipo: tipo,
     cliente: cliente,
-    status: getVal('f-status') || 'pendente',
+    status: 'pendente',
     obs: getVal('f-obs'),
     cadastro: new Date().toISOString().split('T')[0],
   };
@@ -760,9 +749,11 @@ function salvarReserva() {
     Object.assign(res, {
       origem: getVal('f-origem'), destino: getVal('f-destino'),
       dataIda: getVal('f-data-ida'), dataVolta: getVal('f-data-volta'),
+      horaPartida: getVal('f-hora-partida'), horaChegada: getVal('f-hora-chegada'),
       cia: getVal('f-cia'), nvoo: getVal('f-nvoo'), classe: getVal('f-classe'),
-      pnr: getVal('f-pnr'), bagagem: getVal('f-bagagem'),
-      valor: getVal('f-valor'), programa: getVal('f-programa'), milhas: getVal('f-milhas'),
+      pnr: getVal('f-pnr'),
+      valor: getVal('f-valor'), programa: getVal('f-programa'),
+      milhas: getVal('f-milhas'), pax: getVal('f-pax'),
     });
   } else if (tipo === 'hotel') {
     Object.assign(res, {
@@ -822,9 +813,9 @@ function resTitle(r) {
 function resCols(r) {
   if (r.tipo==='voo') return [
     ['Cliente', r.cliente],
-    ['Data Ida', fmtDate(r.dataIda)],
-    ['Cia / Voo', (r.cia||'')+(r.nvoo?' – '+r.nvoo:'')],
-    ['PNR', r.pnr||'—'],
+    ['Data Ida', fmtDate(r.dataIda) + (r.horaPartida?' '+r.horaPartida:'')],
+    ['Cia / Classe', (r.cia||'—')+(r.classe?' · '+r.classe:'')],
+    ['PNR / Chegada', (r.pnr||'—')+(r.horaChegada?' · chega '+r.horaChegada:'')],
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', r.cliente],
@@ -954,14 +945,15 @@ function editarReserva(id) {
   switchTab('nova');
   setVal('f-tipo', r.tipo); onTipoChange();
   setVal('f-cliente', r.cliente);
-  setVal('f-status', r.status);
   setVal('f-obs', r.obs||'');
   if (r.tipo==='voo'){
     setVal('f-origem',r.origem); setVal('f-destino',r.destino);
     setVal('f-data-ida',r.dataIda); setVal('f-data-volta',r.dataVolta);
+    setVal('f-hora-partida',r.horaPartida); setVal('f-hora-chegada',r.horaChegada);
     setVal('f-cia',r.cia); setVal('f-nvoo',r.nvoo); setVal('f-classe',r.classe);
-    setVal('f-pnr',r.pnr); setVal('f-bagagem',r.bagagem);
-    setVal('f-valor',r.valor); setVal('f-programa',r.programa); setVal('f-milhas',r.milhas);
+    setVal('f-pnr',r.pnr);
+    setVal('f-valor',r.valor); setVal('f-programa',r.programa);
+    setVal('f-milhas',r.milhas); setVal('f-pax',r.pax);
   } else if (r.tipo==='hotel'){
     setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
     setVal('f-hotel-quarto',r.quarto); setVal('f-checkin',r.checkin);
@@ -994,6 +986,7 @@ function renderClientes() {
   var list = clientes.filter(function(c){
     return !q || c.nome.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.cpf.includes(q);
   });
+  list.sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR'); });
 
   document.getElementById('cli-count-label').textContent = list.length + ' cliente' + (list.length!==1?'s':'');
   var grid = document.getElementById('cli-grid');
