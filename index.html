@@ -1026,47 +1026,26 @@ function renderReservas() {
     return;
   }
 
+  // Ordenar por data crescente
+  list.sort(function(a, b) {
+    var da = a.dataIda || a.checkin || a.retData || a.dataPasseio || a.cadastro || '';
+    var db = b.dataIda || b.checkin || b.retData || b.dataPasseio || b.cadastro || '';
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
+
   grid.innerHTML = list.map(function(r){
     var cols = resCols(r);
-    var isVoo = r.tipo === 'voo';
-
-    // Summary row for voo (always visible before expand)
-    var summaryHtml = '';
-    if (isVoo) {
-      summaryHtml =
-        '<div class="res-summary" onclick="toggleRes(\''+r.id+'\')">' +
-          '<div class="res-summary-main">'+
-            '<span class="res-summary-rota">'+
-              '<span style="font-weight:800;font-size:15px">'+(r.origem||'?')+'</span>'+
-              '<span style="color:var(--muted);margin:0 8px;font-size:13px">→</span>'+
-              '<span style="font-weight:800;font-size:15px">'+(r.destino||'?')+'</span>'+
-            '</span>'+
-            '<div class="res-summary-meta">'+
-              '<span>👤 '+r.cliente+'</span>'+
-              '<span>📅 '+fmtDate(r.dataIda)+(r.horaPartida?' '+r.horaPartida:'')+'</span>'+
-              (r.cia ? '<span>✈️ '+r.cia+'</span>' : '')+
-              (r.pnr ? '<span>🔑 '+r.pnr+'</span>' : '')+
-            '</div>'+
-          '</div>'+
-          '<span class="res-toggle" id="restog-'+r.id+'">▼</span>'+
-        '</div>';
-    }
-
-    var bodyHtml =
-      '<div class="res-card-body res-collapsible" id="resbody-'+r.id+'" style="'+(isVoo?'display:none':'')+'">'+
-        cols.map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
-      '</div>';
-
-    return '<div class="res-card" id="rescard-'+r.id+'">'+
-      '<div class="res-card-header" style="cursor:'+(isVoo?'default':'pointer')+'">'+
+    return '<div class="res-card">'+
+      '<div class="res-card-header">'+
         '<div class="type-icon '+TIPO_CLASS[r.tipo]+'">'+TIPO_LABEL[r.tipo].split(' ')[0]+'</div>'+
         '<div class="res-card-info">'+
-          '<div class="res-card-id">'+r.id+' · '+fmtDate(r.cadastro)+'</div>'+
-          '<div class="res-card-title">'+TIPO_LABEL[r.tipo]+'</div>'+
+          '<div class="res-card-id">'+r.id+' · Cadastro: '+fmtDate(r.cadastro)+'</div>'+
+          '<div class="res-card-title">'+resTitle(r)+'</div>'+
         '</div>'+
       '</div>'+
-      summaryHtml +
-      bodyHtml +
+      '<div class="res-card-body">'+
+        cols.map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
+      '</div>'+
       '<div class="res-card-footer">'+
         '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+'</span>'+
         '<button class="btn btn-ghost btn-sm" onclick="editarReserva(\''+r.id+'\')">✏️ Editar</button>'+
