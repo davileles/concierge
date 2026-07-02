@@ -184,8 +184,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="logo-row">
     <div style="width:50px;height:50px;background:rgba(255,88,94,.12);border:2px solid rgba(255,88,94,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">✈️</div>
     <div class="brand">
-      <span class="brand-name">Concierge CDV</span>
-      <span class="brand-sub">Painel de Gestão de Reservas</span>
+      <span class="brand-name">Travel Concierge</span>
+      <span class="brand-sub">Painel de Gestão</span>
     </div>
   </div>
   <p class="subtitle">Gerencie reservas, clientes e status das atividades do serviço concierge.</p>
@@ -843,9 +843,21 @@ function resCols(r) {
 
 function fmtDate(d) {
   if (!d) return '—';
-  var parts = d.split('-');
-  if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
-  return d;
+  var s = String(d).trim();
+  // ISO datetime do Google Sheets ex: 2026-12-08T03:00:00.000Z
+  var dt = new Date(s);
+  if (!isNaN(dt.getTime())) {
+    var day   = String(dt.getUTCDate()).padStart(2,'0');
+    var month = String(dt.getUTCMonth()+1).padStart(2,'0');
+    var year  = dt.getUTCFullYear();
+    return day+'/'+month+'/'+year;
+  }
+  // YYYY-MM-DD
+  var parts = s.split('-');
+  if (parts.length === 3 && parts[0].length === 4) return parts[2]+'/'+parts[1]+'/'+parts[0];
+  // DD/MM/YYYY ja correto
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(s)) return s;
+  return s;
 }
 
 function setFilter(el, type) {
@@ -1001,16 +1013,24 @@ function renderClientes() {
       '</div>'+
       '<div class="cli-body" id="body-'+c.id+'">'+
         '<div class="cli-grid">'+
-          cliField('Nome Completo', c.nome) +
-          cliField('E-mail', c.email) +
-          cliField('Telefone', c.tel) +
           cliFieldCopy('CPF', c.cpf) +
           cliField('Data de Nascimento', fmtDate(c.nasc)) +
-          cliFieldCopy('Passaporte', c.pass) +
-          cliField('Venc. Passaporte', fmtDate(c.passVenc)) +
-          cliField('Programa de Milhas', c.prog) +
-          cliFieldCopy('Nº do Programa', c.progNum) +
+          cliField('Telefone', c.tel) +
+          cliField('E-mail', c.email) +
         '</div>'+
+        (c.logradouro || c.cep ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🏠 Endereço</div><div class="cli-grid">'+
+          cliField('Logradouro', c.logradouro) +
+          cliField('Número', c.numero) +
+          cliField('Complemento', c.complemento) +
+          cliFieldCopy('CEP', c.cep) +
+          cliField('Bairro', c.bairro) +
+          cliField('Cidade', c.cidade) +
+          cliField('Estado', c.estado) +
+        '</div>' : '') +
+        (c.senhas ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔑 Senhas / Acessos</div>'+
+          '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7;word-break:break-all">'+escHtml(c.senhas)+'</div>' : '') +
+        (c.acompanhantes ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👨‍👩‍👧 Quem Viaja Junto</div>'+
+          '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">'+escHtml(c.acompanhantes)+'</div>' : '') +
         (resCount ? '<span class="cli-reservas-link" onclick="verReservasCliente(\''+c.nome+'\')">📋 Ver '+resCount+' reserva'+(resCount!==1?'s':'')+' deste cliente →</span>' : '') +
       '</div>'+
     '</div>';
@@ -1024,6 +1044,9 @@ function cliFieldCopy(label, val) {
   return '<div class="cli-field"><div class="cli-field-label">'+label+'</div><div class="cli-field-val">'+(val||'—')+
     (val ? ' <button class="cli-copy" onclick="copiarTexto(\''+val+'\')" title="Copiar">📋</button>' : '') +
   '</div></div>';
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function toggleCli(id) {
