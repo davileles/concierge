@@ -48,6 +48,8 @@ input::placeholder,textarea::placeholder{color:var(--muted2)}
 input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer}
 select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
 .sep{height:1px;background:var(--border);margin:16px 0}
+.var-btn{background:rgba(18,110,255,.12);color:#60a5fa;border:1px solid rgba(18,110,255,.3);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:background .15s}
+.var-btn:hover{background:rgba(18,110,255,.25);color:#fff}
 
 /* BUTTONS */
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border:none;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.4px;transition:background .15s,transform .1s}
@@ -585,82 +587,92 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="verificarBaileys()">🔄 Verificar</button>
   </div>
 
-  <!-- SELEÇÃO DE CLIENTE -->
-  <div class="card">
-    <div class="card-title">👤 Destinatário</div>
-    <div class="g2">
+  <!-- SUB-TABS -->
+  <div class="mode-tabs" style="margin-bottom:1.2rem">
+    <button class="mode-tab active" id="msub-modelos"  onclick="setMsgSubTab('modelos')">📝 Modelos</button>
+    <button class="mode-tab"        id="msub-disparar" onclick="setMsgSubTab('disparar')">🚀 Disparar</button>
+  </div>
+
+  <!-- ── SUB: MODELOS ─────────────────────────────────── -->
+  <div id="msg-sub-modelos">
+
+    <div class="card">
+      <div class="card-title" id="modelos-form-title">✏️ Novo Modelo</div>
+
       <div class="field">
-        <label>Cliente</label>
-        <select id="msg-cliente" onchange="onMsgClienteChange()">
-          <option value="">Selecione o cliente…</option>
-        </select>
+        <label>Nome do Modelo</label>
+        <input type="text" id="m-nome" placeholder="Ex: Instrução para Problemas, Chegando o Voo…"/>
+      </div>
+
+      <!-- VARIÁVEIS -->
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👤 Variáveis do Cliente</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px" id="vars-cliente"></div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">✈️ Variáveis da Reserva</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px" id="vars-reserva"></div>
+      </div>
+
+      <div class="field">
+        <label>Texto do Modelo <span class="tag">clique nas variáveis acima para inserir</span></label>
+        <textarea id="m-texto" rows="10" style="min-height:200px;font-size:13px;line-height:1.8" placeholder="Digite o texto do modelo aqui. Clique nas variáveis acima para inserir os campos automaticamente…"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-accent" style="flex:1" onclick="salvarModelo()">💾 Salvar Modelo</button>
+        <button class="btn btn-ghost btn-sm" onclick="cancelarEdicaoModelo()">✕ Cancelar</button>
+      </div>
+      <p id="modelo-ok" style="font-size:12px;color:#22c55e;font-weight:700;margin-top:8px;min-height:14px"></p>
+    </div>
+
+    <!-- LISTA DE MODELOS -->
+    <div id="modelos-lista"></div>
+  </div>
+
+  <!-- ── SUB: DISPARAR ────────────────────────────────── -->
+  <div id="msg-sub-disparar" style="display:none">
+
+    <div class="card">
+      <div class="card-title">🎯 Selecionar</div>
+      <div class="g3">
+        <div class="field">
+          <label>Modelo</label>
+          <select id="d-modelo" onchange="onDispararChange()">
+            <option value="">Selecione um modelo…</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cliente</label>
+          <select id="d-cliente" onchange="onDispararChange()">
+            <option value="">Selecione o cliente…</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Reserva <span class="tag">opcional</span></label>
+          <select id="d-reserva" onchange="onDispararChange()">
+            <option value="">Nenhuma</option>
+          </select>
+        </div>
+      </div>
+      <div id="d-grupo-info" style="display:none;font-size:12px;font-weight:600;color:var(--muted);margin-top:4px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">💬 Mensagem</div>
+      <div class="field">
+        <label>Pré-visualização <span class="tag">editável antes de enviar</span></label>
+        <textarea id="d-msg-final" rows="10" style="min-height:200px;font-size:13px;line-height:1.8" placeholder="Selecione modelo e cliente para gerar a mensagem…"></textarea>
       </div>
       <div class="field">
         <label>Grupo WhatsApp (ID)</label>
-        <input type="text" id="msg-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px"/>
+        <input type="text" id="d-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px"/>
       </div>
-    </div>
-    <div id="msg-cliente-info" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);margin-top:4px"></div>
-  </div>
-
-  <!-- TIPO DE MENSAGEM -->
-  <div class="card">
-    <div class="card-title">📝 Modelo de Mensagem</div>
-    <div class="mode-tabs" style="margin-bottom:16px">
-      <button class="mode-tab active" id="mtab-instrucao" onclick="setMsgTipo('instrucao')">⚠️ Instrução para Problemas</button>
-      <button class="mode-tab" id="mtab-voo" onclick="setMsgTipo('voo')">✈️ Está Chegando seu Voo</button>
+      <div class="btn-row">
+        <button class="btn btn-accent" style="flex:1" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
+        <button class="btn btn-ghost btn-sm" onclick="copiarDisparar()">📋 Copiar</button>
+      </div>
+      <p id="d-send-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
     </div>
 
-    <!-- INSTRUÇÃO PARA PROBLEMAS -->
-    <div id="msg-panel-instrucao">
-      <div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.25);border-radius:8px;padding:10px 14px;font-size:12px;color:#f59e0b;margin-bottom:14px">
-        💡 Esse texto é fixo e ficará salvo. Edite abaixo e clique em Salvar Modelo.
-      </div>
-      <div class="field">
-        <label>Texto da Mensagem</label>
-        <textarea id="msg-instrucao-texto" rows="10" placeholder="Digite aqui a mensagem de instrução para problemas…" style="min-height:180px;font-size:13px;line-height:1.7"></textarea>
-      </div>
-      <div class="btn-row" style="margin-bottom:4px">
-        <button class="btn btn-ghost btn-sm" onclick="salvarModeloInstrucao()">💾 Salvar Modelo</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetModeloInstrucao()">↩️ Restaurar padrão</button>
-      </div>
-      <p id="instrucao-ok" style="font-size:12px;color:#22c55e;font-weight:700;min-height:14px;margin-bottom:12px"></p>
-      <div class="sep"></div>
-      <div class="field" style="margin-top:14px">
-        <label>Pré-visualização</label>
-        <div id="msg-instrucao-preview" style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--text);white-space:pre-wrap;line-height:1.7;min-height:60px"></div>
-      </div>
-    </div>
-
-    <!-- ESTÁ CHEGANDO SEU VOO -->
-    <div id="msg-panel-voo" style="display:none">
-      <div class="field">
-        <label>Selecione a Reserva de Voo</label>
-        <select id="msg-voo-reserva" onchange="onMsgVooChange()">
-          <option value="">Selecione uma reserva…</option>
-        </select>
-      </div>
-      <div id="msg-voo-info" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px"></div>
-      <div class="sep"></div>
-      <div class="field" style="margin-top:14px">
-        <label>Mensagem Gerada</label>
-        <textarea id="msg-voo-texto" rows="10" style="min-height:200px;font-size:13px;line-height:1.7" placeholder="Selecione um cliente e uma reserva de voo para gerar a mensagem…"></textarea>
-      </div>
-    </div>
-  </div>
-
-  <!-- ENVIO -->
-  <div class="card">
-    <div class="card-title">🚀 Enviar Mensagem</div>
-    <div class="field">
-      <label>Mensagem Final <span class="tag">editável antes de enviar</span></label>
-      <textarea id="msg-final" rows="8" style="min-height:160px;font-size:13px;line-height:1.7" placeholder="A mensagem aparecerá aqui após selecionar cliente e modelo…"></textarea>
-    </div>
-    <div class="btn-row">
-      <button class="btn btn-accent" style="flex:1" onclick="enviarMensagem()">📤 Enviar para o Grupo</button>
-      <button class="btn btn-ghost btn-sm" onclick="copiarMsgFinal()">📋 Copiar</button>
-    </div>
-    <p id="msg-send-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
   </div>
 
 </div><!-- /panel-mensagens -->
@@ -694,16 +706,7 @@ var activeFilter = 'todos';
 var deleteTargetId = null;
 var tabAtual = 'reservas';
 
-var APPS_SCRIPT_CODE = `function doGet(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName(e.parameter.aba || 'Clientes');
-  var linhaInicio = parseInt(e.parameter.linha || 2);
-  var data = sheet.getDataRange().getValues();
-  var rows = data.slice(linhaInicio - 1);
-  return ContentService
-    .createTextOutput(JSON.stringify({ ok: true, rows: rows }))
-    .setMimeType(ContentService.MimeType.JSON);
-}`;
+var APPS_SCRIPT_CODE = 'function doGet(e) {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(e.parameter.aba || \'Clientes\');\n  var linhaInicio = parseInt(e.parameter.linha || 2);\n  var data = sheet.getDataRange().getValues();\n  var rows = data.slice(linhaInicio - 1);\n  return ContentService\n    .createTextOutput(JSON.stringify({ ok: true, rows: rows }))\n    .setMimeType(ContentService.MimeType.JSON);\n}';
 
 // ══════════════════════════════════════════
 //  CONFIG (localStorage)
@@ -1244,7 +1247,7 @@ function switchTab(name) {
   document.getElementById('panel-'+name).classList.add('active');
   var tabs = document.querySelectorAll('.main-tab');
   var map = {reservas:0, nova:1, clientes:2, mensagens:3, config:4};
-  if (name==='mensagens') initMensagens();
+  if (name==='mensagens') { loadModelos(); initMensagens(); }
   if (tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name==='clientes') renderClientes();
 }
@@ -1284,22 +1287,44 @@ function copiarScript() {
 // ══════════════════════════════════════════
 //  MENSAGENS
 // ══════════════════════════════════════════
-var MSG_TIPO = 'instrucao';
+var modelos = [];
+var editingModeloId = null;
 
-var DEFAULT_INSTRUCAO = `Olá! 👋
+var VARS_CLIENTE = [
+  { label: '{{nome}}',        desc: 'Nome completo' },
+  { label: '{{primeiro_nome}}', desc: 'Primeiro nome' },
+  { label: '{{telefone}}',    desc: 'Telefone' },
+  { label: '{{email}}',       desc: 'E-mail' },
+  { label: '{{cpf}}',         desc: 'CPF' },
+  { label: '{{nascimento}}',  desc: 'Data de nascimento' },
+  { label: '{{cidade}}',      desc: 'Cidade' },
+];
 
-Caso você enfrente algum problema durante a sua viagem, siga as orientações abaixo:
+var VARS_RESERVA = [
+  { label: '{{origem}}',           desc: 'Origem' },
+  { label: '{{destino}}',          desc: 'Destino' },
+  { label: '{{data_ida}}',         desc: 'Data de ida' },
+  { label: '{{hora_partida}}',     desc: 'Hora de partida' },
+  { label: '{{hora_chegada}}',     desc: 'Hora de chegada' },
+  { label: '{{data_volta}}',       desc: 'Data de volta' },
+  { label: '{{cia}}',              desc: 'Cia aérea' },
+  { label: '{{classe}}',           desc: 'Classe' },
+  { label: '{{pnr}}',              desc: 'Localizador' },
+  { label: '{{programa}}',         desc: 'Programa de emissão' },
+  { label: '{{milhas}}',           desc: 'Milhas por pax' },
+  { label: '{{pax}}',              desc: 'Total passageiros' },
+  { label: '{{hotel}}',            desc: 'Nome do hotel' },
+  { label: '{{checkin}}',          desc: 'Check-in' },
+  { label: '{{checkout}}',         desc: 'Check-out' },
+  { label: '{{conf}}',             desc: 'Confirmação' },
+];
 
-*1. Voo cancelado ou atrasado:*
-Entre em contato com a companhia aérea no balcão de atendimento do aeroporto e solicite reacomodação ou reembolso. Me avise imediatamente para que eu possa acompanhar e ajudar à distância.
-
-*2. Problema com hospedagem:*
-Contate diretamente a recepção do hotel. Se não for resolvido, entre em contato comigo.
-
-*3. Emergências gerais:*
-Ligue para o número de emergência local e em seguida me avise.
-
-Estou disponível para ajudar! 🙏`;
+function loadModelos() {
+  modelos = JSON.parse(localStorage.getItem('concierge_modelos') || '[]');
+}
+function saveModelos() {
+  localStorage.setItem('concierge_modelos', JSON.stringify(modelos));
+}
 
 function getBaileysUrl() {
   return (getCfg().baileys || '').replace(/\/+$/, '');
@@ -1311,204 +1336,297 @@ function verificarBaileys() {
   var lbl = document.getElementById('baileys-label');
   dot.className = 'sync-dot loading';
   lbl.textContent = 'Verificando conexão com Baileys…';
-  if (!url) {
-    dot.className = 'sync-dot err';
-    lbl.textContent = 'URL do Baileys não configurada. Acesse Configuração.';
-    return;
-  }
+  if (!url) { dot.className='sync-dot err'; lbl.textContent='URL do Baileys não configurada.'; return; }
   fetch(url + '/status', { signal: AbortSignal.timeout(6000) })
     .then(function(r){ return r.json(); })
     .then(function(d){
-      var conectado = d.status === 'conectado' || d.connected === true || d.ok === true;
-      dot.className = 'sync-dot ' + (conectado ? 'ok' : 'err');
-      lbl.textContent = conectado ? '✅ Baileys conectado' : '⚠️ Baileys desconectado — verifique o servidor';
+      var ok = d.status==='conectado' || d.connected===true || d.ok===true;
+      dot.className = 'sync-dot ' + (ok?'ok':'err');
+      lbl.textContent = ok ? '✅ Baileys conectado' : '⚠️ Baileys desconectado';
     })
-    .catch(function(){
-      dot.className = 'sync-dot err';
-      lbl.textContent = 'Não foi possível conectar ao servidor Baileys.';
-    });
+    .catch(function(){ dot.className='sync-dot err'; lbl.textContent='Não foi possível conectar ao Baileys.'; });
 }
 
+// ── SUB-TABS ─────────────────────────────────────────────────────────────────
+function setMsgSubTab(tab) {
+  document.getElementById('msg-sub-modelos').style.display  = tab==='modelos'  ? 'block' : 'none';
+  document.getElementById('msg-sub-disparar').style.display = tab==='disparar' ? 'block' : 'none';
+  document.getElementById('msub-modelos').classList.toggle('active',  tab==='modelos');
+  document.getElementById('msub-disparar').classList.toggle('active', tab==='disparar');
+  if (tab==='disparar') initDisparar();
+}
+
+// ── INIT MENSAGENS ────────────────────────────────────────────────────────────
 function initMensagens() {
-  // Populate cliente select
-  var sel = document.getElementById('msg-cliente');
-  var cur = sel.value;
-  sel.innerHTML = '<option value="">Selecione o cliente…</option>';
-  var sorted = clientes.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
-  sorted.forEach(function(c){
-    var opt = document.createElement('option');
-    opt.value = c.nome;
-    opt.textContent = c.nome;
-    sel.appendChild(opt);
-  });
-  if (cur) sel.value = cur;
-  // Load saved instrucao
-  var saved = localStorage.getItem('msg_instrucao') || DEFAULT_INSTRUCAO;
-  document.getElementById('msg-instrucao-texto').value = saved;
-  atualizarPreviewInstrucao();
+  loadModelos();
+  renderVarButtons();
+  renderModelosLista();
   verificarBaileys();
-  setMsgTipo(MSG_TIPO);
 }
 
-function onMsgClienteChange() {
-  var nome = getVal('msg-cliente');
-  var cli = clientes.find(function(c){ return c.nome === nome; });
-  var infoEl = document.getElementById('msg-cliente-info');
-  if (!cli) { infoEl.style.display='none'; setVal('msg-grupo',''); populateMsgVooReservas(''); return; }
-  setVal('msg-grupo', cli.grupo || '');
-  infoEl.style.display = 'block';
-  infoEl.innerHTML =
-    '<span style="color:var(--text);font-weight:700">'+cli.nome+'</span>' +
-    (cli.tel ? ' · 📱 '+cli.tel : '') +
-    (cli.grupo ? ' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>' : ' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado</span>');
-  populateMsgVooReservas(nome);
-  atualizarMsgFinal();
-}
-
-function populateMsgVooReservas(nome) {
-  var sel = document.getElementById('msg-voo-reserva');
-  sel.innerHTML = '<option value="">Selecione uma reserva…</option>';
-  var voos = reservas.filter(function(r){ return r.tipo==='voo' && (!nome || r.cliente===nome); });
-  voos.forEach(function(r){
-    var opt = document.createElement('option');
-    opt.value = r.id;
-    var label = (r.origem||'?') + ' → ' + (r.destino||'?') + ' · ' + fmtDate(r.dataIda);
-    opt.textContent = label;
-    sel.appendChild(opt);
+// ── VARIÁVEL BUTTONS ──────────────────────────────────────────────────────────
+function renderVarButtons() {
+  var cEl = document.getElementById('vars-cliente');
+  var rEl = document.getElementById('vars-reserva');
+  if (!cEl || !rEl) return;
+  cEl.innerHTML = VARS_CLIENTE.map(function(v){
+    return '<button class="var-btn" data-var="'+v.label+'" title="'+v.desc+'">'+v.label+'</button>';
+  }).join('');
+  rEl.innerHTML = VARS_RESERVA.map(function(v){
+    return '<button class="var-btn" data-var="'+v.label+'" title="'+v.desc+'">'+v.label+'</button>';
+  }).join('');
+  // Bind clicks via delegation
+  [cEl,rEl].forEach(function(el){
+    el.addEventListener('click', function(e){
+      var btn = e.target.closest('.var-btn');
+      if (btn) insertVar(btn.dataset.var);
+    });
   });
 }
 
-function onMsgVooChange() {
-  var id = getVal('msg-voo-reserva');
-  var r = reservas.find(function(x){ return x.id===id; });
-  var infoEl = document.getElementById('msg-voo-info');
-  if (!r) { infoEl.style.display='none'; setVal('msg-voo-texto',''); setVal('msg-final',''); return; }
-  infoEl.style.display = 'block';
-  infoEl.innerHTML =
-    '<b style="color:var(--text)">'+r.origem+' → '+r.destino+'</b>' +
-    ' · '+fmtDate(r.dataIda) +
-    (r.horaPartida ? ' às '+r.horaPartida : '') +
-    (r.cia ? ' · '+r.cia : '') +
-    (r.nvoo ? ' '+r.nvoo : '') +
-    (r.classe ? ' · '+r.classe : '') +
-    (r.pnr ? '<br>PNR: <span style="font-family:monospace;color:var(--accent)">'+r.pnr+'</span>' : '') +
-    (r.horaChegada ? ' · Chegada: '+r.horaChegada : '');
-  var txt = gerarMsgVoo(r);
-  document.getElementById('msg-voo-texto').value = txt;
-  document.getElementById('msg-final').value = txt;
+function insertVar(varStr) {
+  var ta = document.getElementById('m-texto');
+  if (!ta) return;
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  var val = ta.value;
+  ta.value = val.slice(0, start) + varStr + val.slice(end);
+  ta.selectionStart = ta.selectionEnd = start + varStr.length;
+  ta.focus();
 }
 
-function gerarMsgVoo(r) {
-  var nome = getVal('msg-cliente') || r.cliente || '';
-  var primeiroNome = nome.split(' ')[0];
-  var dataIda = fmtDate(r.dataIda);
-  var dataVolta = r.dataVolta ? fmtDate(r.dataVolta) : '';
-  var linhas = [];
-  linhas.push('✈️ *Está chegando seu voo, ' + primeiroNome + '!*');
-  linhas.push('');
-  linhas.push('Aqui estão os detalhes da sua viagem:');
-  linhas.push('');
-  linhas.push('🛫 *Partida:* ' + (r.origem||'') + (r.horaPartida ? ' · ' + r.horaPartida : ''));
-  linhas.push('🛬 *Chegada:* ' + (r.destino||'') + (r.horaChegada ? ' · ' + r.horaChegada : ''));
-  linhas.push('📅 *Data:* ' + dataIda + (dataVolta ? ' → ' + dataVolta : ''));
-  if (r.ciaIda||r.cia) linhas.push('✈️ *Cia Aérea (Ida):* ' + (r.ciaIda||r.cia) + (r.nvooIda ? ' · Voo ' + r.nvooIda : ''));
-  if (r.ciaVolta) linhas.push('↩️ *Cia Aérea (Volta):* ' + r.ciaVolta + (r.nvooVolta ? ' · Voo ' + r.nvooVolta : ''));
-  if (r.classe) linhas.push('💺 *Classe:* ' + r.classe);
-  if (r.pnr)   linhas.push('🔑 *Localizador:* ' + r.pnr);
-  if (r.programa && r.milhas) linhas.push('🌟 *Milhas:* ' + r.milhas + ' por pax · ' + r.programa);
-  if (r.pax && r.pax > 1)    linhas.push('👥 *Passageiros:* ' + r.pax);
-  linhas.push('');
-  linhas.push('Qualquer dúvida, estou aqui! Boa viagem! 🙏');
-  return linhas.join('\n');
-}
-
-function setMsgTipo(tipo) {
-  MSG_TIPO = tipo;
-  document.getElementById('msg-panel-instrucao').style.display = tipo==='instrucao' ? 'block' : 'none';
-  document.getElementById('msg-panel-voo').style.display       = tipo==='voo'       ? 'block' : 'none';
-  document.getElementById('mtab-instrucao').classList.toggle('active', tipo==='instrucao');
-  document.getElementById('mtab-voo').classList.toggle('active', tipo==='voo');
-  atualizarMsgFinal();
-}
-
-function atualizarPreviewInstrucao() {
-  var txt = document.getElementById('msg-instrucao-texto').value;
-  document.getElementById('msg-instrucao-preview').textContent = txt;
-}
-
-function salvarModeloInstrucao() {
-  var txt = document.getElementById('msg-instrucao-texto').value;
-  localStorage.setItem('msg_instrucao', txt);
-  atualizarPreviewInstrucao();
-  document.getElementById('instrucao-ok').textContent = '✅ Modelo salvo!';
-  setTimeout(function(){ document.getElementById('instrucao-ok').textContent=''; }, 3000);
-  atualizarMsgFinal();
-}
-
-function resetModeloInstrucao() {
-  document.getElementById('msg-instrucao-texto').value = DEFAULT_INSTRUCAO;
-  atualizarPreviewInstrucao();
-}
-
-function atualizarMsgFinal() {
-  if (MSG_TIPO === 'instrucao') {
-    document.getElementById('msg-final').value = document.getElementById('msg-instrucao-texto').value;
+// ── SALVAR MODELO ─────────────────────────────────────────────────────────────
+function salvarModelo() {
+  var nome  = getVal('m-nome');
+  var texto = document.getElementById('m-texto').value.trim();
+  if (!nome)  { showToast('⚠️ Dê um nome ao modelo', 'err'); return; }
+  if (!texto) { showToast('⚠️ O texto está vazio', 'err'); return; }
+  if (editingModeloId) {
+    var m = modelos.find(function(x){ return x.id===editingModeloId; });
+    if (m) { m.nome=nome; m.texto=texto; }
   } else {
-    var txt = document.getElementById('msg-voo-texto').value;
-    document.getElementById('msg-final').value = txt;
+    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto });
+  }
+  saveModelos();
+  cancelarEdicaoModelo();
+  renderModelosLista();
+  document.getElementById('modelo-ok').textContent = '✅ Modelo salvo!';
+  setTimeout(function(){ document.getElementById('modelo-ok').textContent=''; }, 3000);
+}
+
+function cancelarEdicaoModelo() {
+  editingModeloId = null;
+  setVal('m-nome', '');
+  document.getElementById('m-texto').value = '';
+  document.getElementById('modelos-form-title').textContent = '✏️ Novo Modelo';
+}
+
+function editarModelo(id) {
+  var m = modelos.find(function(x){ return x.id===id; });
+  if (!m) return;
+  editingModeloId = id;
+  setVal('m-nome', m.nome);
+  document.getElementById('m-texto').value = m.texto;
+  document.getElementById('modelos-form-title').textContent = '✏️ Editando: ' + m.nome;
+  document.getElementById('msg-sub-modelos').scrollIntoView({ behavior:'smooth' });
+}
+
+function excluirModelo(id) {
+  if (!confirm('Excluir este modelo?')) return;
+  modelos = modelos.filter(function(x){ return x.id!==id; });
+  saveModelos();
+  renderModelosLista();
+}
+
+function renderModelosLista() {
+  var el = document.getElementById('modelos-lista');
+  if (!el) return;
+  if (!modelos.length) {
+    el.innerHTML = '<div class="empty"><span class="empty-icon">📝</span>Nenhum modelo cadastrado.<br><small style="font-size:12px;margin-top:6px;display:block">Crie um modelo acima para começar.</small></div>';
+    return;
+  }
+  el.innerHTML = modelos.map(function(m){
+    // Preview: show first 120 chars with vars highlighted
+    var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
+    prev = prev.substring(0, 200) + (m.texto.length>200?'…':'');
+    return '<div class="res-card" style="margin-bottom:10px">'+
+      '<div class="res-card-header">'+
+        '<div class="type-icon type-passeio">📝</div>'+
+        '<div class="res-card-info">'+
+          '<div class="res-card-id">'+m.id+'</div>'+
+          '<div class="res-card-title">'+m.nome+'</div>'+
+        '</div>'+
+      '</div>'+
+      '<div style="padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:100px;overflow:hidden">'+prev+'</div>'+
+      '<div class="res-card-footer">'+
+        '<button class="btn btn-blue btn-sm mod-usar" data-id="'+m.id+'">🚀 Usar</button>'+
+        '<button class="btn btn-ghost btn-sm mod-editar" data-id="'+m.id+'">✏️ Editar</button>'+
+        '<button class="btn btn-danger btn-sm mod-excluir" data-id="'+m.id+'">🗑 Excluir</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+  // Bind clicks via delegation
+  var lista = document.getElementById('modelos-lista');
+  if (lista) {
+    lista.onclick = function(e) {
+      var btn = e.target.closest('button[data-id]');
+      if (!btn) return;
+      var id = btn.dataset.id;
+      if (btn.classList.contains('mod-usar'))    usarModelo(id);
+      if (btn.classList.contains('mod-editar'))  editarModelo(id);
+      if (btn.classList.contains('mod-excluir')) excluirModelo(id);
+    };
   }
 }
 
-function enviarMensagem() {
-  var grupo = getVal('msg-grupo');
-  var texto = getVal('msg-final');
-  var url   = getBaileysUrl();
-  var statusEl = document.getElementById('msg-send-ok');
+function usarModelo(id) {
+  loadModelos();
+  var m = modelos.find(function(x){ return x.id===id; });
+  if (!m) return;
+  setMsgSubTab('disparar');
+  var sel = document.getElementById('d-modelo');
+  sel.value = id;
+  onDispararChange();
+}
 
+// ── DISPARAR ──────────────────────────────────────────────────────────────────
+function initDisparar() {
+  loadModelos();
+  // populate modelos select
+  var sel = document.getElementById('d-modelo');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione um modelo…</option>';
+  modelos.forEach(function(m){
+    var opt = document.createElement('option');
+    opt.value = m.id; opt.textContent = m.nome;
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+
+  // populate clientes select
+  var csel = document.getElementById('d-cliente');
+  var ccur = csel.value;
+  csel.innerHTML = '<option value="">Selecione o cliente…</option>';
+  var sorted = clientes.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
+  sorted.forEach(function(c){
+    var opt = document.createElement('option');
+    opt.value = c.nome; opt.textContent = c.nome;
+    csel.appendChild(opt);
+  });
+  if (ccur) { csel.value = ccur; populateDispararReservas(ccur); }
+  onDispararChange();
+}
+
+function populateDispararReservas(nome) {
+  var sel = document.getElementById('d-reserva');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Nenhuma</option>';
+  var list = reservas.filter(function(r){ return !nome || r.cliente===nome; });
+  list.forEach(function(r){
+    var opt = document.createElement('option');
+    opt.value = r.id;
+    var label = r.tipo==='voo' ? (r.origem||'?')+'→'+(r.destino||'?')+' '+fmtDate(r.dataIda)
+              : r.tipo==='hotel' ? (r.hotelNome||r.destino||'Hotel')+' '+fmtDate(r.checkin)
+              : r.tipo==='carro' ? (r.locadora||'Carro')+' '+fmtDate(r.retData)
+              : (r.passeioNome||'Passeio')+' '+fmtDate(r.dataPasseio);
+    opt.textContent = '['+r.tipo.toUpperCase()+'] ' + label;
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
+function onDispararChange() {
+  var clienteNome = getVal('d-cliente');
+  var reservaId   = getVal('d-reserva');
+  var modeloId    = getVal('d-modelo');
+
+  // update reserva list when client changes
+  populateDispararReservas(clienteNome);
+
+  var cli = clientes.find(function(c){ return c.nome===clienteNome; });
+  var res = reservas.find(function(r){ return r.id===reservaId; });
+  var mod = modelos.find(function(m){ return m.id===modeloId; });
+
+  // Set grupo
+  if (cli) {
+    setVal('d-grupo', cli.grupo || '');
+    var info = document.getElementById('d-grupo-info');
+    info.style.display = 'block';
+    info.innerHTML = '📱 '+cli.tel+(cli.grupo?' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>':' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado</span>');
+  } else {
+    document.getElementById('d-grupo-info').style.display='none';
+  }
+
+  if (!mod) { document.getElementById('d-msg-final').value=''; return; }
+
+  // Resolve variables
+  var txt = mod.texto;
+  var ob='{{', cb='}}'; function rv(t, key, val) { return t.split(ob+key+cb).join(val||''); }
+  if (cli) {
+    txt = rv(txt, 'nome', cli.nome);
+    txt = rv(txt, 'primeiro_nome', (cli.nome||'').split(' ')[0]);
+    txt = rv(txt, 'telefone', cli.tel);
+    txt = rv(txt, 'email', cli.email);
+    txt = rv(txt, 'cpf', cli.cpf);
+    txt = rv(txt, 'nascimento', fmtDate(cli.nasc));
+    txt = rv(txt, 'cidade', cli.cidade);
+  }
+  if (res) {
+    txt = rv(txt, 'origem', res.origem);
+    txt = rv(txt, 'destino', res.destino);
+    txt = rv(txt, 'data_ida', fmtDate(res.dataIda));
+    txt = rv(txt, 'hora_partida', res.horaPartida);
+    txt = rv(txt, 'hora_chegada', res.horaChegada);
+    txt = rv(txt, 'data_volta', res.dataVolta?fmtDate(res.dataVolta):'');
+    txt = rv(txt, 'cia', res.ciaIda||res.cia);
+    txt = rv(txt, 'classe', res.classe);
+    txt = rv(txt, 'pnr', res.pnr);
+    txt = rv(txt, 'programa', res.programa);
+    txt = rv(txt, 'milhas', res.milhas);
+    txt = rv(txt, 'pax', res.pax);
+    txt = rv(txt, 'hotel', res.hotelNome);
+    txt = rv(txt, 'checkin', fmtDate(res.checkin));
+    txt = rv(txt, 'checkout', fmtDate(res.checkout));
+    txt = rv(txt, 'conf', res.conf||res.hotelConf);
+  }
+  document.getElementById('d-msg-final').value = txt;
+}
+
+function dispararMensagem() {
+  var grupo  = getVal('d-grupo');
+  var texto  = document.getElementById('d-msg-final').value.trim();
+  var url    = getBaileysUrl();
+  var statusEl = document.getElementById('d-send-ok');
   if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
   if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
   if (!url)   { showToast('⚠️ URL do Baileys não configurada', 'err'); return; }
-
-  statusEl.style.color = '#f59e0b';
-  statusEl.textContent = '⏳ Enviando…';
-
+  statusEl.style.color='#f59e0b'; statusEl.textContent='⏳ Enviando…';
   fetch(url + '/send-message', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ number: grupo, message: texto })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
-    if (d.ok || d.success || d.status === 'sent') {
-      statusEl.style.color = '#22c55e';
-      statusEl.textContent = '✅ Mensagem enviada com sucesso!';
-      showToast('✅ Mensagem enviada!', 'ok');
+    if (d.ok||d.success||d.status==='sent') {
+      statusEl.style.color='#22c55e'; statusEl.textContent='✅ Mensagem enviada!';
+      showToast('✅ Mensagem enviada!','ok');
     } else {
-      statusEl.style.color = '#ff585e';
-      statusEl.textContent = '❌ Erro: ' + (d.erro || d.error || d.message || 'falha no envio');
+      statusEl.style.color='#ff585e'; statusEl.textContent='❌ '+(d.erro||d.error||d.message||'falha');
     }
     setTimeout(function(){ statusEl.textContent=''; }, 5000);
   })
-  .catch(function(e){
-    statusEl.style.color = '#ff585e';
-    statusEl.textContent = '❌ Sem resposta do servidor Baileys';
+  .catch(function(){
+    statusEl.style.color='#ff585e'; statusEl.textContent='❌ Sem resposta do servidor';
     setTimeout(function(){ statusEl.textContent=''; }, 5000);
   });
 }
 
-function copiarMsgFinal() {
-  var txt = document.getElementById('msg-final').value;
+function copiarDisparar() {
+  var txt = document.getElementById('d-msg-final').value;
   if (!txt) return;
-  navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Mensagem copiada!', 'ok'); });
+  navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Copiado!','ok'); });
 }
 
-// Sync preview ao digitar
-document.addEventListener('DOMContentLoaded', function(){
-  var el = document.getElementById('msg-instrucao-texto');
-  if (el) el.addEventListener('input', function(){ atualizarPreviewInstrucao(); atualizarMsgFinal(); });
-  var el2 = document.getElementById('msg-voo-texto');
-  if (el2) el2.addEventListener('input', function(){ document.getElementById('msg-final').value = el2.value; });
-});
+
 
 // ══════════════════════════════════════════
 //  INIT
