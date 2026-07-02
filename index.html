@@ -101,7 +101,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .res-card-info{flex:1;min-width:0}
 .res-card-id{font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:1px;margin-bottom:2px}
 .res-card-title{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.res-card-body{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.res-card-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0}
 .res-col{padding:12px 16px;border-right:1px solid var(--border)}
 .res-col:last-child{border-right:none}
 .res-col-label{font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
@@ -963,10 +963,11 @@ function resTitle(r) {
 
 function resCols(r) {
   if (r.tipo==='voo') return [
+    ['Origem → Destino', (r.origem||'?')+' → '+(r.destino||'?')],
     ['Cliente', r.cliente],
-    ['Ida', fmtDate(r.dataIda)+(r.horaPartida?' '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
-    ['Cia / Classe', (r.ciaIda||r.cia||'—')+(r.classe?' · '+r.classe:'')],
-    ['PNR / Volta', (r.pnr||'—')+(r.dataVolta?' · volta '+fmtDate(r.dataVolta):'')],
+    ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')],
+    ['Cia Aérea', r.ciaIda||r.cia||'—'],
+    ['Localizador', r.pnr||'—'],
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', r.cliente],
