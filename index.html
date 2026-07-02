@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Concierge CDV – Painel de Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1e2535;--surface:#2a3246;--surface2:#323c54;
+  --border:#3d4a66;--border2:#4a5878;
+  --accent:#ff585e;--accent2:#e04449;
+  --blue:#126eff;--text:#eeeeee;--muted:#8a9bbf;--muted2:#5a6a8a;
+  --green:#22c55e;--yellow:#f59e0b;--purple:#c084fc;
+  --r:10px;--font:'Montserrat',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2.5rem 1rem 4rem}
+.wrap{width:100%;max-width:1200px}
+header{margin-bottom:2rem}
+.logo-row{display:flex;align-items:center;gap:14px;margin-bottom:6px}
+.brand{display:flex;flex-direction:column;gap:2px}
+.brand-name{font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.3px;line-height:1.1}
+.brand-sub{font-size:11px;font-weight:600;color:var(--accent);letter-spacing:1px;text-transform:uppercase}
+.subtitle{font-size:12px;color:var(--muted);font-weight:500;margin-top:4px}
+
+/* TABS */
+.main-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:1.4rem}
+.main-tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}
+.main-tab.active{background:var(--accent);color:#fff}
+.main-tab:not(.active):hover{color:var(--text)}
+.main-panel{display:none}
+.main-panel.active{display:block}
+
+/* CARD */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1rem}
+.card-title{font-size:12px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:1.2rem;display:flex;align-items:center;gap:8px}
+
+/* FORM */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+label{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.4px;text-transform:uppercase}
+.tag{font-size:10px;font-weight:500;color:var(--muted2);text-transform:none;letter-spacing:0}
+input,select,textarea{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);color:var(--text);font-family:var(--font);font-size:14px;font-weight:500;padding:10px 12px;width:100%;outline:none;transition:border-color .15s;appearance:none;-webkit-appearance:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+input::placeholder,textarea::placeholder{color:var(--muted2)}
+input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(.5);cursor:pointer}
+select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a6a8a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px;cursor:pointer}
+.sep{height:1px;background:var(--border);margin:16px 0}
+
+/* BUTTONS */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px 20px;border:none;border-radius:var(--r);font-family:var(--font);font-size:13px;font-weight:800;cursor:pointer;letter-spacing:.4px;transition:background .15s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{background:var(--accent2)}
+.btn-blue{background:var(--blue);color:#fff}
+.btn-blue:hover{background:#0f5fe0}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border2)}
+.btn-ghost:hover{background:var(--border)}
+.btn-danger{background:rgba(255,88,94,.12);color:var(--accent);border:1px solid rgba(255,88,94,.3)}
+.btn-danger:hover{background:rgba(255,88,94,.22)}
+.btn-sm{padding:7px 14px;font-size:11px;border-radius:7px}
+.btn-row{display:flex;gap:10px;align-items:center;margin-top:4px}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.3px}
+.badge-green{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.badge-yellow{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.badge-red{background:rgba(255,88,94,.15);color:var(--accent);border:1px solid rgba(255,88,94,.3)}
+.badge-blue{background:rgba(18,110,255,.15);color:#60a5fa;border:1px solid rgba(18,110,255,.3)}
+.badge-purple{background:rgba(192,132,252,.15);color:#c084fc;border:1px solid rgba(192,132,252,.3)}
+.badge-gray{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+
+/* TYPE ICON */
+.type-icon{font-size:16px;width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.type-voo{background:rgba(18,110,255,.15)}
+.type-hotel{background:rgba(245,158,11,.15)}
+.type-carro{background:rgba(34,197,94,.15)}
+.type-passeio{background:rgba(192,132,252,.15)}
+
+/* GRID DE RESERVAS */
+.reservas-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px}
+.reservas-count{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.5px;text-transform:uppercase}
+.search-bar{display:flex;gap:8px;align-items:center;flex:1;max-width:340px}
+.search-bar input{margin:0;padding:9px 12px;font-size:13px}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
+.filter-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.3px}
+.filter-chip.active,.filter-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+/* RESERVA CARD */
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;transition:border-color .15s}
+.res-card:hover{border-color:var(--border2)}
+.res-card-header{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--border);background:var(--surface2)}
+.res-card-info{flex:1;min-width:0}
+.res-card-id{font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:1px;margin-bottom:2px}
+.res-card-title{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.res-card-body{display:grid;grid-template-columns:repeat(4,1fr);gap:0}
+.res-col{padding:12px 16px;border-right:1px solid var(--border)}
+.res-col:last-child{border-right:none}
+.res-col-label{font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
+.res-col-val{font-size:13px;font-weight:600;color:var(--text)}
+.res-card-footer{padding:10px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.res-obs{font-size:12px;color:var(--muted);flex:1}
+
+/* STATUS SELECT inline */
+.status-sel{background:transparent;border:none;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer;padding:0;outline:none;color:inherit;width:auto}
+.status-sel option{background:var(--surface);color:var(--text)}
+
+/* EMPTY STATE */
+.empty{text-align:center;color:var(--muted2);padding:56px 0;font-size:14px}
+.empty-icon{font-size:36px;display:block;margin-bottom:10px}
+
+/* CLIENTE CARD */
+.cli-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px}
+.cli-header{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--surface2);border-bottom:1px solid var(--border);cursor:pointer;user-select:none}
+.cli-avatar{width:40px;height:40px;border-radius:50%;background:rgba(255,88,94,.15);border:2px solid rgba(255,88,94,.3);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--accent);flex-shrink:0}
+.cli-name{font-size:14px;font-weight:800;color:var(--text)}
+.cli-email{font-size:11px;color:var(--muted);margin-top:1px}
+.cli-toggle{margin-left:auto;color:var(--muted2);font-size:12px;transition:transform .2s}
+.cli-toggle.open{transform:rotate(180deg)}
+.cli-body{display:none;padding:16px}
+.cli-body.open{display:block}
+.cli-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.cli-field{display:flex;flex-direction:column;gap:3px}
+.cli-field-label{font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px}
+.cli-field-val{font-size:13px;font-weight:600;color:var(--text);word-break:break-all}
+.cli-copy{background:none;border:none;cursor:pointer;color:var(--muted2);font-size:12px;padding:2px 4px;transition:color .15s;vertical-align:middle}
+.cli-copy:hover{color:var(--text)}
+.cli-reservas-link{font-size:11px;font-weight:700;color:var(--blue);cursor:pointer;margin-top:12px;display:inline-flex;align-items:center;gap:4px}
+.cli-reservas-link:hover{color:#60a5fa}
+
+/* STATS BAR */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.4rem}
+.stat-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.stat-val{font-size:24px;font-weight:800;color:var(--accent);line-height:1}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:540px;width:100%;max-height:85vh;overflow-y:auto}
+.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
+.modal-title{font-size:15px;font-weight:800;color:var(--text)}
+.modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0}
+.modal-close:hover{color:var(--text)}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:700;color:var(--text);z-index:99999;opacity:0;transform:translateY(10px);transition:opacity .25s,transform .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.ok{border-color:rgba(34,197,94,.4);color:#22c55e}
+.toast.err{border-color:rgba(255,88,94,.4);color:var(--accent)}
+
+/* SHEETS SYNC */
+.sync-bar{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:1rem;font-size:12px;font-weight:600;color:var(--muted)}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:background .3s;background:var(--muted2)}
+.sync-dot.ok{background:#22c55e}
+.sync-dot.err{background:var(--accent)}
+.sync-dot.loading{background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* SETTINGS PANEL */
+.settings-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border)}
+.settings-row:last-child{border-bottom:none}
+.settings-label{flex:1;font-size:13px;font-weight:600;color:var(--text)}
+.settings-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.settings-input{max-width:360px}
+
+@media(max-width:680px){
+  .g2,.g3{grid-template-columns:1fr}
+  .res-card-body{grid-template-columns:1fr 1fr}
+  .res-col{border-right:none;border-bottom:1px solid var(--border)}
+  .res-col:last-child{border-bottom:none}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .cli-grid{grid-template-columns:1fr 1fr}
+  .main-tab{font-size:9px;padding:8px 4px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="logo-row">
+    <div style="width:50px;height:50px;background:rgba(255,88,94,.12);border:2px solid rgba(255,88,94,.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">✈️</div>
+    <div class="brand">
+      <span class="brand-name">Concierge CDV</span>
+      <span class="brand-sub">Painel de Gestão de Reservas</span>
+    </div>
+  </div>
+  <p class="subtitle">Gerencie reservas, clientes e status das atividades do serviço concierge.</p>
+</header>
+
+<!-- SYNC BAR -->
+<div class="sync-bar">
+  <div class="sync-dot" id="sync-dot"></div>
+  <span id="sync-label">Configurando conexão com Google Sheets…</span>
+  <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="syncClientes()">🔄 Sincronizar</button>
+</div>
+
+<!-- TABS -->
+<div class="main-tabs">
+  <button class="main-tab active" onclick="switchTab('reservas')">📋 Reservas</button>
+  <button class="main-tab" onclick="switchTab('nova')">➕ Nova Reserva</button>
+  <button class="main-tab" onclick="switchTab('clientes')">👤 Clientes</button>
+  <button class="main-tab" onclick="switchTab('config')">⚙️ Configuração</button>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ABA: RESERVAS
+══════════════════════════════════════════ -->
+<div class="main-panel active" id="panel-reservas">
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-box">
+      <div class="stat-val" id="stat-total">0</div>
+      <div class="stat-label">Total de Reservas</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:#22c55e" id="stat-confirmado">0</div>
+      <div class="stat-label">Confirmadas</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:#f59e0b" id="stat-pendente">0</div>
+      <div class="stat-label">Pendentes</div>
+    </div>
+    <div class="stat-box">
+      <div class="stat-val" style="color:#c084fc" id="stat-concluido">0</div>
+      <div class="stat-label">Concluídas</div>
+    </div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="reservas-header">
+    <span class="reservas-count" id="res-count-label">0 reservas</span>
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="🔍 Buscar cliente ou destino…" oninput="renderReservas()"/>
+    </div>
+  </div>
+  <div class="filter-row">
+    <span class="filter-chip active" data-filter="todos" onclick="setFilter(this)">Todos</span>
+    <span class="filter-chip" data-filter="voo" onclick="setFilter(this)">✈️ Voo</span>
+    <span class="filter-chip" data-filter="hotel" onclick="setFilter(this)">🏨 Hotel</span>
+    <span class="filter-chip" data-filter="carro" onclick="setFilter(this)">🚗 Carro</span>
+    <span class="filter-chip" data-filter="passeio" onclick="setFilter(this)">🎯 Passeio</span>
+    <span class="filter-chip" data-filter="pendente" onclick="setFilter(this,'status')">⏳ Pendente</span>
+    <span class="filter-chip" data-filter="confirmado" onclick="setFilter(this,'status')">✅ Confirmado</span>
+    <span class="filter-chip" data-filter="cancelado" onclick="setFilter(this,'status')">❌ Cancelado</span>
+  </div>
+
+  <div id="res-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ABA: NOVA RESERVA
+══════════════════════════════════════════ -->
+<div class="main-panel" id="panel-nova">
+  <div class="card">
+    <div class="card-title">✈️ Dados da Reserva</div>
+
+    <div class="g2">
+      <div class="field">
+        <label>Tipo de Reserva</label>
+        <select id="f-tipo" onchange="onTipoChange()">
+          <option value="">Selecione…</option>
+          <option value="voo">✈️ Passagem Aérea</option>
+          <option value="hotel">🏨 Hospedagem</option>
+          <option value="carro">🚗 Aluguel de Carro</option>
+          <option value="passeio">🎯 Passeio / Atividade</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Cliente</label>
+        <select id="f-cliente">
+          <option value="">Selecione o cliente…</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- CAMPOS VOO -->
+    <div id="fields-voo" style="display:none">
+      <div class="sep"></div>
+      <div class="g2">
+        <div class="field"><label>Origem</label><input type="text" id="f-origem" placeholder="Ex: GRU – São Paulo"/></div>
+        <div class="field"><label>Destino</label><input type="text" id="f-destino" placeholder="Ex: LIS – Lisboa"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Data de Ida</label><input type="date" id="f-data-ida"/></div>
+        <div class="field"><label>Data de Volta <span class="tag">opcional</span></label><input type="date" id="f-data-volta"/></div>
+        <div class="field"><label>Cia Aérea</label><input type="text" id="f-cia" placeholder="Ex: LATAM, TAP"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Nº do Voo</label><input type="text" id="f-nvoo" placeholder="Ex: LA8002"/></div>
+        <div class="field"><label>Classe</label>
+          <select id="f-classe">
+            <option value="">Selecione…</option>
+            <option>Econômica</option><option>Econômica Premium</option>
+            <option>Executiva</option><option>Primeira Classe</option>
+          </select>
+        </div>
+        <div class="field"><label>Localizador / PNR</label><input type="text" id="f-pnr" placeholder="Ex: ABC123"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Bagagem Despachada</label>
+          <select id="f-bagagem">
+            <option value="">Não incluída</option>
+            <option>1 mala (23kg)</option><option>2 malas (23kg)</option>
+            <option>1 mala (32kg)</option><option>Incluída – verificar bilhete</option>
+          </select>
+        </div>
+        <div class="field"><label>Valor Pago <span class="tag">R$</span></label><input type="text" id="f-valor" placeholder="Ex: 3.200,00"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Programa de Milhas <span class="tag">opcional</span></label><input type="text" id="f-programa" placeholder="Ex: LATAM Pass"/></div>
+        <div class="field"><label>Milhas Utilizadas <span class="tag">opcional</span></label><input type="text" id="f-milhas" placeholder="Ex: 45.000"/></div>
+      </div>
+    </div>
+
+    <!-- CAMPOS HOTEL -->
+    <div id="fields-hotel" style="display:none">
+      <div class="sep"></div>
+      <div class="field"><label>Nome do Hotel</label><input type="text" id="f-hotel-nome" placeholder="Ex: Grand Hyatt São Paulo"/></div>
+      <div class="g2">
+        <div class="field"><label>Destino</label><input type="text" id="f-hotel-destino" placeholder="Ex: Lisboa, Portugal"/></div>
+        <div class="field"><label>Tipo de Quarto</label><input type="text" id="f-hotel-quarto" placeholder="Ex: Deluxe King"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Check-in</label><input type="date" id="f-checkin"/></div>
+        <div class="field"><label>Check-out</label><input type="date" id="f-checkout"/></div>
+        <div class="field"><label>Nº de Noites</label><input type="number" id="f-noites" min="1" placeholder="Ex: 5"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Nº de Hóspedes</label><input type="number" id="f-hospedes" min="1" placeholder="Ex: 2"/></div>
+        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 4.500,00"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Confirmação / Reserva Nº</label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
+        <div class="field"><label>Regime <span class="tag">opcional</span></label>
+          <select id="f-regime">
+            <option value="">Selecione…</option>
+            <option>Apenas Pernoite</option><option>Café da Manhã</option>
+            <option>Meia Pensão</option><option>Pensão Completa</option><option>All Inclusive</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMPOS CARRO -->
+    <div id="fields-carro" style="display:none">
+      <div class="sep"></div>
+      <div class="g2">
+        <div class="field"><label>Locadora</label><input type="text" id="f-locadora" placeholder="Ex: Localiza, Hertz"/></div>
+        <div class="field"><label>Categoria do Veículo</label><input type="text" id="f-carro-cat" placeholder="Ex: Econômico, SUV"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Local de Retirada</label><input type="text" id="f-ret-local" placeholder="Ex: Aeroporto GRU"/></div>
+        <div class="field"><label>Local de Devolução</label><input type="text" id="f-dev-local" placeholder="Ex: Aeroporto GIG"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Data de Retirada</label><input type="date" id="f-ret-data"/></div>
+        <div class="field"><label>Data de Devolução</label><input type="date" id="f-dev-data"/></div>
+        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-carro-valor" placeholder="Ex: 1.200,00"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Confirmação / Voucher</label><input type="text" id="f-carro-conf" placeholder="Ex: LOC-987654"/></div>
+        <div class="field"><label>Seguro <span class="tag">opcional</span></label>
+          <select id="f-seguro">
+            <option value="">Selecione…</option>
+            <option>Sem seguro adicional</option>
+            <option>Cobertura Básica</option><option>Cobertura Total</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CAMPOS PASSEIO -->
+    <div id="fields-passeio" style="display:none">
+      <div class="sep"></div>
+      <div class="field"><label>Nome do Passeio / Atividade</label><input type="text" id="f-passeio-nome" placeholder="Ex: Passeio de barco pelas Ilhas Gregas"/></div>
+      <div class="g2">
+        <div class="field"><label>Destino / Cidade</label><input type="text" id="f-passeio-dest" placeholder="Ex: Santorini, Grécia"/></div>
+        <div class="field"><label>Fornecedor / Operadora</label><input type="text" id="f-passeio-op" placeholder="Ex: Get Your Guide"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Data</label><input type="date" id="f-passeio-data"/></div>
+        <div class="field"><label>Horário</label><input type="time" id="f-passeio-hora"/></div>
+        <div class="field"><label>Nº de Participantes</label><input type="number" id="f-passeio-pax" min="1" placeholder="Ex: 3"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Voucher / Confirmação</label><input type="text" id="f-passeio-conf" placeholder="Ex: GYG-ABCDEF"/></div>
+        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-passeio-valor" placeholder="Ex: 980,00"/></div>
+      </div>
+    </div>
+
+    <!-- COMUM A TODOS -->
+    <div class="sep"></div>
+    <div class="g2">
+      <div class="field">
+        <label>Status</label>
+        <select id="f-status">
+          <option value="pendente">⏳ Pendente</option>
+          <option value="confirmado">✅ Confirmado</option>
+          <option value="concluido">🎯 Concluído</option>
+          <option value="cancelado">❌ Cancelado</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Data do Cadastro</label>
+        <input type="date" id="f-cadastro" readonly style="opacity:.6"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>Observações <span class="tag">opcional</span></label>
+      <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-accent" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
+      <button class="btn btn-ghost" onclick="limparForm()">🗑 Limpar</button>
+    </div>
+    <p id="form-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ABA: CLIENTES
+══════════════════════════════════════════ -->
+<div class="main-panel" id="panel-clientes">
+  <div class="reservas-header">
+    <span class="reservas-count" id="cli-count-label">0 clientes</span>
+    <div class="search-bar">
+      <input type="text" id="cli-search" placeholder="🔍 Buscar cliente…" oninput="renderClientes()"/>
+    </div>
+  </div>
+  <div id="cli-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ABA: CONFIGURAÇÃO
+══════════════════════════════════════════ -->
+<div class="main-panel" id="panel-config">
+  <div class="card">
+    <div class="card-title">⚙️ Configuração do Google Sheets</div>
+    <div class="settings-row">
+      <div>
+        <div class="settings-label">URL do Apps Script (Web App)</div>
+        <div class="settings-desc">Cole a URL publicada do seu Google Apps Script com permissão "Anyone"</div>
+      </div>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>URL do Web App</label>
+      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveCfg()"/>
+    </div>
+    <div class="field">
+      <label>Nome da aba de clientes na planilha</label>
+      <input type="text" id="cfg-aba" placeholder="Ex: Clientes" oninput="saveCfg()"/>
+    </div>
+    <div class="sep"></div>
+    <div class="card-title" style="margin-bottom:1rem">🗺️ Mapeamento de Colunas</div>
+    <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Informe a <strong style="color:var(--text)">letra da coluna</strong> correspondente a cada campo na sua planilha (ex: A, B, C…)</p>
+    <div class="g3">
+      <div class="field"><label>Nome Completo</label><input type="text" id="cfg-col-nome" placeholder="Ex: A" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>E-mail</label><input type="text" id="cfg-col-email" placeholder="Ex: B" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="cfg-col-tel" placeholder="Ex: C" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>CPF</label><input type="text" id="cfg-col-cpf" placeholder="Ex: D" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Data de Nascimento</label><input type="text" id="cfg-col-nasc" placeholder="Ex: E" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Passaporte <span class="tag">opcional</span></label><input type="text" id="cfg-col-pass" placeholder="Ex: F" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Venc. Passaporte <span class="tag">opcional</span></label><input type="text" id="cfg-col-pass-venc" placeholder="Ex: G" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Programa de Milhas <span class="tag">opcional</span></label><input type="text" id="cfg-col-prog" placeholder="Ex: H" maxlength="2" oninput="saveCfg()"/></div>
+      <div class="field"><label>Nº do Programa <span class="tag">opcional</span></label><input type="text" id="cfg-col-prog-num" placeholder="Ex: I" maxlength="2" oninput="saveCfg()"/></div>
+    </div>
+    <div class="field">
+      <label>Linha de início dos dados (ex: 2 para pular cabeçalho)</label>
+      <input type="number" id="cfg-linha" placeholder="Ex: 2" min="1" oninput="saveCfg()" style="max-width:120px"/>
+    </div>
+    <div class="sep"></div>
+    <div class="btn-row">
+      <button class="btn btn-blue" onclick="syncClientes()">🔄 Testar Conexão e Sincronizar</button>
+      <button class="btn btn-danger btn-sm" onclick="limparDados()">🗑 Apagar todas as reservas</button>
+    </div>
+    <p id="cfg-ok" style="font-size:12px;font-weight:700;margin-top:10px;min-height:16px;color:#22c55e"></p>
+  </div>
+
+  <!-- COMO CONFIGURAR -->
+  <div class="card">
+    <div class="card-title">📖 Como Configurar o Apps Script</div>
+    <p style="font-size:13px;color:var(--muted);line-height:1.8">
+      1. Acesse sua planilha no Google Sheets<br>
+      2. Clique em <strong style="color:var(--text)">Extensões → Apps Script</strong><br>
+      3. Cole o código abaixo e salve (Ctrl+S)<br>
+      4. Clique em <strong style="color:var(--text)">Implantar → Nova implantação → Aplicativo da Web</strong><br>
+      5. Defina "Executar como: eu" e "Quem tem acesso: Qualquer pessoa"<br>
+      6. Copie a URL gerada e cole no campo acima
+    </p>
+    <div class="sep"></div>
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:4px">
+      <pre style="font-size:11px;color:var(--muted);font-family:'Courier New',monospace;white-space:pre-wrap;line-height:1.7" id="script-code"></pre>
+    </div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="copiarScript()">📋 Copiar Código</button>
+    <p id="script-ok" style="font-size:12px;color:#22c55e;font-weight:700;margin-top:6px;min-height:14px"></p>
+  </div>
+</div>
+
+</div><!-- /wrap -->
+
+<!-- MODAL CONFIRMAÇÃO DELETE -->
+<div class="modal-overlay" id="modal-delete">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">❌ Excluir Reserva</span>
+      <button class="modal-close" onclick="closeModal('modal-delete')">×</button>
+    </div>
+    <p style="font-size:14px;color:var(--muted);margin-bottom:24px">Tem certeza que deseja excluir esta reserva? Essa ação não pode ser desfeita.</p>
+    <div class="btn-row">
+      <button class="btn btn-danger" style="flex:1" onclick="confirmarDelete()">Sim, excluir</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-delete')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ══════════════════════════════════════════
+//  ESTADO GLOBAL
+// ══════════════════════════════════════════
+var reservas = [];
+var clientes = [];
+var activeFilter = 'todos';
+var filterType  = 'tipo'; // 'tipo' ou 'status'
+var deleteTargetId = null;
+var tabAtual = 'reservas';
+
+var APPS_SCRIPT_CODE = `function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(e.parameter.aba || 'Clientes');
+  var linhaInicio = parseInt(e.parameter.linha || 2);
+  var data = sheet.getDataRange().getValues();
+  var rows = data.slice(linhaInicio - 1);
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, rows: rows }))
+    .setMimeType(ContentService.MimeType.JSON);
+}`;
+
+// ══════════════════════════════════════════
+//  CONFIG (localStorage)
+// ══════════════════════════════════════════
+function loadCfg() {
+  var c = JSON.parse(localStorage.getItem('concierge_cfg') || '{}');
+  setVal('cfg-url', c.url || '');
+  setVal('cfg-aba', c.aba || 'Clientes');
+  setVal('cfg-col-nome',     c.colNome     || 'A');
+  setVal('cfg-col-email',    c.colEmail    || 'B');
+  setVal('cfg-col-tel',      c.colTel      || 'C');
+  setVal('cfg-col-cpf',      c.colCpf      || 'D');
+  setVal('cfg-col-nasc',     c.colNasc     || 'E');
+  setVal('cfg-col-pass',     c.colPass     || 'F');
+  setVal('cfg-col-pass-venc',c.colPassVenc || 'G');
+  setVal('cfg-col-prog',     c.colProg     || 'H');
+  setVal('cfg-col-prog-num', c.colProgNum  || 'I');
+  setVal('cfg-linha',        c.linha       || '2');
+  document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
+}
+
+function saveCfg() {
+  var c = {
+    url:         getVal('cfg-url'),
+    aba:         getVal('cfg-aba') || 'Clientes',
+    colNome:     getVal('cfg-col-nome').toUpperCase() || 'A',
+    colEmail:    getVal('cfg-col-email').toUpperCase() || 'B',
+    colTel:      getVal('cfg-col-tel').toUpperCase() || 'C',
+    colCpf:      getVal('cfg-col-cpf').toUpperCase() || 'D',
+    colNasc:     getVal('cfg-col-nasc').toUpperCase() || 'E',
+    colPass:     getVal('cfg-col-pass').toUpperCase() || 'F',
+    colPassVenc: getVal('cfg-col-pass-venc').toUpperCase() || 'G',
+    colProg:     getVal('cfg-col-prog').toUpperCase() || 'H',
+    colProgNum:  getVal('cfg-col-prog-num').toUpperCase() || 'I',
+    linha:       getVal('cfg-linha') || '2'
+  };
+  localStorage.setItem('concierge_cfg', JSON.stringify(c));
+}
+
+function getCfg() {
+  return JSON.parse(localStorage.getItem('concierge_cfg') || '{}');
+}
+
+function colIndex(letra) {
+  return letra ? letra.toUpperCase().charCodeAt(0) - 65 : 0;
+}
+
+// ══════════════════════════════════════════
+//  RESERVAS (localStorage)
+// ══════════════════════════════════════════
+function loadReservas() {
+  reservas = JSON.parse(localStorage.getItem('concierge_reservas') || '[]');
+}
+
+function saveReservas() {
+  localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+}
+
+// ══════════════════════════════════════════
+//  SYNC CLIENTES (Google Sheets)
+// ══════════════════════════════════════════
+function syncClientes() {
+  var c = getCfg();
+  var dot = document.getElementById('sync-dot');
+  var lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot loading';
+  lbl.textContent = 'Sincronizando com Google Sheets…';
+
+  if (!c.url) {
+    dot.className = 'sync-dot err';
+    lbl.textContent = 'URL do Apps Script não configurada. Acesse a aba Configuração.';
+    return;
+  }
+
+  var url = c.url + '?aba=' + encodeURIComponent(c.aba || 'Clientes') + '&linha=' + encodeURIComponent(c.linha || 2);
+  fetch(url)
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error('Resposta inválida');
+      clientes = d.rows.map(function(row, i){
+        return {
+          id: 'cli-' + i,
+          nome:     String(row[colIndex(c.colNome)]     || '').trim(),
+          email:    String(row[colIndex(c.colEmail)]    || '').trim(),
+          tel:      String(row[colIndex(c.colTel)]      || '').trim(),
+          cpf:      String(row[colIndex(c.colCpf)]      || '').trim(),
+          nasc:     String(row[colIndex(c.colNasc)]     || '').trim(),
+          pass:     String(row[colIndex(c.colPass)]     || '').trim(),
+          passVenc: String(row[colIndex(c.colPassVenc)] || '').trim(),
+          prog:     String(row[colIndex(c.colProg)]     || '').trim(),
+          progNum:  String(row[colIndex(c.colProgNum)]  || '').trim(),
+        };
+      }).filter(function(c){ return c.nome; });
+      localStorage.setItem('concierge_clientes', JSON.stringify(clientes));
+      dot.className = 'sync-dot ok';
+      lbl.textContent = clientes.length + ' clientes carregados · ' + new Date().toLocaleTimeString('pt-BR');
+      populateClienteSelect();
+      renderClientes();
+      showToast('✅ ' + clientes.length + ' clientes sincronizados', 'ok');
+      document.getElementById('cfg-ok').textContent = '✅ Conexão estabelecida com sucesso!';
+      setTimeout(function(){ document.getElementById('cfg-ok').textContent=''; }, 4000);
+    })
+    .catch(function(e){
+      dot.className = 'sync-dot err';
+      lbl.textContent = 'Erro ao conectar. Verifique a URL e as permissões do script.';
+      showToast('❌ Falha na sincronização', 'err');
+    });
+}
+
+function populateClienteSelect() {
+  var sel = document.getElementById('f-cliente');
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione o cliente…</option>';
+  clientes.forEach(function(c){
+    var opt = document.createElement('option');
+    opt.value = c.nome;
+    opt.textContent = c.nome;
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
+// ══════════════════════════════════════════
+//  FORMULÁRIO
+// ══════════════════════════════════════════
+function onTipoChange() {
+  ['voo','hotel','carro','passeio'].forEach(function(t){
+    document.getElementById('fields-'+t).style.display = 'none';
+  });
+  var tipo = getVal('f-tipo');
+  if (tipo) document.getElementById('fields-'+tipo).style.display = 'block';
+}
+
+function limparForm() {
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-cia','f-nvoo','f-classe','f-pnr','f-bagagem','f-valor','f-programa','f-milhas',
+   'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
+   'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
+   'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
+   'f-status','f-obs'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value='';
+  });
+  onTipoChange();
+  document.getElementById('form-ok').textContent = '';
+}
+
+function getVal(id) {
+  var el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+function setVal(id, v) {
+  var el = document.getElementById(id);
+  if (el) el.value = v;
+}
+
+function salvarReserva() {
+  var tipo = getVal('f-tipo');
+  var cliente = getVal('f-cliente');
+  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
+  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
+
+  var id = 'RES-' + Date.now();
+  var res = {
+    id: id,
+    tipo: tipo,
+    cliente: cliente,
+    status: getVal('f-status') || 'pendente',
+    obs: getVal('f-obs'),
+    cadastro: new Date().toISOString().split('T')[0],
+  };
+
+  if (tipo === 'voo') {
+    Object.assign(res, {
+      origem: getVal('f-origem'), destino: getVal('f-destino'),
+      dataIda: getVal('f-data-ida'), dataVolta: getVal('f-data-volta'),
+      cia: getVal('f-cia'), nvoo: getVal('f-nvoo'), classe: getVal('f-classe'),
+      pnr: getVal('f-pnr'), bagagem: getVal('f-bagagem'),
+      valor: getVal('f-valor'), programa: getVal('f-programa'), milhas: getVal('f-milhas'),
+    });
+  } else if (tipo === 'hotel') {
+    Object.assign(res, {
+      hotelNome: getVal('f-hotel-nome'), destino: getVal('f-hotel-destino'),
+      quarto: getVal('f-hotel-quarto'), checkin: getVal('f-checkin'),
+      checkout: getVal('f-checkout'), noites: getVal('f-noites'),
+      hospedes: getVal('f-hospedes'), valor: getVal('f-hotel-valor'),
+      conf: getVal('f-hotel-conf'), regime: getVal('f-regime'),
+    });
+  } else if (tipo === 'carro') {
+    Object.assign(res, {
+      locadora: getVal('f-locadora'), categoria: getVal('f-carro-cat'),
+      retLocal: getVal('f-ret-local'), devLocal: getVal('f-dev-local'),
+      retData: getVal('f-ret-data'), devData: getVal('f-dev-data'),
+      valor: getVal('f-carro-valor'), conf: getVal('f-carro-conf'),
+      seguro: getVal('f-seguro'),
+    });
+  } else if (tipo === 'passeio') {
+    Object.assign(res, {
+      passeioNome: getVal('f-passeio-nome'), destino: getVal('f-passeio-dest'),
+      operadora: getVal('f-passeio-op'), dataPasseio: getVal('f-passeio-data'),
+      hora: getVal('f-passeio-hora'), pax: getVal('f-passeio-pax'),
+      conf: getVal('f-passeio-conf'), valor: getVal('f-passeio-valor'),
+    });
+  }
+
+  reservas.unshift(res);
+  saveReservas();
+  updateStats();
+  renderReservas();
+  limparForm();
+  showToast('✅ Reserva salva com sucesso!', 'ok');
+  switchTab('reservas');
+}
+
+// ══════════════════════════════════════════
+//  RENDER RESERVAS
+// ══════════════════════════════════════════
+var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚗 Carro', passeio:'🎯 Passeio' };
+var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio' };
+
+var STATUS_BADGE = {
+  pendente:  '<span class="badge badge-yellow">⏳ Pendente</span>',
+  confirmado:'<span class="badge badge-green">✅ Confirmado</span>',
+  concluido: '<span class="badge badge-purple">🎯 Concluído</span>',
+  cancelado: '<span class="badge badge-red">❌ Cancelado</span>',
+};
+
+function resTitle(r) {
+  if (r.tipo==='voo')     return (r.origem||'?') + ' → ' + (r.destino||'?');
+  if (r.tipo==='hotel')   return r.hotelNome || r.destino || 'Hotel';
+  if (r.tipo==='carro')   return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
+  if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
+  return 'Reserva';
+}
+
+function resCols(r) {
+  if (r.tipo==='voo') return [
+    ['Cliente', r.cliente],
+    ['Data Ida', fmtDate(r.dataIda)],
+    ['Cia / Voo', (r.cia||'')+(r.nvoo?' – '+r.nvoo:'')],
+    ['PNR', r.pnr||'—'],
+  ];
+  if (r.tipo==='hotel') return [
+    ['Cliente', r.cliente],
+    ['Check-in', fmtDate(r.checkin)],
+    ['Check-out', fmtDate(r.checkout)],
+    ['Confirmação', r.conf||'—'],
+  ];
+  if (r.tipo==='carro') return [
+    ['Cliente', r.cliente],
+    ['Retirada', fmtDate(r.retData)],
+    ['Devolução', fmtDate(r.devData)],
+    ['Confirmação', r.conf||'—'],
+  ];
+  if (r.tipo==='passeio') return [
+    ['Cliente', r.cliente],
+    ['Data', fmtDate(r.dataPasseio)],
+    ['Hora', r.hora||'—'],
+    ['Voucher', r.conf||'—'],
+  ];
+  return [];
+}
+
+function fmtDate(d) {
+  if (!d) return '—';
+  var parts = d.split('-');
+  if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+  return d;
+}
+
+function setFilter(el, type) {
+  activeFilter = el.dataset.filter;
+  filterType = type || 'tipo';
+  document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
+  el.classList.add('active');
+  renderReservas();
+}
+
+function renderReservas() {
+  loadReservas();
+  var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
+  var list = reservas.filter(function(r){
+    var matchFilter = activeFilter === 'todos' ||
+      (filterType === 'tipo'   && r.tipo   === activeFilter) ||
+      (filterType === 'status' && r.status === activeFilter);
+    var matchQ = !q || r.cliente.toLowerCase().includes(q) || resTitle(r).toLowerCase().includes(q);
+    return matchFilter && matchQ;
+  });
+
+  document.getElementById('res-count-label').textContent = list.length + ' reserva' + (list.length!==1?'s':'');
+  updateStats();
+
+  var grid = document.getElementById('res-grid');
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">📋</span>Nenhuma reserva encontrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em "Nova Reserva" para adicionar.</small></div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(function(r){
+    var cols = resCols(r);
+    return '<div class="res-card">'+
+      '<div class="res-card-header">'+
+        '<div class="type-icon '+TIPO_CLASS[r.tipo]+'">'+TIPO_LABEL[r.tipo].split(' ')[0]+'</div>'+
+        '<div class="res-card-info">'+
+          '<div class="res-card-id">'+r.id+' · Cadastro: '+fmtDate(r.cadastro)+'</div>'+
+          '<div class="res-card-title">'+resTitle(r)+'</div>'+
+        '</div>'+
+        (STATUS_BADGE[r.status]||'') +
+      '</div>'+
+      '<div class="res-card-body">'+
+        cols.map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
+      '</div>'+
+      '<div class="res-card-footer">'+
+        '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+'</span>'+
+        '<select class="btn btn-ghost btn-sm status-sel" onchange="alterarStatus(\''+r.id+'\',this.value)" title="Alterar status">'+
+          '<option value="pendente"'+(r.status==='pendente'?' selected':'')+'>⏳ Pendente</option>'+
+          '<option value="confirmado"'+(r.status==='confirmado'?' selected':'')+'>✅ Confirmado</option>'+
+          '<option value="concluido"'+(r.status==='concluido'?' selected':'')+'>🎯 Concluído</option>'+
+          '<option value="cancelado"'+(r.status==='cancelado'?' selected':'')+'>❌ Cancelado</option>'+
+        '</select>'+
+        '<button class="btn btn-ghost btn-sm" onclick="editarReserva(\''+r.id+'\')">✏️ Editar</button>'+
+        '<button class="btn btn-danger btn-sm" onclick="pedirDelete(\''+r.id+'\')">🗑 Excluir</button>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function updateStats() {
+  document.getElementById('stat-total').textContent      = reservas.length;
+  document.getElementById('stat-confirmado').textContent = reservas.filter(function(r){ return r.status==='confirmado'; }).length;
+  document.getElementById('stat-pendente').textContent   = reservas.filter(function(r){ return r.status==='pendente';   }).length;
+  document.getElementById('stat-concluido').textContent  = reservas.filter(function(r){ return r.status==='concluido';  }).length;
+}
+
+function alterarStatus(id, status) {
+  var r = reservas.find(function(x){ return x.id===id; });
+  if (r) { r.status = status; saveReservas(); renderReservas(); showToast('Status atualizado: ' + status, 'ok'); }
+}
+
+function pedirDelete(id) {
+  deleteTargetId = id;
+  document.getElementById('modal-delete').classList.add('open');
+}
+
+function confirmarDelete() {
+  reservas = reservas.filter(function(r){ return r.id !== deleteTargetId; });
+  saveReservas();
+  closeModal('modal-delete');
+  renderReservas();
+  showToast('🗑 Reserva excluída', 'ok');
+}
+
+function editarReserva(id) {
+  var r = reservas.find(function(x){ return x.id===id; });
+  if (!r) return;
+  switchTab('nova');
+  setVal('f-tipo', r.tipo); onTipoChange();
+  setVal('f-cliente', r.cliente);
+  setVal('f-status', r.status);
+  setVal('f-obs', r.obs||'');
+  if (r.tipo==='voo'){
+    setVal('f-origem',r.origem); setVal('f-destino',r.destino);
+    setVal('f-data-ida',r.dataIda); setVal('f-data-volta',r.dataVolta);
+    setVal('f-cia',r.cia); setVal('f-nvoo',r.nvoo); setVal('f-classe',r.classe);
+    setVal('f-pnr',r.pnr); setVal('f-bagagem',r.bagagem);
+    setVal('f-valor',r.valor); setVal('f-programa',r.programa); setVal('f-milhas',r.milhas);
+  } else if (r.tipo==='hotel'){
+    setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
+    setVal('f-hotel-quarto',r.quarto); setVal('f-checkin',r.checkin);
+    setVal('f-checkout',r.checkout); setVal('f-noites',r.noites);
+    setVal('f-hospedes',r.hospedes); setVal('f-hotel-valor',r.valor);
+    setVal('f-hotel-conf',r.conf); setVal('f-regime',r.regime);
+  } else if (r.tipo==='carro'){
+    setVal('f-locadora',r.locadora); setVal('f-carro-cat',r.categoria);
+    setVal('f-ret-local',r.retLocal); setVal('f-dev-local',r.devLocal);
+    setVal('f-ret-data',r.retData); setVal('f-dev-data',r.devData);
+    setVal('f-carro-valor',r.valor); setVal('f-carro-conf',r.conf);
+    setVal('f-seguro',r.seguro);
+  } else if (r.tipo==='passeio'){
+    setVal('f-passeio-nome',r.passeioNome); setVal('f-passeio-dest',r.destino);
+    setVal('f-passeio-op',r.operadora); setVal('f-passeio-data',r.dataPasseio);
+    setVal('f-passeio-hora',r.hora); setVal('f-passeio-pax',r.pax);
+    setVal('f-passeio-conf',r.conf); setVal('f-passeio-valor',r.valor);
+  }
+  // Remove o antigo e vai salvar um novo ao submeter
+  reservas = reservas.filter(function(x){ return x.id!==id; });
+  saveReservas();
+  showToast('✏️ Editando reserva — salve para confirmar', 'ok');
+}
+
+// ══════════════════════════════════════════
+//  RENDER CLIENTES
+// ══════════════════════════════════════════
+function renderClientes() {
+  var q = (document.getElementById('cli-search')||{value:''}).value.toLowerCase();
+  var list = clientes.filter(function(c){
+    return !q || c.nome.toLowerCase().includes(q) || c.email.toLowerCase().includes(q) || c.cpf.includes(q);
+  });
+
+  document.getElementById('cli-count-label').textContent = list.length + ' cliente' + (list.length!==1?'s':'');
+  var grid = document.getElementById('cli-grid');
+
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">👤</span>' +
+      (clientes.length ? 'Nenhum cliente encontrado.' : 'Nenhum cliente carregado.<br><small style="font-size:12px;margin-top:6px;display:block">Configure o Google Sheets e clique em Sincronizar.</small>') +
+      '</div>';
+    return;
+  }
+
+  grid.innerHTML = list.map(function(c){
+    var initials = c.nome.split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('').toUpperCase();
+    var resCount = reservas.filter(function(r){ return r.cliente===c.nome; }).length;
+    return '<div class="cli-card">'+
+      '<div class="cli-header" onclick="toggleCli(\''+c.id+'\')">'+
+        '<div class="cli-avatar">'+initials+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div class="cli-name">'+c.nome+'</div>'+
+          '<div class="cli-email">'+(c.email||c.tel||'')+(resCount?' · <span style="color:var(--accent)">'+resCount+' reserva'+(resCount!==1?'s':'')+'</span>':'')+'</div>'+
+        '</div>'+
+        '<div class="cli-toggle" id="tog-'+c.id+'">▼</div>'+
+      '</div>'+
+      '<div class="cli-body" id="body-'+c.id+'">'+
+        '<div class="cli-grid">'+
+          cliField('Nome Completo', c.nome) +
+          cliField('E-mail', c.email) +
+          cliField('Telefone', c.tel) +
+          cliFieldCopy('CPF', c.cpf) +
+          cliField('Data de Nascimento', fmtDate(c.nasc)) +
+          cliFieldCopy('Passaporte', c.pass) +
+          cliField('Venc. Passaporte', fmtDate(c.passVenc)) +
+          cliField('Programa de Milhas', c.prog) +
+          cliFieldCopy('Nº do Programa', c.progNum) +
+        '</div>'+
+        (resCount ? '<span class="cli-reservas-link" onclick="verReservasCliente(\''+c.nome+'\')">📋 Ver '+resCount+' reserva'+(resCount!==1?'s':'')+' deste cliente →</span>' : '') +
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function cliField(label, val) {
+  return '<div class="cli-field"><div class="cli-field-label">'+label+'</div><div class="cli-field-val">'+(val||'—')+'</div></div>';
+}
+function cliFieldCopy(label, val) {
+  return '<div class="cli-field"><div class="cli-field-label">'+label+'</div><div class="cli-field-val">'+(val||'—')+
+    (val ? ' <button class="cli-copy" onclick="copiarTexto(\''+val+'\')" title="Copiar">📋</button>' : '') +
+  '</div></div>';
+}
+
+function toggleCli(id) {
+  var body = document.getElementById('body-'+id);
+  var tog  = document.getElementById('tog-'+id);
+  if (!body) return;
+  body.classList.toggle('open');
+  tog.classList.toggle('open');
+}
+
+function verReservasCliente(nome) {
+  document.getElementById('search-input').value = nome;
+  activeFilter = 'todos';
+  document.querySelectorAll('.filter-chip').forEach(function(c){ c.classList.remove('active'); });
+  document.querySelector('[data-filter="todos"]').classList.add('active');
+  switchTab('reservas');
+}
+
+function copiarTexto(txt) {
+  navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Copiado: '+txt, 'ok'); });
+}
+
+// ══════════════════════════════════════════
+//  TABS
+// ══════════════════════════════════════════
+function switchTab(name) {
+  tabAtual = name;
+  document.querySelectorAll('.main-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.remove('active'); });
+  document.getElementById('panel-'+name).classList.add('active');
+  var tabs = document.querySelectorAll('.main-tab');
+  var map = {reservas:0, nova:1, clientes:2, config:3};
+  if (tabs[map[name]]) tabs[map[name]].classList.add('active');
+  if (name==='clientes') renderClientes();
+}
+
+// ══════════════════════════════════════════
+//  MODAL / TOAST / UTILS
+// ══════════════════════════════════════════
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast show' + (type ? ' '+type : '');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function(){ t.classList.remove('show'); }, 3200);
+}
+
+function limparDados() {
+  if (!confirm('⚠️ Apagar TODAS as reservas? Essa ação não pode ser desfeita.')) return;
+  reservas = [];
+  saveReservas();
+  renderReservas();
+  showToast('🗑 Todas as reservas foram apagadas', 'err');
+}
+
+function copiarScript() {
+  navigator.clipboard.writeText(APPS_SCRIPT_CODE)
+    .then(function(){ 
+      document.getElementById('script-ok').textContent = '✅ Código copiado!';
+      setTimeout(function(){ document.getElementById('script-ok').textContent=''; }, 3000);
+    });
+}
+
+// ══════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', function(){
+  loadCfg();
+  loadReservas();
+
+  // Data de hoje no form
+  setVal('f-cadastro', new Date().toISOString().split('T')[0]);
+
+  // Clientes do cache
+  var cached = localStorage.getItem('concierge_clientes');
+  if (cached) {
+    clientes = JSON.parse(cached);
+    populateClienteSelect();
+    var dot = document.getElementById('sync-dot');
+    var lbl = document.getElementById('sync-label');
+    dot.className = 'sync-dot ok';
+    lbl.textContent = clientes.length + ' clientes em cache · clique em Sincronizar para atualizar';
+  } else {
+    syncClientes();
+  }
+
+  renderReservas();
+});
+</script>
+</body>
+</html>
