@@ -15,8 +15,8 @@
   --green:#22c55e;--yellow:#f59e0b;--purple:#c084fc;
   --r:10px;--font:'Montserrat',sans-serif;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:2.5rem 1rem 4rem}
-.wrap{width:100%;max-width:1200px}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding:2.5rem 1rem 4rem;display:flex;flex-direction:column;align-items:center}
+.wrap{width:100%;max-width:1200px;display:block;align-self:stretch}
 header{margin-bottom:2rem}
 .logo-row{display:flex;align-items:center;gap:14px;margin-bottom:6px}
 .brand{display:flex;flex-direction:column;gap:2px}
@@ -29,8 +29,7 @@ header{margin-bottom:2rem}
 .main-tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}
 .main-tab.active{background:var(--accent);color:#fff}
 .main-tab:not(.active):hover{color:var(--text)}
-.main-panel{display:none}
-.main-panel.active{display:block}
+.main-panel{display:none;width:100%}.main-panel.active{display:block;width:100%}
 
 /* CARD */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin-bottom:1rem}
