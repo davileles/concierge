@@ -398,29 +398,14 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div id="fields-hotel" style="display:none">
       <div class="sep"></div>
       <div class="field"><label>Nome do Hotel</label><input type="text" id="f-hotel-nome" placeholder="Ex: Grand Hyatt São Paulo"/></div>
-      <div class="g2">
-        <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="f-hotel-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
-        <div class="field"><label>Tipo de Quarto</label><input type="text" id="f-hotel-quarto" placeholder="Ex: Deluxe King"/></div>
-      </div>
+      <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="f-hotel-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       <div class="g3">
         <div class="field"><label>Check-in</label><input type="date" id="f-checkin"/></div>
         <div class="field"><label>Check-out</label><input type="date" id="f-checkout"/></div>
         <div class="field"><label>Nº de Noites</label><input type="number" id="f-noites" min="1" placeholder="Ex: 5"/></div>
       </div>
-      <div class="g2">
-        <div class="field"><label>Nº de Hóspedes</label><input type="number" id="f-hospedes" min="1" placeholder="Ex: 2"/></div>
-        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 4.500,00"/></div>
-      </div>
-      <div class="g2">
-        <div class="field"><label>Confirmação / Reserva Nº</label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
-        <div class="field"><label>Regime <span class="tag">opcional</span></label>
-          <select id="f-regime">
-            <option value="">Selecione…</option>
-            <option>Apenas Pernoite</option><option>Café da Manhã</option>
-            <option>Meia Pensão</option><option>Pensão Completa</option><option>All Inclusive</option>
-          </select>
-        </div>
-      </div>
+      <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 4.500,00"/></div>
+      <div class="field"><label>Confirmação / Reserva Nº</label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
     </div>
 
     <!-- CAMPOS CARRO -->
