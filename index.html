@@ -662,8 +662,42 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <textarea id="d-msg-final" rows="10" style="min-height:200px;font-size:13px;line-height:1.8" placeholder="Selecione modelo e cliente para gerar a mensagem…"></textarea>
       </div>
       <div class="field">
-        <label>Grupo WhatsApp (ID)</label>
-        <input type="text" id="d-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px"/>
+        <label>Grupo WhatsApp <span class="tag">selecione ou digite o ID manualmente</span></label>
+        <select id="d-grupo-select" onchange="onGrupoSelectChange()" style="margin-bottom:6px">
+          <option value="">— Selecione um grupo —</option>
+          <optgroup label="Travel Concierge">
+            <option value="120363403530027688@g.us">Travel Concierge - Amira</option>
+            <option value="120363391949368669@g.us">Travel Concierge - Arthur</option>
+            <option value="120363405557831632@g.us">Travel Concierge - Carla e André</option>
+            <option value="120363403495509280@g.us">Travel Concierge - Cinthia e Humberto</option>
+            <option value="120363408402238452@g.us">Travel Concierge - Daniel e Suelen</option>
+            <option value="120363418603292365@g.us">Travel Concierge - Débora e Irfeo</option>
+            <option value="120363424713170391@g.us">Travel Concierge - Diego Leoni</option>
+            <option value="120363419998992026@g.us">Travel Concierge - Diogo e Lorena</option>
+            <option value="120363405775845661@g.us">Travel Concierge - Givaldo</option>
+            <option value="120363390104440020@g.us">Travel Concierge - Goretti</option>
+            <option value="120363407463456235@g.us">Travel Concierge - José Neto</option>
+            <option value="120363393447170875@g.us">Travel Concierge - Kelciane</option>
+            <option value="120363408631839521@g.us">Travel Concierge - Khiara</option>
+            <option value="120363425444238129@g.us">Travel Concierge - Leo e Gabi</option>
+            <option value="120363425819885696@g.us">Travel Concierge - Leo e Rafa</option>
+            <option value="120363427304739979@g.us">Travel Concierge - Marisa</option>
+            <option value="120363401712706212@g.us">Travel Concierge - Miguel e Maria</option>
+            <option value="120363423899202830@g.us">Travel Concierge - Oswaldo e Mônica</option>
+            <option value="120363421301140271@g.us">Travel Concierge - Rodolpho</option>
+            <option value="120363408346115371@g.us">Travel Concierge - Rosângela</option>
+            <option value="120363425716567102@g.us">Travel Concierge - Samyr</option>
+            <option value="120363391338103142@g.us">Travel Concierge - Saulo</option>
+            <option value="120363408241513231@g.us">Travel Concierge - Silas</option>
+            <option value="120363402469493674@g.us">Travel Concierge (Alan e Rennata)</option>
+            <option value="120363392093867579@g.us">Travel Concierge (Camilla e Letícia)</option>
+            <option value="120363399938696504@g.us">Travel Concierge (Gina)</option>
+            <option value="120363402546094470@g.us">Travel Concierge (Rachel e Mateus)</option>
+            <option value="120363416414594773@g.us">Travel Concierge (Renata, Vania e Maisa)</option>
+          </optgroup>
+          <option value="__manual__">✏️ Digitar ID manualmente…</option>
+        </select>
+        <input type="text" id="d-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px;display:none"/>
       </div>
       <div class="btn-row">
         <button class="btn btn-accent" style="flex:1" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
@@ -1548,6 +1582,19 @@ function onDispararChange() {
   // Set grupo
   if (cli) {
     setVal('d-grupo', cli.grupo || '');
+    var _sel = document.getElementById('d-grupo-select');
+    if (_sel) {
+      var _found = false;
+      for (var _i = 0; _i < _sel.options.length; _i++) {
+        if (_sel.options[_i].value === (cli.grupo || '')) { _sel.selectedIndex = _i; _found = true; break; }
+      }
+      if (!_found) {
+        _sel.value = cli.grupo ? '__manual__' : '';
+        document.getElementById('d-grupo').style.display = cli.grupo ? '' : 'none';
+      } else {
+        document.getElementById('d-grupo').style.display = 'none';
+      }
+    }
     var info = document.getElementById('d-grupo-info');
     info.style.display = 'block';
     info.innerHTML = '📱 '+cli.tel+(cli.grupo?' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>':' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado</span>');
@@ -1590,8 +1637,27 @@ function onDispararChange() {
   document.getElementById('d-msg-final').value = txt;
 }
 
+function onGrupoSelectChange() {
+  var sel = document.getElementById('d-grupo-select');
+  var inp = document.getElementById('d-grupo');
+  if (sel.value === '__manual__') {
+    inp.style.display = '';
+    inp.value = '';
+    inp.focus();
+  } else {
+    inp.style.display = 'none';
+    inp.value = sel.value;
+  }
+}
+
+function getGrupoId() {
+  var sel = document.getElementById('d-grupo-select');
+  if (sel && sel.value && sel.value !== '__manual__') return sel.value;
+  return document.getElementById('d-grupo').value.trim();
+}
+
 function dispararMensagem() {
-  var grupo  = getVal('d-grupo');
+  var grupo  = getGrupoId();
   var texto  = document.getElementById('d-msg-final').value.trim();
   var url    = getBaileysUrl();
   var statusEl = document.getElementById('d-send-ok');
