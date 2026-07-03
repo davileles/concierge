@@ -1587,7 +1587,7 @@ function verificarBaileys() {
   fetch(url + '/status', { signal: AbortSignal.timeout(6000) })
     .then(function(r){ return r.json(); })
     .then(function(d){
-      var ok = d.status==='conectado' || d.connected===true || d.ok===true;
+      var ok = d.status==='conectado' || d.connected===true || d.ok===true || d.conectado===true;
       dot.className = 'sync-dot ' + (ok?'ok':'err');
       lbl.textContent = ok ? '✅ Baileys conectado' : '⚠️ Baileys desconectado';
     })
