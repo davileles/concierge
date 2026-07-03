@@ -16,7 +16,7 @@
   --r:10px;--font:'Montserrat',sans-serif;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding:0}
-.wrap{width:100%;max-width:1200px;margin:0 auto;padding:1.5rem 1.5rem 4rem;box-sizing:border-box}
+.wrap{width:100%;max-width:1200px;margin:0 auto;padding:0.75rem 1.5rem 4rem;box-sizing:border-box}
 header{background:var(--surface);border-bottom:3px solid var(--accent);padding:14px 22px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .logo-row{display:flex;align-items:center;gap:14px}
 .brand{display:flex;flex-direction:column;gap:2px}
@@ -28,7 +28,7 @@ header{background:var(--surface);border-bottom:3px solid var(--accent);padding:1
 
 /* TABS */
 .main-tabs{background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:81px;z-index:90}
-.main-tabs-inner{display:flex;gap:0;max-width:1200px;margin:0 auto;padding:0 1.5rem}
+.main-tabs-inner{display:flex;gap:0;width:100%;max-width:1200px;margin:0 auto;padding:0 1.5rem;box-sizing:border-box}
 .main-tab{background:transparent;border:none;border-bottom:3px solid transparent;color:var(--muted);font-family:var(--font);font-size:13px;font-weight:700;padding:14px 18px;cursor:pointer;transition:color .15s,border-color .15s}
 .main-tab:hover{color:var(--text)}
 .main-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
