@@ -271,6 +271,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <span class="filter-chip" data-filter="hotel" onclick="setFilter(this)">🏨 Hotel</span>
     <span class="filter-chip" data-filter="carro" onclick="setFilter(this)">🚗 Carro</span>
     <span class="filter-chip" data-filter="passeio" onclick="setFilter(this)">🎯 Passeio</span>
+    <span class="filter-chip" data-filter="passadas" onclick="setFilter(this)">📅 Passadas</span>
   </div>
 
   <div id="res-grid"></div>
@@ -1248,12 +1249,13 @@ function renderReservas() {
   var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
   var hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   var list = reservas.filter(function(r){
-    var matchFilter = activeFilter === 'todos' || r.tipo === activeFilter;
+    var matchTipo = activeFilter === 'todos' || activeFilter === 'passadas' || r.tipo === activeFilter;
     var matchQ = !q || r.cliente.toLowerCase().includes(q) || resTitle(r).toLowerCase().includes(q);
     // Data principal da reserva
     var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
     var futura = !dataRef || dataRef >= hoje;
-    return matchFilter && matchQ && futura;
+    var matchData = activeFilter === 'passadas' ? (!futura && dataRef) : futura;
+    return matchTipo && matchQ && matchData;
   });
 
   document.getElementById('res-count-label').textContent = list.length + ' reserva' + (list.length!==1?'s':'');
