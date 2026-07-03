@@ -1258,7 +1258,6 @@ function setFilter(el) {
 
 function renderReservas() {
   loadReservas();
-  updateStats();
   var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
   var hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   var list = reservas.filter(function(r){
@@ -1271,7 +1270,7 @@ function renderReservas() {
   });
 
   document.getElementById('res-count-label').textContent = list.length + ' reserva' + (list.length!==1?'s':'');
-  updateStats();
+  updateStats(list);
 
   var grid = document.getElementById('res-grid');
   if (!list.length) {
@@ -1308,11 +1307,12 @@ function renderReservas() {
   }).join('');
 }
 
-function updateStats() {
-  document.getElementById('stat-total').textContent  = reservas.length;
-  document.getElementById('stat-voo').textContent    = reservas.filter(function(r){ return r.tipo==='voo';     }).length;
-  document.getElementById('stat-hotel').textContent  = reservas.filter(function(r){ return r.tipo==='hotel';   }).length;
-  document.getElementById('stat-outros').textContent = reservas.filter(function(r){ return r.tipo==='carro'||r.tipo==='passeio'; }).length;
+function updateStats(lista) {
+  var src = lista || reservas;
+  document.getElementById('stat-total').textContent  = src.length;
+  document.getElementById('stat-voo').textContent    = src.filter(function(r){ return r.tipo==='voo';     }).length;
+  document.getElementById('stat-hotel').textContent  = src.filter(function(r){ return r.tipo==='hotel';   }).length;
+  document.getElementById('stat-outros').textContent = src.filter(function(r){ return r.tipo==='carro'||r.tipo==='passeio'; }).length;
 }
 
 function toggleRes(id) {
