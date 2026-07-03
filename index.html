@@ -32,6 +32,12 @@ header{background:var(--surface);border-bottom:3px solid var(--accent);padding:1
 .main-tab:hover{color:var(--text)}
 .main-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
 .main-tab:not(.active):hover{color:var(--text)}
+.iata-wrap{position:relative}
+.iata-dropdown{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:150;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.iata-option{padding:8px 12px;font-size:12px;color:var(--text);cursor:pointer;font-family:var(--font);border-bottom:1px solid rgba(61,74,102,.3)}
+.iata-option:last-child{border-bottom:none}
+.iata-option:hover,.iata-option.selected{background:rgba(255,88,94,.1);color:var(--accent)}
+.iata-code{font-weight:800;color:var(--accent);margin-right:6px;font-size:11px}
 .upload-ativo{border:2px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
 .upload-ativo:hover,.upload-ativo.drag{border-color:var(--accent);background:rgba(255,88,94,.05)}
 .upload-ativo input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
@@ -202,6 +208,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   .main-tabs{padding:0 8px;top:69px}  .main-tab{font-size:10px;padding:10px 8px}
 }
 </style>
+<script src="https://davileles.github.io/painel-cdv/iata.js"></script>
 </head>
 <body>
 
@@ -299,8 +306,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div id="fields-voo" style="display:none">
       <div class="sep"></div>
       <div class="g2">
-        <div class="field"><label>Origem</label><input type="text" id="f-origem" placeholder="Ex: GRU – São Paulo"/></div>
-        <div class="field"><label>Destino</label><input type="text" id="f-destino" placeholder="Ex: LIS – Lisboa"/></div>
+        <div class="field"><label>Origem</label><div class="iata-wrap"><input type="text" id="f-origem" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
+        <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="f-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="sep" style="margin:10px 0 4px"></div>
       <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✈️ Voo de Ida</p>
@@ -384,7 +391,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="sep"></div>
       <div class="field"><label>Nome do Hotel</label><input type="text" id="f-hotel-nome" placeholder="Ex: Grand Hyatt São Paulo"/></div>
       <div class="g2">
-        <div class="field"><label>Destino</label><input type="text" id="f-hotel-destino" placeholder="Ex: Lisboa, Portugal"/></div>
+        <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="f-hotel-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
         <div class="field"><label>Tipo de Quarto</label><input type="text" id="f-hotel-quarto" placeholder="Ex: Deluxe King"/></div>
       </div>
       <div class="g3">
@@ -416,8 +423,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Categoria do Veículo</label><input type="text" id="f-carro-cat" placeholder="Ex: Econômico, SUV"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Local de Retirada</label><input type="text" id="f-ret-local" placeholder="Ex: Aeroporto GRU"/></div>
-        <div class="field"><label>Local de Devolução</label><input type="text" id="f-dev-local" placeholder="Ex: Aeroporto GIG"/></div>
+        <div class="field"><label>Local de Retirada</label><div class="iata-wrap"><input type="text" id="f-ret-local" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
+        <div class="field"><label>Local de Devolução</label><div class="iata-wrap"><input type="text" id="f-dev-local" placeholder="Ex: GIG ou Rio de Janeiro" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g3">
         <div class="field"><label>Data de Retirada</label><input type="date" id="f-ret-data"/></div>
@@ -441,7 +448,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="sep"></div>
       <div class="field"><label>Nome do Passeio / Atividade</label><input type="text" id="f-passeio-nome" placeholder="Ex: Passeio de barco pelas Ilhas Gregas"/></div>
       <div class="g2">
-        <div class="field"><label>Destino / Cidade</label><input type="text" id="f-passeio-dest" placeholder="Ex: Santorini, Grécia"/></div>
+        <div class="field"><label>Destino / Cidade</label><div class="iata-wrap"><input type="text" id="f-passeio-dest" placeholder="Ex: JTR ou Santorini" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
         <div class="field"><label>Fornecedor / Operadora</label><input type="text" id="f-passeio-op" placeholder="Ex: Get Your Guide"/></div>
       </div>
       <div class="g3">
@@ -1823,6 +1830,62 @@ function onDispararChange() {
   }
   document.getElementById('d-msg-final').value = txt;
 }
+
+// ── IATA AUTOCOMPLETE ──────────────────────────────────────────
+function iataAutocomplete(inputEl, dropdownEl) {
+  var q = inputEl.value.trim().toLowerCase();
+  if (q.length < 2) { dropdownEl.style.display = 'none'; return; }
+  if (typeof IATA_AIRPORTS === 'undefined') { dropdownEl.style.display = 'none'; return; }
+  var matches = IATA_AIRPORTS.filter(function(a) {
+    return a.code.toLowerCase().startsWith(q) || a.label.toLowerCase().includes(q);
+  }).slice(0, 10);
+  if (!matches.length) { dropdownEl.style.display = 'none'; return; }
+  dropdownEl._matches = matches;
+  dropdownEl.innerHTML = matches.map(function(a) {
+    var nome = a.label.replace(/ *\(.*?\)/g, '').trim();
+    return '<div class="iata-option" onmousedown="iataSelect(event,\'' + a.code + '\',\'' + a.label.replace(/'/g, "\\'") + '\')">' +
+      '<span class="iata-code">' + a.code + '</span>' + nome + '</div>';
+  }).join('');
+  dropdownEl.style.display = 'block';
+}
+
+function iataSelect(e, code, label) {
+  e.preventDefault();
+  var wrap = e.currentTarget.closest('.iata-wrap');
+  if (!wrap) return;
+  var input = wrap.querySelector('input');
+  var dropdown = wrap.querySelector('.iata-dropdown');
+  if (input) input.value = code;
+  if (dropdown) dropdown.style.display = 'none';
+}
+
+function iataKeydown(e, inputEl, dropdownEl) {
+  if (e.key === 'Escape') { dropdownEl.style.display = 'none'; return; }
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    var opts = dropdownEl.querySelectorAll('.iata-option');
+    if (!opts.length) return;
+    var sel = dropdownEl.querySelector('.iata-option.selected');
+    var idx = -1;
+    opts.forEach(function(o, i) { if (o === sel) idx = i; });
+    if (sel) sel.classList.remove('selected');
+    idx = e.key === 'ArrowDown' ? Math.min(idx + 1, opts.length - 1) : Math.max(idx - 1, 0);
+    opts[idx].classList.add('selected');
+    opts[idx].scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  if (e.key === 'Enter') {
+    var sel2 = dropdownEl.querySelector('.iata-option.selected');
+    if (sel2) { sel2.dispatchEvent(new MouseEvent('mousedown', { bubbles: true })); e.preventDefault(); }
+  }
+}
+
+// Fechar dropdown ao clicar fora
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.iata-wrap')) {
+    document.querySelectorAll('.iata-dropdown').forEach(function(d) { d.style.display = 'none'; });
+  }
+});
 
 function onGrupoSelectChange() {
   var sel = document.getElementById('d-grupo-select');
