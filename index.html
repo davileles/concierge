@@ -29,6 +29,10 @@ header{margin-bottom:2rem}
 .main-tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}
 .main-tab.active{background:var(--accent);color:#fff}
 .main-tab:not(.active):hover{color:var(--text)}
+.mode-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:1.4rem}
+.mode-tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}
+.mode-tab.active{background:var(--accent);color:#fff}
+.mode-tab:not(.active):hover{color:var(--text)}
 .main-panel{display:none;width:100%}.main-panel.active{display:block;width:100%}
 
 /* CARD */
@@ -630,81 +634,93 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <!-- ── SUB: DISPARAR ────────────────────────────────── -->
   <div id="msg-sub-disparar" style="display:none">
 
-    <div class="card">
-      <div class="card-title">🎯 Selecionar</div>
-      <div class="g3">
-        <div class="field">
-          <label>Modelo</label>
-          <select id="d-modelo" onchange="onDispararChange()">
-            <option value="">Selecione um modelo…</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Cliente</label>
-          <select id="d-cliente" onchange="onDispararChange()">
-            <option value="">Selecione o cliente…</option>
-          </select>
-        </div>
-        <div class="field">
-          <label>Reserva <span class="tag">opcional</span></label>
-          <select id="d-reserva" onchange="onDispararChange()">
-            <option value="">Nenhuma</option>
-          </select>
-        </div>
-      </div>
-      <div id="d-grupo-info" style="display:none;font-size:12px;font-weight:600;color:var(--muted);margin-top:4px"></div>
-    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start">
 
-    <div class="card">
-      <div class="card-title">💬 Mensagem</div>
-      <div class="field">
-        <label>Pré-visualização <span class="tag">editável antes de enviar</span></label>
-        <textarea id="d-msg-final" rows="10" style="min-height:200px;font-size:13px;line-height:1.8" placeholder="Selecione modelo e cliente para gerar a mensagem…"></textarea>
+      <!-- COLUNA ESQUERDA: Selecionar + Grupo -->
+      <div style="display:flex;flex-direction:column;gap:1rem">
+
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">🎯 Selecionar</div>
+          <div class="field">
+            <label>Modelo</label>
+            <select id="d-modelo" onchange="onDispararChange()">
+              <option value="">Selecione um modelo…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Cliente</label>
+            <select id="d-cliente" onchange="onDispararChange()">
+              <option value="">Selecione o cliente…</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Reserva <span class="tag">opcional</span></label>
+            <select id="d-reserva" onchange="onDispararChange()">
+              <option value="">Nenhuma</option>
+            </select>
+          </div>
+          <div id="d-grupo-info" style="display:none;font-size:12px;font-weight:600;color:var(--muted);margin-top:4px"></div>
+        </div>
+
+        <div class="card" style="margin-bottom:0">
+          <div class="card-title">📱 Grupo WhatsApp</div>
+          <div class="field">
+            <label>Destino <span class="tag">selecione ou digite manualmente</span></label>
+            <select id="d-grupo-select" onchange="onGrupoSelectChange()" style="margin-bottom:6px">
+              <option value="">— Selecione um grupo —</option>
+              <optgroup label="Travel Concierge">
+                <option value="120363403530027688@g.us">Travel Concierge - Amira</option>
+                <option value="120363391949368669@g.us">Travel Concierge - Arthur</option>
+                <option value="120363405557831632@g.us">Travel Concierge - Carla e André</option>
+                <option value="120363403495509280@g.us">Travel Concierge - Cinthia e Humberto</option>
+                <option value="120363408402238452@g.us">Travel Concierge - Daniel e Suelen</option>
+                <option value="120363418603292365@g.us">Travel Concierge - Débora e Irfeo</option>
+                <option value="120363424713170391@g.us">Travel Concierge - Diego Leoni</option>
+                <option value="120363419998992026@g.us">Travel Concierge - Diogo e Lorena</option>
+                <option value="120363405775845661@g.us">Travel Concierge - Givaldo</option>
+                <option value="120363390104440020@g.us">Travel Concierge - Goretti</option>
+                <option value="120363407463456235@g.us">Travel Concierge - José Neto</option>
+                <option value="120363393447170875@g.us">Travel Concierge - Kelciane</option>
+                <option value="120363408631839521@g.us">Travel Concierge - Khiara</option>
+                <option value="120363425444238129@g.us">Travel Concierge - Leo e Gabi</option>
+                <option value="120363425819885696@g.us">Travel Concierge - Leo e Rafa</option>
+                <option value="120363427304739979@g.us">Travel Concierge - Marisa</option>
+                <option value="120363401712706212@g.us">Travel Concierge - Miguel e Maria</option>
+                <option value="120363423899202830@g.us">Travel Concierge - Oswaldo e Mônica</option>
+                <option value="120363421301140271@g.us">Travel Concierge - Rodolpho</option>
+                <option value="120363408346115371@g.us">Travel Concierge - Rosângela</option>
+                <option value="120363425716567102@g.us">Travel Concierge - Samyr</option>
+                <option value="120363391338103142@g.us">Travel Concierge - Saulo</option>
+                <option value="120363408241513231@g.us">Travel Concierge - Silas</option>
+                <option value="120363402469493674@g.us">Travel Concierge (Alan e Rennata)</option>
+                <option value="120363392093867579@g.us">Travel Concierge (Camilla e Letícia)</option>
+                <option value="120363399938696504@g.us">Travel Concierge (Gina)</option>
+                <option value="120363402546094470@g.us">Travel Concierge (Rachel e Mateus)</option>
+                <option value="120363416414594773@g.us">Travel Concierge (Renata, Vania e Maisa)</option>
+              </optgroup>
+              <option value="__manual__">✏️ Digitar ID manualmente…</option>
+            </select>
+            <input type="text" id="d-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px;display:none"/>
+          </div>
+        </div>
+
       </div>
-      <div class="field">
-        <label>Grupo WhatsApp <span class="tag">selecione ou digite o ID manualmente</span></label>
-        <select id="d-grupo-select" onchange="onGrupoSelectChange()" style="margin-bottom:6px">
-          <option value="">— Selecione um grupo —</option>
-          <optgroup label="Travel Concierge">
-            <option value="120363403530027688@g.us">Travel Concierge - Amira</option>
-            <option value="120363391949368669@g.us">Travel Concierge - Arthur</option>
-            <option value="120363405557831632@g.us">Travel Concierge - Carla e André</option>
-            <option value="120363403495509280@g.us">Travel Concierge - Cinthia e Humberto</option>
-            <option value="120363408402238452@g.us">Travel Concierge - Daniel e Suelen</option>
-            <option value="120363418603292365@g.us">Travel Concierge - Débora e Irfeo</option>
-            <option value="120363424713170391@g.us">Travel Concierge - Diego Leoni</option>
-            <option value="120363419998992026@g.us">Travel Concierge - Diogo e Lorena</option>
-            <option value="120363405775845661@g.us">Travel Concierge - Givaldo</option>
-            <option value="120363390104440020@g.us">Travel Concierge - Goretti</option>
-            <option value="120363407463456235@g.us">Travel Concierge - José Neto</option>
-            <option value="120363393447170875@g.us">Travel Concierge - Kelciane</option>
-            <option value="120363408631839521@g.us">Travel Concierge - Khiara</option>
-            <option value="120363425444238129@g.us">Travel Concierge - Leo e Gabi</option>
-            <option value="120363425819885696@g.us">Travel Concierge - Leo e Rafa</option>
-            <option value="120363427304739979@g.us">Travel Concierge - Marisa</option>
-            <option value="120363401712706212@g.us">Travel Concierge - Miguel e Maria</option>
-            <option value="120363423899202830@g.us">Travel Concierge - Oswaldo e Mônica</option>
-            <option value="120363421301140271@g.us">Travel Concierge - Rodolpho</option>
-            <option value="120363408346115371@g.us">Travel Concierge - Rosângela</option>
-            <option value="120363425716567102@g.us">Travel Concierge - Samyr</option>
-            <option value="120363391338103142@g.us">Travel Concierge - Saulo</option>
-            <option value="120363408241513231@g.us">Travel Concierge - Silas</option>
-            <option value="120363402469493674@g.us">Travel Concierge (Alan e Rennata)</option>
-            <option value="120363392093867579@g.us">Travel Concierge (Camilla e Letícia)</option>
-            <option value="120363399938696504@g.us">Travel Concierge (Gina)</option>
-            <option value="120363402546094470@g.us">Travel Concierge (Rachel e Mateus)</option>
-            <option value="120363416414594773@g.us">Travel Concierge (Renata, Vania e Maisa)</option>
-          </optgroup>
-          <option value="__manual__">✏️ Digitar ID manualmente…</option>
-        </select>
-        <input type="text" id="d-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px;display:none"/>
+
+      <!-- COLUNA DIREITA: Mensagem + Enviar -->
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">💬 Mensagem</div>
+        <div class="field">
+          <label>Pré-visualização <span class="tag">editável antes de enviar</span></label>
+          <textarea id="d-msg-final" rows="14" style="min-height:320px;font-size:13px;line-height:1.8" placeholder="Selecione modelo e cliente para gerar a mensagem…"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-accent" style="flex:1" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
+          <button class="btn btn-ghost btn-sm" onclick="copiarDisparar()">📋 Copiar</button>
+        </div>
+        <p id="d-send-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
       </div>
-      <div class="btn-row">
-        <button class="btn btn-accent" style="flex:1" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
-        <button class="btn btn-ghost btn-sm" onclick="copiarDisparar()">📋 Copiar</button>
-      </div>
-      <p id="d-send-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
-    </div>
+
+    </div><!-- /grid 2 colunas -->
 
   </div>
 
