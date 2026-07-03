@@ -1247,6 +1247,7 @@ function setFilter(el) {
 
 function renderReservas() {
   loadReservas();
+  updateStats();
   var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
   var hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   var list = reservas.filter(function(r){
@@ -1321,6 +1322,7 @@ function confirmarDelete() {
   reservas = reservas.filter(function(r){ return r.id !== deleteTargetId; });
   saveReservas();
   closeModal('modal-delete');
+  updateStats();
   renderReservas();
   showToast('🗑 Reserva excluída', 'ok');
 }
