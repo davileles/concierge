@@ -1281,7 +1281,11 @@ function renderReservas() {
   list.sort(function(a, b) {
     var da = a.dataIda || a.checkin || a.retData || a.dataPasseio || a.cadastro || '';
     var db = b.dataIda || b.checkin || b.retData || b.dataPasseio || b.cadastro || '';
-    return da < db ? -1 : da > db ? 1 : 0;
+    if (da !== db) return da < db ? -1 : 1;
+    // Desempate por horário de partida
+    var ha = a.horaPartida || a.horaPasseio || '';
+    var hb = b.horaPartida || b.horaPasseio || '';
+    return ha < hb ? -1 : ha > hb ? 1 : 0;
   });
 
   grid.innerHTML = list.map(function(r){
