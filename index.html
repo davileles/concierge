@@ -355,6 +355,10 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Horário de Chegada — Volta</label><input type="time" id="f-hora-chegada-volta"/></div>
         <div class="field"><label>Nº do Voo — Volta <span class="tag">opcional</span></label><input type="text" id="f-nvoo-volta" placeholder="Ex: LA8003"/></div>
       </div>
+      <div class="field">
+        <label>Conexão — Volta <span class="tag">opcional — cidade/aeroporto de escala</span></label>
+        <div class="iata-wrap"><input type="text" id="f-conexao-volta" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div>
+      </div>
       <div class="sep" style="margin:10px 0 12px"></div>
       </div>
       <div class="g3">
@@ -961,7 +965,7 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
    'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -1143,6 +1147,7 @@ function salvarReserva() {
       dataVolta: getVal('f-data-volta'),
       ciaVolta: getVal('f-cia-volta'), nvooVolta: getVal('f-nvoo-volta'),
       horaPartidaVolta: getVal('f-hora-partida-volta'), horaChegadaVolta: getVal('f-hora-chegada-volta'),
+      conexaoVolta: getVal('f-conexao-volta'),
       classe: getVal('f-classe'), pnr: getVal('f-pnr'),
       valor: getVal('f-valor'), programa: getVal('f-programa'),
       milhas: getVal('f-milhas'), pax: getVal('f-pax'),
@@ -1200,6 +1205,7 @@ function resCols(r) {
     ['Origem → Destino', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
     ['Cliente', r.cliente],
     ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
+    ['Volta', r.dataVolta?(fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:'')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':'')):null],
     ['Cia Aérea', r.ciaIda||r.cia||'—'],
     ['Localizador', r.pnr||'—'],
   ];
@@ -1348,6 +1354,7 @@ function editarReserva(id) {
     setVal('f-data-volta',r.dataVolta);
     setVal('f-cia-volta',r.ciaVolta); setVal('f-nvoo-volta',r.nvooVolta);
     setVal('f-hora-partida-volta',r.horaPartidaVolta); setVal('f-hora-chegada-volta',r.horaChegadaVolta);
+    setVal('f-conexao-volta',r.conexaoVolta||'');
     setVal('f-classe',r.classe); setVal('f-pnr',r.pnr);
     setVal('f-valor',r.valor); setVal('f-programa',r.programa);
     setVal('f-milhas',r.milhas); setVal('f-pax',r.pax);
