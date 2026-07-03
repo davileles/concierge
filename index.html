@@ -338,7 +338,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <div class="sep" style="margin:10px 0 4px"></div>
       <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">↩️ Voo de Volta <span class="tag" style="text-transform:none">opcional</span></p>
       <div class="g2">
+        <div class="field"><label>Origem da Volta <span class="tag">se diferente do destino da ida</span></label><div class="iata-wrap"><input type="text" id="f-origem-volta" placeholder="Ex: DUS ou Düsseldorf" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
         <div class="field"><label>Data de Volta</label><input type="date" id="f-data-volta"/></div>
+      </div>
+      <div class="g2">
+        <div class="field" style="display:none"><label></label><input type="text" style="display:none"/></div>
+      </div>
+      <div class="g2">
         <div class="field"><label>Cia Aérea — Volta</label>
           <select id="f-cia-volta">
             <option value="">Selecione…</option>
@@ -951,7 +957,7 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
    'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -1085,6 +1091,7 @@ function aplicarDadosAtivo(d) {
   sv('f-conexao', d.conexao);
   sv('f-data-volta', d.dataVolta); sv('f-hora-partida-volta', d.horaPartidaVolta); sv('f-hora-chegada-volta', d.horaChegadaVolta);
   ssv('f-cia-volta', d.ciaVolta); sv('f-nvoo-volta', d.nvooVolta);
+  sv('f-origem-volta', d.origemVolta);
   sv('f-conexao-volta', d.conexaoVolta);
   ssv('f-classe', d.classe); sv('f-pnr', d.pnr); sv('f-pax', d.pax);
   ssv('f-programa', d.programa); sv('f-milhas', d.milhas); sv('f-valor', d.valor);
@@ -1134,6 +1141,7 @@ function salvarReserva() {
       conexao: getVal('f-conexao'),
       dataVolta: getVal('f-data-volta'),
       ciaVolta: getVal('f-cia-volta'), nvooVolta: getVal('f-nvoo-volta'),
+      origemVolta: getVal('f-origem-volta'),
       horaPartidaVolta: getVal('f-hora-partida-volta'), horaChegadaVolta: getVal('f-hora-chegada-volta'),
       conexaoVolta: getVal('f-conexao-volta'),
       classe: getVal('f-classe'), pnr: getVal('f-pnr'),
@@ -1193,7 +1201,7 @@ function resCols(r) {
     ['Origem → Destino', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
     ['Cliente', r.cliente],
     ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
-    ['Volta', r.dataVolta?(fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:'')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':'')):null],
+    ['Volta', r.dataVolta?(( r.origemVolta ? r.origemVolta+' → '+(r.destino||'?')+' · ' : '')+fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:'')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':'')):null],
     ['Cia Aérea', r.ciaIda||r.cia||'—'],
     ['Localizador', r.pnr||'—'],
   ];
@@ -1342,6 +1350,7 @@ function editarReserva(id) {
     setVal('f-conexao',r.conexao||'');
     setVal('f-data-volta',r.dataVolta);
     setVal('f-cia-volta',r.ciaVolta); setVal('f-nvoo-volta',r.nvooVolta);
+    setVal('f-origem-volta',r.origemVolta||'');
     setVal('f-hora-partida-volta',r.horaPartidaVolta); setVal('f-hora-chegada-volta',r.horaChegadaVolta);
     setVal('f-conexao-volta',r.conexaoVolta||'');
     setVal('f-classe',r.classe); setVal('f-pnr',r.pnr);
