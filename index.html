@@ -1298,7 +1298,7 @@ function renderReservas() {
         '</div>'+
       '</div>'+
       '<div class="res-card-body">'+
-        cols.map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
+        cols.filter(function(c){ return c[1] !== null && c[1] !== undefined && c[1] !== ''; }).map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
       '</div>'+
       '<div class="res-card-footer">'+
         '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+'</span>'+
