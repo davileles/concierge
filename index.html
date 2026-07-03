@@ -29,6 +29,20 @@ header{margin-bottom:2rem}
 .main-tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}
 .main-tab.active{background:var(--accent);color:#fff}
 .main-tab:not(.active):hover{color:var(--text)}
+.upload-ativo{border:2px dashed var(--border2);border-radius:12px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative}
+.upload-ativo:hover,.upload-ativo.drag{border-color:var(--accent);background:rgba(255,88,94,.05)}
+.upload-ativo input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-ativo-icon{font-size:28px;margin-bottom:6px}
+.upload-ativo-label{font-size:12px;font-weight:700;color:var(--muted);letter-spacing:.3px}
+.upload-ativo-sub{font-size:11px;color:var(--muted2);margin-top:4px}
+.upload-preview{display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-top:10px}
+.upload-preview-icon{font-size:22px;flex-shrink:0}
+.upload-preview-name{font-size:12px;font-weight:700;color:var(--text);flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.upload-preview-remove{font-size:16px;color:var(--muted2);cursor:pointer;flex-shrink:0;padding:2px 6px;border-radius:6px;transition:color .15s}
+.upload-preview-remove:hover{color:var(--accent)}
+.upload-lendo{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--yellow);margin-top:10px}
+.upload-lendo-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
 .mode-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:1.4rem}
 .mode-tab{flex:1;padding:10px 8px;border:none;background:transparent;color:var(--muted);font-family:var(--font);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;border-radius:9px;cursor:pointer;transition:background .15s,color .15s}
 .mode-tab.active{background:var(--accent);color:#fff}
@@ -453,6 +467,27 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <input type="date" id="f-cadastro" readonly style="opacity:.6"/>
       </div>
     </div>
+
+    <!-- UPLOAD DE ATIVO -->
+    <div class="field">
+      <label>📎 Ativo da Reserva <span class="tag">imagem ou PDF — leitura automática com IA</span></label>
+      <div class="upload-ativo" id="upload-ativo-drop"
+           ondragover="event.preventDefault();this.classList.add('drag')"
+           ondragleave="this.classList.remove('drag')"
+           ondrop="onAtivoDrop(event)">
+        <input type="file" id="upload-ativo-input" accept="image/*,.pdf" onchange="onAtivoChange(event)"/>
+        <div class="upload-ativo-icon">📄</div>
+        <div class="upload-ativo-label">Clique para selecionar ou arraste aqui</div>
+        <div class="upload-ativo-sub">Imagem (PNG, JPG, WEBP) ou PDF • a IA lê e preenche os campos automaticamente</div>
+      </div>
+      <div id="upload-preview" style="display:none"></div>
+      <div id="upload-lendo" style="display:none" class="upload-lendo">
+        <div class="upload-lendo-dot"></div>
+        <span>Lendo arquivo com IA…</span>
+      </div>
+      <p id="upload-ok" style="font-size:12px;font-weight:700;margin-top:8px;min-height:14px;color:#22c55e"></p>
+    </div>
+
     <div class="field">
       <label>Observações <span class="tag">opcional</span></label>
       <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
@@ -934,6 +969,204 @@ function getVal(id) {
 function setVal(id, v) {
   var el = document.getElementById(id);
   if (el) el.value = v;
+}
+
+// ── UPLOAD DE ATIVO ────────────────────────────────────────
+var ativoArquivo = null;
+
+function onAtivoDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-ativo-drop').classList.remove('drag');
+  var file = e.dataTransfer.files[0];
+  if (file) processarAtivo(file);
+}
+
+function onAtivoChange(e) {
+  var file = e.target.files[0];
+  if (file) processarAtivo(file);
+}
+
+function processarAtivo(file) {
+  ativoArquivo = file;
+  var icon = file.type === 'application/pdf' ? '📄' : '🖼️';
+  document.getElementById('upload-preview').style.display = 'flex';
+  document.getElementById('upload-preview').innerHTML =
+    '<div class="upload-preview">' +
+    '<span class="upload-preview-icon">' + icon + '</span>' +
+    '<span class="upload-preview-name">' + file.name + '</span>' +
+    '<span class="upload-preview-remove" onclick="removerAtivo()" title="Remover">✕</span>' +
+    '</div>';
+  document.getElementById('upload-ok').textContent = '';
+  lerAtivoComIA(file);
+}
+
+function removerAtivo() {
+  ativoArquivo = null;
+  document.getElementById('upload-preview').style.display = 'none';
+  document.getElementById('upload-preview').innerHTML = '';
+  document.getElementById('upload-ativo-input').value = '';
+  document.getElementById('upload-ok').textContent = '';
+}
+
+function lerAtivoComIA(file) {
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var base64 = e.target.result.split(',')[1];
+    var mediaType = file.type || 'image/jpeg';
+    var isPdf = file.type === 'application/pdf';
+
+    document.getElementById('upload-lendo').style.display = 'flex';
+    document.getElementById('upload-ok').textContent = '';
+
+    var tipoCampos = '';
+    var tipoSel = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
+    if (tipoSel === 'voo') tipoCampos = 'passagem aérea';
+    else if (tipoSel === 'hotel') tipoCampos = 'hospedagem';
+    else if (tipoSel === 'carro') tipoCampos = 'aluguel de carro';
+    else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
+    else tipoCampos = 'reserva de viagem';
+
+    var prompt = 'Você é um assistente de extração de dados de documentos de viagem. ' +
+      'Analise este documento (' + (isPdf ? 'PDF' : 'imagem') + ') que é um comprovante de ' + tipoCampos + '. ' +
+      'Extraia TODOS os dados relevantes e retorne SOMENTE um JSON válido (sem markdown, sem explicação) no seguinte formato:\n' +
+      '{\n' +
+      '  "tipo": "voo|hotel|carro|passeio",\n' +
+      '  "origem": "",\n' +
+      '  "destino": "",\n' +
+      '  "dataIda": "YYYY-MM-DD",\n' +
+      '  "horaPartida": "HH:MM",\n' +
+      '  "horaChegada": "HH:MM",\n' +
+      '  "ciaIda": "",\n' +
+      '  "nvooIda": "",\n' +
+      '  "dataVolta": "YYYY-MM-DD",\n' +
+      '  "horaPartidaVolta": "HH:MM",\n' +
+      '  "horaChegadaVolta": "HH:MM",\n' +
+      '  "ciaVolta": "",\n' +
+      '  "nvooVolta": "",\n' +
+      '  "classe": "",\n' +
+      '  "pnr": "",\n' +
+      '  "pax": "",\n' +
+      '  "programa": "",\n' +
+      '  "milhas": "",\n' +
+      '  "valor": "",\n' +
+      '  "hotelNome": "",\n' +
+      '  "hotelDestino": "",\n' +
+      '  "hotelQuarto": "",\n' +
+      '  "checkin": "YYYY-MM-DD",\n' +
+      '  "checkout": "YYYY-MM-DD",\n' +
+      '  "noites": "",\n' +
+      '  "hospedes": "",\n' +
+      '  "hotelConf": "",\n' +
+      '  "regime": "",\n' +
+      '  "hotelValor": "",\n' +
+      '  "locadora": "",\n' +
+      '  "carroCat": "",\n' +
+      '  "retLocal": "",\n' +
+      '  "devLocal": "",\n' +
+      '  "retData": "YYYY-MM-DD",\n' +
+      '  "devData": "YYYY-MM-DD",\n' +
+      '  "carroConf": "",\n' +
+      '  "carroValor": "",\n' +
+      '  "passeioNome": "",\n' +
+      '  "passeioDest": "",\n' +
+      '  "passeioOp": "",\n' +
+      '  "passeioData": "YYYY-MM-DD",\n' +
+      '  "passeioHora": "HH:MM",\n' +
+      '  "passeioPax": "",\n' +
+      '  "passeioConf": "",\n' +
+      '  "passeioValor": "",\n' +
+      '  "obs": ""\n' +
+      '}\nPreencha apenas os campos que existem no documento. Deixe vazio o que não encontrar.';
+
+    var body = {
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1000,
+      messages: [{
+        role: 'user',
+        content: [
+          isPdf
+            ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
+            : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+          { type: 'text', text: prompt }
+        ]
+      }]
+    };
+
+    fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      document.getElementById('upload-lendo').style.display = 'none';
+      var texto = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
+      texto = texto.replace(/```json|```/g, '').trim();
+      try {
+        var d = JSON.parse(texto);
+        aplicarDadosAtivo(d);
+        document.getElementById('upload-ok').style.color = '#22c55e';
+        document.getElementById('upload-ok').textContent = '✅ Dados extraídos e preenchidos automaticamente!';
+      } catch(err) {
+        document.getElementById('upload-ok').style.color = 'var(--accent)';
+        document.getElementById('upload-ok').textContent = '⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.';
+        console.error('Parse erro:', texto);
+      }
+    })
+    .catch(function(err) {
+      document.getElementById('upload-lendo').style.display = 'none';
+      document.getElementById('upload-ok').style.color = 'var(--accent)';
+      document.getElementById('upload-ok').textContent = '❌ Erro ao conectar com a IA.';
+      console.error(err);
+    });
+  };
+  reader.readAsDataURL(file);
+}
+
+function aplicarDadosAtivo(d) {
+  function sv(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; }
+  function ssv(id, val) {
+    var el = document.getElementById(id);
+    if (!el || !val) return;
+    for (var i = 0; i < el.options.length; i++) {
+      if (el.options[i].value.toLowerCase() === val.toLowerCase() ||
+          el.options[i].text.toLowerCase().includes(val.toLowerCase())) {
+        el.selectedIndex = i; return;
+      }
+    }
+    el.value = val;
+  }
+
+  if (d.tipo) { ssv('f-tipo', d.tipo); onTipoChange(); }
+
+  // Voo
+  sv('f-origem', d.origem); sv('f-destino', d.destino);
+  sv('f-data-ida', d.dataIda); sv('f-hora-partida', d.horaPartida); sv('f-hora-chegada', d.horaChegada);
+  ssv('f-cia-ida', d.ciaIda); sv('f-nvoo-ida', d.nvooIda);
+  sv('f-data-volta', d.dataVolta); sv('f-hora-partida-volta', d.horaPartidaVolta); sv('f-hora-chegada-volta', d.horaChegadaVolta);
+  ssv('f-cia-volta', d.ciaVolta); sv('f-nvoo-volta', d.nvooVolta);
+  ssv('f-classe', d.classe); sv('f-pnr', d.pnr); sv('f-pax', d.pax);
+  ssv('f-programa', d.programa); sv('f-milhas', d.milhas); sv('f-valor', d.valor);
+
+  // Hotel
+  sv('f-hotel-nome', d.hotelNome); sv('f-hotel-destino', d.hotelDestino); sv('f-hotel-quarto', d.hotelQuarto);
+  sv('f-checkin', d.checkin); sv('f-checkout', d.checkout); sv('f-noites', d.noites);
+  sv('f-hospedes', d.hospedes); sv('f-hotel-conf', d.hotelConf);
+  ssv('f-regime', d.regime); sv('f-hotel-valor', d.hotelValor);
+
+  // Carro
+  sv('f-locadora', d.locadora); sv('f-carro-cat', d.carroCat);
+  sv('f-ret-local', d.retLocal); sv('f-dev-local', d.devLocal);
+  sv('f-ret-data', d.retData); sv('f-dev-data', d.devData);
+  sv('f-carro-conf', d.carroConf); sv('f-carro-valor', d.carroValor);
+
+  // Passeio
+  sv('f-passeio-nome', d.passeioNome); sv('f-passeio-dest', d.passeioDest); sv('f-passeio-op', d.passeioOp);
+  sv('f-passeio-data', d.passeioData); sv('f-passeio-hora', d.passeioHora);
+  sv('f-passeio-pax', d.passeioPax); sv('f-passeio-conf', d.passeioConf); sv('f-passeio-valor', d.passeioValor);
+
+  // Obs
+  if (d.obs) sv('f-obs', d.obs);
 }
 
 function salvarReserva() {
