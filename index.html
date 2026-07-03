@@ -1025,58 +1025,6 @@ function lerAtivoComIA(file) {
     else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
     else tipoCampos = 'reserva de viagem';
 
-    var prompt = 'Você é um assistente de extração de dados de documentos de viagem. ' +
-      'Analise este documento (' + (isPdf ? 'PDF' : 'imagem') + ') que é um comprovante de ' + tipoCampos + '. ' +
-      'Extraia TODOS os dados relevantes e retorne SOMENTE um JSON válido (sem markdown, sem explicação) no seguinte formato:\n' +
-      '{\n' +
-      '  "tipo": "voo|hotel|carro|passeio",\n' +
-      '  "origem": "",\n' +
-      '  "destino": "",\n' +
-      '  "dataIda": "YYYY-MM-DD",\n' +
-      '  "horaPartida": "HH:MM",\n' +
-      '  "horaChegada": "HH:MM",\n' +
-      '  "ciaIda": "",\n' +
-      '  "nvooIda": "",\n' +
-      '  "dataVolta": "YYYY-MM-DD",\n' +
-      '  "horaPartidaVolta": "HH:MM",\n' +
-      '  "horaChegadaVolta": "HH:MM",\n' +
-      '  "ciaVolta": "",\n' +
-      '  "nvooVolta": "",\n' +
-      '  "classe": "",\n' +
-      '  "pnr": "",\n' +
-      '  "pax": "",\n' +
-      '  "programa": "",\n' +
-      '  "milhas": "",\n' +
-      '  "valor": "",\n' +
-      '  "hotelNome": "",\n' +
-      '  "hotelDestino": "",\n' +
-      '  "hotelQuarto": "",\n' +
-      '  "checkin": "YYYY-MM-DD",\n' +
-      '  "checkout": "YYYY-MM-DD",\n' +
-      '  "noites": "",\n' +
-      '  "hospedes": "",\n' +
-      '  "hotelConf": "",\n' +
-      '  "regime": "",\n' +
-      '  "hotelValor": "",\n' +
-      '  "locadora": "",\n' +
-      '  "carroCat": "",\n' +
-      '  "retLocal": "",\n' +
-      '  "devLocal": "",\n' +
-      '  "retData": "YYYY-MM-DD",\n' +
-      '  "devData": "YYYY-MM-DD",\n' +
-      '  "carroConf": "",\n' +
-      '  "carroValor": "",\n' +
-      '  "passeioNome": "",\n' +
-      '  "passeioDest": "",\n' +
-      '  "passeioOp": "",\n' +
-      '  "passeioData": "YYYY-MM-DD",\n' +
-      '  "passeioHora": "HH:MM",\n' +
-      '  "passeioPax": "",\n' +
-      '  "passeioConf": "",\n' +
-      '  "passeioValor": "",\n' +
-      '  "obs": ""\n' +
-      '}\nPreencha apenas os campos que existem no documento. Deixe vazio o que não encontrar.';
-
     fetch('https://cdv-proxy-production.up.railway.app/ia/extrair-reserva', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
