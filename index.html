@@ -1077,30 +1077,21 @@ function lerAtivoComIA(file) {
       '  "obs": ""\n' +
       '}\nPreencha apenas os campos que existem no documento. Deixe vazio o que não encontrar.';
 
-    var body = {
-      model: 'claude-sonnet-4-6',
-      max_tokens: 1000,
-      messages: [{
-        role: 'user',
-        content: [
-          isPdf
-            ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64 } }
-            : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
-          { type: 'text', text: prompt }
-        ]
-      }]
-    };
-
-    fetch('https://api.anthropic.com/v1/messages', {
+    fetch('https://cdv-proxy-production.up.railway.app/ia/extrair-reserva', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        base64: base64,
+        mediaType: mediaType,
+        isPdf: isPdf,
+        tipoCampos: tipoCampos
+      })
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       document.getElementById('upload-lendo').style.display = 'none';
-      var texto = (data.content && data.content[0] && data.content[0].text) ? data.content[0].text : '';
-      texto = texto.replace(/```json|```/g, '').trim();
+      if (!data.ok) throw new Error(data.erro || 'Erro desconhecido');
+      var texto = data.texto || '';
       try {
         var d = JSON.parse(texto);
         aplicarDadosAtivo(d);
@@ -1115,7 +1106,7 @@ function lerAtivoComIA(file) {
     .catch(function(err) {
       document.getElementById('upload-lendo').style.display = 'none';
       document.getElementById('upload-ok').style.color = 'var(--accent)';
-      document.getElementById('upload-ok').textContent = '❌ Erro ao conectar com a IA.';
+      document.getElementById('upload-ok').textContent = '❌ Erro ao conectar com a IA: ' + err.message;
       console.error(err);
     });
   };
