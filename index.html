@@ -211,17 +211,9 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="brand">
       <span class="brand-name">Travel Concierge</span>
       <span class="brand-sub">Painel de Gestão</span>
-      <span class="subtitle">Gerencie reservas e clientes do serviço concierge.</span>
     </div>
   </div>
 </header>
-
-<!-- SYNC BAR -->
-<div class="sync-bar">
-  <div class="sync-dot" id="sync-dot"></div>
-  <span id="sync-label">Configurando conexão com Google Sheets…</span>
-  <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="syncClientes()">🔄 Sincronizar</button>
-</div>
 
 <!-- TABS -->
 <div class="main-tabs">
@@ -509,6 +501,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
      ABA: CLIENTES
 ══════════════════════════════════════════ -->
 <div class="main-panel" id="panel-clientes">
+  <div class="sync-bar" style="margin-bottom:1rem">
+    <div class="sync-dot" id="sync-dot"></div>
+    <span id="sync-label">Configurando conexão com Google Sheets…</span>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="syncClientes()">🔄 Sincronizar</button>
+  </div>
   <div class="reservas-header">
     <span class="reservas-count" id="cli-count-label">0 clientes</span>
     <div class="search-bar">
@@ -522,6 +519,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
      ABA: CONFIGURAÇÃO
 ══════════════════════════════════════════ -->
 <div class="main-panel" id="panel-config">
+  <div class="sync-bar" style="margin-bottom:1rem" id="baileys-bar">
+    <div class="sync-dot" id="baileys-dot"></div>
+    <span id="baileys-label">Verificando conexão com Baileys…</span>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="verificarBaileys()">🔄 Verificar</button>
+  </div>
   <div class="card">
     <div class="card-title">⚙️ Configuração do Google Sheets</div>
     <div class="settings-row">
@@ -621,13 +623,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
      ABA: MENSAGENS
 ══════════════════════════════════════════ -->
 <div class="main-panel" id="panel-mensagens">
-
-  <!-- STATUS BAILEYS -->
-  <div class="sync-bar" id="baileys-bar">
-    <div class="sync-dot" id="baileys-dot"></div>
-    <span id="baileys-label">Verificando conexão com Baileys…</span>
-    <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="verificarBaileys()">🔄 Verificar</button>
-  </div>
 
   <!-- SUB-TABS -->
   <div class="mode-tabs" style="margin-bottom:1.2rem">
