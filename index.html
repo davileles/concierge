@@ -16,7 +16,7 @@
   --r:10px;--font:'Montserrat',sans-serif;
 }
 body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding:0}
-.wrap{width:100%;max-width:1200px;margin:0 auto;padding:1rem 1.5rem 4rem;box-sizing:border-box}
+.wrap{width:100%;max-width:1200px;margin:0 auto;padding:1.2rem 1.5rem 4rem;box-sizing:border-box}
 header{background:var(--surface);border-bottom:3px solid var(--accent);padding:14px 22px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .logo-row{display:flex;align-items:center;gap:14px}
 .brand{display:flex;flex-direction:column;gap:2px}
@@ -1187,7 +1187,11 @@ var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚗 Carro', pas
 var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio' };
 
 function resTitle(r) {
-  if (r.tipo==='voo')     return (r.origem||'?') + ' → ' + (r.destino||'?');
+  if (r.tipo==='voo') {
+    var ida = (r.origem||'?') + ' → ' + (r.destino||'?');
+    var volta = r.dataVolta ? ' / ' + (r.origemVolta||r.destino||'?') + ' → ' + (r.destinoVolta||r.origem||'?') : '';
+    return ida + volta;
+  }
   if (r.tipo==='hotel')   return r.hotelNome || r.destino || 'Hotel';
   if (r.tipo==='carro')   return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
   if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
@@ -1196,10 +1200,11 @@ function resTitle(r) {
 
 function resCols(r) {
   if (r.tipo==='voo') return [
-    ['Origem → Destino', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
+    ['Ida', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
     ['Cliente', r.cliente],
     ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
-    ['Volta', r.dataVolta?((r.origemVolta||r.destinoVolta)?(r.origemVolta||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':'')+' · '+fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:'')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':'')):null],
+    ['Volta', r.dataVolta?(r.origemVolta||r.destino||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':''):null],
+    ['Data / Hora Volta', r.dataVolta?fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):null],
     ['Cia Aérea', r.ciaIda||r.cia||'—'],
     ['Localizador', r.pnr||'—'],
   ];
