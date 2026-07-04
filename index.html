@@ -1957,6 +1957,38 @@ document.addEventListener('click', function(e) {
   }
 });
 
+function onTipoEmissaoChange() {
+  var tipo = getVal('f-tipo-emissao');
+  var elMilhas  = document.getElementById('campos-milhas');
+  var elBalcao  = document.getElementById('campos-balcao');
+  var elTarifa  = document.getElementById('campo-tarifa');
+  if (elMilhas)  elMilhas.style.display  = tipo === 'milhas'  ? '' : 'none';
+  if (elBalcao)  elBalcao.style.display  = tipo === 'balcao'  ? '' : 'none';
+  if (elTarifa)  elTarifa.style.display  = (tipo === 'milhas' || tipo === 'balcao') ? '' : 'none';
+  if (tipo !== 'milhas')  { setVal('f-milhas-total',''); setVal('f-milhas',''); }
+  if (tipo !== 'balcao')  { setVal('f-valor-total-balcao',''); setVal('f-valor-pax-balcao',''); }
+  if (tipo === 'dinheiro') setVal('f-valor','');
+}
+
+function onMilhasChange() {
+  var raw   = (getVal('f-milhas-total') || '').replace(/\D/g, '');
+  var total = parseFloat(raw) || 0;
+  var pax   = parseInt(getVal('f-pax')) || 1;
+  setVal('f-milhas', total > 0 ? Math.round(total / pax).toLocaleString('pt-BR') : '');
+}
+
+function onValorBalcaoChange() {
+  var raw   = (getVal('f-valor-total-balcao') || '').replace(',', '.').replace(/[^\d.]/g, '');
+  var total = parseFloat(raw) || 0;
+  var pax   = parseInt(getVal('f-pax')) || 1;
+  setVal('f-valor-pax-balcao', total > 0 ? 'R$ ' + (total / pax).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '');
+}
+
+function onPaxChange() {
+  onMilhasChange();
+  onValorBalcaoChange();
+}
+
 function onGrupoSelectChange() {
   var sel = document.getElementById('d-grupo-select');
   var inp = document.getElementById('d-grupo');
