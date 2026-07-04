@@ -997,11 +997,19 @@ function colIndex(letra) {
 //  RESERVAS (localStorage)
 // ══════════════════════════════════════════
 function loadReservas() {
-  reservas = JSON.parse(localStorage.getItem('concierge_reservas') || '[]');
+  try { reservas = JSON.parse(sessionStorage.getItem('concierge_reservas') || '[]'); } catch(e) { reservas = []; }
 }
 
 function saveReservas() {
-  localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+  sessionStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:reservas})}).catch(function(e){console.error('[saveReservas]',e);});
+}
+
+function syncReservas() {
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas')
+    .then(function(r){return r.json();})
+    .then(function(d){if(d.ok){reservas=d.data||[];sessionStorage.setItem('concierge_reservas',JSON.stringify(reservas));renderReservas();}})
+    .catch(function(e){console.error('[syncReservas]',e);});
 }
 
 // ══════════════════════════════════════════
@@ -2106,12 +2114,19 @@ function onPaxChange() {
 }
 
 function loadViagens() {
-  try { viagens = JSON.parse(localStorage.getItem('concierge_viagens') || '[]'); }
-  catch(e) { viagens = []; }
+  try { viagens = JSON.parse(sessionStorage.getItem('concierge_viagens') || '[]'); } catch(e) { viagens = []; }
 }
 
 function saveViagens() {
-  localStorage.setItem('concierge_viagens', JSON.stringify(viagens));
+  sessionStorage.setItem('concierge_viagens', JSON.stringify(viagens));
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:viagens})}).catch(function(e){console.error('[saveViagens]',e);});
+}
+
+function syncViagens() {
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens')
+    .then(function(r){return r.json();})
+    .then(function(d){if(d.ok){viagens=d.data||[];sessionStorage.setItem('concierge_viagens',JSON.stringify(viagens));renderViagens();}})
+    .catch(function(e){console.error('[syncViagens]',e);});
 }
 
 function abrirNovaViagem() {
@@ -2395,8 +2410,8 @@ function copiarDisparar() {
 // ══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function(){
   loadCfg();
-  loadReservas();
-  loadViagens();
+  syncReservas();
+  syncViagens();
 
   // Data de hoje no form
   setVal('f-cadastro', new Date().toISOString().split('T')[0]);
