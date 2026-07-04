@@ -1135,16 +1135,24 @@ function colIndex(letra) {
 //  RESERVAS (localStorage)
 // ══════════════════════════════════════════
 function loadReservas() {
-  try {
-    // Usa apenas localStorage como cache offline — sessionStorage removido para evitar race condition
-    var l = localStorage.getItem('concierge_reservas');
-    reservas = (l && JSON.parse(l).length) ? JSON.parse(l) : [];
-  } catch(e) { reservas = []; }
+  // Apenas lê o array em memória — não usa localStorage como fonte
+  // Os dados autoritativos vêm sempre do syncReservas (servidor)
+  if (!reservas || !reservas.length) {
+    try {
+      var l = localStorage.getItem('concierge_reservas');
+      reservas = (l && JSON.parse(l).length) ? JSON.parse(l) : [];
+    } catch(e) { reservas = []; }
+  }
 }
 
 function saveReservas() {
+  // Salva localmente e no servidor
   localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
-  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:reservas})}).catch(function(e){console.error('[saveReservas]',e);});
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({data:reservas})
+  }).catch(function(e){console.error('[saveReservas]',e);});
 }
 
 function syncReservas() {
@@ -1152,20 +1160,20 @@ function syncReservas() {
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok){
-        // Servidor é a fonte da verdade — só aceita dados do servidor se tiver >= que o local
-        var local = [];
-        try { local = JSON.parse(localStorage.getItem('concierge_reservas')||'[]'); } catch(e){}
-        if (d.data.length >= local.length) {
-          reservas = d.data||[];
-          localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
-        } else {
-          // Local tem mais dados — salva o local no servidor (merge won't overwrite)
-          reservas = local;
-        }
+        // Servidor é sempre a fonte da verdade — sobrescreve tudo
+        reservas = d.data || [];
+        localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
         renderReservas();
       }
     })
-    .catch(function(e){console.error('[syncReservas]',e);});
+    .catch(function(e){
+      console.error('[syncReservas]',e);
+      // Fallback: usa localStorage se servidor falhar
+      try {
+        var l = localStorage.getItem('concierge_reservas');
+        if (l) { reservas = JSON.parse(l); renderReservas(); }
+      } catch(e2){}
+    });
 }
 
 // ══════════════════════════════════════════
@@ -1751,9 +1759,9 @@ function editarReserva(id) {
     setVal('f-passeio-hora',r.hora); setVal('f-passeio-pax',r.pax);
     setVal('f-passeio-conf',r.conf); setVal('f-passeio-valor',r.valor);
   }
-  // Remove o antigo e vai salvar um novo ao submeter
+  // Remove o antigo da memória — o save no servidor acontece ao submeter o formulário
   reservas = reservas.filter(function(x){ return x.id!==id; });
-  saveReservas();
+  localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
   showToast('✏️ Editando reserva — salve para confirmar', 'ok');
 }
 
