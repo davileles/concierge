@@ -332,7 +332,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
     <div class="g2">
       <div class="field">
-        <label>Tipo de Reserva</label>
+        <label>Tipo de Reserva <span style="color:var(--accent)">*</span></label>
         <select id="f-tipo" onchange="onTipoChange()">
           <option value="">Selecione…</option>
           <option value="voo">✈️ Passagem Aérea</option>
@@ -342,7 +342,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         </select>
       </div>
       <div class="field">
-        <label>Cliente</label>
+        <label>Cliente <span style="color:var(--accent)">*</span></label>
         <select id="f-cliente">
           <option value="">Selecione o cliente…</option>
         </select>
@@ -356,12 +356,12 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <!-- VOO DE IDA -->
       <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✈️ Voo de Ida</p>
       <div class="g3">
-        <div class="field"><label>Origem</label><div class="iata-wrap"><input type="text" id="f-origem" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
-        <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="f-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
+        <div class="field"><label>Origem <span style="color:var(--accent)">*</span></label><div class="iata-wrap"><input type="text" id="f-origem" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
+        <div class="field"><label>Destino <span style="color:var(--accent)">*</span></label><div class="iata-wrap"><input type="text" id="f-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
         <div class="field"><label>Conexão <span class="tag">opcional</span></label><div class="iata-wrap"><input type="text" id="f-conexao" placeholder="Ex: CDG ou Paris" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data de Ida</label><input type="date" id="f-data-ida"/></div>
+        <div class="field"><label>Data de Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-ida"/></div>
         <div class="field"><label>Cia Aérea — Ida</label>
           <select id="f-cia-ida">
             <option value="">Selecione…</option>
@@ -375,8 +375,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         </div>
       </div>
       <div class="g3">
-        <div class="field"><label>Horário de Partida</label><input type="time" id="f-hora-partida"/></div>
-        <div class="field"><label>Horário de Chegada</label><input type="time" id="f-hora-chegada"/></div>
+        <div class="field"><label>Horário de Partida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-partida"/></div>
+        <div class="field"><label>Horário de Chegada <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-chegada"/></div>
         <div class="field"><label>Nº do Voo <span class="tag">opcional</span></label><input type="text" id="f-nvoo-ida" placeholder="Ex: LA8002"/></div>
       </div>
 
@@ -419,7 +419,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           </select>
         </div>
         <div class="field"><label>Localizador / PNR</label><input type="text" id="f-pnr" placeholder="Ex: ABC123"/></div>
-        <div class="field"><label>Tipo de Emissão</label>
+        <div class="field"><label>Tipo de Emissão <span style="color:var(--accent)">*</span></label>
           <select id="f-tipo-emissao" onchange="onTipoEmissaoChange()">
             <option value="">Selecione…</option>
             <option value="milhas">Milhas</option>
@@ -472,11 +472,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <!-- CAMPOS HOTEL -->
     <div id="fields-hotel" style="display:none">
       <div class="sep"></div>
-      <div class="field"><label>Nome do Hotel</label><input type="text" id="f-hotel-nome" placeholder="Ex: Grand Hyatt São Paulo"/></div>
+      <div class="field"><label>Nome do Hotel <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-nome" placeholder="Ex: Grand Hyatt São Paulo"/></div>
       <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="f-hotel-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       <div class="g3">
-        <div class="field"><label>Check-in</label><input type="date" id="f-checkin"/></div>
-        <div class="field"><label>Check-out</label><input type="date" id="f-checkout"/></div>
+        <div class="field"><label>Check-in <span style="color:var(--accent)">*</span></label><input type="date" id="f-checkin"/></div>
+        <div class="field"><label>Check-out <span style="color:var(--accent)">*</span></label><input type="date" id="f-checkout"/></div>
         <div class="field"><label>Nº de Noites</label><input type="number" id="f-noites" min="1" placeholder="Ex: 5"/></div>
       </div>
       <div class="g2">
@@ -498,16 +498,16 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div id="fields-carro" style="display:none">
       <div class="sep"></div>
       <div class="g2">
-        <div class="field"><label>Locadora</label><input type="text" id="f-locadora" placeholder="Ex: Localiza, Hertz"/></div>
+        <div class="field"><label>Locadora <span style="color:var(--accent)">*</span></label><input type="text" id="f-locadora" placeholder="Ex: Localiza, Hertz"/></div>
         <div class="field"><label>Categoria do Veículo</label><input type="text" id="f-carro-cat" placeholder="Ex: Econômico, SUV"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Local de Retirada</label><div class="iata-wrap"><input type="text" id="f-ret-local" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
+        <div class="field"><label>Local de Retirada <span style="color:var(--accent)">*</span></label><div class="iata-wrap"><input type="text" id="f-ret-local" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
         <div class="field"><label>Local de Devolução</label><div class="iata-wrap"><input type="text" id="f-dev-local" placeholder="Ex: GIG ou Rio de Janeiro" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g3">
-        <div class="field"><label>Data de Retirada</label><input type="date" id="f-ret-data"/></div>
-        <div class="field"><label>Data de Devolução</label><input type="date" id="f-dev-data"/></div>
+        <div class="field"><label>Data de Retirada <span style="color:var(--accent)">*</span></label><input type="date" id="f-ret-data"/></div>
+        <div class="field"><label>Data de Devolução <span style="color:var(--accent)">*</span></label><input type="date" id="f-dev-data"/></div>
         <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-carro-valor" placeholder="Ex: 1.200,00"/></div>
       </div>
       <div class="g2">
@@ -525,13 +525,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <!-- CAMPOS PASSEIO -->
     <div id="fields-passeio" style="display:none">
       <div class="sep"></div>
-      <div class="field"><label>Nome do Passeio / Atividade</label><input type="text" id="f-passeio-nome" placeholder="Ex: Passeio de barco pelas Ilhas Gregas"/></div>
+      <div class="field"><label>Nome do Passeio / Atividade <span style="color:var(--accent)">*</span></label><input type="text" id="f-passeio-nome" placeholder="Ex: Passeio de barco pelas Ilhas Gregas"/></div>
       <div class="g2">
         <div class="field"><label>Destino / Cidade</label><div class="iata-wrap"><input type="text" id="f-passeio-dest" placeholder="Ex: JTR ou Santorini" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
         <div class="field"><label>Fornecedor / Operadora</label><input type="text" id="f-passeio-op" placeholder="Ex: Get Your Guide"/></div>
       </div>
       <div class="g3">
-        <div class="field"><label>Data</label><input type="date" id="f-passeio-data"/></div>
+        <div class="field"><label>Data <span style="color:var(--accent)">*</span></label><input type="date" id="f-passeio-data"/></div>
         <div class="field"><label>Horário</label><input type="time" id="f-passeio-hora"/></div>
         <div class="field"><label>Nº de Participantes</label><input type="number" id="f-passeio-pax" min="1" placeholder="Ex: 3"/></div>
       </div>
@@ -600,8 +600,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   <div class="nova-viagem-form" id="nova-viagem-form" style="display:none">
     <div class="card-title" style="margin-bottom:1rem">🗺️ <span id="viagem-form-titulo">Nova Viagem</span></div>
     <div class="g2">
-      <div class="field"><label>Nome da Viagem</label><input type="text" id="vf-nome" placeholder="Ex: Europa Jul/2026"/></div>
-      <div class="field"><label>Cliente(s)</label>
+      <div class="field"><label>Nome da Viagem <span style="color:var(--accent)">*</span></label><input type="text" id="vf-nome" placeholder="Ex: Europa Jul/2026"/></div>
+      <div class="field"><label>Cliente(s) <span style="color:var(--accent)">*</span></label>
           <div class="cli-multiselect">
             <div class="cli-tags" id="vf-clientes-tags" onclick="document.getElementById('vf-clientes-input').focus()">
               <input type="text" id="vf-clientes-input" class="cli-tag-input" placeholder="Buscar cliente…"
