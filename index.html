@@ -1254,6 +1254,16 @@ function salvarReserva() {
   if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
   if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
 
+  // Validações específicas para voo
+  if (tipo === 'voo') {
+    if (!getVal('f-origem'))       { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
+    if (!getVal('f-destino'))      { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
+    if (!getVal('f-data-ida'))     { showToast('⚠️ Informe a Data de Ida', 'err'); return; }
+    if (!getVal('f-hora-partida')) { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
+    if (!getVal('f-hora-chegada')) { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
+    if (!getVal('f-tipo-emissao')) { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+  }
+
   var id = 'RES-' + Date.now();
   var res = {
     id: id,
