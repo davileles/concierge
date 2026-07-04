@@ -1643,7 +1643,7 @@ function switchTab(name) {
   document.getElementById('panel-'+name).classList.add('active');
   if (name === 'viagens') renderViagens();
   var tabs = document.querySelectorAll('.main-tab');
-  var map = {reservas:0, nova:1, viagens:2, clientes:2, mensagens:3, config:4};
+  var map = {reservas:0, nova:1, viagens:2, clientes:3, mensagens:4, config:5};
   if (name==='mensagens') { loadModelos(); initMensagens(); }
   if (tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name==='clientes') renderClientes();
