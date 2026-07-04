@@ -116,6 +116,20 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .filter-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.3px}
 .filter-chip.active,.filter-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
+/* MULTI-SELECT CLIENTES */
+.cli-multiselect{position:relative}
+.cli-tags{display:flex;flex-wrap:wrap;gap:4px;padding:6px 8px;min-height:38px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;cursor:text;align-items:center}
+.cli-tags:focus-within{border-color:var(--accent)}
+.cli-tag{display:inline-flex;align-items:center;gap:4px;background:rgba(255,88,94,.15);border:1px solid rgba(255,88,94,.3);color:var(--accent);font-size:11px;font-weight:700;padding:2px 8px;border-radius:12px}
+.cli-tag-x{cursor:pointer;font-size:14px;line-height:1;opacity:.7;margin-left:2px}
+.cli-tag-x:hover{opacity:1}
+.cli-tag-input{border:none;background:transparent;color:var(--text);font-family:var(--font);font-size:13px;outline:none;flex:1;min-width:120px;padding:2px 0}
+.cli-dropdown{position:absolute;top:calc(100% + 2px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;z-index:200;max-height:200px;overflow-y:auto;display:none;box-shadow:0 4px 16px rgba(0,0,0,.3)}
+.cli-dropdown.open{display:block}
+.cli-dropdown-item{padding:8px 12px;font-size:13px;cursor:pointer;color:var(--text)}
+.cli-dropdown-item:hover{background:rgba(255,88,94,.1);color:var(--accent)}
+.cli-dropdown-empty{padding:8px 12px;font-size:12px;color:var(--muted);font-style:italic}
+
 /* VIAGENS */
 .viagem-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:border-color .2s}
 .viagem-card.urgente{border-color:var(--accent)}
@@ -575,7 +589,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     <div class="card-title" style="margin-bottom:1rem">🗺️ <span id="viagem-form-titulo">Nova Viagem</span></div>
     <div class="g2">
       <div class="field"><label>Nome da Viagem</label><input type="text" id="vf-nome" placeholder="Ex: Europa Jul/2026"/></div>
-      <div class="field"><label>Cliente(s)</label><input type="text" id="vf-clientes" placeholder="Ex: Humberto e Maria"/></div>
+      <div class="field"><label>Cliente(s)</label>
+          <div class="cli-multiselect">
+            <div class="cli-tags" id="vf-clientes-tags" onclick="document.getElementById('vf-clientes-input').focus()">
+              <input type="text" id="vf-clientes-input" class="cli-tag-input" placeholder="Buscar cliente…"
+                oninput="cliFilter()" onkeydown="cliKeydown(event)"
+                onfocus="cliFilter()" onblur="setTimeout(cliClose,200)"/>
+            </div>
+            <div class="cli-dropdown" id="vf-clientes-dropdown"></div>
+          </div>
+          <input type="hidden" id="vf-clientes"/>
+        </div>
     </div>
     <div class="g2">
       <div class="field"><label>Data de Início</label><input type="date" id="vf-inicio"/></div>
@@ -2129,11 +2153,117 @@ function syncViagens() {
     .catch(function(e){console.error('[syncViagens]',e);});
 }
 
+// ── MULTI-SELECT CLIENTES ──────────────────────────────────────
+var cliSel = [];
+
+function cliSync() {
+  document.getElementById('vf-clientes').value = cliSel.map(function(c){return c.nome;}).join(', ');
+}
+
+function cliRenderTags() {
+  var container = document.getElementById('vf-clientes-tags');
+  var input = document.getElementById('vf-clientes-input');
+  container.querySelectorAll('.cli-tag').forEach(function(t){t.remove();});
+  cliSel.forEach(function(c) {
+    var tag = document.createElement('span');
+    tag.className = 'cli-tag';
+    tag.textContent = c.nome;
+    var x = document.createElement('span');
+    x.className = 'cli-tag-x';
+    x.textContent = '×';
+    x.dataset.nome = c.nome;
+    x.onclick = function(e) {
+      e.stopPropagation();
+      cliSel = cliSel.filter(function(s){return s.nome !== this.dataset.nome;}.bind(this));
+      cliRenderTags();
+      cliSync();
+    };
+    tag.appendChild(x);
+    container.insertBefore(tag, input);
+  });
+  input.placeholder = cliSel.length ? '' : 'Buscar cliente…';
+}
+
+function cliFilter() {
+  var q = (document.getElementById('vf-clientes-input').value||'').toLowerCase().trim();
+  var dd = document.getElementById('vf-clientes-dropdown');
+  var selecionados = cliSel.map(function(c){return c.nome;});
+  var lista = (clientes||[]).filter(function(c){
+    var nome = c.nome || c.Nome || '';
+    return nome && !selecionados.includes(nome) && (!q || nome.toLowerCase().includes(q));
+  }).slice(0,20);
+  if (!lista.length) {
+    dd.innerHTML = '<div class="cli-dropdown-empty">Nenhum cliente encontrado</div>';
+  } else {
+    dd.innerHTML = '';
+    lista.forEach(function(c){
+      var nome = c.nome || c.Nome || '';
+      var item = document.createElement('div');
+      item.className = 'cli-dropdown-item';
+      item.textContent = nome;
+      item.onmousedown = function(e) {
+        e.preventDefault();
+        if (!cliSel.find(function(s){return s.nome===nome;})) {
+          cliSel.push({nome:nome});
+          cliRenderTags();
+          cliSync();
+        }
+        document.getElementById('vf-clientes-input').value = '';
+        cliClose();
+        document.getElementById('vf-clientes-input').focus();
+      };
+      dd.appendChild(item);
+    });
+  }
+  dd.classList.add('open');
+}
+
+function cliClose() {
+  var dd = document.getElementById('vf-clientes-dropdown');
+  if (dd) dd.classList.remove('open');
+}
+
+function cliKeydown(e) {
+  if (e.key === 'Escape') { cliClose(); return; }
+  if (e.key === 'Backspace' && !e.target.value && cliSel.length) {
+    cliSel.pop();
+    cliRenderTags();
+    cliSync();
+    return;
+  }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    var first = document.querySelector('#vf-clientes-dropdown .cli-dropdown-item');
+    if (first) first.dispatchEvent(new MouseEvent('mousedown', {bubbles:true}));
+  }
+}
+
+function cliReset() {
+  cliSel = [];
+  cliRenderTags();
+  cliSync();
+  document.getElementById('vf-clientes-input').value = '';
+  cliClose();
+}
+
+function cliPreench(nomesStr) {
+  cliSel = [];
+  if (nomesStr) {
+    nomesStr.split(',').forEach(function(n){
+      n = n.trim();
+      if (n) cliSel.push({nome:n});
+    });
+  }
+  cliRenderTags();
+  cliSync();
+}
+
 function abrirNovaViagem() {
   viagemEditandoId = null;
   atividadesTemp = [];
   document.getElementById('viagem-form-titulo').textContent = 'Nova Viagem';
   ['vf-nome','vf-clientes','vf-inicio','vf-fim','vf-obs'].forEach(function(id){ setVal(id,''); });
+  cliReset();
   document.getElementById('vf-ok').textContent = '';
   renderAtividadesTemp();
   document.getElementById('nova-viagem-form').style.display = '';
@@ -2221,7 +2351,7 @@ function editarViagem(id) {
   viagemEditandoId = id;
   atividadesTemp = [];
   document.getElementById('viagem-form-titulo').textContent = 'Editar Viagem';
-  setVal('vf-nome', v.nome); setVal('vf-clientes', v.clientes);
+  setVal('vf-nome', v.nome); cliPreench(v.clientes||'');
   setVal('vf-inicio', v.inicio||''); setVal('vf-fim', v.fim||''); setVal('vf-obs', v.obs||'');
   document.getElementById('vf-ok').textContent = '';
   renderAtividadesTemp();
