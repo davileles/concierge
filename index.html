@@ -2137,7 +2137,10 @@ function abrirNovaViagem() {
   document.getElementById('vf-ok').textContent = '';
   renderAtividadesTemp();
   document.getElementById('nova-viagem-form').style.display = '';
-  document.getElementById('nova-viagem-form').scrollIntoView({behavior:'smooth', block:'start'});
+  // Scroll para o topo do panel de viagens para mostrar o form completo
+  var panel = document.getElementById('panel-viagens');
+  if (panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 
 function fecharNovaViagem() {
@@ -2239,6 +2242,39 @@ function toggleViagemBody(id) {
   if (body) body.classList.toggle('open');
 }
 
+function adicionarAtividadeViagem(id, icon, nome) {
+  var v = viagens.find(function(x){ return x.id === id; });
+  if (!v) return;
+  v.atividades = v.atividades || [];
+  v.atividades.push({icon: icon, nome: nome, status: 'pendente', reservaId: null});
+  saveViagens();
+  renderViagens();
+  // Manter o card expandido
+  setTimeout(function() {
+    var body = document.getElementById('vbody-' + id);
+    if (body) body.classList.add('open');
+  }, 100);
+}
+
+function adicionarAtividadeCustomViagem(id) {
+  var nome = prompt('Nome da atividade:');
+  if (!nome) return;
+  adicionarAtividadeViagem(id, '📌', nome);
+}
+
+function removerAtividade(viagemId, ativIdx) {
+  var v = viagens.find(function(x){ return x.id === viagemId; });
+  if (!v || !v.atividades[ativIdx]) return;
+  if (!confirm('Remover esta atividade?')) return;
+  v.atividades.splice(ativIdx, 1);
+  saveViagens();
+  renderViagens();
+  setTimeout(function() {
+    var body = document.getElementById('vbody-' + viagemId);
+    if (body) body.classList.add('open');
+  }, 100);
+}
+
 function ciclarStatus(viagemId, ativIdx) {
   var v = viagens.find(function(x){ return x.id === viagemId; });
   if (!v || !v.atividades[ativIdx]) return;
@@ -2316,6 +2352,7 @@ function renderViagens() {
           ? '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">🔗 '+resLabel+'</span>'
           : '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">Vincular reserva</span>',
         '<span class="ativ-status '+a.status+'"'+dVid+' onclick="ciclarStatus(this.dataset.vid,+this.dataset.idx)">'+statusLabel(a.status)+'</span>',
+        '<button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--muted2)"'+dVid+' onclick="removerAtividade(this.dataset.vid,+this.dataset.idx)">✕</button>',
         '</div>'
       ].join('');
     }).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhuma atividade.</p>';
@@ -2338,6 +2375,20 @@ function renderViagens() {
       '</div>',
       '<div class="viagem-body" id="vbody-',v.id,'">',
         ativsHtml,
+        '<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">',
+          '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Adicionar atividade</div>',
+          '<div style="display:flex;flex-wrap:wrap;gap:5px">',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'✈️\',\'Passagem Doméstica\')">✈️ Passagem Dom.</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🌍\',\'Passagem Internacional\')">🌍 Passagem Int.</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🏨\',\'Hotel\')">🏨 Hotel</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🛡️\',\'Seguro Viagem\')">🛡️ Seguro</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'💳\',\'Ativação Seguro Cartão\')">💳 Seg. Cartão</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🚗\',\'Aluguel de Carro\')">🚗 Carro</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🎯\',\'Passeio/Atividade\')">🎯 Passeio</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🗺️\',\'Roteiro Personalizado\')">🗺️ Roteiro</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeCustomViagem(this.dataset.vid)">➕ Outra</button>',
+          '</div>',
+        '</div>',
         '<div class="viagem-actions">',
           '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="editarViagem(this.dataset.vid)">✏️ Editar</button>',
           '<button class="btn btn-ghost btn-sm" style="color:var(--accent)"'+dVid2+' onclick="excluirViagem(this.dataset.vid)">🗑 Excluir</button>',
