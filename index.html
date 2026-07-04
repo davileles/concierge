@@ -117,7 +117,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .filter-chip.active,.filter-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 /* RESERVA CARD */
-.res-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px;transition:border-color .15s}
+.res-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:10px
+.res-card.urgente{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 4px 20px rgba(255,88,94,.18)}
+.res-card.urgente .res-card-header{background:rgba(255,88,94,.08)}
+.urgente-badge{display:inline-flex;align-items:center;gap:4px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;letter-spacing:.5px;padding:3px 8px;border-radius:20px;margin-left:8px;text-transform:uppercase;animation:urgente-pulse 2s infinite}
+@keyframes urgente-pulse{0%,100%{opacity:1}50%{opacity:.7}};transition:border-color .15s}
 .res-summary{display:flex;align-items:center;gap:12px;padding:14px 16px;cursor:pointer;border-bottom:1px solid var(--border);transition:background .15s}
 .res-summary:hover{background:rgba(255,255,255,.02)}
 .res-summary-main{flex:1;min-width:0}
@@ -1290,12 +1294,23 @@ function renderReservas() {
 
   grid.innerHTML = list.map(function(r){
     var cols = resCols(r);
-    return '<div class="res-card">'+
+    // Verificar se a reserva é nos próximos 7 dias
+    var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
+    var urgente = false;
+    var diasRestantes = null;
+    if (dataRef) {
+      var hoje = new Date(); hoje.setHours(0,0,0,0);
+      var dRef = new Date(dataRef + 'T00:00:00');
+      var diff = Math.round((dRef - hoje) / 86400000);
+      if (diff >= 0 && diff <= 7) { urgente = true; diasRestantes = diff; }
+    }
+    var urgenteBadge = urgente ? '<span class="urgente-badge">🔴 ' + (diasRestantes === 0 ? 'Hoje!' : diasRestantes === 1 ? 'Amanhã!' : 'Em ' + diasRestantes + ' dias') + '</span>' : '';
+    return '<div class="res-card' + (urgente ? ' urgente' : '') + '">'+
       '<div class="res-card-header">'+
         '<div class="type-icon '+TIPO_CLASS[r.tipo]+'">'+TIPO_LABEL[r.tipo].split(' ')[0]+'</div>'+
         '<div class="res-card-info">'+
           '<div class="res-card-id">'+r.id+' · Cadastro: '+fmtDate(r.cadastro)+'</div>'+
-          '<div class="res-card-title">'+resTitle(r)+'</div>'+
+          '<div class="res-card-title">'+resTitle(r)+urgenteBadge+'</div>'+
         '</div>'+
       '</div>'+
       '<div class="res-card-body">'+
