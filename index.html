@@ -428,45 +428,68 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           </select>
         </div>
       </div>
-      <div class="g2">
-        <div class="field"><label>Programa da Emissão</label>
+
+      <!-- MILHAS: Programa + Qtd Milhas + Total Pax -->
+      <div id="campos-milhas" style="display:none">
+        <div class="field"><label>Programa da Emissão <span style="color:var(--accent)">*</span></label>
           <select id="f-programa">
             <option value="">Selecione…</option>
-            <option>AAdvantage</option>
-            <option>Azul Fidelidade</option>
-            <option>Balcão</option>
-            <option>Executive Club</option>
-            <option>Finnair Plus</option>
-            <option>Iberia Plus</option>
-            <option>LATAM Pass</option>
-            <option>Privilege Club</option>
-            <option>Livelo</option>
-            <option>Esfera</option>
-            <option>Smiles</option>
+            <option>AAdvantage</option><option>Azul Fidelidade</option>
+            <option>Executive Club</option><option>Finnair Plus</option>
+            <option>Iberia Plus</option><option>LATAM Pass</option>
+            <option>Livelo</option><option>Esfera</option>
+            <option>Privilege Club</option><option>Smiles</option>
           </select>
         </div>
-        <div class="field"><label>Total de Passageiros</label><input type="number" id="f-pax" min="1" placeholder="Ex: 2" oninput="onPaxChange()"/></div>
-      </div>
-
-      <!-- CAMPOS MILHAS -->
-      <div id="campos-milhas" style="display:none">
         <div class="g2">
-          <div class="field"><label>Quantidade Total de Milhas Gastas</label><input type="text" id="f-milhas-total" placeholder="Ex: 90.000" oninput="onMilhasChange()"/></div>
+          <div class="field"><label>Quantidade Total de Milhas Gastas <span style="color:var(--accent)">*</span></label><input type="text" id="f-milhas-total" placeholder="Ex: 90.000" oninput="onMilhasChange()"/></div>
           <div class="field"><label>Milhas por Passageiro <span class="tag">automático</span></label><input type="text" id="f-milhas" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
         </div>
+        <div class="field"><label>Total de Passageiros <span style="color:var(--accent)">*</span></label><input type="number" id="f-pax" min="1" placeholder="Ex: 2" oninput="onPaxChange()"/></div>
       </div>
 
-      <!-- CAMPOS BALCÃO -->
-      <div id="campos-balcao" style="display:none">
+      <!-- DINHEIRO: só valor -->
+      <div id="campos-dinheiro" style="display:none">
+        <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-dinheiro" placeholder="Ex: 4.690,15"/></div>
+      </div>
+
+      <!-- DINHEIRO C/ ACÚMULO: valor + programa fidelidade -->
+      <div id="campos-dinheiro-acumulo" style="display:none">
         <div class="g2">
-          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span></label><input type="text" id="f-valor-total-balcao" placeholder="Ex: 6.400,00" oninput="onValorBalcaoChange()"/></div>
-          <div class="field"><label>Valor por Passageiro <span class="tag">automático</span></label><input type="text" id="f-valor-pax-balcao" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
+          <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-acumulo" placeholder="Ex: 4.690,15"/></div>
+          <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+            <select id="f-programa-acumulo-voo">
+              <option value="">Selecione…</option>
+              <option>AAdvantage</option><option>Azul Fidelidade</option>
+              <option>Executive Club</option><option>Finnair Plus</option>
+              <option>Iberia Plus</option><option>LATAM Pass</option>
+              <option>Livelo</option><option>Esfera</option>
+              <option>Privilege Club</option><option>Smiles</option>
+            </select>
+          </div>
         </div>
       </div>
 
-      <!-- VALOR DA TARIFA PAGANTE (milhas e balcão) -->
-      <div id="campo-tarifa" style="display:none">
-        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$ — comparativo</span></label><input type="text" id="f-valor" placeholder="Ex: 320,00"/></div>
+      <!-- BALCÃO: Programa + Total Pax + Valor Total + Tarifa Pagante -->
+      <div id="campos-balcao" style="display:none">
+        <div class="field"><label>Programa da Emissão <span style="color:var(--accent)">*</span></label>
+          <select id="f-programa-balcao">
+            <option value="">Selecione…</option>
+            <option>AAdvantage</option><option>Azul Fidelidade</option>
+            <option>Executive Club</option><option>Finnair Plus</option>
+            <option>Iberia Plus</option><option>LATAM Pass</option>
+            <option>Livelo</option><option>Esfera</option>
+            <option>Privilege Club</option><option>Smiles</option>
+          </select>
+        </div>
+        <div class="g2">
+          <div class="field"><label>Total de Passageiros <span style="color:var(--accent)">*</span></label><input type="number" id="f-pax-balcao" min="1" placeholder="Ex: 2" oninput="onValorBalcaoChange()"/></div>
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-total-balcao" placeholder="Ex: 6.400,00" oninput="onValorBalcaoChange()"/></div>
+        </div>
+        <div class="g2">
+          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" placeholder="Ex: 320,00"/></div>
+          <div class="field"><label>Valor por Passageiro <span class="tag">automático</span></label><input type="text" id="f-valor-pax-balcao" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
+        </div>
       </div>
     </div>
 
@@ -1245,7 +1268,11 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao','f-valor','f-programa','f-milhas-total','f-milhas','f-valor-total-balcao','f-valor-pax-balcao','f-pax',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao',
+   'f-programa','f-milhas-total','f-milhas','f-pax',
+   'f-valor-dinheiro',
+   'f-valor-acumulo','f-programa-acumulo-voo',
+   'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor',
    'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo','f-hotel-programa-milhas',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -1465,11 +1492,22 @@ function salvarReserva() {
       conexaoVolta: getVal('f-conexao-volta'),
       classe: getVal('f-classe'), pnr: getVal('f-pnr'),
       tipoEmissao: getVal('f-tipo-emissao'),
-      valor: getVal('f-valor'), programa: getVal('f-programa'),
+      // Milhas
+      programa: getVal('f-programa'),
       milhasTotal: getVal('f-milhas-total'),
-      milhas: getVal('f-milhas'), pax: getVal('f-pax'),
+      milhas: getVal('f-milhas'),
+      pax: getVal('f-pax'),
+      // Dinheiro
+      valorDinheiro: getVal('f-valor-dinheiro'),
+      // Dinheiro c/ acúmulo
+      valorAcumulo: getVal('f-valor-acumulo'),
+      programaAcumuloVoo: getVal('f-programa-acumulo-voo'),
+      // Balcão
+      programaBalcao: getVal('f-programa-balcao'),
+      paxBalcao: getVal('f-pax-balcao'),
       valorTotalBalcao: getVal('f-valor-total-balcao'),
       valorPaxBalcao: getVal('f-valor-pax-balcao'),
+      valor: getVal('f-valor'),
     });
   } else if (tipo === 'hotel') {
     Object.assign(res, {
@@ -1536,11 +1574,22 @@ function resCols(r) {
     ['Volta', r.dataVolta?(r.origemVolta||r.destino||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':''):null],
     ['Data / Hora Volta', r.dataVolta?fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):null],
     ['Cia Aérea', r.ciaIda||r.cia||null],
+    ['Classe', r.classe||null],
     ['Localizador', r.pnr||null],
     ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo',balcao:'Balcão'}[r.tipoEmissao]||r.tipoEmissao||null],
-    ['Total de Milhas', r.milhasTotal||null],
+    // Milhas
     ['Programa', r.programa||null],
-    ['Valor Total (Balcão)', r.valorTotalBalcao||null],
+    ['Total de Milhas', r.milhasTotal?r.milhasTotal+(r.pax?' ('+r.pax+' pax)':''):null],
+    // Dinheiro
+    ['Valor Gasto', r.valorDinheiro||null],
+    // Dinheiro c/ acúmulo
+    ['Valor Gasto', r.valorAcumulo||null],
+    ['Programa Fidelidade', r.programaAcumuloVoo||null],
+    // Balcão
+    ['Programa', r.programaBalcao||null],
+    ['Total Passageiros', r.paxBalcao||null],
+    ['Valor Total', r.valorTotalBalcao||null],
+    ['Tarifa Pagante', r.valor||null],
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', toTitleCase(r.cliente)],
@@ -1715,10 +1764,20 @@ function editarReserva(id) {
     setVal('f-conexao-volta',r.conexaoVolta||'');
     setVal('f-classe',r.classe); setVal('f-pnr',r.pnr);
     setVal('f-tipo-emissao',r.tipoEmissao||''); onTipoEmissaoChange();
-    setVal('f-valor',r.valor); setVal('f-programa',r.programa);
+    // Milhas
+    setVal('f-programa',r.programa||'');
     setVal('f-milhas-total',r.milhasTotal||''); setVal('f-milhas',r.milhas||'');
+    setVal('f-pax',r.pax||'');
+    // Dinheiro
+    setVal('f-valor-dinheiro',r.valorDinheiro||'');
+    // Dinheiro c/ acúmulo
+    setVal('f-valor-acumulo',r.valorAcumulo||'');
+    setVal('f-programa-acumulo-voo',r.programaAcumuloVoo||'');
+    // Balcão
+    setVal('f-programa-balcao',r.programaBalcao||'');
+    setVal('f-pax-balcao',r.paxBalcao||'');
     setVal('f-valor-total-balcao',r.valorTotalBalcao||''); setVal('f-valor-pax-balcao',r.valorPaxBalcao||'');
-    setVal('f-pax',r.pax);
+    setVal('f-valor',r.valor||'');
   } else if (r.tipo==='hotel'){
     setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
     setVal('f-checkin',r.checkin); setVal('f-checkout',r.checkout);
@@ -2273,15 +2332,20 @@ document.addEventListener('click', function(e) {
 
 function onTipoEmissaoChange() {
   var tipo = getVal('f-tipo-emissao');
-  var elMilhas  = document.getElementById('campos-milhas');
-  var elBalcao  = document.getElementById('campos-balcao');
-  var elTarifa  = document.getElementById('campo-tarifa');
-  if (elMilhas)  elMilhas.style.display  = tipo === 'milhas'  ? '' : 'none';
-  if (elBalcao)  elBalcao.style.display  = tipo === 'balcao'  ? '' : 'none';
-  if (elTarifa)  elTarifa.style.display  = (tipo === 'milhas' || tipo === 'balcao') ? '' : 'none';
-  if (tipo !== 'milhas')  { setVal('f-milhas-total',''); setVal('f-milhas',''); }
-  if (tipo !== 'balcao')  { setVal('f-valor-total-balcao',''); setVal('f-valor-pax-balcao',''); }
-  if (tipo === 'dinheiro') setVal('f-valor','');
+  var blocks = ['campos-milhas','campos-dinheiro','campos-dinheiro-acumulo','campos-balcao'];
+  blocks.forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  if (tipo === 'milhas')           document.getElementById('campos-milhas').style.display = '';
+  if (tipo === 'dinheiro')         document.getElementById('campos-dinheiro').style.display = '';
+  if (tipo === 'dinheiro_acumulo') document.getElementById('campos-dinheiro-acumulo').style.display = '';
+  if (tipo === 'balcao')           document.getElementById('campos-balcao').style.display = '';
+  // Limpar campos ao trocar tipo
+  if (tipo !== 'milhas')           { setVal('f-programa',''); setVal('f-milhas-total',''); setVal('f-milhas',''); setVal('f-pax',''); }
+  if (tipo !== 'dinheiro')         setVal('f-valor-dinheiro','');
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-valor-acumulo',''); setVal('f-programa-acumulo-voo',''); }
+  if (tipo !== 'balcao')           { setVal('f-programa-balcao',''); setVal('f-pax-balcao',''); setVal('f-valor-total-balcao',''); setVal('f-valor',''); setVal('f-valor-pax-balcao',''); }
 }
 
 function onHotelTipoEmissaoChange() {
@@ -2312,13 +2376,12 @@ function onMilhasChange() {
 function onValorBalcaoChange() {
   var raw   = (getVal('f-valor-total-balcao') || '').replace(',', '.').replace(/[^\d.]/g, '');
   var total = parseFloat(raw) || 0;
-  var pax   = parseInt(getVal('f-pax')) || 1;
+  var pax   = parseInt(getVal('f-pax-balcao')) || 1;
   setVal('f-valor-pax-balcao', total > 0 ? 'R$ ' + (total / pax).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '');
 }
 
 function onPaxChange() {
   onMilhasChange();
-  onValorBalcaoChange();
 }
 
 function loadViagens() {
