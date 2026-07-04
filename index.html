@@ -1461,7 +1461,9 @@ function renderReservas() {
     // Data principal da reserva
     var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
     var futura = !dataRef || dataRef >= hoje;
-    var matchData = activeFilter === 'passadas' ? (!futura && dataRef) : futura;
+    var matchData = activeFilter === 'passadas' ? (!futura && dataRef)
+                  : activeFilter === 'todos'    ? true
+                  : futura;
     return matchTipo && matchQ && matchData;
   });
 
