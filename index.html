@@ -1589,7 +1589,9 @@ function saveModelos() {
 }
 
 function getBaileysUrl() {
-  return (getCfg().baileys || '').replace(/\/+$/, '');
+  var u = (getCfg().baileys || '').trim().replace(/\/+$/, '');
+  if (u && !u.startsWith('http')) u = 'https://' + u;
+  return u;
 }
 
 function verificarBaileys() {
