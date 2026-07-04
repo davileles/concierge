@@ -932,6 +932,30 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
   </div>
 </div>
 
+<!-- MODAL DETALHE ATIVIDADE -->
+<div class="modal-overlay" id="modal-ativ-detalhe">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="mad-header">Atividade</span>
+      <button class="modal-close" onclick="closeModal('modal-ativ-detalhe')">×</button>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Título</div>
+      <input type="text" id="mad-titulo" placeholder="Ex: GRU → MIA ida, Hotel Marriott noite 1…"
+        style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px"/>
+    </div>
+    <div style="margin-bottom:20px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Descrição / Detalhes</div>
+      <textarea id="mad-descricao" rows="5" placeholder="Detalhes, instruções, observações sobre esta atividade…"
+        style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;resize:vertical;min-height:100px"></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-accent" style="flex:1" onclick="salvarDetalheAtiv()">💾 Salvar</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-ativ-detalhe')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
 
@@ -2309,15 +2333,85 @@ function fecharNovaViagem() {
   atividadesTemp = [];
 }
 
+// Ordem canônica de categorias de atividades
+var ORDEM_ATIVIDADES = [
+  'Passagem Doméstica',
+  'Passagem Internacional',
+  'Hotel',
+  'Aluguel de Carro',
+  'Seguro Viagem',
+  'Ativação Seguro Cartão',
+  'Passeio/Atividade',
+  'Roteiro Personalizado'
+];
+
+function ordemAtiv(a) {
+  var idx = ORDEM_ATIVIDADES.indexOf(a.nome);
+  return idx === -1 ? ORDEM_ATIVIDADES.length : idx;
+}
+
+function sortAtividades(ativs) {
+  return ativs.slice().sort(function(a, b) {
+    return ordemAtiv(a) - ordemAtiv(b);
+  });
+}
+
+// Contexto do modal de detalhe
+var detalheAtivCtx = null; // { tipo: 'temp'|'viagem', idx, viagemId }
+
+function abrirDetalheAtiv(tipo, idx, viagemId) {
+  var a;
+  if (tipo === 'temp') {
+    a = atividadesTemp[idx];
+  } else {
+    var v = viagens.find(function(x){ return x.id === viagemId; });
+    a = v && v.atividades[idx];
+  }
+  if (!a) return;
+  detalheAtivCtx = { tipo: tipo, idx: idx, viagemId: viagemId };
+  document.getElementById('mad-header').textContent = a.icon + ' ' + a.nome;
+  document.getElementById('mad-titulo').value = a.titulo || '';
+  document.getElementById('mad-descricao').value = a.descricao || '';
+  document.getElementById('modal-ativ-detalhe').classList.add('open');
+}
+
+function salvarDetalheAtiv() {
+  if (!detalheAtivCtx) return;
+  var titulo = document.getElementById('mad-titulo').value.trim();
+  var descricao = document.getElementById('mad-descricao').value.trim();
+  if (detalheAtivCtx.tipo === 'temp') {
+    if (atividadesTemp[detalheAtivCtx.idx]) {
+      atividadesTemp[detalheAtivCtx.idx].titulo = titulo;
+      atividadesTemp[detalheAtivCtx.idx].descricao = descricao;
+    }
+    closeModal('modal-ativ-detalhe');
+    renderAtividadesTemp();
+  } else {
+    var v = viagens.find(function(x){ return x.id === detalheAtivCtx.viagemId; });
+    if (v && v.atividades[detalheAtivCtx.idx]) {
+      v.atividades[detalheAtivCtx.idx].titulo = titulo;
+      v.atividades[detalheAtivCtx.idx].descricao = descricao;
+      saveViagens();
+    }
+    closeModal('modal-ativ-detalhe');
+    renderViagens();
+    setTimeout(function() {
+      var body = document.getElementById('vbody-' + detalheAtivCtx.viagemId);
+      if (body) body.classList.add('open');
+    }, 100);
+  }
+  detalheAtivCtx = null;
+}
+
 function addAtividade(icon, nome) {
-  atividadesTemp.push({icon:icon, nome:nome, descricao:'', status:'pendente', reservaId:null});
+  atividadesTemp.push({icon:icon, nome:nome, titulo:'', descricao:'', status:'pendente', reservaId:null});
   renderAtividadesTemp();
 }
 
 function addAtividadeCustom() {
   var nome = prompt('Nome da atividade:');
   if (!nome) return;
-  atividadesTemp.push({icon:'📌', nome:nome, descricao:'', status:'pendente', reservaId:null});
+  atividadesTemp.push({icon:'📌', nome:nome, titulo:'', descricao:'', status:'pendente', reservaId:null});
   renderAtividadesTemp();
 }
 
@@ -2338,15 +2432,13 @@ function renderAtividadesTemp() {
     return;
   }
   el.innerHTML = atividadesTemp.map(function(a, i) {
+    var tituloLabel = a.titulo ? '<span style="font-size:11px;color:var(--muted);margin-left:6px">— '+a.titulo+'</span>' : '';
+    var hasDesc = a.titulo || a.descricao;
     return '<div class="ativ-row" style="flex-wrap:wrap;gap:4px">' +
       '<span class="ativ-icon">'+a.icon+'</span>' +
-      '<span class="ativ-nome" style="flex:1">'+a.nome+'</span>' +
+      '<span class="ativ-nome" style="flex:1">'+a.nome+tituloLabel+'</span>' +
+      '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px;'+(hasDesc?'color:var(--accent)':'')+'" onclick="abrirDetalheAtiv(\'temp\','+i+',null)" title="Editar título e descrição">✏️</button>' +
       '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="removerAtividadeTemp('+i+')">✕</button>' +
-      '<div style="width:100%;padding-left:28px">' +
-        '<input type="text" placeholder="Descrição / detalhes (opcional)" value="'+(a.descricao||'')+'" ' +
-        'oninput="updateAtivDescTemp('+i+',this.value)" ' +
-        'style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);width:100%;box-sizing:border-box"/>' +
-      '</div>' +
     '</div>';
   }).join('');
 }
@@ -2366,6 +2458,7 @@ function salvarViagem() {
       viagens[idx].fim = getVal('vf-fim');
       viagens[idx].obs = getVal('vf-obs');
       atividadesTemp.forEach(function(a) { viagens[idx].atividades.push(a); });
+      viagens[idx].atividades = sortAtividades(viagens[idx].atividades);
     }
   } else {
     viagens.unshift({
@@ -2375,7 +2468,7 @@ function salvarViagem() {
       inicio: getVal('vf-inicio'),
       fim: getVal('vf-fim'),
       obs: getVal('vf-obs'),
-      atividades: JSON.parse(JSON.stringify(atividadesTemp)),
+      atividades: sortAtividades(JSON.parse(JSON.stringify(atividadesTemp))),
       cadastro: new Date().toISOString().split('T')[0]
     });
   }
@@ -2423,7 +2516,8 @@ function adicionarAtividadeViagem(id, icon, nome) {
   var v = viagens.find(function(x){ return x.id === id; });
   if (!v) return;
   v.atividades = v.atividades || [];
-  v.atividades.push({icon: icon, nome: nome, descricao: '', status: 'pendente', reservaId: null});
+  v.atividades.push({icon: icon, nome: nome, titulo: '', descricao: '', status: 'pendente', reservaId: null});
+  v.atividades = sortAtividades(v.atividades);
   saveViagens();
   renderViagens();
   // Manter o card expandido
@@ -2522,20 +2616,18 @@ function renderViagens() {
       var resLabel = res ? resTitle(res) : '';
       var dVid = ' data-vid="'+v.id+'" data-idx="'+i+'"';
       var descId = 'adesc-'+v.id+'-'+i;
+      var tituloLabel = a.titulo ? '<span style="font-size:11px;color:var(--muted);margin-left:4px">— '+a.titulo+'</span>' : '';
+      var hasDetail = a.titulo || a.descricao;
       return [
-        '<div class="ativ-row" style="flex-wrap:wrap;gap:4px">',
+        '<div class="ativ-row">',
         '<span class="ativ-icon">',a.icon,'</span>',
-        '<span class="ativ-nome" style="flex:1">',a.nome,'</span>',
+        '<span class="ativ-nome" style="flex:1">',a.nome,tituloLabel,'</span>',
         resLabel
           ? '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">🔗 '+resLabel+'</span>'
           : '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">Vincular reserva</span>',
         '<span class="ativ-status '+a.status+'"'+dVid+' onclick="ciclarStatus(this.dataset.vid,+this.dataset.idx)">'+statusLabel(a.status)+'</span>',
+        '<button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;'+(hasDetail?'color:var(--accent)':'')+'" title="Editar título e descrição" onclick="abrirDetalheAtiv(\'viagem\','+i+',\''+v.id+'\')">✏️</button>',
         '<button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--muted2)"'+dVid+' onclick="removerAtividade(this.dataset.vid,+this.dataset.idx)">✕</button>',
-        '<div style="width:100%;padding-left:28px">',
-          '<input type="text" id="'+descId+'" placeholder="Detalhes / descrição (opcional)" value="'+(a.descricao||'')+'" ',
-          'onblur="salvarDescAtiv(\''+v.id+'\','+i+',this.value)" ',
-          'style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);width:100%;box-sizing:border-box"/>',
-        '</div>',
         '</div>'
       ].join('');
     }).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhuma atividade.</p>';
