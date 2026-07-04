@@ -956,7 +956,7 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-valor','f-programa','f-milhas','f-pax',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao','f-valor','f-programa','f-milhas-total','f-milhas','f-valor-total-balcao','f-valor-pax-balcao','f-pax',
    'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -1093,8 +1093,13 @@ function aplicarDadosAtivo(d) {
   sv('f-origem-volta', d.origemVolta);
   sv('f-destino-volta', d.destinoVolta);
   sv('f-conexao-volta', d.conexaoVolta);
-  ssv('f-classe', d.classe); sv('f-pnr', d.pnr); sv('f-pax', d.pax);
-  ssv('f-programa', d.programa); sv('f-milhas', d.milhas); sv('f-valor', d.valor);
+  ssv('f-classe', d.classe); sv('f-pnr', d.pnr);
+  if (d.tipoEmissao) { ssv('f-tipo-emissao', d.tipoEmissao); onTipoEmissaoChange(); }
+  ssv('f-programa', d.programa);
+  sv('f-milhas-total', d.milhasTotal); sv('f-milhas', d.milhas);
+  sv('f-valor-total-balcao', d.valorTotalBalcao); sv('f-valor-pax-balcao', d.valorPaxBalcao);
+  sv('f-pax', d.pax); sv('f-valor', d.valor);
+  onMilhasChange(); onValorBalcaoChange();
 
   // Hotel
   sv('f-hotel-nome', d.hotelNome); sv('f-hotel-destino', d.hotelDestino); sv('f-hotel-quarto', d.hotelQuarto);
@@ -1376,8 +1381,11 @@ function editarReserva(id) {
     setVal('f-hora-partida-volta',r.horaPartidaVolta); setVal('f-hora-chegada-volta',r.horaChegadaVolta);
     setVal('f-conexao-volta',r.conexaoVolta||'');
     setVal('f-classe',r.classe); setVal('f-pnr',r.pnr);
+    setVal('f-tipo-emissao',r.tipoEmissao||''); onTipoEmissaoChange();
     setVal('f-valor',r.valor); setVal('f-programa',r.programa);
-    setVal('f-milhas',r.milhas); setVal('f-pax',r.pax);
+    setVal('f-milhas-total',r.milhasTotal||''); setVal('f-milhas',r.milhas||'');
+    setVal('f-valor-total-balcao',r.valorTotalBalcao||''); setVal('f-valor-pax-balcao',r.valorPaxBalcao||'');
+    setVal('f-pax',r.pax);
   } else if (r.tipo==='hotel'){
     setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
     setVal('f-hotel-quarto',r.quarto); setVal('f-checkin',r.checkin);
