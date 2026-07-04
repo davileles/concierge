@@ -2616,7 +2616,7 @@ function renderViagens() {
     return;
   }
   grid.innerHTML = list.map(function(v) {
-    var ativs = v.atividades || [];
+    var ativs = sortAtividades(v.atividades || []);
     var total = ativs.length;
     var concluidas = ativs.filter(function(a){ return a.status==='concluida'; }).length;
     var pct = total ? Math.round(concluidas/total*100) : 0;
