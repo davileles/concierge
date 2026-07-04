@@ -409,7 +409,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       </div>
 
       <div class="sep" style="margin:10px 0 12px"></div>
-      </div>
       <div class="g3">
         <div class="field"><label>Classe</label>
           <select id="f-classe">
@@ -603,6 +602,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
     <p id="form-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
   </div>
+</div>
 
 <!-- ══════════════════════════════════════════
      ABA: VIAGENS
@@ -2227,7 +2227,7 @@ function onHotelTipoEmissaoChange() {
 
 function onHospedesChange() { /* reservado para cálculos futuros */ }
 
-
+function onMilhasChange() {
   var raw   = (getVal('f-milhas-total') || '').replace(/\D/g, '');
   var total = parseFloat(raw) || 0;
   var pax   = parseInt(getVal('f-pax')) || 1;
