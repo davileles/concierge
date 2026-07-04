@@ -424,6 +424,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
             <option value="">Selecione…</option>
             <option value="milhas">Milhas</option>
             <option value="dinheiro">Dinheiro</option>
+            <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
             <option value="balcao">Balcão</option>
           </select>
         </div>
@@ -478,8 +479,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Check-out</label><input type="date" id="f-checkout"/></div>
         <div class="field"><label>Nº de Noites</label><input type="number" id="f-noites" min="1" placeholder="Ex: 5"/></div>
       </div>
+      <div class="g2">
+        <div class="field"><label>Tipo de Emissão</label>
+          <select id="f-hotel-tipo-emissao">
+            <option value="">Selecione…</option>
+            <option value="milhas">Milhas</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
+            <option value="pontos">Pontos do cartão</option>
+          </select>
+        </div>
+        <div class="field"><label>Confirmação / Reserva Nº</label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
+      </div>
       <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 4.500,00"/></div>
-      <div class="field"><label>Confirmação / Reserva Nº</label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
     </div>
 
     <!-- CAMPOS CARRO -->
@@ -1129,13 +1141,15 @@ function populateClienteSelect() {
   var sel = document.getElementById('f-cliente');
   var cur = sel.value;
   sel.innerHTML = '<option value="">Selecione o cliente…</option>';
-  clientes.forEach(function(c){
+  var sorted = clientes.slice().sort(function(a,b){ return toTitleCase(a.nome).localeCompare(toTitleCase(b.nome),'pt-BR'); });
+  sorted.forEach(function(c){
     var opt = document.createElement('option');
-    opt.value = c.nome;
-    opt.textContent = c.nome;
+    var nome = toTitleCase(c.nome);
+    opt.value = nome;
+    opt.textContent = nome;
     sel.appendChild(opt);
   });
-  if (cur) sel.value = cur;
+  if (cur) sel.value = toTitleCase(cur);
 }
 
 // ══════════════════════════════════════════
@@ -1151,7 +1165,7 @@ function onTipoChange() {
 
 function limparForm() {
   ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao','f-valor','f-programa','f-milhas-total','f-milhas','f-valor-total-balcao','f-valor-pax-balcao','f-pax',
-   'f-hotel-nome','f-hotel-destino','f-hotel-quarto','f-checkin','f-checkout','f-noites','f-hospedes','f-hotel-valor','f-hotel-conf','f-regime',
+   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-obs'].forEach(function(id){
@@ -1304,10 +1318,10 @@ function aplicarDadosAtivo(d) {
   onMilhasChange(); onValorBalcaoChange();
 
   // Hotel
-  sv('f-hotel-nome', d.hotelNome); sv('f-hotel-destino', d.hotelDestino); sv('f-hotel-quarto', d.hotelQuarto);
+  sv('f-hotel-nome', d.hotelNome); sv('f-hotel-destino', d.hotelDestino);
   sv('f-checkin', d.checkin); sv('f-checkout', d.checkout); sv('f-noites', d.noites);
-  sv('f-hospedes', d.hospedes); sv('f-hotel-conf', d.hotelConf);
-  ssv('f-regime', d.regime); sv('f-hotel-valor', d.hotelValor);
+  sv('f-hotel-conf', d.hotelConf); sv('f-hotel-valor', d.hotelValor);
+  if (d.tipoEmissao) ssv('f-hotel-tipo-emissao', d.tipoEmissao);
 
   // Carro
   sv('f-locadora', d.locadora); sv('f-carro-cat', d.carroCat);
@@ -1369,10 +1383,10 @@ function salvarReserva() {
   } else if (tipo === 'hotel') {
     Object.assign(res, {
       hotelNome: getVal('f-hotel-nome'), destino: getVal('f-hotel-destino'),
-      quarto: getVal('f-hotel-quarto'), checkin: getVal('f-checkin'),
-      checkout: getVal('f-checkout'), noites: getVal('f-noites'),
-      hospedes: getVal('f-hospedes'), valor: getVal('f-hotel-valor'),
-      conf: getVal('f-hotel-conf'), regime: getVal('f-regime'),
+      checkin: getVal('f-checkin'), checkout: getVal('f-checkout'),
+      noites: getVal('f-noites'), valor: getVal('f-hotel-valor'),
+      conf: getVal('f-hotel-conf'),
+      tipoEmissao: getVal('f-hotel-tipo-emissao'),
     });
   } else if (tipo === 'carro') {
     Object.assign(res, {
@@ -1432,6 +1446,7 @@ function resCols(r) {
     ['Cliente', toTitleCase(r.cliente)],
     ['Check-in', fmtDate(r.checkin)],
     ['Check-out', fmtDate(r.checkout)],
+    ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo',pontos:'Pontos do cartão'}[r.tipoEmissao]||r.tipoEmissao||'—'],
     ['Confirmação', r.conf||'—'],
   ];
   if (r.tipo==='carro') return [
@@ -1602,10 +1617,9 @@ function editarReserva(id) {
     setVal('f-pax',r.pax);
   } else if (r.tipo==='hotel'){
     setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
-    setVal('f-hotel-quarto',r.quarto); setVal('f-checkin',r.checkin);
-    setVal('f-checkout',r.checkout); setVal('f-noites',r.noites);
-    setVal('f-hospedes',r.hospedes); setVal('f-hotel-valor',r.valor);
-    setVal('f-hotel-conf',r.conf); setVal('f-regime',r.regime);
+    setVal('f-checkin',r.checkin); setVal('f-checkout',r.checkout);
+    setVal('f-noites',r.noites); setVal('f-hotel-valor',r.valor);
+    setVal('f-hotel-conf',r.conf); setVal('f-hotel-tipo-emissao',r.tipoEmissao||'');
   } else if (r.tipo==='carro'){
     setVal('f-locadora',r.locadora); setVal('f-carro-cat',r.categoria);
     setVal('f-ret-local',r.retLocal); setVal('f-dev-local',r.devLocal);
