@@ -2276,7 +2276,7 @@ function renderViagens() {
   var grid = document.getElementById('viagens-grid');
   if (!grid) return;
   if (!list.length) {
-    grid.innerHTML = '<div class="empty"><span class="empty-icon">🗺️</span>Nenhuma viagem cadastrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em "Nova Viagem" para começar.</small></div>';
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">🗺️</span>Nenhuma viagem cadastrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em &quot;Nova Viagem&quot; para começar.</small></div>';
     return;
   }
   grid.innerHTML = list.map(function(v) {
@@ -2286,43 +2286,53 @@ function renderViagens() {
     var pct = total ? Math.round(concluidas/total*100) : 0;
     var pctColor = pct===100 ? 'var(--green)' : pct>50 ? 'var(--yellow)' : 'var(--accent)';
     var periodo = '';
-    if (v.inicio && v.fim) periodo = fmtDate(v.inicio)+' → '+fmtDate(v.fim);
+    if (v.inicio && v.fim) periodo = fmtDate(v.inicio)+' &rarr; '+fmtDate(v.fim);
     else if (v.inicio) periodo = 'A partir de '+fmtDate(v.inicio);
     loadReservas();
     var ativsHtml = ativs.length ? ativs.map(function(a,i){
       var res = a.reservaId ? reservas.find(function(r){ return r.id===a.reservaId; }) : null;
       var resLabel = res ? resTitle(res) : '';
-      return '<div class="ativ-row">'+
-        '<span class="ativ-icon">'+a.icon+'</span>'+
-        '<span class="ativ-nome">'+a.nome+'</span>'+
-        (resLabel
-          ? '<span class="ativ-reserva" onclick="abrirVinculo(''+v.id+'','+i+')">🔗 '+resLabel+'</span>'
-          : '<span class="ativ-reserva" onclick="abrirVinculo(''+v.id+'','+i+')">Vincular reserva</span>')+
-        '<span class="ativ-status '+a.status+'" onclick="ciclarStatus(''+v.id+'','+i+')">'+statusLabel(a.status)+'</span>'+
-      '</div>';
+      var dVid = ' data-vid="'+v.id+'" data-idx="'+i+'"';
+      return [
+        '<div class="ativ-row">',
+        '<span class="ativ-icon">',a.icon,'</span>',
+        '<span class="ativ-nome">',a.nome,'</span>',
+        resLabel
+          ? '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">🔗 '+resLabel+'</span>'
+          : '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">Vincular reserva</span>',
+        '<span class="ativ-status '+a.status+'"'+dVid+' onclick="ciclarStatus(this.dataset.vid,+this.dataset.idx)">'+statusLabel(a.status)+'</span>',
+        '</div>'
+      ].join('');
     }).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhuma atividade.</p>';
-    return '<div class="viagem-card">'+
-      '<div class="viagem-header" onclick="toggleViagemBody(''+v.id+'')">'+
-        '<div style="font-size:24px">🗺️</div>'+
-        '<div class="viagem-info">'+
-          '<div class="viagem-nome">'+v.nome+'</div>'+
-          '<div class="viagem-meta">'+v.clientes+(periodo?' · '+periodo:'')+'</div>'+
-        '</div>'+
-        '<div class="viagem-progress-wrap">'+
-          '<div class="viagem-progress-label">'+concluidas+'/'+total+' concluídas</div>'+
-          '<div class="viagem-progress-bar"><div class="viagem-progress-fill" style="width:'+pct+'%;background:'+pctColor+'"></div></div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="viagem-body" id="vbody-'+v.id+'">'+
-        ativsHtml+
-        '<div class="viagem-actions">'+
-          '<button class="btn btn-ghost btn-sm" onclick="editarViagem(''+v.id+'')">✏️ Editar</button>'+
-          '<button class="btn btn-ghost btn-sm" style="color:var(--accent)" onclick="excluirViagem(''+v.id+'')">🗑 Excluir</button>'+
-        '</div>'+
-      '</div>'+
-    '</div>';
+
+    var dVid2 = ' data-vid="'+v.id+'"';
+    return [
+      '<div class="viagem-card">',
+      '<div class="viagem-header"'+dVid2+' onclick="toggleViagemBody(this.dataset.vid)">',
+        '<div style="font-size:24px">🗺️</div>',
+        '<div class="viagem-info">',
+          '<div class="viagem-nome">',v.nome,'</div>',
+          '<div class="viagem-meta">',v.clientes,(periodo?' · '+periodo:''),'</div>',
+        '</div>',
+        '<div class="viagem-progress-wrap">',
+          '<div class="viagem-progress-label">',concluidas,'/',total,' concluídas</div>',
+          '<div class="viagem-progress-bar">',
+            '<div class="viagem-progress-fill" style="width:',pct,'%;background:',pctColor,'"></div>',
+          '</div>',
+        '</div>',
+      '</div>',
+      '<div class="viagem-body" id="vbody-',v.id,'">',
+        ativsHtml,
+        '<div class="viagem-actions">',
+          '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="editarViagem(this.dataset.vid)">✏️ Editar</button>',
+          '<button class="btn btn-ghost btn-sm" style="color:var(--accent)"'+dVid2+' onclick="excluirViagem(this.dataset.vid)">🗑 Excluir</button>',
+        '</div>',
+      '</div>',
+      '</div>'
+    ].join('');
   }).join('');
 }
+
 
 function onGrupoSelectChange() {
   var sel = document.getElementById('d-grupo-select');
