@@ -1476,6 +1476,8 @@ function salvarReserva() {
       milhasTotal: getVal('f-milhas-total'),
       milhas: getVal('f-milhas'), pax: getVal('f-pax'),
       programaMilhas: getVal('f-programa-milhas'),
+      valorTotalBalcao: getVal('f-valor-total-balcao'),
+      valorPaxBalcao: getVal('f-valor-pax-balcao'),
     });
   } else if (tipo === 'hotel') {
     Object.assign(res, {
@@ -1546,6 +1548,7 @@ function resCols(r) {
     ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo',balcao:'Balcão'}[r.tipoEmissao]||r.tipoEmissao||null],
     ['Total de Milhas', r.milhasTotal||null],
     ['Programa de Milhas', r.programaMilhas||null],
+    ['Valor Total (Balcão)', r.valorTotalBalcao||null],
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', toTitleCase(r.cliente)],
