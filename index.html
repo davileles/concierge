@@ -919,6 +919,10 @@ var reservas = [];
 var clientes = [];
 var activeFilter = 'todos';
 var deleteTargetId = null;
+var viagens = [];
+var viagemEditandoId = null;
+var vinculoAlvo = null;
+var atividadesTemp = [];
 var tabAtual = 'reservas';
 
 var APPS_SCRIPT_CODE = 'function doGet(e) {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(e.parameter.aba || \'Clientes\');\n  var linhaInicio = parseInt(e.parameter.linha || 2);\n  var data = sheet.getDataRange().getValues();\n  var rows = data.slice(linhaInicio - 1);\n  return ContentService\n    .createTextOutput(JSON.stringify({ ok: true, rows: rows }))\n    .setMimeType(ContentService.MimeType.JSON);\n}';
@@ -2101,6 +2105,225 @@ function onPaxChange() {
   onValorBalcaoChange();
 }
 
+function loadViagens() {
+  try { viagens = JSON.parse(localStorage.getItem('concierge_viagens') || '[]'); }
+  catch(e) { viagens = []; }
+}
+
+function saveViagens() {
+  localStorage.setItem('concierge_viagens', JSON.stringify(viagens));
+}
+
+function abrirNovaViagem() {
+  viagemEditandoId = null;
+  atividadesTemp = [];
+  document.getElementById('viagem-form-titulo').textContent = 'Nova Viagem';
+  ['vf-nome','vf-clientes','vf-inicio','vf-fim','vf-obs'].forEach(function(id){ setVal(id,''); });
+  document.getElementById('vf-ok').textContent = '';
+  renderAtividadesTemp();
+  document.getElementById('nova-viagem-form').style.display = '';
+  document.getElementById('nova-viagem-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function fecharNovaViagem() {
+  document.getElementById('nova-viagem-form').style.display = 'none';
+  atividadesTemp = [];
+}
+
+function addAtividade(icon, nome) {
+  atividadesTemp.push({icon:icon, nome:nome, status:'pendente', reservaId:null});
+  renderAtividadesTemp();
+}
+
+function addAtividadeCustom() {
+  var nome = prompt('Nome da atividade:');
+  if (!nome) return;
+  atividadesTemp.push({icon:'📌', nome:nome, status:'pendente', reservaId:null});
+  renderAtividadesTemp();
+}
+
+function removerAtividadeTemp(idx) {
+  atividadesTemp.splice(idx, 1);
+  renderAtividadesTemp();
+}
+
+function renderAtividadesTemp() {
+  var el = document.getElementById('vf-atividades-list');
+  if (!el) return;
+  if (!atividadesTemp.length) {
+    el.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-bottom:8px">Nenhuma atividade adicionada. Clique abaixo para adicionar.</p>';
+    return;
+  }
+  el.innerHTML = atividadesTemp.map(function(a, i) {
+    return '<div class="ativ-row">' +
+      '<span class="ativ-icon">'+a.icon+'</span>' +
+      '<span class="ativ-nome">'+a.nome+'</span>' +
+      '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="removerAtividadeTemp('+i+')">✕</button>' +
+    '</div>';
+  }).join('');
+}
+
+function salvarViagem() {
+  var nome = getVal('vf-nome');
+  var clientes = getVal('vf-clientes');
+  if (!nome) { showToast('⚠️ Informe o nome da viagem','err'); return; }
+  if (!clientes) { showToast('⚠️ Informe o(s) cliente(s)','err'); return; }
+
+  if (viagemEditandoId) {
+    var idx = viagens.findIndex(function(v){ return v.id === viagemEditandoId; });
+    if (idx !== -1) {
+      viagens[idx].nome = nome;
+      viagens[idx].clientes = clientes;
+      viagens[idx].inicio = getVal('vf-inicio');
+      viagens[idx].fim = getVal('vf-fim');
+      viagens[idx].obs = getVal('vf-obs');
+      atividadesTemp.forEach(function(a) { viagens[idx].atividades.push(a); });
+    }
+  } else {
+    viagens.unshift({
+      id: 'VGM-' + Date.now(),
+      nome: nome,
+      clientes: clientes,
+      inicio: getVal('vf-inicio'),
+      fim: getVal('vf-fim'),
+      obs: getVal('vf-obs'),
+      atividades: JSON.parse(JSON.stringify(atividadesTemp)),
+      cadastro: new Date().toISOString().split('T')[0]
+    });
+  }
+  saveViagens();
+  fecharNovaViagem();
+  renderViagens();
+  showToast('✅ Viagem salva!', 'ok');
+}
+
+function editarViagem(id) {
+  var v = viagens.find(function(x){ return x.id === id; });
+  if (!v) return;
+  viagemEditandoId = id;
+  atividadesTemp = [];
+  document.getElementById('viagem-form-titulo').textContent = 'Editar Viagem';
+  setVal('vf-nome', v.nome); setVal('vf-clientes', v.clientes);
+  setVal('vf-inicio', v.inicio||''); setVal('vf-fim', v.fim||''); setVal('vf-obs', v.obs||'');
+  document.getElementById('vf-ok').textContent = '';
+  renderAtividadesTemp();
+  document.getElementById('nova-viagem-form').style.display = '';
+  document.getElementById('nova-viagem-form').scrollIntoView({behavior:'smooth'});
+}
+
+function excluirViagem(id) {
+  if (!confirm('Excluir esta viagem? As reservas vinculadas não serão afetadas.')) return;
+  viagens = viagens.filter(function(v){ return v.id !== id; });
+  saveViagens();
+  renderViagens();
+  showToast('🗑 Viagem excluída', 'ok');
+}
+
+function toggleViagemBody(id) {
+  var body = document.getElementById('vbody-' + id);
+  if (body) body.classList.toggle('open');
+}
+
+function ciclarStatus(viagemId, ativIdx) {
+  var v = viagens.find(function(x){ return x.id === viagemId; });
+  if (!v || !v.atividades[ativIdx]) return;
+  var ciclo = {pendente:'andamento', andamento:'concluida', concluida:'pendente'};
+  v.atividades[ativIdx].status = ciclo[v.atividades[ativIdx].status] || 'pendente';
+  saveViagens(); renderViagens();
+}
+
+function abrirVinculo(viagemId, ativIdx) {
+  vinculoAlvo = {viagemId: viagemId, ativIdx: ativIdx};
+  loadReservas();
+  var sel = document.getElementById('modal-reserva-select');
+  sel.innerHTML = '<option value="">Selecione uma reserva…</option>' +
+    reservas.map(function(r){
+      return '<option value="'+r.id+'">'+r.id+' · '+r.cliente+' · '+resTitle(r)+'</option>';
+    }).join('');
+  var v = viagens.find(function(x){ return x.id === viagemId; });
+  if (v && v.atividades[ativIdx] && v.atividades[ativIdx].reservaId)
+    sel.value = v.atividades[ativIdx].reservaId;
+  document.getElementById('modal-vincular').style.display = 'flex';
+}
+
+function confirmarVinculo() {
+  if (!vinculoAlvo) return;
+  var reservaId = document.getElementById('modal-reserva-select').value;
+  var v = viagens.find(function(x){ return x.id === vinculoAlvo.viagemId; });
+  if (v && v.atividades[vinculoAlvo.ativIdx]) {
+    v.atividades[vinculoAlvo.ativIdx].reservaId = reservaId || null;
+    if (reservaId) v.atividades[vinculoAlvo.ativIdx].status = 'concluida';
+    saveViagens(); renderViagens();
+  }
+  closeModal('modal-vincular');
+  vinculoAlvo = null;
+}
+
+function statusLabel(s) {
+  if (s==='andamento') return 'Em andamento';
+  if (s==='concluida') return 'Concluída';
+  return 'Pendente';
+}
+
+function renderViagens() {
+  loadViagens();
+  var q = ((document.getElementById('viagens-search')||{}).value||'').toLowerCase().trim();
+  var list = viagens.filter(function(v){
+    return !q || v.nome.toLowerCase().includes(q) || v.clientes.toLowerCase().includes(q);
+  });
+  var lbl = document.getElementById('viagens-count-label');
+  if (lbl) lbl.textContent = list.length + ' viagem' + (list.length!==1?'s':'');
+  var grid = document.getElementById('viagens-grid');
+  if (!grid) return;
+  if (!list.length) {
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">🗺️</span>Nenhuma viagem cadastrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em "Nova Viagem" para começar.</small></div>';
+    return;
+  }
+  grid.innerHTML = list.map(function(v) {
+    var ativs = v.atividades || [];
+    var total = ativs.length;
+    var concluidas = ativs.filter(function(a){ return a.status==='concluida'; }).length;
+    var pct = total ? Math.round(concluidas/total*100) : 0;
+    var pctColor = pct===100 ? 'var(--green)' : pct>50 ? 'var(--yellow)' : 'var(--accent)';
+    var periodo = '';
+    if (v.inicio && v.fim) periodo = fmtDate(v.inicio)+' → '+fmtDate(v.fim);
+    else if (v.inicio) periodo = 'A partir de '+fmtDate(v.inicio);
+    loadReservas();
+    var ativsHtml = ativs.length ? ativs.map(function(a,i){
+      var res = a.reservaId ? reservas.find(function(r){ return r.id===a.reservaId; }) : null;
+      var resLabel = res ? resTitle(res) : '';
+      return '<div class="ativ-row">'+
+        '<span class="ativ-icon">'+a.icon+'</span>'+
+        '<span class="ativ-nome">'+a.nome+'</span>'+
+        (resLabel
+          ? '<span class="ativ-reserva" onclick="abrirVinculo(''+v.id+'','+i+')">🔗 '+resLabel+'</span>'
+          : '<span class="ativ-reserva" onclick="abrirVinculo(''+v.id+'','+i+')">Vincular reserva</span>')+
+        '<span class="ativ-status '+a.status+'" onclick="ciclarStatus(''+v.id+'','+i+')">'+statusLabel(a.status)+'</span>'+
+      '</div>';
+    }).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhuma atividade.</p>';
+    return '<div class="viagem-card">'+
+      '<div class="viagem-header" onclick="toggleViagemBody(''+v.id+'')">'+
+        '<div style="font-size:24px">🗺️</div>'+
+        '<div class="viagem-info">'+
+          '<div class="viagem-nome">'+v.nome+'</div>'+
+          '<div class="viagem-meta">'+v.clientes+(periodo?' · '+periodo:'')+'</div>'+
+        '</div>'+
+        '<div class="viagem-progress-wrap">'+
+          '<div class="viagem-progress-label">'+concluidas+'/'+total+' concluídas</div>'+
+          '<div class="viagem-progress-bar"><div class="viagem-progress-fill" style="width:'+pct+'%;background:'+pctColor+'"></div></div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="viagem-body" id="vbody-'+v.id+'">'+
+        ativsHtml+
+        '<div class="viagem-actions">'+
+          '<button class="btn btn-ghost btn-sm" onclick="editarViagem(''+v.id+'')">✏️ Editar</button>'+
+          '<button class="btn btn-ghost btn-sm" style="color:var(--accent)" onclick="excluirViagem(''+v.id+'')">🗑 Excluir</button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
 function onGrupoSelectChange() {
   var sel = document.getElementById('d-grupo-select');
   var inp = document.getElementById('d-grupo');
@@ -2163,6 +2386,7 @@ function copiarDisparar() {
 window.addEventListener('DOMContentLoaded', function(){
   loadCfg();
   loadReservas();
+  loadViagens();
 
   // Data de hoje no form
   setVal('f-cadastro', new Date().toISOString().split('T')[0]);
