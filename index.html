@@ -504,12 +504,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div class="field"><label>Nº de Noites</label><input type="number" id="f-noites" min="1" placeholder="Ex: 5"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Total de Hóspedes</label><input type="number" id="f-hotel-hospedes" min="1" placeholder="Ex: 2" oninput="onHospedesChange()"/></div>
-        <div class="field"><label>Confirmação / Reserva Nº</label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
+        <div class="field"><label>Total de Hóspedes <span style="color:var(--accent)">*</span></label><input type="number" id="f-hotel-hospedes" min="1" placeholder="Ex: 2"/></div>
+        <div class="field"><label>Confirmação / Nº de Reserva <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-conf" placeholder="Ex: HYA-001234"/></div>
       </div>
-      <!-- Tipo de Emissão hotel — fica por último -->
       <div class="sep" style="margin:12px 0 14px"></div>
-      <div class="field"><label>Tipo de Emissão</label>
+      <div class="field"><label>Tipo de Emissão <span style="color:var(--accent)">*</span></label>
         <select id="f-hotel-tipo-emissao" onchange="onHotelTipoEmissaoChange()">
           <option value="">Selecione…</option>
           <option value="milhas">Milhas</option>
@@ -517,59 +516,56 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
         </select>
       </div>
-      <!-- Valor: label muda conforme tipo -->
-      <div class="field"><label id="f-hotel-valor-label">Valor Total <span class="tag">R$</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 4.500,00"/></div>
-      <!-- Campos extras: milhas acúmulo -->
-      <div id="hotel-campos-acumulo" style="display:none">
+
+      <!-- HOTEL: MILHAS — valor total milhas + programa -->
+      <div id="hotel-campos-milhas" style="display:none">
         <div class="g2">
-          <div class="field"><label>Milhas a Receber</label><input type="text" id="f-hotel-milhas-acumulo" placeholder="Ex: 15.000"/></div>
-          <div class="field"><label>Programa de Fidelidade</label>
-            <select id="f-hotel-programa-acumulo">
+          <div class="field"><label>Valor Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 60.000"/></div>
+          <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+            <select id="f-hotel-programa-milhas">
               <option value="">Selecione…</option>
-              <option>AAdvantage</option>
-              <option>Azul Fidelidade</option>
-              <option>Executive Club</option>
-              <option>Finnair Plus</option>
-              <option>Iberia Plus</option>
-              <option>LATAM Pass</option>
-              <option>Privilege Club</option>
-              <option>Livelo</option>
-              <option>Esfera</option>
-              <option>Smiles</option>
+              <option>AAdvantage</option><option>Azul Fidelidade</option>
+              <option>Executive Club</option><option>Finnair Plus</option>
+              <option>Iberia Plus</option><option>LATAM Pass</option>
+              <option>Livelo</option><option>Esfera</option>
+              <option>Privilege Club</option><option>Smiles</option>
             </select>
           </div>
         </div>
-        <div class="field"><label>Parceiro</label>
-          <select id="f-hotel-parceiro-acumulo">
-            <option value="">Selecione o parceiro…</option>
-            <option>Allianz</option>
-            <option>Booking</option>
-            <option>Decolar</option>
-            <option>Hotéis.com</option>
-            <option>Localiza Rent a Car</option>
-            <option>Movida</option>
-            <option>Rental Cars</option>
-            <option>Unidas</option>
-            <option>Outro</option>
-          </select>
-        </div>
       </div>
-      <!-- Campos extras: milhas como pagamento -->
-      <div id="hotel-campos-milhas" style="display:none">
-        <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
-          <select id="f-hotel-programa-milhas">
-            <option value="">Selecione o programa…</option>
-            <option>AAdvantage</option>
-            <option>Azul Fidelidade</option>
-            <option>Executive Club</option>
-            <option>Finnair Plus</option>
-            <option>Iberia Plus</option>
-            <option>LATAM Pass</option>
-            <option>Privilege Club</option>
-            <option>Livelo</option>
-            <option>Esfera</option>
-            <option>Smiles</option>
-          </select>
+
+      <!-- HOTEL: DINHEIRO — valor total -->
+      <div id="hotel-campos-dinheiro" style="display:none">
+        <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor-dinheiro" placeholder="Ex: 4.500,00"/></div>
+      </div>
+
+      <!-- HOTEL: DINHEIRO C/ ACÚMULO — valor + milhas + programa + parceiro -->
+      <div id="hotel-campos-acumulo" style="display:none">
+        <div class="g2">
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor-acumulo" placeholder="Ex: 4.500,00"/></div>
+          <div class="field"><label>Milhas a Receber <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-milhas-acumulo" placeholder="Ex: 15.000"/></div>
+        </div>
+        <div class="g2">
+          <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+            <select id="f-hotel-programa-acumulo">
+              <option value="">Selecione…</option>
+              <option>AAdvantage</option><option>Azul Fidelidade</option>
+              <option>Executive Club</option><option>Finnair Plus</option>
+              <option>Iberia Plus</option><option>LATAM Pass</option>
+              <option>Livelo</option><option>Esfera</option>
+              <option>Privilege Club</option><option>Smiles</option>
+            </select>
+          </div>
+          <div class="field"><label>Parceiro <span style="color:var(--accent)">*</span></label>
+            <select id="f-hotel-parceiro-acumulo">
+              <option value="">Selecione o parceiro…</option>
+              <option>Allianz</option><option>Booking</option>
+              <option>Decolar</option><option>Hotéis.com</option>
+              <option>Localiza Rent a Car</option><option>Movida</option>
+              <option>Rental Cars</option><option>Unidas</option>
+              <option>Outro</option>
+            </select>
+          </div>
         </div>
       </div>
     </div>
@@ -1273,7 +1269,10 @@ function limparForm() {
    'f-valor-dinheiro',
    'f-valor-acumulo','f-programa-acumulo-voo',
    'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor',
-   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo','f-hotel-programa-milhas',
+   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes',
+   'f-hotel-valor','f-hotel-programa-milhas',
+   'f-hotel-valor-dinheiro',
+   'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-obs'].forEach(function(id){
@@ -1284,6 +1283,8 @@ function limparForm() {
   if (ac) ac.style.display = 'none';
   var hm = document.getElementById('hotel-campos-milhas');
   if (hm) hm.style.display = 'none';
+  var hd = document.getElementById('hotel-campos-dinheiro');
+  if (hd) hd.style.display = 'none';
   var lbl = document.getElementById('f-hotel-valor-label');
   if (lbl) lbl.innerHTML = 'Valor Total <span class="tag">R$</span>';
   document.getElementById('form-ok').textContent = '';
@@ -1513,14 +1514,20 @@ function salvarReserva() {
     Object.assign(res, {
       hotelNome: getVal('f-hotel-nome'), destino: getVal('f-hotel-destino'),
       checkin: getVal('f-checkin'), checkout: getVal('f-checkout'),
-      noites: getVal('f-noites'), valor: getVal('f-hotel-valor'),
+      noites: getVal('f-noites'),
       conf: getVal('f-hotel-conf'),
       hospedes: getVal('f-hotel-hospedes'),
       tipoEmissao: getVal('f-hotel-tipo-emissao'),
+      // Milhas
+      valorMilhas: getVal('f-hotel-valor'),
+      programaMilhas: getVal('f-hotel-programa-milhas'),
+      // Dinheiro
+      valorDinheiro: getVal('f-hotel-valor-dinheiro'),
+      // Dinheiro c/ acúmulo
+      valorAcumulo: getVal('f-hotel-valor-acumulo'),
       milhasAcumulo: getVal('f-hotel-milhas-acumulo'),
       programaAcumulo: getVal('f-hotel-programa-acumulo'),
       parceiroAcumulo: getVal('f-hotel-parceiro-acumulo'),
-      programaMilhas: getVal('f-hotel-programa-milhas'),
     });
   } else if (tipo === 'carro') {
     Object.assign(res, {
@@ -1593,14 +1600,20 @@ function resCols(r) {
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', toTitleCase(r.cliente)],
+    ['Hotel', r.hotelNome||null],
     ['Check-in', fmtDate(r.checkin)],
     ['Check-out', fmtDate(r.checkout)],
+    ['Noites', r.noites||null],
     ['Hóspedes', r.hospedes||null],
-    ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo'}[r.tipoEmissao]||r.tipoEmissao||null],
-    ['Programa de Milhas', r.programaMilhas||null],
-    ['Milhas a Receber', r.milhasAcumulo ? r.milhasAcumulo + (r.programaAcumulo ? ' — ' + r.programaAcumulo : '') : null],
-    ['Parceiro', r.parceiroAcumulo||null],
     ['Confirmação', r.conf||null],
+    ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo'}[r.tipoEmissao]||r.tipoEmissao||null],
+    ['Total de Milhas', r.valorMilhas||null],
+    ['Programa Fidelidade', r.programaMilhas||null],
+    ['Valor Gasto', r.valorDinheiro||null],
+    ['Valor Total', r.valorAcumulo||null],
+    ['Milhas a Receber', r.milhasAcumulo||null],
+    ['Programa Fidelidade', r.programaAcumulo||null],
+    ['Parceiro', r.parceiroAcumulo||null],
   ];
   if (r.tipo==='carro') return [
     ['Cliente', toTitleCase(r.cliente)],
@@ -1781,13 +1794,19 @@ function editarReserva(id) {
   } else if (r.tipo==='hotel'){
     setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
     setVal('f-checkin',r.checkin); setVal('f-checkout',r.checkout);
-    setVal('f-noites',r.noites); setVal('f-hotel-valor',r.valor);
-    setVal('f-hotel-conf',r.conf); setVal('f-hotel-hospedes',r.hospedes||'');
+    setVal('f-noites',r.noites||''); setVal('f-hotel-conf',r.conf||'');
+    setVal('f-hotel-hospedes',r.hospedes||'');
     setVal('f-hotel-tipo-emissao',r.tipoEmissao||'');
+    // Milhas
+    setVal('f-hotel-valor',r.valorMilhas||r.valor||'');
+    setVal('f-hotel-programa-milhas',r.programaMilhas||'');
+    // Dinheiro
+    setVal('f-hotel-valor-dinheiro',r.valorDinheiro||'');
+    // Dinheiro c/ acúmulo
+    setVal('f-hotel-valor-acumulo',r.valorAcumulo||'');
     setVal('f-hotel-milhas-acumulo',r.milhasAcumulo||'');
     setVal('f-hotel-programa-acumulo',r.programaAcumulo||'');
     setVal('f-hotel-parceiro-acumulo',r.parceiroAcumulo||'');
-    setVal('f-hotel-programa-milhas',r.programaMilhas||'');
     onHotelTipoEmissaoChange();
   } else if (r.tipo==='carro'){
     setVal('f-locadora',r.locadora); setVal('f-carro-cat',r.categoria);
@@ -2350,18 +2369,17 @@ function onTipoEmissaoChange() {
 
 function onHotelTipoEmissaoChange() {
   var tipo = getVal('f-hotel-tipo-emissao');
-  var elAcumulo = document.getElementById('hotel-campos-acumulo');
-  var elMilhas  = document.getElementById('hotel-campos-milhas');
-  var label     = document.getElementById('f-hotel-valor-label');
-  if (elAcumulo) elAcumulo.style.display = tipo === 'dinheiro_acumulo' ? '' : 'none';
-  if (elMilhas)  elMilhas.style.display  = tipo === 'milhas' ? '' : 'none';
-  if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-milhas-acumulo', ''); setVal('f-hotel-programa-acumulo', ''); setVal('f-hotel-parceiro-acumulo', ''); }
-  if (tipo !== 'milhas') setVal('f-hotel-programa-milhas', '');
-  if (label) {
-    label.innerHTML = tipo === 'milhas'
-      ? 'Valor Total de Milhas'
-      : 'Valor Total <span class="tag">R$</span>';
-  }
+  ['hotel-campos-milhas','hotel-campos-dinheiro','hotel-campos-acumulo'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  if (tipo === 'milhas')           document.getElementById('hotel-campos-milhas').style.display = '';
+  if (tipo === 'dinheiro')         document.getElementById('hotel-campos-dinheiro').style.display = '';
+  if (tipo === 'dinheiro_acumulo') document.getElementById('hotel-campos-acumulo').style.display = '';
+  // Limpar ao trocar
+  if (tipo !== 'milhas')           { setVal('f-hotel-valor',''); setVal('f-hotel-programa-milhas',''); }
+  if (tipo !== 'dinheiro')         setVal('f-hotel-valor-dinheiro','');
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-valor-acumulo',''); setVal('f-hotel-milhas-acumulo',''); setVal('f-hotel-programa-acumulo',''); setVal('f-hotel-parceiro-acumulo',''); }
 }
 
 function onHospedesChange() { /* reservado para cálculos futuros */ }
