@@ -1461,7 +1461,9 @@ function salvarReserva() {
       horaPartidaVolta: getVal('f-hora-partida-volta'), horaChegadaVolta: getVal('f-hora-chegada-volta'),
       conexaoVolta: getVal('f-conexao-volta'),
       classe: getVal('f-classe'), pnr: getVal('f-pnr'),
+      tipoEmissao: getVal('f-tipo-emissao'),
       valor: getVal('f-valor'), programa: getVal('f-programa'),
+      milhasTotal: getVal('f-milhas-total'),
       milhas: getVal('f-milhas'), pax: getVal('f-pax'),
       programaMilhas: getVal('f-programa-milhas'),
     });
@@ -1531,6 +1533,8 @@ function resCols(r) {
     ['Data / Hora Volta', r.dataVolta?fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):null],
     ['Cia Aérea', r.ciaIda||r.cia||null],
     ['Localizador', r.pnr||null],
+    ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo',balcao:'Balcão'}[r.tipoEmissao]||r.tipoEmissao||null],
+    ['Total de Milhas', r.milhasTotal||null],
     ['Programa de Milhas', r.programaMilhas||null],
   ];
   if (r.tipo==='hotel') return [
