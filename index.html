@@ -2153,6 +2153,18 @@ function syncViagens() {
     .catch(function(e){console.error('[syncViagens]',e);});
 }
 
+// ── MULTI-SELECT CLIENTES ──
+
+function normalizarNome(nome) {
+  if (!nome) return '';
+  // Normalizar: primeira letra de cada palavra maiúscula, resto minúsculo
+  var partes = nome.trim().split(/\s+/).map(function(p){
+    return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+  });
+  // Exibir apenas primeiro nome + primeiro sobrenome
+  return partes.slice(0, 2).join(' ');
+}
+
 // ── MULTI-SELECT CLIENTES ──────────────────────────────────────
 var cliSel = [];
 
@@ -2197,7 +2209,8 @@ function cliFilter() {
   } else {
     dd.innerHTML = '';
     lista.forEach(function(c){
-      var nome = c.nome || c.Nome || '';
+      var nomeRaw = c.nome || c.Nome || '';
+      var nome = normalizarNome(nomeRaw);
       var item = document.createElement('div');
       item.className = 'cli-dropdown-item';
       item.textContent = nome;
