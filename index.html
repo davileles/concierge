@@ -452,6 +452,19 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
           <div class="field"><label>Quantidade Total de Milhas Gastas</label><input type="text" id="f-milhas-total" placeholder="Ex: 90.000" oninput="onMilhasChange()"/></div>
           <div class="field"><label>Milhas por Passageiro <span class="tag">automático</span></label><input type="text" id="f-milhas" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
         </div>
+        <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+          <select id="f-programa-milhas">
+            <option value="">Selecione o programa…</option>
+            <option>AAdvantage</option>
+            <option>Azul Fidelidade</option>
+            <option>Executive Club</option>
+            <option>Finnair Plus</option>
+            <option>Iberia Plus</option>
+            <option>LATAM Pass</option>
+            <option>Privilege Club</option>
+            <option>Smiles</option>
+          </select>
+        </div>
       </div>
 
       <!-- CAMPOS BALCÃO -->
@@ -511,6 +524,22 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
               <option>Smiles</option>
             </select>
           </div>
+        </div>
+      </div>
+      <!-- Campos extras: milhas como pagamento -->
+      <div id="hotel-campos-milhas" style="display:none">
+        <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+          <select id="f-hotel-programa-milhas">
+            <option value="">Selecione o programa…</option>
+            <option>AAdvantage</option>
+            <option>Azul Fidelidade</option>
+            <option>Executive Club</option>
+            <option>Finnair Plus</option>
+            <option>Iberia Plus</option>
+            <option>LATAM Pass</option>
+            <option>Privilege Club</option>
+            <option>Smiles</option>
+          </select>
         </div>
       </div>
     </div>
@@ -1186,8 +1215,8 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao','f-valor','f-programa','f-milhas-total','f-milhas','f-valor-total-balcao','f-valor-pax-balcao','f-pax',
-   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes','f-hotel-milhas-acumulo','f-hotel-programa-acumulo',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao','f-valor','f-programa','f-milhas-total','f-milhas','f-programa-milhas','f-valor-total-balcao','f-valor-pax-balcao','f-pax',
+   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-programa-milhas',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-obs'].forEach(function(id){
@@ -1196,6 +1225,8 @@ function limparForm() {
   onTipoChange();
   var ac = document.getElementById('hotel-campos-acumulo');
   if (ac) ac.style.display = 'none';
+  var hm = document.getElementById('hotel-campos-milhas');
+  if (hm) hm.style.display = 'none';
   var lbl = document.getElementById('f-hotel-valor-label');
   if (lbl) lbl.innerHTML = 'Valor Total <span class="tag">R$</span>';
   document.getElementById('form-ok').textContent = '';
@@ -1405,6 +1436,7 @@ function salvarReserva() {
       classe: getVal('f-classe'), pnr: getVal('f-pnr'),
       valor: getVal('f-valor'), programa: getVal('f-programa'),
       milhas: getVal('f-milhas'), pax: getVal('f-pax'),
+      programaMilhas: getVal('f-programa-milhas'),
     });
   } else if (tipo === 'hotel') {
     Object.assign(res, {
@@ -1416,6 +1448,7 @@ function salvarReserva() {
       tipoEmissao: getVal('f-hotel-tipo-emissao'),
       milhasAcumulo: getVal('f-hotel-milhas-acumulo'),
       programaAcumulo: getVal('f-hotel-programa-acumulo'),
+      programaMilhas: getVal('f-hotel-programa-milhas'),
     });
   } else if (tipo === 'carro') {
     Object.assign(res, {
@@ -1468,8 +1501,9 @@ function resCols(r) {
     ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
     ['Volta', r.dataVolta?(r.origemVolta||r.destino||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':''):null],
     ['Data / Hora Volta', r.dataVolta?fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):null],
-    ['Cia Aérea', r.ciaIda||r.cia||'—'],
-    ['Localizador', r.pnr||'—'],
+    ['Cia Aérea', r.ciaIda||r.cia||null],
+    ['Localizador', r.pnr||null],
+    ['Programa de Milhas', r.programaMilhas||null],
   ];
   if (r.tipo==='hotel') return [
     ['Cliente', toTitleCase(r.cliente)],
@@ -1477,6 +1511,7 @@ function resCols(r) {
     ['Check-out', fmtDate(r.checkout)],
     ['Hóspedes', r.hospedes||null],
     ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo'}[r.tipoEmissao]||r.tipoEmissao||null],
+    ['Programa de Milhas', r.programaMilhas||null],
     ['Milhas a Receber', r.milhasAcumulo ? r.milhasAcumulo + (r.programaAcumulo ? ' — ' + r.programaAcumulo : '') : null],
     ['Confirmação', r.conf||null],
   ];
@@ -1644,6 +1679,7 @@ function editarReserva(id) {
     setVal('f-tipo-emissao',r.tipoEmissao||''); onTipoEmissaoChange();
     setVal('f-valor',r.valor); setVal('f-programa',r.programa);
     setVal('f-milhas-total',r.milhasTotal||''); setVal('f-milhas',r.milhas||'');
+    setVal('f-programa-milhas',r.programaMilhas||'');
     setVal('f-valor-total-balcao',r.valorTotalBalcao||''); setVal('f-valor-pax-balcao',r.valorPaxBalcao||'');
     setVal('f-pax',r.pax);
   } else if (r.tipo==='hotel'){
@@ -1654,6 +1690,7 @@ function editarReserva(id) {
     setVal('f-hotel-tipo-emissao',r.tipoEmissao||'');
     setVal('f-hotel-milhas-acumulo',r.milhasAcumulo||'');
     setVal('f-hotel-programa-acumulo',r.programaAcumulo||'');
+    setVal('f-hotel-programa-milhas',r.programaMilhas||'');
     onHotelTipoEmissaoChange();
   } else if (r.tipo==='carro'){
     setVal('f-locadora',r.locadora); setVal('f-carro-cat',r.categoria);
@@ -2204,20 +2241,20 @@ function onTipoEmissaoChange() {
   if (elMilhas)  elMilhas.style.display  = tipo === 'milhas'  ? '' : 'none';
   if (elBalcao)  elBalcao.style.display  = tipo === 'balcao'  ? '' : 'none';
   if (elTarifa)  elTarifa.style.display  = (tipo === 'milhas' || tipo === 'balcao') ? '' : 'none';
-  if (tipo !== 'milhas')  { setVal('f-milhas-total',''); setVal('f-milhas',''); }
+  if (tipo !== 'milhas')  { setVal('f-milhas-total',''); setVal('f-milhas',''); setVal('f-programa-milhas',''); }
   if (tipo !== 'balcao')  { setVal('f-valor-total-balcao',''); setVal('f-valor-pax-balcao',''); }
   if (tipo === 'dinheiro') setVal('f-valor','');
 }
 
 function onHotelTipoEmissaoChange() {
   var tipo = getVal('f-hotel-tipo-emissao');
-  var acumulo = document.getElementById('hotel-campos-acumulo');
-  var label   = document.getElementById('f-hotel-valor-label');
-  if (acumulo) acumulo.style.display = tipo === 'dinheiro_acumulo' ? '' : 'none';
-  if (tipo !== 'dinheiro_acumulo') {
-    setVal('f-hotel-milhas-acumulo', '');
-    setVal('f-hotel-programa-acumulo', '');
-  }
+  var elAcumulo = document.getElementById('hotel-campos-acumulo');
+  var elMilhas  = document.getElementById('hotel-campos-milhas');
+  var label     = document.getElementById('f-hotel-valor-label');
+  if (elAcumulo) elAcumulo.style.display = tipo === 'dinheiro_acumulo' ? '' : 'none';
+  if (elMilhas)  elMilhas.style.display  = tipo === 'milhas' ? '' : 'none';
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-milhas-acumulo', ''); setVal('f-hotel-programa-acumulo', ''); }
+  if (tipo !== 'milhas') setVal('f-hotel-programa-milhas', '');
   if (label) {
     label.innerHTML = tipo === 'milhas'
       ? 'Valor Total de Milhas'
