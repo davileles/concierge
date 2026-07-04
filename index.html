@@ -636,7 +636,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 </div>
 
 <!-- MODAL VINCULAR RESERVA -->
-<div class="modal-overlay" id="modal-vincular" style="display:none">
+<div class="modal-overlay" id="modal-vincular">
   <div class="modal">
     <div class="modal-header">
       <span class="modal-title">🔗 Vincular Reserva</span>
@@ -1021,18 +1021,26 @@ function colIndex(letra) {
 //  RESERVAS (localStorage)
 // ══════════════════════════════════════════
 function loadReservas() {
-  try { reservas = JSON.parse(sessionStorage.getItem('concierge_reservas') || '[]'); } catch(e) { reservas = []; }
+  try {
+    var s = sessionStorage.getItem('concierge_reservas');
+    var l = localStorage.getItem('concierge_reservas');
+    // Prefer sessionStorage (more recent), fallback to localStorage
+    if (s && JSON.parse(s).length) { reservas = JSON.parse(s); }
+    else if (l && JSON.parse(l).length) { reservas = JSON.parse(l); }
+    else { reservas = []; }
+  } catch(e) { reservas = []; }
 }
 
 function saveReservas() {
   sessionStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+  localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
   fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:reservas})}).catch(function(e){console.error('[saveReservas]',e);});
 }
 
 function syncReservas() {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas')
     .then(function(r){return r.json();})
-    .then(function(d){if(d.ok){reservas=d.data||[];sessionStorage.setItem('concierge_reservas',JSON.stringify(reservas));renderReservas();}})
+    .then(function(d){if(d.ok){reservas=d.data||[];sessionStorage.setItem('concierge_reservas',JSON.stringify(reservas));localStorage.setItem('concierge_reservas',JSON.stringify(reservas));renderReservas();}})
     .catch(function(e){console.error('[syncReservas]',e);});
 }
 
@@ -1060,7 +1068,7 @@ function syncClientes() {
       clientes = d.rows.map(function(row, i){
         return {
           id: 'cli-' + i,
-          nome:          String(row[colIndex(c.colNome)]          || '').trim(),
+          nome:          toTitleCase(String(row[colIndex(c.colNome)] || '')),
           tel:           String(row[colIndex(c.colTel)]           || '').trim(),
           email:         String(row[colIndex(c.colEmail)]         || '').trim(),
           cpf:           String(row[colIndex(c.colCpf)]           || '').trim(),
@@ -1136,6 +1144,14 @@ function getVal(id) {
 function setVal(id, v) {
   var el = document.getElementById(id);
   if (el) el.value = v;
+}
+
+// Normaliza nome: primeiras letras maiúsculas, max 2 palavras (nome + sobrenome)
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.trim().split(/\s+/).slice(0, 2).map(function(w) {
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
 }
 
 // ── UPLOAD DE ATIVO ────────────────────────────────────────
@@ -1286,7 +1302,7 @@ function aplicarDadosAtivo(d) {
 
 function salvarReserva() {
   var tipo = getVal('f-tipo');
-  var cliente = getVal('f-cliente');
+  var cliente = toTitleCase(getVal('f-cliente'));
   if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
   if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
 
@@ -1381,7 +1397,7 @@ function resTitle(r) {
 function resCols(r) {
   if (r.tipo==='voo') return [
     ['Ida', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
-    ['Cliente', r.cliente],
+    ['Cliente', toTitleCase(r.cliente)],
     ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
     ['Volta', r.dataVolta?(r.origemVolta||r.destino||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':''):null],
     ['Data / Hora Volta', r.dataVolta?fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):null],
@@ -1389,19 +1405,19 @@ function resCols(r) {
     ['Localizador', r.pnr||'—'],
   ];
   if (r.tipo==='hotel') return [
-    ['Cliente', r.cliente],
+    ['Cliente', toTitleCase(r.cliente)],
     ['Check-in', fmtDate(r.checkin)],
     ['Check-out', fmtDate(r.checkout)],
     ['Confirmação', r.conf||'—'],
   ];
   if (r.tipo==='carro') return [
-    ['Cliente', r.cliente],
+    ['Cliente', toTitleCase(r.cliente)],
     ['Retirada', fmtDate(r.retData)],
     ['Devolução', fmtDate(r.devData)],
     ['Confirmação', r.conf||'—'],
   ];
   if (r.tipo==='passeio') return [
-    ['Cliente', r.cliente],
+    ['Cliente', toTitleCase(r.cliente)],
     ['Data', fmtDate(r.dataPasseio)],
     ['Hora', r.hora||'—'],
     ['Voucher', r.conf||'—'],
@@ -2292,15 +2308,19 @@ function fecharNovaViagem() {
 }
 
 function addAtividade(icon, nome) {
-  atividadesTemp.push({icon:icon, nome:nome, status:'pendente', reservaId:null});
+  atividadesTemp.push({icon:icon, nome:nome, descricao:'', status:'pendente', reservaId:null});
   renderAtividadesTemp();
 }
 
 function addAtividadeCustom() {
   var nome = prompt('Nome da atividade:');
   if (!nome) return;
-  atividadesTemp.push({icon:'📌', nome:nome, status:'pendente', reservaId:null});
+  atividadesTemp.push({icon:'📌', nome:nome, descricao:'', status:'pendente', reservaId:null});
   renderAtividadesTemp();
+}
+
+function updateAtivDescTemp(idx, val) {
+  if (atividadesTemp[idx]) atividadesTemp[idx].descricao = val;
 }
 
 function removerAtividadeTemp(idx) {
@@ -2316,10 +2336,15 @@ function renderAtividadesTemp() {
     return;
   }
   el.innerHTML = atividadesTemp.map(function(a, i) {
-    return '<div class="ativ-row">' +
+    return '<div class="ativ-row" style="flex-wrap:wrap;gap:4px">' +
       '<span class="ativ-icon">'+a.icon+'</span>' +
-      '<span class="ativ-nome">'+a.nome+'</span>' +
+      '<span class="ativ-nome" style="flex:1">'+a.nome+'</span>' +
       '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="removerAtividadeTemp('+i+')">✕</button>' +
+      '<div style="width:100%;padding-left:28px">' +
+        '<input type="text" placeholder="Descrição / detalhes (opcional)" value="'+(a.descricao||'')+'" ' +
+        'oninput="updateAtivDescTemp('+i+',this.value)" ' +
+        'style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);width:100%;box-sizing:border-box"/>' +
+      '</div>' +
     '</div>';
   }).join('');
 }
@@ -2385,11 +2410,18 @@ function toggleViagemBody(id) {
   if (body) body.classList.toggle('open');
 }
 
+function salvarDescAtiv(viagemId, ativIdx, val) {
+  var v = viagens.find(function(x){ return x.id === viagemId; });
+  if (!v || !v.atividades[ativIdx]) return;
+  v.atividades[ativIdx].descricao = val;
+  saveViagens();
+}
+
 function adicionarAtividadeViagem(id, icon, nome) {
   var v = viagens.find(function(x){ return x.id === id; });
   if (!v) return;
   v.atividades = v.atividades || [];
-  v.atividades.push({icon: icon, nome: nome, status: 'pendente', reservaId: null});
+  v.atividades.push({icon: icon, nome: nome, descricao: '', status: 'pendente', reservaId: null});
   saveViagens();
   renderViagens();
   // Manter o card expandido
@@ -2432,12 +2464,12 @@ function abrirVinculo(viagemId, ativIdx) {
   var sel = document.getElementById('modal-reserva-select');
   sel.innerHTML = '<option value="">Selecione uma reserva…</option>' +
     reservas.map(function(r){
-      return '<option value="'+r.id+'">'+r.id+' · '+r.cliente+' · '+resTitle(r)+'</option>';
+      return '<option value="'+r.id+'">'+r.id+' · '+toTitleCase(r.cliente)+' · '+resTitle(r)+'</option>';
     }).join('');
   var v = viagens.find(function(x){ return x.id === viagemId; });
   if (v && v.atividades[ativIdx] && v.atividades[ativIdx].reservaId)
     sel.value = v.atividades[ativIdx].reservaId;
-  document.getElementById('modal-vincular').style.display = 'flex';
+  document.getElementById('modal-vincular').classList.add('open');
 }
 
 function confirmarVinculo() {
@@ -2487,15 +2519,21 @@ function renderViagens() {
       var res = a.reservaId ? reservas.find(function(r){ return r.id===a.reservaId; }) : null;
       var resLabel = res ? resTitle(res) : '';
       var dVid = ' data-vid="'+v.id+'" data-idx="'+i+'"';
+      var descId = 'adesc-'+v.id+'-'+i;
       return [
-        '<div class="ativ-row">',
+        '<div class="ativ-row" style="flex-wrap:wrap;gap:4px">',
         '<span class="ativ-icon">',a.icon,'</span>',
-        '<span class="ativ-nome">',a.nome,'</span>',
+        '<span class="ativ-nome" style="flex:1">',a.nome,'</span>',
         resLabel
           ? '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">🔗 '+resLabel+'</span>'
           : '<span class="ativ-reserva"'+dVid+' onclick="abrirVinculo(this.dataset.vid,+this.dataset.idx)">Vincular reserva</span>',
         '<span class="ativ-status '+a.status+'"'+dVid+' onclick="ciclarStatus(this.dataset.vid,+this.dataset.idx)">'+statusLabel(a.status)+'</span>',
         '<button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:11px;color:var(--muted2)"'+dVid+' onclick="removerAtividade(this.dataset.vid,+this.dataset.idx)">✕</button>',
+        '<div style="width:100%;padding-left:28px">',
+          '<input type="text" id="'+descId+'" placeholder="Detalhes / descrição (opcional)" value="'+(a.descricao||'')+'" ',
+          'onblur="salvarDescAtiv(\''+v.id+'\','+i+',this.value)" ',
+          'style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);width:100%;box-sizing:border-box"/>',
+        '</div>',
         '</div>'
       ].join('');
     }).join('') : '<p style="font-size:12px;color:var(--muted)">Nenhuma atividade.</p>';
