@@ -531,6 +531,20 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
             </select>
           </div>
         </div>
+        <div class="field"><label>Parceiro</label>
+          <select id="f-hotel-parceiro-acumulo">
+            <option value="">Selecione o parceiro…</option>
+            <option>Allianz</option>
+            <option>Booking</option>
+            <option>Decolar</option>
+            <option>Hotéis.com</option>
+            <option>Localiza Rent a Car</option>
+            <option>Movida</option>
+            <option>Rental Cars</option>
+            <option>Unidas</option>
+            <option>Outro</option>
+          </select>
+        </div>
       </div>
       <!-- Campos extras: milhas como pagamento -->
       <div id="hotel-campos-milhas" style="display:none">
@@ -1224,7 +1238,7 @@ function onTipoChange() {
 
 function limparForm() {
   ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao','f-valor','f-programa','f-milhas-total','f-milhas','f-programa-milhas','f-valor-total-balcao','f-valor-pax-balcao','f-pax',
-   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-programa-milhas',
+   'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-valor','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo','f-hotel-programa-milhas',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-obs'].forEach(function(id){
@@ -1456,6 +1470,7 @@ function salvarReserva() {
       tipoEmissao: getVal('f-hotel-tipo-emissao'),
       milhasAcumulo: getVal('f-hotel-milhas-acumulo'),
       programaAcumulo: getVal('f-hotel-programa-acumulo'),
+      parceiroAcumulo: getVal('f-hotel-parceiro-acumulo'),
       programaMilhas: getVal('f-hotel-programa-milhas'),
     });
   } else if (tipo === 'carro') {
@@ -1521,6 +1536,7 @@ function resCols(r) {
     ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo'}[r.tipoEmissao]||r.tipoEmissao||null],
     ['Programa de Milhas', r.programaMilhas||null],
     ['Milhas a Receber', r.milhasAcumulo ? r.milhasAcumulo + (r.programaAcumulo ? ' — ' + r.programaAcumulo : '') : null],
+    ['Parceiro', r.parceiroAcumulo||null],
     ['Confirmação', r.conf||null],
   ];
   if (r.tipo==='carro') return [
@@ -1698,6 +1714,7 @@ function editarReserva(id) {
     setVal('f-hotel-tipo-emissao',r.tipoEmissao||'');
     setVal('f-hotel-milhas-acumulo',r.milhasAcumulo||'');
     setVal('f-hotel-programa-acumulo',r.programaAcumulo||'');
+    setVal('f-hotel-parceiro-acumulo',r.parceiroAcumulo||'');
     setVal('f-hotel-programa-milhas',r.programaMilhas||'');
     onHotelTipoEmissaoChange();
   } else if (r.tipo==='carro'){
@@ -2261,7 +2278,7 @@ function onHotelTipoEmissaoChange() {
   var label     = document.getElementById('f-hotel-valor-label');
   if (elAcumulo) elAcumulo.style.display = tipo === 'dinheiro_acumulo' ? '' : 'none';
   if (elMilhas)  elMilhas.style.display  = tipo === 'milhas' ? '' : 'none';
-  if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-milhas-acumulo', ''); setVal('f-hotel-programa-acumulo', ''); }
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-milhas-acumulo', ''); setVal('f-hotel-programa-acumulo', ''); setVal('f-hotel-parceiro-acumulo', ''); }
   if (tipo !== 'milhas') setVal('f-hotel-programa-milhas', '');
   if (label) {
     label.innerHTML = tipo === 'milhas'
