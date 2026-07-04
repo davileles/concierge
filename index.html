@@ -1136,17 +1136,13 @@ function colIndex(letra) {
 // ══════════════════════════════════════════
 function loadReservas() {
   try {
-    var s = sessionStorage.getItem('concierge_reservas');
+    // Usa apenas localStorage como cache offline — sessionStorage removido para evitar race condition
     var l = localStorage.getItem('concierge_reservas');
-    // Prefer sessionStorage (more recent), fallback to localStorage
-    if (s && JSON.parse(s).length) { reservas = JSON.parse(s); }
-    else if (l && JSON.parse(l).length) { reservas = JSON.parse(l); }
-    else { reservas = []; }
+    reservas = (l && JSON.parse(l).length) ? JSON.parse(l) : [];
   } catch(e) { reservas = []; }
 }
 
 function saveReservas() {
-  sessionStorage.setItem('concierge_reservas', JSON.stringify(reservas));
   localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
   fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:reservas})}).catch(function(e){console.error('[saveReservas]',e);});
 }
@@ -1154,7 +1150,21 @@ function saveReservas() {
 function syncReservas() {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas')
     .then(function(r){return r.json();})
-    .then(function(d){if(d.ok){reservas=d.data||[];sessionStorage.setItem('concierge_reservas',JSON.stringify(reservas));localStorage.setItem('concierge_reservas',JSON.stringify(reservas));renderReservas();}})
+    .then(function(d){
+      if(d.ok){
+        // Servidor é a fonte da verdade — só aceita dados do servidor se tiver >= que o local
+        var local = [];
+        try { local = JSON.parse(localStorage.getItem('concierge_reservas')||'[]'); } catch(e){}
+        if (d.data.length >= local.length) {
+          reservas = d.data||[];
+          localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+        } else {
+          // Local tem mais dados — salva o local no servidor (merge won't overwrite)
+          reservas = local;
+        }
+        renderReservas();
+      }
+    })
     .catch(function(e){console.error('[syncReservas]',e);});
 }
 
