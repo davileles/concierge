@@ -1830,7 +1830,9 @@ function confirmarDelete() {
 function editarReserva(id) {
   var r = reservas.find(function(x){ return x.id===id; });
   if (!r) return;
+  window._editandoReserva = true;
   switchTab('nova');
+  window._editandoReserva = false;
   // Pré-selecionar viagem já associada
   var viagemAssoc = viagens.find(function(v){
     return v.atividades && v.atividades.some(function(a){ return a.reservaId === id; });
@@ -2035,7 +2037,7 @@ function switchTab(name) {
   document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('panel-'+name).classList.add('active');
   if (name === 'viagens') renderViagens();
-  if (name === 'nova') populateViagemAssocSelect();
+  if (name === 'nova' && !window._editandoReserva) populateViagemAssocSelect();
   var tabs = document.querySelectorAll('.main-tab');
   var map = {reservas:0, nova:1, viagens:2, clientes:3, mensagens:4, config:5};
   if (name==='mensagens') { loadModelos(); initMensagens(); }
