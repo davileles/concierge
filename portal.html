@@ -287,35 +287,84 @@ function toggleViagem(id, header) {
 function entrar() {
   var email = document.getElementById('login-email').value.trim().toLowerCase();
   var errEl = document.getElementById('login-error');
-  if (!email || !email.includes('@')) {
-    errEl.textContent = 'Digite um e-mail válido.';
-    return;
-  }
+  if (!email || !email.includes('@')) { errEl.textContent = 'Digite um e-mail válido.'; return; }
   errEl.textContent = '';
-  document.querySelector('#login-wrap .btn').textContent = 'Buscando…';
-  document.querySelector('#login-wrap .btn').disabled = true;
+  var btn = document.querySelector('#login-wrap .btn');
+  btn.textContent = 'Buscando…'; btn.disabled = true;
 
-  fetch(PROXY + '/concierge/portal?email=' + encodeURIComponent(email))
+  // 1. Buscar cfg do proxy para obter URL do Apps Script e colunas
+  fetch(PROXY + '/concierge/cfg')
     .then(function(r){ return r.json(); })
-    .then(function(d) {
-      document.querySelector('#login-wrap .btn').textContent = 'Ver Minhas Viagens';
-      document.querySelector('#login-wrap .btn').disabled = false;
-      if (!d.ok) { errEl.textContent = d.erro || 'Erro ao buscar dados.'; return; }
-      if (!d.clientes || !d.clientes.length) {
-        errEl.textContent = 'Nenhuma viagem encontrada para este e-mail.';
-        return;
+    .then(function(cfgRes) {
+      var cfg = cfgRes.data || {};
+      if (!cfg.url) throw new Error('Apps Script não configurado. Contate o administrador.');
+
+      function colIdx(letra) {
+        var s = (letra || 'A').toUpperCase().trim();
+        var r = 0;
+        for (var i = 0; i < s.length; i++) r = r * 26 + (s.charCodeAt(i) - 64);
+        return r - 1;
       }
-      _dados = d;
+
+      // 2. Buscar clientes direto do Apps Script (browser lida com redirect do Google)
+      var sheetUrl = cfg.url + '?aba=' + encodeURIComponent(cfg.aba || 'Clientes') + '&linha=' + encodeURIComponent(cfg.linha || 2);
+      return fetch(sheetUrl).then(function(r){ return r.json(); }).then(function(sheetData) {
+        var rows = sheetData.rows || [];
+        var clientesMatch = rows
+          .map(function(row) {
+            return {
+              nome: String(row[colIdx(cfg.colNome)] || '').trim(),
+              email: String(row[colIdx(cfg.colEmail)] || '').trim().toLowerCase(),
+            };
+          })
+          .filter(function(c){ return c.email === email && c.nome; });
+
+        if (!clientesMatch.length) throw new Error('Nenhuma viagem encontrada para este e-mail.');
+
+        var nomesCliente = clientesMatch.map(function(c) {
+          var partes = c.nome.trim().split(/\s+/);
+          return (partes[0].charAt(0).toUpperCase() + partes[0].slice(1).toLowerCase()) +
+                 (partes[1] ? ' ' + partes[1].charAt(0).toUpperCase() + partes[1].slice(1).toLowerCase() : '');
+        });
+
+        // 3. Buscar viagens e reservas do proxy
+        return Promise.all([
+          fetch(PROXY + '/concierge/viagens').then(function(r){ return r.json(); }),
+          fetch(PROXY + '/concierge/reservas').then(function(r){ return r.json(); })
+        ]).then(function(results) {
+          var todasViagens  = results[0].data || [];
+          var todasReservas = results[1].data || [];
+
+          function nomeMatch(nome) {
+            if (!nome) return false;
+            var partes = nome.trim().split(/\s+/);
+            var norm = (partes[0].charAt(0).toUpperCase() + partes[0].slice(1).toLowerCase()) +
+                       (partes[1] ? ' ' + partes[1].charAt(0).toUpperCase() + partes[1].slice(1).toLowerCase() : '');
+            return nomesCliente.indexOf(norm) !== -1;
+          }
+
+          var viagens = todasViagens.filter(function(v) {
+            var clis = Array.isArray(v.clientes) ? v.clientes : [v.clientes];
+            return clis.some(nomeMatch);
+          });
+          var reservas = todasReservas.filter(function(r){ return nomeMatch(r.cliente); });
+
+          return { clientes: clientesMatch, nomesCliente: nomesCliente, viagens: viagens, reservas: reservas };
+        });
+      });
+    })
+    .then(function(dados) {
+      btn.textContent = 'Ver Minhas Viagens'; btn.disabled = false;
+      _dados = dados;
       document.getElementById('login-wrap').style.display = 'none';
       document.getElementById('portal-wrap').style.display = '';
-      document.getElementById('portal-nome').textContent = 'Olá, ' + toTitleCase(d.clientes[0].nome) + '!';
+      document.getElementById('portal-nome').textContent = 'Olá, ' + toTitleCase(dados.clientes[0].nome) + '!';
       document.getElementById('portal-email').textContent = email;
       renderPortal();
     })
-    .catch(function() {
-      document.querySelector('#login-wrap .btn').textContent = 'Ver Minhas Viagens';
-      document.querySelector('#login-wrap .btn').disabled = false;
-      errEl.textContent = 'Erro de conexão. Tente novamente.';
+    .catch(function(e) {
+      btn.textContent = 'Ver Minhas Viagens'; btn.disabled = false;
+      errEl.textContent = e.message || 'Erro de conexão. Tente novamente.';
     });
 }
 
