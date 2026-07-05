@@ -1162,19 +1162,11 @@ function colIndex(letra) {
 //  RESERVAS (localStorage)
 // ══════════════════════════════════════════
 function loadReservas() {
-  // Apenas lê o array em memória — não usa localStorage como fonte
-  // Os dados autoritativos vêm sempre do syncReservas (servidor)
-  if (!reservas || !reservas.length) {
-    try {
-      var l = localStorage.getItem('concierge_reservas');
-      reservas = (l && JSON.parse(l).length) ? JSON.parse(l) : [];
-    } catch(e) { reservas = []; }
-  }
+  // Dados vêm sempre do servidor — array em memória é a fonte
+  if (!reservas) reservas = [];
 }
 
 function saveReservas() {
-  // Salva localmente e no servidor
-  localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
   fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -1187,20 +1179,11 @@ function syncReservas() {
     .then(function(r){return r.json();})
     .then(function(d){
       if(d.ok){
-        // Servidor é sempre a fonte da verdade — sobrescreve tudo
         reservas = d.data || [];
-        localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
         renderReservas();
       }
     })
-    .catch(function(e){
-      console.error('[syncReservas]',e);
-      // Fallback: usa localStorage se servidor falhar
-      try {
-        var l = localStorage.getItem('concierge_reservas');
-        if (l) { reservas = JSON.parse(l); renderReservas(); }
-      } catch(e2){}
-    });
+    .catch(function(e){console.error('[syncReservas]',e);});
 }
 
 // ══════════════════════════════════════════
@@ -1244,7 +1227,6 @@ function syncClientes() {
           grupo:         String(row[colIndex(c.colGrupo)]         || '').trim(),
         };
       }).filter(function(c){ return c.nome; });
-      localStorage.setItem('concierge_clientes', JSON.stringify(clientes));
       dot.className = 'sync-dot ok';
       lbl.textContent = clientes.length + ' clientes carregados · ' + new Date().toLocaleTimeString('pt-BR');
       populateClienteSelect();
@@ -1967,7 +1949,6 @@ function editarReserva(id) {
   window._reservaEditandoOriginal = JSON.parse(JSON.stringify(r));
   // Remove da memória local apenas (não salva no servidor ainda)
   reservas = reservas.filter(function(x){ return x.id!==id; });
-  localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
   // Mostrar botão cancelar
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
   if (btnCancelar) btnCancelar.style.display = '';
@@ -1978,7 +1959,6 @@ function cancelarEdicaoReserva() {
   // Restaurar reserva original
   if (window._reservaEditandoOriginal) {
     reservas.push(window._reservaEditandoOriginal);
-    localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
     window._reservaEditandoId = null;
     window._reservaEditandoOriginal = null;
   }
@@ -2090,7 +2070,6 @@ function switchTab(name) {
   // Se estava editando uma reserva e saiu da aba nova sem salvar, restaurar
   if (name !== 'nova' && window._reservaEditandoOriginal) {
     reservas.push(window._reservaEditandoOriginal);
-    localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
     window._reservaEditandoId = null;
     window._reservaEditandoOriginal = null;
     var btnCancelar = document.getElementById('btn-cancelar-edicao');
@@ -2574,18 +2553,18 @@ function onPaxChange() {
 }
 
 function loadViagens() {
-  try { viagens = JSON.parse(sessionStorage.getItem('concierge_viagens') || '[]'); } catch(e) { viagens = []; }
+  if (!viagens) viagens = [];
 }
 
 function saveViagens() {
-  sessionStorage.setItem('concierge_viagens', JSON.stringify(viagens));
+
   fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:viagens})}).catch(function(e){console.error('[saveViagens]',e);});
 }
 
 function syncViagens() {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens')
     .then(function(r){return r.json();})
-    .then(function(d){if(d.ok){viagens=d.data||[];sessionStorage.setItem('concierge_viagens',JSON.stringify(viagens));renderViagens();}})
+    .then(function(d){if(d.ok){viagens=d.data||[];renderViagens();}})
     .catch(function(e){console.error('[syncViagens]',e);});
 }
 
@@ -3268,17 +3247,7 @@ window.addEventListener('DOMContentLoaded', function(){
   setVal('f-cadastro', new Date().toISOString().split('T')[0]);
 
   // Clientes do cache
-  var cached = localStorage.getItem('concierge_clientes');
-  if (cached) {
-    clientes = JSON.parse(cached);
-    populateClienteSelect();
-    var dot = document.getElementById('sync-dot');
-    var lbl = document.getElementById('sync-label');
-    dot.className = 'sync-dot ok';
-    lbl.textContent = clientes.length + ' clientes em cache · clique em Sincronizar para atualizar';
-  } else {
-    syncClientes();
-  }
+  syncClientes();
 
   renderReservas();
 });
