@@ -1642,10 +1642,10 @@ function resGridCols(r, cols) {
     var temVolta = cols.some(function(c){ return c[0] === 'Volta'; });
     if (temVolta) {
       // Cliente | Ida | Data/Hora Ida | Volta | Data/Hora Volta | Cia | Localizador
-      return '140px 130px 200px 130px 200px 100px 110px';
+      return '140px 130px 1fr 130px 1fr 100px 115px';
     } else {
       // Cliente | Ida | Data/Hora Ida | Cia | Localizador
-      return '160px 160px 220px 120px 120px';
+      return '160px 160px 1fr 120px 115px';
     }
   }
   if (r.tipo === 'hotel') {
