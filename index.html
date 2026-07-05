@@ -174,7 +174,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .res-card-info{flex:1;min-width:0}
 .res-card-id{font-size:10px;font-weight:700;color:var(--muted2);letter-spacing:1px;margin-bottom:2px}
 .res-card-title{font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.res-card-body{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:0}
+.res-card-body{display:grid;gap:0}
 .res-col{padding:12px 16px;border-right:1px solid var(--border)}
 .res-col:last-child{border-right:none}
 .res-col-label{font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}
@@ -1636,6 +1636,25 @@ function setFilter(el) {
   renderReservas();
 }
 
+// Larguras proporcionais das colunas do grid por tipo de reserva
+function resGridCols(r, cols) {
+  if (r.tipo === 'voo') {
+    var temVolta = cols.some(function(c){ return c[0] === 'Volta'; });
+    if (temVolta) {
+      // Cliente | Ida | Data/Hora Ida | Volta | Data/Hora Volta | Cia | Localizador
+      return '140px 130px 200px 130px 200px 100px 110px';
+    } else {
+      // Cliente | Ida | Data/Hora Ida | Cia | Localizador
+      return '160px 160px 220px 120px 120px';
+    }
+  }
+  if (r.tipo === 'hotel') {
+    // Cliente | Hotel | Check-in | Check-out | Confirmação
+    return '140px 2fr 110px 110px 160px';
+  }
+  return 'repeat(auto-fit, minmax(130px, 1fr))';
+}
+
 function renderReservas() {
   loadReservas();
   var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
@@ -1693,7 +1712,7 @@ function renderReservas() {
           '<div class="res-card-title">'+resTitle(r)+urgenteBadge+'</div>'+
         '</div>'+
       '</div>'+
-      '<div class="res-card-body">'+
+      '<div class="res-card-body" style="grid-template-columns:'+resGridCols(r, cols)+';gap:0">'+
         cols.filter(function(c){ return c[1] !== null && c[1] !== undefined && c[1] !== ''; }).map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
       '</div>'+
       '<div class="res-card-footer">'+
