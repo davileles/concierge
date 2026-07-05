@@ -1040,10 +1040,15 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 <!-- MODAL DETALHE ATIVIDADE -->
 <div class="modal-overlay" id="modal-ativ-detalhe">
-  <div class="modal">
+  <div class="modal" style="max-width:560px">
     <div class="modal-header">
       <span class="modal-title" id="mad-header">Atividade</span>
       <button class="modal-close" onclick="closeModal('modal-ativ-detalhe')">×</button>
+    </div>
+    <!-- Dados do Cliente -->
+    <div id="mad-cliente-section" style="display:none;margin-bottom:16px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">👤 Dados do Cliente</div>
+      <div id="mad-cliente-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div style="margin-bottom:14px">
       <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Título</div>
@@ -2760,6 +2765,57 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
   document.getElementById('mad-header').textContent = a.icon + ' ' + a.nome;
   document.getElementById('mad-titulo').value = a.titulo || '';
   document.getElementById('mad-descricao').value = a.descricao || '';
+
+  // Seção de dados do cliente (da viagem)
+  var cliSecao = document.getElementById('mad-cliente-section');
+  var cliInfo  = document.getElementById('mad-cliente-info');
+  if (tipo !== 'temp' && viagemId) {
+    var vv = viagens.find(function(x){ return x.id === viagemId; });
+    // Clientes da viagem
+    var cliNomes = vv && vv.clientes
+      ? (Array.isArray(vv.clientes) ? vv.clientes : [vv.clientes])
+      : [];
+    var cliDados = cliNomes.map(function(nome) {
+      return clientes.find(function(c){ return toTitleCase(c.nome) === toTitleCase(nome) || c.nome === nome; });
+    }).filter(Boolean);
+
+    if (cliDados.length) {
+      cliInfo.innerHTML = cliDados.map(function(c) {
+        function madCopy(label, val) {
+          if (!val) return '';
+          var safe = val.replace(/'/g, "&#39;");
+          return '<div style="display:flex;align-items:center;gap:8px;padding:3px 0">' +
+            '<span style="color:var(--muted);min-width:120px;flex-shrink:0;font-size:11px">' + label + '</span>' +
+            '<span style="font-weight:600;flex:1;word-break:break-all">' + val + '</span>' +
+            '<button onclick="copiarTexto(this)" data-val="' + safe + '" title="Copiar" ' +
+            'style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:13px;padding:2px 4px;border-radius:4px;flex-shrink:0">📋</button>' +
+            '</div>';
+        }
+        var html = cliDados.length > 1
+          ? '<div style="font-size:11px;font-weight:800;color:var(--accent);margin-bottom:4px">' + toTitleCase(c.nome) + '</div>'
+          : '';
+        html += madCopy('Nome Completo', c.nome);
+        html += madCopy('CPF', c.cpf);
+        html += madCopy('Nascimento', c.nasc ? fmtDate(c.nasc) : '');
+        if (c.senhas) {
+          html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border)">' +
+            '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">🔑 Senhas / Acessos</div>' +
+            '<div style="display:flex;align-items:flex-start;gap:8px">' +
+              '<span style="flex:1;white-space:pre-wrap;word-break:break-all;font-size:12px;color:var(--muted)">' + escHtml(c.senhas) + '</span>' +
+              '<button onclick="copiarTexto(this)" data-val="' + c.senhas.replace(/'/g,"&#39;") + '" title="Copiar senhas" ' +
+              'style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:13px;padding:2px 4px;border-radius:4px;flex-shrink:0">📋</button>' +
+            '</div>' +
+          '</div>';
+        }
+        return html;
+      }).join('<div style="border-top:1px solid var(--border);margin:8px 0"></div>');
+      cliSecao.style.display = '';
+    } else {
+      cliSecao.style.display = 'none';
+    }
+  } else {
+    cliSecao.style.display = 'none';
+  }
 
   // Seção da reserva vinculada
   var secao  = document.getElementById('mad-reserva-section');
