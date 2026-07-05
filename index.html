@@ -653,6 +653,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
     <div class="btn-row">
       <button class="btn btn-accent" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
+      <button class="btn btn-ghost" id="btn-cancelar-edicao" style="display:none" onclick="cancelarEdicaoReserva()">✕ Cancelar Edição</button>
       <button class="btn btn-ghost" onclick="limparForm()">🗑 Limpar</button>
     </div>
     <p id="form-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
@@ -1278,6 +1279,10 @@ function limparForm() {
    'f-obs'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
+  window._reservaEditandoId = null;
+  window._reservaEditandoOriginal = null;
+  var btnCancelar = document.getElementById('btn-cancelar-edicao');
+  if (btnCancelar) btnCancelar.style.display = 'none';
   onTipoChange();
   var ac = document.getElementById('hotel-campos-acumulo');
   if (ac) ac.style.display = 'none';
@@ -1546,6 +1551,10 @@ function salvarReserva() {
     });
   }
 
+  window._reservaEditandoId = null;
+  window._reservaEditandoOriginal = null;
+  var btnCancelar = document.getElementById('btn-cancelar-edicao');
+  if (btnCancelar) btnCancelar.style.display = 'none';
   reservas.unshift(res);
   saveReservas();
   updateStats();
@@ -1819,10 +1828,28 @@ function editarReserva(id) {
     setVal('f-passeio-hora',r.hora); setVal('f-passeio-pax',r.pax);
     setVal('f-passeio-conf',r.conf); setVal('f-passeio-valor',r.valor);
   }
-  // Remove o antigo da memória — o save no servidor acontece ao submeter o formulário
+  // Guarda a reserva original para restaurar se o usuário cancelar
+  window._reservaEditandoId = id;
+  window._reservaEditandoOriginal = JSON.parse(JSON.stringify(r));
+  // Remove da memória local apenas (não salva no servidor ainda)
   reservas = reservas.filter(function(x){ return x.id!==id; });
   localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
-  showToast('✏️ Editando reserva — salve para confirmar', 'ok');
+  // Mostrar botão cancelar
+  var btnCancelar = document.getElementById('btn-cancelar-edicao');
+  if (btnCancelar) btnCancelar.style.display = '';
+  showToast('✏️ Editando reserva — salve para confirmar ou cancele', 'ok');
+}
+
+function cancelarEdicaoReserva() {
+  // Restaurar reserva original
+  if (window._reservaEditandoOriginal) {
+    reservas.push(window._reservaEditandoOriginal);
+    localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+    window._reservaEditandoId = null;
+    window._reservaEditandoOriginal = null;
+  }
+  limparForm();
+  switchTab('reservas');
 }
 
 // ══════════════════════════════════════════
