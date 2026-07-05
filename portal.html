@@ -208,7 +208,7 @@ body::before {
    PORTAL (after login)
 ════════════════════════════════════════ */
 #portal-wrap { display: none; }
-#portal-wrap.visible { animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
+#portal-wrap.visible { display: block; min-height: 100vh; animation: fadeUp .5s cubic-bezier(.16,1,.3,1) both; }
 
 /* Top nav */
 .portal-nav {
@@ -778,7 +778,7 @@ function entrar() {
       document.getElementById('nav-nome').textContent = primeiroNome;
       document.getElementById('portal-email').textContent = '📧 '+email;
       document.getElementById('login-wrap').style.display='none';
-      var pw=document.getElementById('portal-wrap'); pw.style.display=''; setTimeout(function(){ pw.classList.add('visible'); }, 10);
+      var pw=document.getElementById('portal-wrap'); pw.style.display='block'; pw.style.minHeight='100vh'; setTimeout(function(){ pw.classList.add('visible'); }, 10);
       renderPortal();
     })
     .catch(function(e){
@@ -789,7 +789,7 @@ function entrar() {
 
 function sair(){
   _dados=null;
-  var pw=document.getElementById('portal-wrap'); pw.style.display='none'; pw.classList.remove('visible');
+  var pw=document.getElementById('portal-wrap'); pw.style.display='none'; pw.style.minHeight=''; pw.classList.remove('visible');
   document.getElementById('login-wrap').style.display='flex';
   document.getElementById('login-email').value='';
   document.getElementById('login-error').textContent='';
