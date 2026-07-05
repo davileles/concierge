@@ -1574,33 +1574,26 @@ function resTitle(r) {
 }
 
 function resCols(r) {
-  if (r.tipo==='voo') return [
-    ['Cliente', toTitleCase(r.cliente)],
-    ['Ida', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
-    ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
-    ['Volta', r.dataVolta?(r.origemVolta||r.destino||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':''):null],
-    ['Data / Hora Volta', r.dataVolta?fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:''):null],
-    ['Cia Aérea', r.ciaIda||r.cia||null],
-    ['Localizador', r.pnr||null],
-    ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo',balcao:'Balcão'}[r.tipoEmissao]||r.tipoEmissao||null],
-    ['Programa', r.programa||r.programaBalcao||null],
-    ['Total de Milhas', r.milhasTotal?r.milhasTotal+(r.pax?' ('+r.pax+' pax)':''):null],
-    ['Valor Gasto', r.valorDinheiro||r.valorAcumulo||r.valorTotalBalcao||null],
-    ['Programa Fidelidade', r.programaAcumuloVoo||null],
-    ['Tarifa Pagante', r.valor||null],
-  ];
+  if (r.tipo==='voo') {
+    var cols = [
+      ['Cliente', toTitleCase(r.cliente)],
+      ['Ida', (r.origem||'?')+' → '+(r.destino||'?')+(r.conexao?' (via '+r.conexao+')':'')],
+      ['Data / Hora Ida', fmtDate(r.dataIda)+(r.horaPartida?' · '+r.horaPartida:'')+(r.horaChegada?' → '+r.horaChegada:'')],
+    ];
+    if (r.dataVolta) {
+      cols.push(['Volta', (r.origemVolta||r.destino||'?')+' → '+(r.destinoVolta||r.origem||'?')+(r.conexaoVolta?' (via '+r.conexaoVolta+')':'')]);
+      cols.push(['Data / Hora Volta', fmtDate(r.dataVolta)+(r.horaPartidaVolta?' · '+r.horaPartidaVolta:'')+(r.horaChegadaVolta?' → '+r.horaChegadaVolta:'')]);
+    }
+    cols.push(['Cia Aérea', r.ciaIda||r.cia||null]);
+    cols.push(['Localizador', r.pnr||null]);
+    return cols;
+  }
   if (r.tipo==='hotel') return [
     ['Cliente', toTitleCase(r.cliente)],
     ['Hotel', r.hotelNome||null],
     ['Check-in', fmtDate(r.checkin)],
     ['Check-out', fmtDate(r.checkout)],
     ['Confirmação', r.conf||null],
-    ['Tipo de Emissão', {milhas:'Milhas',dinheiro:'Dinheiro',dinheiro_acumulo:'Dinheiro c/ acúmulo'}[r.tipoEmissao]||r.tipoEmissao||null],
-    ['Total de Milhas', r.valorMilhas||null],
-    ['Programa Fidelidade', r.programaMilhas||r.programaAcumulo||null],
-    ['Valor Gasto', r.valorDinheiro||r.valorAcumulo||null],
-    ['Milhas a Receber', r.milhasAcumulo||null],
-    ['Parceiro', r.parceiroAcumulo||null],
   ];
   if (r.tipo==='carro') return [
     ['Cliente', toTitleCase(r.cliente)],
