@@ -738,16 +738,32 @@ function entrar() {
           fetch(PROXY+'/concierge/reservas').then(function(r){return r.json();})
         ]).then(function(res){
           var todasViagens=res[0].data||[], todasReservas=res[1].data||[];
-          function nomeMatch(nome){
-            if(!nome)return false;
-            var p=nome.trim().split(/\s+/);
-            var norm=(p[0].charAt(0).toUpperCase()+p[0].slice(1).toLowerCase())+
-                     (p[1]?' '+p[1].charAt(0).toUpperCase()+p[1].slice(1).toLowerCase():'');
-            return nomesCliente.indexOf(norm)!==-1;
+          function norm2(s){
+            if(!s)return '';
+            var p=s.trim().split(/\s+/);
+            return (p[0].charAt(0).toUpperCase()+p[0].slice(1).toLowerCase())+
+                   (p[1]?' '+p[1].charAt(0).toUpperCase()+p[1].slice(1).toLowerCase():'');
+          }
+          function nomeMatch(campo){
+            if(!campo)return false;
+            // Suporta string "A, B" ou array
+            var lista=Array.isArray(campo)?campo:String(campo).split(',');
+            return lista.some(function(n){
+              var normalizado=norm2(n.trim());
+              return nomesCliente.some(function(nc){
+                // Comparação exata (2 partes) ou por primeiro nome
+                return normalizado===nc ||
+                       normalizado.toLowerCase().split(' ')[0]===nc.toLowerCase().split(' ')[0];
+              });
+            });
           }
           return {
             clientes: clientesMatch, nomesCliente: nomesCliente,
-            viagens:  todasViagens.filter(function(v){ var c=Array.isArray(v.clientes)?v.clientes:[v.clientes]; return c.some(nomeMatch); }),
+            viagens:  todasViagens.filter(function(v){
+              var c=Array.isArray(v.clientes)?v.clientes:
+                    (typeof v.clientes==='string'?v.clientes.split(','):[v.clientes]);
+              return c.some(function(n){return nomeMatch(n.trim());});
+            }),
             reservas: todasReservas.filter(function(r){return nomeMatch(r.cliente);})
           };
         });
