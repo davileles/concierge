@@ -84,9 +84,9 @@ html, body {
 .login-headline {
   font-size: 30px;
   font-weight: 300;
-  line-height: 1.2;
+  line-height: 1.3;
   letter-spacing: -0.5px;
-  color: var(--text);
+  color: rgba(255,255,255,.55);
   margin-bottom: 10px;
   text-align: center;
 }
@@ -215,8 +215,8 @@ html, body {
 }
 
 .hero-greeting {
-  font-size: 26px; font-weight: 300;
-  letter-spacing: -0.4px; color: var(--text);
+  font-size: 28px; font-weight: 300;
+  letter-spacing: -0.5px; color: rgba(255,255,255,.6);
   margin-bottom: 4px;
 }
 
@@ -236,7 +236,7 @@ html, body {
 }
 
 .stat-num {
-  font-size: 26px; font-weight: 300;
+  font-size: 26px; font-weight: 400;
   color: var(--text); letter-spacing: -0.5px;
   margin-bottom: 4px;
 }
@@ -256,6 +256,11 @@ html, body {
   margin-bottom: 16px;
   display: flex; align-items: center; gap: 12px;
 }
+.section-label::before {
+  content: '';
+  width: 16px; height: 1px;
+  background: var(--gold); opacity: .6; flex-shrink: 0;
+}
 
 .section-label::after {
   content: ''; flex: 1; height: 1px; background: var(--border);
@@ -269,6 +274,9 @@ html, body {
   margin-bottom: 12px;
   transition: border-color .2s;
 }
+.viagem-card.expanded {
+  border-color: var(--border-strong);
+}
 
 .viagem-card:hover { border-color: var(--border-strong); }
 
@@ -279,8 +287,8 @@ html, body {
 }
 
 .viagem-nome {
-  font-size: 15px; font-weight: 400;
-  color: var(--text); flex: 1;
+  font-size: 15px; font-weight: 500;
+  color: var(--text); flex: 1; letter-spacing: -0.1px;
 }
 
 .viagem-meta {
@@ -337,7 +345,7 @@ html, body {
 .ativ-icon { font-size: 16px; flex-shrink: 0; }
 
 .ativ-body { flex: 1; }
-.ativ-nome { font-size: 13px; font-weight: 400; color: var(--text-2); }
+.ativ-nome { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.75); }
 .ativ-titulo { font-size: 11px; color: var(--text-3); margin-top: 2px; }
 .ativ-desc { font-size: 11px; color: var(--text-3); margin-top: 4px; line-height: 1.5; }
 
@@ -403,9 +411,9 @@ html, body {
   <div class="login-box fade-in">
     <div class="login-wordmark">
       <div class="login-wordmark-icon">✈</div>
-      <span class="login-wordmark-text">CDV Concierge</span>
+      <span class="login-wordmark-text">CDV <span style="color:var(--gold);opacity:.7">Concierge</span></span>
     </div>
-    <h1 class="login-headline">Sua viagem,<br>acompanhada.</h1>
+    <h1 class="login-headline">Sua viagem,<br><span style="color:var(--gold);font-weight:400">acompanhada.</span></h1>
     <p class="login-sub">Acesse com o e-mail cadastrado para acompanhar reservas e atividades em tempo real.</p>
     <div class="login-field">
       <span class="login-field-icon">✉</span>
@@ -424,7 +432,7 @@ html, body {
   <nav class="nav">
     <div class="nav-brand">
       <div class="nav-brand-icon">✈</div>
-      <span class="nav-brand-name">CDV Concierge</span>
+      <span class="nav-brand-name">CDV <span style="color:var(--gold);opacity:.8">Concierge</span></span>
     </div>
     <div class="nav-user">
       <span>Olá, <strong id="nav-nome"></strong></span>
@@ -586,7 +594,7 @@ function entrar() {
       btn.innerHTML='Acessar <span style="opacity:.4">→</span>'; btn.disabled=false;
       _dados=dados;
       var nome=toTitleCase(dados.clientes[0].nome).split(' ')[0];
-      document.getElementById('portal-nome').textContent='Olá, '+nome+'.';
+      document.getElementById('portal-nome').innerHTML='Olá, <span style="font-weight:500;color:rgba(255,255,255,.95)">'+nome+'</span>.';
       document.getElementById('nav-nome').textContent=nome;
       document.getElementById('portal-email').textContent=email;
       document.getElementById('login-wrap').style.display='none';
