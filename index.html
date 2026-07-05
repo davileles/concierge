@@ -1318,7 +1318,10 @@ function populateViagemAssocSelect(reservadoParaId) {
   if (!sel) return;
   sel.innerHTML = '<option value="">Não associar a nenhuma viagem</option>';
   viagens.forEach(function(v) {
-    var label = v.nome + (v.clientes && v.clientes.length ? ' — ' + v.clientes.map(toTitleCase).join(', ') : '');
+    var clientes = v.clientes
+      ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(toTitleCase).join(', ')
+      : '';
+    var label = v.nome + (clientes ? ' — ' + clientes : '');
     if (v.inicio) label += ' (' + fmtDate(v.inicio) + ')';
     var opt = document.createElement('option');
     opt.value = v.id;
