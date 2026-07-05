@@ -1045,11 +1045,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       <span class="modal-title" id="mad-header">Atividade</span>
       <button class="modal-close" onclick="closeModal('modal-ativ-detalhe')">×</button>
     </div>
-    <!-- Dados do Cliente -->
-    <div id="mad-cliente-section" style="display:none;margin-bottom:16px">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">👤 Dados do Cliente</div>
-      <div id="mad-cliente-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;flex-direction:column;gap:6px"></div>
-    </div>
     <div style="margin-bottom:14px">
       <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Título</div>
       <input type="text" id="mad-titulo" placeholder="Ex: GRU → MIA ida, Hotel Marriott noite 1…"
@@ -1061,9 +1056,14 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         style="width:100%;box-sizing:border-box;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;resize:vertical;min-height:80px"></textarea>
     </div>
     <!-- Reserva vinculada -->
-    <div id="mad-reserva-section" style="display:none;margin-bottom:20px">
+    <div id="mad-reserva-section" style="display:none;margin-bottom:14px">
       <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🔗 Reserva Vinculada</div>
       <div id="mad-reserva-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px;font-size:12px;line-height:1.8"></div>
+    </div>
+    <!-- Dados do Cliente -->
+    <div id="mad-cliente-section" style="display:none;margin-bottom:20px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">👤 Dados do Cliente</div>
+      <div id="mad-cliente-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;flex-direction:column;gap:6px"></div>
     </div>
     <div class="btn-row">
       <button class="btn btn-accent" style="flex:1" onclick="salvarDetalheAtiv()">💾 Salvar</button>
