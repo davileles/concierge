@@ -2822,7 +2822,6 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
   var secao  = document.getElementById('mad-reserva-section');
   var info   = document.getElementById('mad-reserva-info');
   if (a.reservaId) {
-    loadReservas();
     var res = reservas.find(function(r){ return r.id === a.reservaId; });
     if (res) {
       var cols = resCols(res);
