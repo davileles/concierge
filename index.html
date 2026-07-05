@@ -349,6 +349,21 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
       </div>
     </div>
 
+    <div class="g2">
+      <div class="field">
+        <label>Associar a uma Viagem <span class="tag">opcional</span></label>
+        <select id="f-viagem-assoc" onchange="onViagemAssocChange()">
+          <option value="">Não associar a nenhuma viagem</option>
+        </select>
+      </div>
+      <div class="field" id="field-atividade-assoc" style="display:none">
+        <label>Atividade na Viagem <span class="tag">opcional</span></label>
+        <select id="f-atividade-assoc">
+          <option value="">➕ Criar nova atividade</option>
+        </select>
+      </div>
+    </div>
+
     <!-- CAMPOS VOO -->
     <div id="fields-voo" style="display:none">
       <div class="sep"></div>
@@ -645,13 +660,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <span>Lendo arquivo com IA…</span>
       </div>
       <p id="upload-ok" style="font-size:12px;font-weight:700;margin-top:8px;min-height:14px;color:#22c55e"></p>
-    </div>
-
-    <div class="field">
-      <label>Associar a uma Viagem <span class="tag">opcional</span></label>
-      <select id="f-viagem-assoc">
-        <option value="">Não associar a nenhuma viagem</option>
-      </select>
     </div>
 
     <div class="field">
@@ -1284,7 +1292,7 @@ function limparForm() {
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
-   'f-obs','f-viagem-assoc'].forEach(function(id){
+   'f-obs','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
   window._reservaEditandoId = null;
@@ -1300,7 +1308,34 @@ function limparForm() {
   if (hd) hd.style.display = 'none';
   var lbl = document.getElementById('f-hotel-valor-label');
   if (lbl) lbl.innerHTML = 'Valor Total <span class="tag">R$</span>';
+  // Esconder select de atividade
+  var fa = document.getElementById('field-atividade-assoc');
+  if (fa) fa.style.display = 'none';
   document.getElementById('form-ok').textContent = '';
+}
+
+function onViagemAssocChange() {
+  var viagemId = getVal('f-viagem-assoc');
+  var fieldAtiv = document.getElementById('field-atividade-assoc');
+  var selAtiv = document.getElementById('f-atividade-assoc');
+  if (!viagemId || !fieldAtiv || !selAtiv) {
+    if (fieldAtiv) fieldAtiv.style.display = 'none';
+    return;
+  }
+  var v = viagens.find(function(x){ return x.id === viagemId; });
+  if (!v || !v.atividades || !v.atividades.length) {
+    fieldAtiv.style.display = 'none';
+    return;
+  }
+  // Popular select com atividades existentes da viagem
+  selAtiv.innerHTML = '<option value="">➕ Criar nova atividade</option>';
+  sortAtividades(v.atividades).forEach(function(a, i) {
+    var opt = document.createElement('option');
+    opt.value = i; // índice na lista sorted
+    opt.textContent = a.icon + ' ' + a.nome + (a.titulo ? ' — ' + a.titulo : '');
+    selAtiv.appendChild(opt);
+  });
+  fieldAtiv.style.display = '';
 }
 
 function getVal(id) {
@@ -1329,6 +1364,7 @@ function populateViagemAssocSelect(reservadoParaId) {
     sel.appendChild(opt);
   });
   if (reservadoParaId) sel.value = reservadoParaId;
+  onViagemAssocChange();
 }
 function toTitleCase(str) {
   if (!str) return '';
@@ -1585,38 +1621,46 @@ function salvarReserva() {
 
   // Vincular à viagem selecionada (se houver)
   var viagemId = getVal('f-viagem-assoc');
+  var ativIdxSel = getVal('f-atividade-assoc'); // índice da atividade existente ou '' para criar nova
   if (viagemId) {
     var v = viagens.find(function(x){ return x.id === viagemId; });
     if (v) {
       v.atividades = v.atividades || [];
-      // Determinar ícone e nome da atividade com base no tipo
-      var ATIV_MAP = {
-        voo: { icon: '✈️', nome: res.origem && res.destino
-          ? (res.origem + ' → ' + res.destino === res.origemVolta + ' → ' + res.destinoVolta || !res.dataVolta
-              ? (res.dataVolta ? 'Passagem ' : 'Passagem ')
-              : 'Passagem ')
-          : 'Passagem Internacional' },
-        hotel: { icon: '🏨', nome: 'Hotel' },
-        carro: { icon: '🚗', nome: 'Aluguel de Carro' },
-        passeio: { icon: '🎯', nome: 'Passeio/Atividade' }
-      };
-      var map = ATIV_MAP[res.tipo] || { icon: '📌', nome: res.tipo };
-      // Determinar se é doméstico ou internacional para voo
-      var nomeAtiv = map.nome;
-      if (res.tipo === 'voo') {
+      if (ativIdxSel !== '') {
+        // Vincular a atividade EXISTENTE
+        var sorted = sortAtividades(v.atividades);
+        var ativRef = sorted[parseInt(ativIdxSel)];
+        var realIdx = v.atividades.indexOf(ativRef);
+        if (realIdx !== -1) {
+          v.atividades[realIdx].reservaId = res.id;
+          v.atividades[realIdx].status = 'concluida';
+        }
+      } else {
+        // Criar NOVA atividade na viagem
         var internacionais = ['MAD','LIS','CDG','JFK','MIA','FCO','LHR','FRA','AMS','GRU','EZE','SCL','BOG','LIM','MEX','CUN','CUR','ORD','LAX','YYZ'];
-        var isIntl = internacionais.indexOf(res.destino) !== -1 || internacionais.indexOf(res.origem) !== -1;
-        nomeAtiv = isIntl ? 'Passagem Internacional' : 'Passagem Doméstica';
+        var nomeAtiv = 'Passagem Internacional';
+        var iconAtiv = '✈️';
+        if (res.tipo === 'voo') {
+          var isIntl = internacionais.indexOf(res.destino) !== -1 || internacionais.indexOf(res.origem) !== -1;
+          nomeAtiv = isIntl ? 'Passagem Internacional' : 'Passagem Doméstica';
+          iconAtiv = '✈️';
+        } else if (res.tipo === 'hotel') {
+          nomeAtiv = 'Hotel'; iconAtiv = '🏨';
+        } else if (res.tipo === 'carro') {
+          nomeAtiv = 'Aluguel de Carro'; iconAtiv = '🚗';
+        } else if (res.tipo === 'passeio') {
+          nomeAtiv = 'Passeio/Atividade'; iconAtiv = '🎯';
+        }
+        v.atividades.push({
+          icon: iconAtiv,
+          nome: nomeAtiv,
+          titulo: res.tipo === 'voo' ? (res.origem||'') + ' → ' + (res.destino||'') : (res.hotelNome || res.passeioNome || ''),
+          descricao: '',
+          status: 'concluida',
+          reservaId: res.id
+        });
+        v.atividades = sortAtividades(v.atividades);
       }
-      v.atividades.push({
-        icon: map.icon,
-        nome: nomeAtiv,
-        titulo: res.tipo === 'voo' ? (res.origem||'') + ' → ' + (res.destino||'') : (res.hotelNome || res.passeioNome || ''),
-        descricao: '',
-        status: 'concluida',
-        reservaId: res.id
-      });
-      v.atividades = sortAtividades(v.atividades);
       saveViagens();
       showToast('✅ Reserva salva e vinculada à viagem!', 'ok');
     }
@@ -1836,11 +1880,22 @@ function editarReserva(id) {
   window._editandoReserva = true;
   switchTab('nova');
   window._editandoReserva = false;
-  // Pré-selecionar viagem já associada
+  // Pré-selecionar viagem já associada e a atividade vinculada
   var viagemAssoc = viagens.find(function(v){
     return v.atividades && v.atividades.some(function(a){ return a.reservaId === id; });
   });
   populateViagemAssocSelect(viagemAssoc ? viagemAssoc.id : '');
+  // Pré-selecionar a atividade específica vinculada a esta reserva
+  if (viagemAssoc) {
+    var sorted = sortAtividades(viagemAssoc.atividades);
+    var ativIdx = sorted.findIndex(function(a){ return a.reservaId === id; });
+    if (ativIdx !== -1) {
+      setTimeout(function(){
+        var selAtiv = document.getElementById('f-atividade-assoc');
+        if (selAtiv) selAtiv.value = String(ativIdx);
+      }, 50);
+    }
+  }
   setVal('f-tipo', r.tipo); onTipoChange();
   setVal('f-cliente', r.cliente);
   setVal('f-obs', r.obs||'');
