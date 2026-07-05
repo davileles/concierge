@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Portal CDV — Acompanhamento de Viagens</title>
+<style>
+:root {
+  --bg:       #0d1117;
+  --surface:  #161b22;
+  --surface2: #1c2230;
+  --border:   #30363d;
+  --text:     #e6edf3;
+  --muted:    #8b949e;
+  --muted2:   #6e7681;
+  --accent:   #e85d5d;
+  --accent2:  #ff8c42;
+  --blue:     #58a6ff;
+  --green:    #3fb950;
+  --yellow:   #d29922;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; }
+
+/* Header */
+.header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 14px; }
+.header-logo { font-size: 22px; }
+.header-title { font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -.3px; }
+.header-sub { font-size: 12px; color: var(--muted); margin-top: 1px; }
+
+/* Login */
+.login-wrap { display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 65px); padding: 24px; }
+.login-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 40px 36px; width: 100%; max-width: 420px; text-align: center; }
+.login-icon { font-size: 48px; margin-bottom: 16px; }
+.login-title { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
+.login-desc { font-size: 13px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+.login-card input { width: 100%; padding: 12px 16px; border-radius: 10px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; margin-bottom: 12px; outline: none; }
+.login-card input:focus { border-color: var(--accent); }
+.btn { padding: 12px 20px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; cursor: pointer; transition: opacity .15s; width: 100%; }
+.btn:hover { opacity: .85; }
+.btn-accent { background: var(--accent); color: #fff; }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.error-msg { font-size: 12px; color: var(--accent); margin-top: 10px; min-height: 16px; }
+
+/* Main */
+.main { max-width: 900px; margin: 0 auto; padding: 28px 20px; }
+.welcome { margin-bottom: 28px; }
+.welcome-name { font-size: 22px; font-weight: 800; margin-bottom: 4px; }
+.welcome-email { font-size: 13px; color: var(--muted); }
+.logout-btn { float: right; font-size: 12px; color: var(--muted2); background: none; border: 1px solid var(--border); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.logout-btn:hover { color: var(--text); }
+
+/* Viagem card */
+.viagem-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; margin-bottom: 16px; overflow: hidden; }
+.viagem-header { padding: 16px 20px; cursor: pointer; display: flex; align-items: center; gap: 12px; user-select: none; }
+.viagem-header:hover { background: var(--surface2); }
+.viagem-icon { font-size: 20px; }
+.viagem-info { flex: 1; }
+.viagem-nome { font-size: 15px; font-weight: 800; }
+.viagem-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.viagem-chevron { font-size: 12px; color: var(--muted2); transition: transform .2s; }
+.viagem-body { display: none; border-top: 1px solid var(--border); padding: 16px 20px; }
+.viagem-body.open { display: block; }
+.viagem-chevron.open { transform: rotate(90deg); }
+
+/* Progress */
+.progress-wrap { margin-bottom: 16px; }
+.progress-label { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+.progress-bar { height: 6px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 99px; transition: width .4s; }
+
+/* Atividades */
+.ativ-list { display: flex; flex-direction: column; gap: 8px; }
+.ativ-row { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+.ativ-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+.ativ-content { flex: 1; }
+.ativ-nome { font-size: 13px; font-weight: 700; }
+.ativ-titulo { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ativ-desc { font-size: 12px; color: var(--muted2); margin-top: 4px; line-height: 1.5; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 10px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; flex-shrink: 0; margin-top: 2px; }
+.badge-pendente   { background: rgba(210,153,34,.15);  color: var(--yellow); }
+.badge-andamento  { background: rgba(88,166,255,.15);  color: var(--blue); }
+.badge-concluida  { background: rgba(63,185,80,.15);   color: var(--green); }
+
+/* Reserva vinculada */
+.reserva-box { margin-top: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; }
+.reserva-box-title { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+.res-cols { display: flex; flex-wrap: wrap; gap: 10px 24px; }
+.res-col label { display: block; font-size: 10px; color: var(--muted2); margin-bottom: 2px; }
+.res-col span { font-size: 12px; font-weight: 600; }
+
+/* Empty */
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); }
+.empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+/* Spinner */
+.spinner { text-align: center; padding: 60px 20px; color: var(--muted); font-size: 14px; }
+
+@media (max-width: 600px) {
+  .main { padding: 20px 14px; }
+  .login-card { padding: 28px 20px; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <span class="header-logo">✈️</span>
+  <div>
+    <div class="header-title">Clube do Viajante</div>
+    <div class="header-sub">Portal de Acompanhamento de Viagens</div>
+  </div>
+</div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-wrap">
+  <div class="login-card">
+    <div class="login-icon">🗺️</div>
+    <div class="login-title">Suas Viagens</div>
+    <div class="login-desc">Digite seu e-mail para acompanhar o status das suas viagens e reservas.</div>
+    <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')entrar()"/>
+    <button class="btn btn-accent" onclick="entrar()">Ver Minhas Viagens</button>
+    <div class="error-msg" id="login-error"></div>
+  </div>
+</div>
+
+<!-- PORTAL -->
+<div id="portal-wrap" style="display:none">
+  <div class="main">
+    <div class="welcome">
+      <button class="logout-btn" onclick="sair()">← Sair</button>
+      <div class="welcome-name" id="portal-nome">Olá!</div>
+      <div class="welcome-email" id="portal-email"></div>
+    </div>
+    <div id="portal-content"><div class="spinner">⏳ Carregando viagens…</div></div>
+  </div>
+</div>
+
+<script>
+var PROXY = 'https://cdv-proxy-production.up.railway.app';
+var _dados = null;
+
+function fmtDate(d) {
+  if (!d) return '—';
+  var p = d.split('-');
+  if (p.length < 3) return d;
+  return p[2] + '/' + p[1] + '/' + p[0];
+}
+
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.trim().split(/\s+/).slice(0, 2).map(function(w) {
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+function statusLabel(s) {
+  return { pendente: 'Pendente', andamento: 'Em andamento', concluida: 'Concluída' }[s] || s;
+}
+
+// ─── SORT atividades ─────────────────────────────────────────────────────────
+var ORDEM = ['Passagem Doméstica','Passagem Internacional','Hotel','Aluguel de Carro',
+             'Seguro Viagem','Ativação Seguro Cartão','Passeio/Atividade','Roteiro Personalizado'];
+function sortAtivs(arr) {
+  return arr.slice().sort(function(a, b) {
+    var ia = ORDEM.indexOf(a.nome), ib = ORDEM.indexOf(b.nome);
+    if (ia === -1) ia = ORDEM.length;
+    if (ib === -1) ib = ORDEM.length;
+    return ia - ib;
+  });
+}
+
+// ─── RESERVA cols (read-only) ──────────────────────────────────────────────
+function resCols(r) {
+  if (!r) return [];
+  if (r.tipo === 'voo') return [
+    { label: 'Ida',         val: (r.origem||'?') + ' → ' + (r.destino||'?') + (r.conexao ? ' (via '+r.conexao+')' : '') },
+    { label: 'Data Ida',    val: fmtDate(r.dataIda) + (r.horaPartida ? ' · ' + r.horaPartida : '') + (r.horaChegada ? ' → ' + r.horaChegada : '') },
+    r.dataVolta ? { label: 'Volta',      val: (r.origemVolta||r.destino||'?') + ' → ' + (r.destinoVolta||r.origem||'?') } : null,
+    r.dataVolta ? { label: 'Data Volta', val: fmtDate(r.dataVolta) + (r.horaPartidaVolta ? ' · ' + r.horaPartidaVolta : '') } : null,
+    { label: 'Cia Aérea',  val: r.ciaIda || r.cia || null },
+    { label: 'Localizador', val: r.pnr || null },
+  ].filter(Boolean).filter(function(c){ return c.val; });
+  if (r.tipo === 'hotel') return [
+    { label: 'Hotel',       val: r.hotelNome || null },
+    { label: 'Check-in',    val: fmtDate(r.checkin) },
+    { label: 'Check-out',   val: fmtDate(r.checkout) },
+    { label: 'Confirmação', val: r.conf || null },
+  ].filter(function(c){ return c.val; });
+  if (r.tipo === 'carro') return [
+    { label: 'Locadora',   val: r.locadora || null },
+    { label: 'Retirada',   val: fmtDate(r.retData) },
+    { label: 'Devolução',  val: fmtDate(r.devData) },
+    { label: 'Confirmação',val: r.conf || null },
+  ].filter(function(c){ return c.val; });
+  if (r.tipo === 'passeio') return [
+    { label: 'Passeio',    val: r.passeioNome || null },
+    { label: 'Data',       val: fmtDate(r.dataPasseio) },
+    { label: 'Voucher',    val: r.conf || null },
+  ].filter(function(c){ return c.val; });
+  return [];
+}
+
+// ─── RENDER ──────────────────────────────────────────────────────────────────
+function renderPortal() {
+  var viagens  = _dados.viagens  || [];
+  var reservas = _dados.reservas || [];
+  var el = document.getElementById('portal-content');
+
+  if (!viagens.length) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">🗺️</div><p>Nenhuma viagem encontrada para o seu e-mail.</p></div>';
+    return;
+  }
+
+  // Ordenar por data de início
+  viagens = viagens.slice().sort(function(a, b) {
+    return (a.inicio || '9') < (b.inicio || '9') ? -1 : 1;
+  });
+
+  el.innerHTML = viagens.map(function(v, vi) {
+    var ativs = sortAtivs(v.atividades || []);
+    var total = ativs.length;
+    var concluidas = ativs.filter(function(a){ return a.status === 'concluida'; }).length;
+    var pct = total ? Math.round(concluidas / total * 100) : 0;
+
+    var dataLabel = '';
+    if (v.inicio && v.fim) dataLabel = fmtDate(v.inicio) + ' → ' + fmtDate(v.fim);
+    else if (v.inicio) dataLabel = 'A partir de ' + fmtDate(v.inicio);
+
+    var ativsHTML = ativs.map(function(a, ai) {
+      var res = a.reservaId ? reservas.find(function(r){ return r.id === a.reservaId; }) : null;
+      var cols = resCols(res);
+
+      var reservaHTML = res ? (
+        '<div class="reserva-box">' +
+        '<div class="reserva-box-title">🔗 Reserva</div>' +
+        '<div class="res-cols">' +
+        cols.map(function(c){ return '<div class="res-col"><label>' + c.label + '</label><span>' + c.val + '</span></div>'; }).join('') +
+        '</div></div>'
+      ) : '';
+
+      var badgeClass = 'badge-' + (a.status || 'pendente');
+      return '<div class="ativ-row">' +
+        '<span class="ativ-icon">' + (a.icon || '📌') + '</span>' +
+        '<div class="ativ-content">' +
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">' +
+            '<span class="ativ-nome">' + a.nome + '</span>' +
+            '<span class="badge ' + badgeClass + '">' + statusLabel(a.status) + '</span>' +
+          '</div>' +
+          (a.titulo ? '<div class="ativ-titulo">' + a.titulo + '</div>' : '') +
+          (a.descricao ? '<div class="ativ-desc">' + a.descricao + '</div>' : '') +
+          reservaHTML +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    var bodyId = 'vbody-' + vi;
+    return '<div class="viagem-card">' +
+      '<div class="viagem-header" onclick="toggleViagem(\'' + bodyId + '\',this)">' +
+        '<span class="viagem-icon">🗺️</span>' +
+        '<div class="viagem-info">' +
+          '<div class="viagem-nome">' + v.nome + '</div>' +
+          (dataLabel ? '<div class="viagem-meta">📅 ' + dataLabel + '</div>' : '') +
+        '</div>' +
+        '<span style="font-size:12px;color:var(--muted);margin-right:8px">' + pct + '% concluído</span>' +
+        '<span class="viagem-chevron" id="chev-' + bodyId + '">›</span>' +
+      '</div>' +
+      '<div class="viagem-body" id="' + bodyId + '">' +
+        '<div class="progress-wrap">' +
+          '<div class="progress-label"><span>' + concluidas + ' de ' + total + ' atividades concluídas</span><span>' + pct + '%</span></div>' +
+          '<div class="progress-bar"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+        '</div>' +
+        '<div class="ativ-list">' + (ativsHTML || '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px">Nenhuma atividade cadastrada.</div>') + '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function toggleViagem(id, header) {
+  var body = document.getElementById(id);
+  var chev = document.getElementById('chev-' + id);
+  var open = body.classList.toggle('open');
+  if (chev) chev.classList.toggle('open', open);
+}
+
+// ─── AUTH ────────────────────────────────────────────────────────────────────
+function entrar() {
+  var email = document.getElementById('login-email').value.trim().toLowerCase();
+  var errEl = document.getElementById('login-error');
+  if (!email || !email.includes('@')) {
+    errEl.textContent = 'Digite um e-mail válido.';
+    return;
+  }
+  errEl.textContent = '';
+  document.querySelector('#login-wrap .btn').textContent = 'Buscando…';
+  document.querySelector('#login-wrap .btn').disabled = true;
+
+  fetch(PROXY + '/concierge/portal?email=' + encodeURIComponent(email))
+    .then(function(r){ return r.json(); })
+    .then(function(d) {
+      document.querySelector('#login-wrap .btn').textContent = 'Ver Minhas Viagens';
+      document.querySelector('#login-wrap .btn').disabled = false;
+      if (!d.ok) { errEl.textContent = d.erro || 'Erro ao buscar dados.'; return; }
+      if (!d.clientes || !d.clientes.length) {
+        errEl.textContent = 'Nenhuma viagem encontrada para este e-mail.';
+        return;
+      }
+      _dados = d;
+      document.getElementById('login-wrap').style.display = 'none';
+      document.getElementById('portal-wrap').style.display = '';
+      document.getElementById('portal-nome').textContent = 'Olá, ' + toTitleCase(d.clientes[0].nome) + '!';
+      document.getElementById('portal-email').textContent = email;
+      renderPortal();
+    })
+    .catch(function() {
+      document.querySelector('#login-wrap .btn').textContent = 'Ver Minhas Viagens';
+      document.querySelector('#login-wrap .btn').disabled = false;
+      errEl.textContent = 'Erro de conexão. Tente novamente.';
+    });
+}
+
+function sair() {
+  _dados = null;
+  document.getElementById('portal-wrap').style.display = 'none';
+  document.getElementById('login-wrap').style.display = 'flex';
+  document.getElementById('login-email').value = '';
+  document.getElementById('login-error').textContent = '';
+}
+
+document.getElementById('login-email').focus();
+</script>
+</body>
+</html>
