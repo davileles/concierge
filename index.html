@@ -1141,13 +1141,31 @@ function loadCfg(callback) {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg')
     .then(function(r){ return r.json(); })
     .then(function(d){
-      _cfg = d.data || {};
-      _applyCfg(_cfg);
+      var c = d.data || {};
+      // Se servidor vazio, tenta localStorage como fallback de migração
+      if (!c.url) {
+        try {
+          var local = JSON.parse(localStorage.getItem('concierge_cfg') || '{}');
+          if (local.url) {
+            c = local;
+            // Migra automaticamente para o servidor
+            fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg', {
+              method: 'POST',
+              headers: {'Content-Type': 'application/json'},
+              body: JSON.stringify({data: c})
+            }).then(function(){ console.log('[cfg] migrado do localStorage para servidor'); });
+          }
+        } catch(e) {}
+      }
+      _cfg = c;
+      _applyCfg(c);
       if (callback) callback();
     })
     .catch(function(e){
       console.error('[loadCfg]', e);
-      _applyCfg({});
+      // Fallback total para localStorage
+      try { _cfg = JSON.parse(localStorage.getItem('concierge_cfg') || '{}'); } catch(e2) { _cfg = {}; }
+      _applyCfg(_cfg);
       if (callback) callback();
     });
 }
