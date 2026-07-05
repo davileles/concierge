@@ -2021,6 +2021,15 @@ function copiarTexto(el) {
 //  TABS
 // ══════════════════════════════════════════
 function switchTab(name) {
+  // Se estava editando uma reserva e saiu da aba nova sem salvar, restaurar
+  if (name !== 'nova' && window._reservaEditandoOriginal) {
+    reservas.push(window._reservaEditandoOriginal);
+    localStorage.setItem('concierge_reservas', JSON.stringify(reservas));
+    window._reservaEditandoId = null;
+    window._reservaEditandoOriginal = null;
+    var btnCancelar = document.getElementById('btn-cancelar-edicao');
+    if (btnCancelar) btnCancelar.style.display = 'none';
+  }
   tabAtual = name;
   document.querySelectorAll('.main-panel').forEach(function(p){ p.classList.remove('active'); });
   document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.remove('active'); });
@@ -2032,6 +2041,7 @@ function switchTab(name) {
   if (name==='mensagens') { loadModelos(); initMensagens(); }
   if (tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name==='clientes') renderClientes();
+  if (name==='reservas') renderReservas();
 }
 
 // ══════════════════════════════════════════
