@@ -648,6 +648,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
     </div>
 
     <div class="field">
+      <label>Associar a uma Viagem <span class="tag">opcional</span></label>
+      <select id="f-viagem-assoc">
+        <option value="">Não associar a nenhuma viagem</option>
+      </select>
+    </div>
+
+    <div class="field">
       <label>Observações <span class="tag">opcional</span></label>
       <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
     </div>
@@ -1277,7 +1284,7 @@ function limparForm() {
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
-   'f-obs'].forEach(function(id){
+   'f-obs','f-viagem-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
   window._reservaEditandoId = null;
@@ -1305,7 +1312,21 @@ function setVal(id, v) {
   if (el) el.value = v;
 }
 
-// Normaliza nome: primeiras letras maiúsculas, max 2 palavras (nome + sobrenome)
+// Popula o select de associação de viagem no form de nova reserva
+function populateViagemAssocSelect(reservadoParaId) {
+  var sel = document.getElementById('f-viagem-assoc');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Não associar a nenhuma viagem</option>';
+  viagens.forEach(function(v) {
+    var label = v.nome + (v.clientes && v.clientes.length ? ' — ' + v.clientes.map(toTitleCase).join(', ') : '');
+    if (v.inicio) label += ' (' + fmtDate(v.inicio) + ')';
+    var opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = label;
+    sel.appendChild(opt);
+  });
+  if (reservadoParaId) sel.value = reservadoParaId;
+}
 function toTitleCase(str) {
   if (!str) return '';
   return str.trim().split(/\s+/).slice(0, 2).map(function(w) {
@@ -1558,10 +1579,51 @@ function salvarReserva() {
   if (btnCancelar) btnCancelar.style.display = 'none';
   reservas.unshift(res);
   saveReservas();
+
+  // Vincular à viagem selecionada (se houver)
+  var viagemId = getVal('f-viagem-assoc');
+  if (viagemId) {
+    var v = viagens.find(function(x){ return x.id === viagemId; });
+    if (v) {
+      v.atividades = v.atividades || [];
+      // Determinar ícone e nome da atividade com base no tipo
+      var ATIV_MAP = {
+        voo: { icon: '✈️', nome: res.origem && res.destino
+          ? (res.origem + ' → ' + res.destino === res.origemVolta + ' → ' + res.destinoVolta || !res.dataVolta
+              ? (res.dataVolta ? 'Passagem ' : 'Passagem ')
+              : 'Passagem ')
+          : 'Passagem Internacional' },
+        hotel: { icon: '🏨', nome: 'Hotel' },
+        carro: { icon: '🚗', nome: 'Aluguel de Carro' },
+        passeio: { icon: '🎯', nome: 'Passeio/Atividade' }
+      };
+      var map = ATIV_MAP[res.tipo] || { icon: '📌', nome: res.tipo };
+      // Determinar se é doméstico ou internacional para voo
+      var nomeAtiv = map.nome;
+      if (res.tipo === 'voo') {
+        var internacionais = ['MAD','LIS','CDG','JFK','MIA','FCO','LHR','FRA','AMS','GRU','EZE','SCL','BOG','LIM','MEX','CUN','CUR','ORD','LAX','YYZ'];
+        var isIntl = internacionais.indexOf(res.destino) !== -1 || internacionais.indexOf(res.origem) !== -1;
+        nomeAtiv = isIntl ? 'Passagem Internacional' : 'Passagem Doméstica';
+      }
+      v.atividades.push({
+        icon: map.icon,
+        nome: nomeAtiv,
+        titulo: res.tipo === 'voo' ? (res.origem||'') + ' → ' + (res.destino||'') : (res.hotelNome || res.passeioNome || ''),
+        descricao: '',
+        status: 'concluida',
+        reservaId: res.id
+      });
+      v.atividades = sortAtividades(v.atividades);
+      saveViagens();
+      showToast('✅ Reserva salva e vinculada à viagem!', 'ok');
+    }
+  } else {
+    showToast('✅ Reserva salva com sucesso!', 'ok');
+  }
+
   updateStats();
   renderReservas();
   limparForm();
-  showToast('✅ Reserva salva com sucesso!', 'ok');
   switchTab('reservas');
 }
 
@@ -1769,6 +1831,11 @@ function editarReserva(id) {
   var r = reservas.find(function(x){ return x.id===id; });
   if (!r) return;
   switchTab('nova');
+  // Pré-selecionar viagem já associada
+  var viagemAssoc = viagens.find(function(v){
+    return v.atividades && v.atividades.some(function(a){ return a.reservaId === id; });
+  });
+  populateViagemAssocSelect(viagemAssoc ? viagemAssoc.id : '');
   setVal('f-tipo', r.tipo); onTipoChange();
   setVal('f-cliente', r.cliente);
   setVal('f-obs', r.obs||'');
@@ -1959,6 +2026,7 @@ function switchTab(name) {
   document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('panel-'+name).classList.add('active');
   if (name === 'viagens') renderViagens();
+  if (name === 'nova') populateViagemAssocSelect();
   var tabs = document.querySelectorAll('.main-tab');
   var map = {reservas:0, nova:1, viagens:2, clientes:3, mensagens:4, config:5};
   if (name==='mensagens') { loadModelos(); initMensagens(); }
