@@ -1093,10 +1093,26 @@ var tabAtual = 'reservas';
 var APPS_SCRIPT_CODE = 'function doGet(e) {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(e.parameter.aba || \'Clientes\');\n  var linhaInicio = parseInt(e.parameter.linha || 2);\n  var data = sheet.getDataRange().getValues();\n  var rows = data.slice(linhaInicio - 1);\n  return ContentService\n    .createTextOutput(JSON.stringify({ ok: true, rows: rows }))\n    .setMimeType(ContentService.MimeType.JSON);\n}';
 
 // ══════════════════════════════════════════
-//  CONFIG (localStorage)
+//  CONFIG (servidor via proxy)
 // ══════════════════════════════════════════
-function loadCfg() {
-  var c = JSON.parse(localStorage.getItem('concierge_cfg') || '{}');
+var _cfg = {}; // cache em memória
+
+function loadCfg(callback) {
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      _cfg = d.data || {};
+      _applyCfg(_cfg);
+      if (callback) callback();
+    })
+    .catch(function(e){
+      console.error('[loadCfg]', e);
+      _applyCfg({});
+      if (callback) callback();
+    });
+}
+
+function _applyCfg(c) {
   setVal('cfg-url', c.url || '');
   setVal('cfg-aba', c.aba || 'Clientes');
   setVal('cfg-col-nome',          c.colNome         || 'A');
@@ -1141,11 +1157,17 @@ function saveCfg() {
     linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys')
   };
-  localStorage.setItem('concierge_cfg', JSON.stringify(c));
+  _cfg = c;
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({data: c})
+  }).then(function(){ showToast('✅ Configurações salvas!', 'ok'); })
+    .catch(function(e){ console.error('[saveCfg]', e); showToast('❌ Erro ao salvar configurações', 'err'); });
 }
 
 function getCfg() {
-  return JSON.parse(localStorage.getItem('concierge_cfg') || '{}');
+  return _cfg;
 }
 
 function colIndex(letra) {
@@ -2157,10 +2179,17 @@ var VARS_RESERVA = [
 ];
 
 function loadModelos() {
-  modelos = JSON.parse(localStorage.getItem('concierge_modelos') || '[]');
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos')
+    .then(function(r){ return r.json(); })
+    .then(function(d){ modelos = d.data || []; renderModelosLista(); })
+    .catch(function(e){ console.error('[loadModelos]', e); modelos = []; });
 }
 function saveModelos() {
-  localStorage.setItem('concierge_modelos', JSON.stringify(modelos));
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({data: modelos})
+  }).catch(function(e){ console.error('[saveModelos]', e); });
 }
 
 function getBaileysUrl() {
@@ -3239,16 +3268,12 @@ function copiarDisparar() {
 //  INIT
 // ══════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', function(){
-  loadCfg();
+  loadCfg(function() {
+    syncClientes();
+  });
   syncReservas();
   syncViagens();
-
-  // Data de hoje no form
   setVal('f-cadastro', new Date().toISOString().split('T')[0]);
-
-  // Clientes do cache
-  syncClientes();
-
   renderReservas();
 });
 </script>
