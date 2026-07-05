@@ -1078,17 +1078,17 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Parceiro</div>
-            <input type="text" id="mad-alerta-parceiro" placeholder="Ex: Booking, Decolar…" style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
+            <div style="position:relative">
+              <input type="text" id="mad-alerta-parceiro" placeholder="Digite para buscar…" autocomplete="off"
+                oninput="onAlertaParceiroInput()"
+                style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
+              <div id="mad-alerta-parceiro-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:100;margin-top:2px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
+            </div>
           </div>
           <div>
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Programa de Fidelidade</div>
             <select id="mad-alerta-programa" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
-              <option value="">Selecione…</option>
-              <option>AAdvantage</option><option>Azul Fidelidade</option>
-              <option>Executive Club</option><option>Finnair Plus</option>
-              <option>Iberia Plus</option><option>LATAM Pass</option>
-              <option>Livelo</option><option>Esfera</option>
-              <option>Privilege Club</option><option>Smiles</option>
+              <option value="">Selecione o parceiro primeiro…</option>
             </select>
           </div>
         </div>
@@ -2800,6 +2800,62 @@ function sortAtividades(ativs) {
 
 // Contexto do modal de detalhe
 var detalheAtivCtx = null; // { tipo: 'temp'|'viagem', idx, viagemId }
+
+// Cache de parceiros do snapshot
+var _parceirosCache = null;
+
+function carregarParceiros(callback) {
+  if (_parceirosCache) { if (callback) callback(_parceirosCache); return; }
+  fetch('https://cdv-proxy-production.up.railway.app/parceiros')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      _parceirosCache = d.data || [];
+      if (callback) callback(_parceirosCache);
+    })
+    .catch(function(){ _parceirosCache = []; if (callback) callback([]); });
+}
+
+function onAlertaParceiroInput() {
+  var q = document.getElementById('mad-alerta-parceiro').value.toLowerCase().trim();
+  var drop = document.getElementById('mad-alerta-parceiro-drop');
+  if (!q || q.length < 2) { drop.style.display = 'none'; return; }
+  carregarParceiros(function(lista) {
+    var filtered = lista.filter(function(p){ return p.nome.includes(q); }).slice(0, 10);
+    if (!filtered.length) { drop.style.display = 'none'; return; }
+    drop.innerHTML = filtered.map(function(p){
+      var progs = p.programas.join(', ') || '—';
+      return '<div onclick="selecionarParceiro(this)" data-nome="'+p.nome+'" data-progs="'+p.programas.join(',')+'" '+
+        'style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" '+
+        'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+
+        '<span style="font-weight:600;text-transform:capitalize">'+p.nome+'</span>'+
+        '<span style="font-size:10px;color:var(--muted)">'+progs+'</span>'+
+        '</div>';
+    }).join('');
+    drop.style.display = '';
+  });
+}
+
+function selecionarParceiro(el) {
+  var nome = el.dataset.nome;
+  var progs = el.dataset.progs ? el.dataset.progs.split(',').filter(Boolean) : [];
+  document.getElementById('mad-alerta-parceiro').value = nome;
+  document.getElementById('mad-alerta-parceiro-drop').style.display = 'none';
+  // Popular programas disponíveis para este parceiro
+  var sel = document.getElementById('mad-alerta-programa');
+  var PROG_LABEL = {
+    smiles: 'Smiles', livelo: 'Livelo', esfera: 'Esfera',
+    latampass: 'LATAM Pass', 'latam pass': 'LATAM Pass',
+    aadvantage: 'AAdvantage', azul: 'Azul Fidelidade',
+    iberia: 'Iberia Plus', executive: 'Executive Club',
+    finnair: 'Finnair Plus', privilege: 'Privilege Club'
+  };
+  sel.innerHTML = progs.length
+    ? '<option value="">Selecione…</option>' + progs.map(function(p){
+        var label = PROG_LABEL[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1);
+        return '<option value="'+p+'">'+label+'</option>';
+      }).join('')
+    : '<option value="">Nenhum programa disponível</option>';
+}
 
 function salvarAlertaAtiv() {
   if (!detalheAtivCtx || detalheAtivCtx.tipo === 'temp') return;
