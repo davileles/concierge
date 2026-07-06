@@ -263,6 +263,13 @@ header{animation:fadeUp .45s ease both}
 .viagem-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,88,94,.13)}
 .ativ-row{transition:transform .15s,background .15s}
 .ativ-row:hover{transform:translateX(2px);background:rgba(255,255,255,.04)}
+.ativ-handle{display:flex;flex-direction:column;gap:1px;cursor:grab;flex-shrink:0;padding:2px 4px;opacity:.35;transition:opacity .15s;user-select:none}
+.ativ-handle:hover{opacity:.9}
+.ativ-handle span{display:block;width:14px;height:2px;background:var(--muted);border-radius:1px}
+.ativ-label{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.ativ-titulo{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ativ-subtipo{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 .brand-icon-wrap{transition:transform .3s,filter .3s;cursor:default}
 .brand-icon-wrap:hover{transform:rotate(-8deg) scale(1.08);filter:drop-shadow(0 0 8px rgba(255,88,94,.5))}
 .viagem-chevron{font-size:14px;color:var(--muted2);transition:transform .25s,color .25s;margin-left:auto;flex-shrink:0}
@@ -2830,8 +2837,42 @@ function ordemAtiv(a) {
 
 function sortAtividades(ativs) {
   return ativs.slice().sort(function(a, b) {
-    return ordemAtiv(a) - ordemAtiv(b);
+    var pa = (a.pos !== undefined && a.pos !== null) ? a.pos : ordemAtiv(a) * 10;
+    var pb = (b.pos !== undefined && b.pos !== null) ? b.pos : ordemAtiv(b) * 10;
+    return pa - pb;
   });
+}
+
+function reordenarAtiv(viagemId, ativIdx, direcao) {
+  var v = viagens.find(function(x){ return x.id === viagemId; });
+  if (!v) return;
+  var sorted = sortAtividades(v.atividades);
+  var trocarCom = direcao === 'up' ? ativIdx - 1 : ativIdx + 1;
+  if (trocarCom < 0 || trocarCom >= sorted.length) return;
+  var a = sorted[ativIdx];
+  var b = sorted[trocarCom];
+  var posA = (a.pos !== undefined && a.pos !== null) ? a.pos : ativIdx * 10;
+  var posB = (b.pos !== undefined && b.pos !== null) ? b.pos : trocarCom * 10;
+  var riA = v.atividades.indexOf(a);
+  var riB = v.atividades.indexOf(b);
+  if (riA === -1 || riB === -1) return;
+  v.atividades[riA].pos = posB;
+  v.atividades[riB].pos = posA;
+  saveViagens();
+  renderViagens();
+  // manter o card aberto
+  setTimeout(function() {
+    var body = document.getElementById('vbody-' + viagemId);
+    if (body) { body.style.display = 'block'; }
+    var hdr = body && body.previousElementSibling;
+    if (hdr) hdr.classList.add('open');
+    // animar barra
+    var fill = hdr && hdr.querySelector('.viagem-progress-fill');
+    if (fill && !fill.classList.contains('anim-done')) {
+      fill.classList.add('anim-done');
+      setTimeout(function(){ fill.style.width = fill.dataset.pct + '%'; }, 30);
+    }
+  }, 30);
 }
 
 // Contexto do modal de detalhe
@@ -3167,11 +3208,15 @@ function renderAtividadesTemp() {
     return;
   }
   el.innerHTML = atividadesTemp.map(function(a, i) {
-    var tituloLabel = a.titulo ? '<span style="font-size:11px;color:var(--muted);margin-left:6px">— '+a.titulo+'</span>' : '';
     var hasDesc = a.titulo || a.descricao;
+    var labelPrincipal = a.titulo || a.nome;
+    var labelSub = a.titulo ? a.nome : '';
     return '<div class="ativ-row" style="flex-wrap:wrap;gap:4px">' +
       '<span class="ativ-icon">'+a.icon+'</span>' +
-      '<span class="ativ-nome" style="flex:1">'+a.nome+tituloLabel+'</span>' +
+      '<div class="ativ-label">' +
+        '<span class="ativ-titulo">'+labelPrincipal+'</span>' +
+        (labelSub ? '<span class="ativ-subtipo">'+labelSub+'</span>' : '') +
+      '</div>' +
       '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px;'+(hasDesc?'color:var(--accent)':'')+'" onclick="abrirDetalheAtiv(\'temp\','+i+',null)" title="Editar título e descrição">✏️</button>' +
       '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="removerAtividadeTemp('+i+')">✕</button>' +
     '</div>';
@@ -3251,7 +3296,8 @@ function adicionarAtividadeViagem(id, icon, nome) {
   var v = viagens.find(function(x){ return x.id === id; });
   if (!v) return;
   v.atividades = v.atividades || [];
-  v.atividades.push({icon: icon, nome: nome, titulo: '', descricao: '', status: 'pendente', reservaId: null});
+  var nextPos = v.atividades.reduce(function(mx,a){ return (a.pos||0) > mx ? (a.pos||0) : mx; }, -1) + 1;
+  v.atividades.push({icon: icon, nome: nome, titulo: '', descricao: '', status: 'pendente', reservaId: null, pos: nextPos});
   v.atividades = sortAtividades(v.atividades);
   saveViagens();
   renderViagens();
@@ -3376,13 +3422,22 @@ function renderViagens() {
       var resLabel = res ? resTitle(res) : '';
       var dVid = ' data-vid="'+v.id+'" data-idx="'+i+'"';
       var descId = 'adesc-'+v.id+'-'+i;
-      var tituloLabel = a.titulo ? '<span style="font-size:11px;color:var(--muted);margin-left:4px">— '+a.titulo+'</span>' : '';
       var hasDetail = a.titulo || a.descricao;
       var rowStyle = 'cursor:pointer;' + (hasDetail ? 'border-color:var(--accent);' : '');
+      var labelPrincipal = a.titulo || a.nome;
+      var labelSub = a.titulo ? a.nome : '';
+      var totalAtivs = ativs.length;
       return [
         '<div class="ativ-row" style="'+rowStyle+'" onclick="abrirDetalheAtiv(\'viagem\','+i+',\''+v.id+'\')">',
+        '<div class="ativ-handle" onclick="event.stopPropagation()">',
+          i > 0 ? '<button style="all:unset;cursor:pointer;font-size:10px;line-height:1;color:var(--muted);padding:0 2px" '+dVid+' onclick="event.stopPropagation();reordenarAtiv(this.dataset.vid,'+i+',\'up\')">▲</button>' : '<span style="display:block;width:16px;height:12px"></span>',
+          i < totalAtivs-1 ? '<button style="all:unset;cursor:pointer;font-size:10px;line-height:1;color:var(--muted);padding:0 2px" '+dVid+' onclick="event.stopPropagation();reordenarAtiv(this.dataset.vid,'+i+',\'down\')">▼</button>' : '<span style="display:block;width:16px;height:12px"></span>',
+        '</div>',
         '<span class="ativ-icon">',a.icon,'</span>',
-        '<span class="ativ-nome" style="flex:1">',a.nome,tituloLabel,'</span>',
+        '<div class="ativ-label">',
+          '<span class="ativ-titulo">',labelPrincipal,'</span>',
+          labelSub ? '<span class="ativ-subtipo">'+labelSub+'</span>' : '',
+        '</div>',
         resLabel
           ? '<span class="ativ-reserva"'+dVid+' onclick="event.stopPropagation();abrirVinculo(this.dataset.vid,+this.dataset.idx)">🔗 '+resLabel+'</span>'
           : '<span class="ativ-reserva"'+dVid+' onclick="event.stopPropagation();abrirVinculo(this.dataset.vid,+this.dataset.idx)">Vincular reserva</span>',
