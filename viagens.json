@@ -272,7 +272,8 @@
         "titulo": "",
         "descricao": "",
         "status": "pendente",
-        "reservaId": null
+        "reservaId": null,
+        "pos": 0
       },
       {
         "icon": "✈️",
@@ -280,7 +281,8 @@
         "titulo": "",
         "descricao": "",
         "status": "pendente",
-        "reservaId": null
+        "reservaId": null,
+        "pos": 10
       },
       {
         "icon": "🌍",
@@ -288,7 +290,8 @@
         "titulo": "Emitir CDG-SSA via Smiles",
         "descricao": "Emitir CDG-SSA via Smiles\nExecutiva Air France",
         "status": "concluida",
-        "reservaId": "RES-1783253557341"
+        "reservaId": "RES-1783253557341",
+        "pos": 30
       },
       {
         "icon": "🌍",
@@ -296,7 +299,8 @@
         "titulo": "",
         "descricao": "",
         "status": "pendente",
-        "reservaId": null
+        "reservaId": null,
+        "pos": 20
       },
       {
         "icon": "🏨",
@@ -304,7 +308,8 @@
         "titulo": "",
         "descricao": "",
         "status": "pendente",
-        "reservaId": null
+        "reservaId": null,
+        "pos": 40
       },
       {
         "icon": "🗺️",
@@ -312,7 +317,8 @@
         "titulo": "",
         "descricao": "",
         "status": "pendente",
-        "reservaId": null
+        "reservaId": null,
+        "pos": 50
       }
     ],
     "cadastro": "2026-07-05"
