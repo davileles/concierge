@@ -482,16 +482,76 @@ html, body {
 }
 
 /* RESPONSIVE */
-@media (max-width: 600px) {
-  .nav { padding: 0 16px; }
-  .hero, .content { padding-left: 16px; padding-right: 16px; }
-  .hero { padding-top: 32px; }
-  .stats { grid-template-columns: repeat(2, 1fr); }
+/* ── RESPONSIVO ── */
+@media (max-width: 640px) {
+  /* Login */
+  #login-wrap { padding: 24px 16px; align-items: flex-start; padding-top: 60px; }
+  .login-box { max-width: 100%; }
+  .login-headline { font-size: 24px; }
+  .login-sub { font-size: 12px; }
+  .login-wordmark { margin-bottom: 32px; }
+  .login-divider { margin: 20px auto; }
+  .login-field input { font-size: 16px; } /* evita zoom no iOS */
+  .login-btn { font-size: 15px; padding: 15px; }
+
+  /* Nav */
+  .nav { padding: 0 14px; height: 52px; }
+  .nav-brand-col { display: none; } /* só ícone no mobile */
+  .nav-user { gap: 10px; font-size: 12px; }
   .nav-user span:first-child { display: none; }
-  .viagem-header { padding: 14px 16px; }
-  .viagem-body { padding: 12px 16px; }
-  .viagem-bar { width: 52px; }
-  .hero-greeting { font-size: 24px; }
+  .nav-logout { padding: 5px 10px; font-size: 10px; }
+
+  /* Hero */
+  .hero { padding: 28px 16px 24px; }
+  .hero-label { font-size: 9px; }
+  .hero-greeting { font-size: 22px; margin-bottom: 2px; }
+  .hero-email { font-size: 12px; margin-bottom: 20px; }
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .stat { padding: 12px 14px; border-radius: 10px; }
+  .stat-num { font-size: 24px; }
+  .stat-label { font-size: 9px; }
+
+  /* Content */
+  .content { padding: 20px 16px 60px; }
+  .section-label { font-size: 9px; margin-bottom: 10px; }
+
+  /* Viagem card */
+  .viagem-card { border-radius: 12px; margin-bottom: 8px; }
+  .viagem-header { padding: 14px 16px; gap: 10px; }
+  .viagem-icon { width: 30px; height: 30px; border-radius: 7px; }
+  .viagem-icon img { width: 18px !important; height: 18px !important; }
+  .viagem-nome { font-size: 13px; }
+  .viagem-meta { font-size: 11px; }
+  .viagem-progress-wrap { min-width: 60px; }
+  .viagem-bar { width: 50px; height: 3px; }
+  .viagem-pct { font-size: 10px; margin-bottom: 4px; }
+  .viagem-body { padding: 10px 14px; }
+  .viagem-chevron { font-size: 15px; margin-left: 4px; }
+
+  /* Atividades */
+  .ativ-row { padding: 11px 12px; gap: 10px; border-radius: 9px; }
+  .ativ-nome { font-size: 12px; }
+  .ativ-titulo, .ativ-desc { font-size: 10px; }
+  .badge { font-size: 9px; padding: 3px 7px; border-radius: 5px; letter-spacing: .3px; }
+
+  /* Reserva box */
+  .reserva-box { padding: 9px 11px; }
+  .res-cols { gap: 5px 14px; }
+  .res-col label { font-size: 9px; }
+  .res-col span { font-size: 11px; }
+
+  /* Touch targets mínimos 44px */
+  .nav-logout { min-height: 36px; display: flex; align-items: center; }
+  .viagem-header { min-height: 56px; }
+}
+
+@media (max-width: 380px) {
+  .stats { grid-template-columns: repeat(2, 1fr); }
+  .hero-greeting { font-size: 20px; }
+  .login-headline { font-size: 21px; }
+  .viagem-nome { font-size: 12px; }
+  .ativ-row { flex-wrap: wrap; }
+  .badge { align-self: flex-start; margin-top: 4px; }
 }
 </style>
 </head>
