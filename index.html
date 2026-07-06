@@ -263,9 +263,11 @@ header{animation:fadeUp .45s ease both}
 .viagem-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(255,88,94,.13)}
 .ativ-row{transition:transform .15s,background .15s}
 .ativ-row:hover{transform:translateX(2px);background:rgba(255,255,255,.04)}
-.ativ-handle{display:flex;flex-direction:column;gap:1px;cursor:grab;flex-shrink:0;padding:2px 4px;opacity:.35;transition:opacity .15s;user-select:none}
-.ativ-handle:hover{opacity:.9}
-.ativ-handle span{display:block;width:14px;height:2px;background:var(--muted);border-radius:1px}
+.ativ-handle{display:flex;align-items:center;justify-content:center;cursor:grab;flex-shrink:0;padding:2px 5px;opacity:.3;transition:opacity .15s;user-select:none;font-size:14px;color:var(--muted)}
+.ativ-handle:hover{opacity:.8}
+.ativ-handle:active{cursor:grabbing}
+.ativ-row.drag-over{border-color:var(--accent)!important;background:rgba(255,88,94,.08)!important}
+.ativ-row.dragging{opacity:.35;border-style:dashed}
 .ativ-label{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;overflow:hidden}
 .ativ-titulo{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ativ-subtipo{font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -2843,6 +2845,59 @@ function sortAtividades(ativs) {
   });
 }
 
+// ── Drag & drop atividades ─────────────────────────────
+var _dragVid = null, _dragIdx = null;
+
+function onDragStartAtiv(e, vid, idx) {
+  _dragVid = vid; _dragIdx = idx;
+  e.dataTransfer.effectAllowed = 'move';
+  e.currentTarget.classList.add('dragging');
+}
+function onDragEndAtiv(e) {
+  e.currentTarget.classList.remove('dragging');
+  document.querySelectorAll('.ativ-row.drag-over').forEach(function(el){ el.classList.remove('drag-over'); });
+}
+function onDragOverAtiv(e, vid, idx) {
+  if (_dragVid !== vid) return;
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function onDragLeaveAtiv(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function onDropAtiv(e, vid, toIdx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (_dragVid !== vid || _dragIdx === null || _dragIdx === toIdx) return;
+  var v = viagens.find(function(x){ return x.id === vid; });
+  if (!v) return;
+  var sorted = sortAtividades(v.atividades);
+  // coletar pos originais
+  sorted.forEach(function(a, i){ a.pos = i * 10; });
+  // trocar pos do arrastado com o destino
+  var fromPos = sorted[_dragIdx].pos;
+  var toPos   = sorted[toIdx].pos;
+  var riFrom = v.atividades.indexOf(sorted[_dragIdx]);
+  var riTo   = v.atividades.indexOf(sorted[toIdx]);
+  if (riFrom !== -1) v.atividades[riFrom].pos = toPos;
+  if (riTo   !== -1) v.atividades[riTo].pos   = fromPos;
+  _dragVid = null; _dragIdx = null;
+  saveViagens();
+  renderViagens();
+  setTimeout(function() {
+    var body = document.getElementById('vbody-' + vid);
+    if (body) body.style.display = 'block';
+    var hdr = body && body.previousElementSibling;
+    if (hdr) hdr.classList.add('open');
+    var fill = hdr && hdr.querySelector('.viagem-progress-fill');
+    if (fill && !fill.classList.contains('anim-done')) {
+      fill.classList.add('anim-done');
+      setTimeout(function(){ fill.style.width = fill.dataset.pct + '%'; }, 30);
+    }
+  }, 30);
+}
+
 function reordenarAtiv(viagemId, ativIdx, direcao) {
   var v = viagens.find(function(x){ return x.id === viagemId; });
   if (!v) return;
@@ -3428,11 +3483,15 @@ function renderViagens() {
       var labelSub = a.titulo ? a.nome : '';
       var totalAtivs = ativs.length;
       return [
-        '<div class="ativ-row" style="'+rowStyle+'" onclick="abrirDetalheAtiv(\'viagem\','+i+',\''+v.id+'\')">',
-        '<div class="ativ-handle" onclick="event.stopPropagation()">',
-          i > 0 ? '<button style="all:unset;cursor:pointer;font-size:10px;line-height:1;color:var(--muted);padding:0 2px" '+dVid+' onclick="event.stopPropagation();reordenarAtiv(this.dataset.vid,'+i+',\'up\')">▲</button>' : '<span style="display:block;width:16px;height:12px"></span>',
-          i < totalAtivs-1 ? '<button style="all:unset;cursor:pointer;font-size:10px;line-height:1;color:var(--muted);padding:0 2px" '+dVid+' onclick="event.stopPropagation();reordenarAtiv(this.dataset.vid,'+i+',\'down\')">▼</button>' : '<span style="display:block;width:16px;height:12px"></span>',
-        '</div>',
+        '<div class="ativ-row" draggable="true" style="'+rowStyle+'"'
+          +' ondragstart="onDragStartAtiv(event,\''+v.id+'\','+i+')"'
+          +' ondragend="onDragEndAtiv(event)"'
+          +' ondragover="onDragOverAtiv(event,\''+v.id+'\','+i+')"'
+          +' ondragleave="onDragLeaveAtiv(event)"'
+          +' ondrop="onDropAtiv(event,\''+v.id+'\','+i+')"'
+          +' onclick="abrirDetalheAtiv(\'viagem\','+i+',\''+v.id+'\')"'
+          +'>',
+        '<div class="ativ-handle" onclick="event.stopPropagation()">⠿</div>',
         '<span class="ativ-icon">',a.icon,'</span>',
         '<div class="ativ-label">',
           '<span class="ativ-titulo">',labelPrincipal,'</span>',
