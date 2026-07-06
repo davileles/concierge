@@ -3361,7 +3361,7 @@ function renderViagens() {
     grid.innerHTML = '<div class="empty"><span class="empty-icon">🗺️</span>Nenhuma viagem cadastrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em &quot;Nova Viagem&quot; para começar.</small></div>';
     return;
   }
-  grid.innerHTML = list.map(function(v) {
+  grid.innerHTML = list.map(function(v, vi) {
     var ativs = sortAtividades(v.atividades || []);
     var total = ativs.length;
     var concluidas = ativs.filter(function(a){ return a.status==='concluida'; }).length;
