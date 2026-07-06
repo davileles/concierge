@@ -4,49 +4,67 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
-<title>CDV Concierge — Portal do Viajante</title>
+<title>Travel Concierge — Portal do Viajante</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet"/>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg: #09090b;
-  --surface: rgba(255,255,255,.05);
-  --surface-hover: rgba(255,255,255,.08);
-  --border: rgba(255,255,255,.10);
-  --border-strong: rgba(255,255,255,.16);
-  --text: rgba(255,255,255,.92);
-  --text-2: rgba(255,255,255,.65);
-  --text-3: rgba(255,255,255,.38);
-  --gold: rgba(210,168,90,1);
-  --gold-bg: rgba(210,168,90,.10);
-  --gold-border: rgba(210,168,90,.25);
-  --green: rgba(52,199,89,1);
-  --green-bg: rgba(52,199,89,.10);
-  --green-border: rgba(52,199,89,.2);
-  --blue: rgba(100,180,255,1);
-  --blue-bg: rgba(100,180,255,.10);
-  --blue-border: rgba(100,180,255,.2);
+  --bg: #1e2535;
+  --surface: #2a3246;
+  --card: #323c54;
+  --border: #3d4a66;
+  --border2: #4a5878;
+  --text: #eeeeee;
+  --muted: #8a9bbf;
+  --muted2: #5a6a8a;
+  --accent: #ff585e;
+  --accent2: #e04449;
+  --green: #34d399;
+  --green-dim: rgba(52,211,153,.12);
+  --green-border: rgba(52,211,153,.25);
+  --blue: #60a5fa;
+  --blue-dim: rgba(96,165,250,.12);
+  --blue-border: rgba(96,165,250,.25);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,.12);
+  --amber-border: rgba(251,191,36,.25);
+  --font: 'Montserrat', sans-serif;
 }
 
 html, body {
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', -apple-system, sans-serif;
-  font-weight: 400;
+  font-family: var(--font);
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ── SHARED ── */
-.label-xs {
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 1.8px;
-  text-transform: uppercase;
-  color: var(--text-3);
+/* ── ANIMAÇÕES ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pulseAccent {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,88,94,.0); }
+  50%       { box-shadow: 0 0 0 6px rgba(255,88,94,.12); }
+}
+@keyframes barFill {
+  from { width: 0%; }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(6px) scale(.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.fade-in  { animation: fadeUp .45s cubic-bezier(.16,1,.3,1) both; }
+.slide-in { animation: slideIn .3s cubic-bezier(.16,1,.3,1) both; }
 
 /* ── LOGIN ── */
 #login-wrap {
@@ -55,6 +73,7 @@ html, body {
   align-items: center;
   justify-content: center;
   padding: 32px 20px;
+  background: var(--bg);
 }
 
 .login-box {
@@ -65,44 +84,65 @@ html, body {
 .login-wordmark {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 52px;
+  gap: 12px;
+  margin-bottom: 40px;
   justify-content: center;
 }
 
 .login-wordmark-icon {
-  width: 30px; height: 30px;
-  border-radius: 8px;
+  width: 36px; height: 36px;
+  border-radius: 10px;
   background: var(--surface);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border2);
   display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
+  font-size: 18px;
+  transition: transform .3s;
+}
+.login-wordmark-icon:hover { transform: rotate(-8deg) scale(1.1); }
+
+.login-brand-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -.3px;
+  line-height: 1.1;
+}
+.login-brand-sub {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
 }
 
-.login-wordmark-text {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 2.5px;
-  text-transform: uppercase;
-  color: var(--text-3);
+.login-divider {
+  width: 40px; height: 2px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin: 28px auto 28px;
 }
 
 .login-headline {
-  font-size: 30px;
-  font-weight: 300;
-  line-height: 1.3;
-  letter-spacing: -0.5px;
-  color: rgba(255,255,255,.55);
-  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.5px;
+  color: var(--text);
+  margin-bottom: 6px;
   text-align: center;
 }
 
+.login-headline span {
+  color: var(--accent);
+}
+
 .login-sub {
-  font-size: 14px;
-  color: var(--text-2);
+  font-size: 13px;
+  color: var(--muted);
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
   line-height: 1.6;
+  font-weight: 500;
 }
 
 .login-field {
@@ -112,120 +152,130 @@ html, body {
 
 .login-field-icon {
   position: absolute;
-  left: 16px; top: 50%;
+  left: 14px; top: 50%;
   transform: translateY(-50%);
-  color: var(--text-3);
+  color: var(--muted2);
   font-size: 15px;
   pointer-events: none;
 }
 
 .login-field input {
   width: 100%;
-  padding: 14px 16px 14px 44px;
-  background: var(--surface);
+  padding: 13px 14px 13px 42px;
+  background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--text);
   font-size: 14px;
-  font-family: inherit;
+  font-family: var(--font);
+  font-weight: 500;
   outline: none;
-  transition: border-color .2s;
+  transition: border-color .2s, box-shadow .2s;
 }
-
-.login-field input::placeholder { color: var(--text-3); }
-.login-field input:focus { border-color: var(--border-strong); }
+.login-field input::placeholder { color: var(--muted2); }
+.login-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255,88,94,.12);
+}
 
 .login-btn {
   width: 100%;
   padding: 14px;
-  background: var(--text);
-  color: var(--bg);
+  background: var(--accent);
+  color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-size: 14px;
-  font-weight: 500;
-  font-family: inherit;
+  font-weight: 800;
+  font-family: var(--font);
+  letter-spacing: .3px;
   cursor: pointer;
-  transition: opacity .15s;
-  margin-bottom: 16px;
+  transition: background .15s, transform .1s, box-shadow .2s;
+  margin-bottom: 14px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
-
-.login-btn:hover { opacity: .88; }
-.login-btn:active { opacity: .75; }
-.login-btn:disabled { opacity: .4; cursor: not-allowed; }
+.login-btn:hover { background: var(--accent2); box-shadow: 0 4px 16px rgba(255,88,94,.3); }
+.login-btn:active { transform: scale(.98); }
+.login-btn:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 
 .login-error {
   font-size: 12px;
-  color: rgba(255,100,100,.9);
+  font-weight: 600;
+  color: #f87171;
   text-align: center;
   min-height: 18px;
 }
 
 .login-footer {
-  margin-top: 36px;
+  margin-top: 28px;
   text-align: center;
   font-size: 11px;
-  color: var(--text-3);
+  color: var(--muted2);
   letter-spacing: .3px;
-}
-
-/* top line accent */
-.login-box::before {
-  content: '';
-  display: block;
-  width: 40px; height: 1px;
-  background: var(--gold);
-  margin: 0 auto 52px;
+  font-weight: 500;
 }
 
 /* ── PORTAL ── */
 #portal-wrap { display: none; min-height: 100vh; }
 
+/* NAV */
 .nav {
   position: sticky; top: 0; z-index: 50;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 32px;
+  padding: 0 28px;
   height: 56px;
   border-bottom: 1px solid var(--border);
-  background: rgba(9,9,11,.85);
-  backdrop-filter: blur(16px);
+  background: var(--surface);
+  border-bottom: 2px solid var(--border);
 }
 
 .nav-brand { display: flex; align-items: center; gap: 10px; }
 .nav-brand-icon {
-  width: 26px; height: 26px; border-radius: 7px;
-  background: var(--surface); border: 1px solid var(--border-strong);
-  display: flex; align-items: center; justify-content: center; font-size: 13px;
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--card); border: 1px solid var(--border2);
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
 }
+.nav-brand-col { display: flex; flex-direction: column; gap: 1px; }
 .nav-brand-name {
-  font-size: 11px; font-weight: 500; letter-spacing: 2px;
-  text-transform: uppercase; color: var(--text-3);
+  font-size: 13px; font-weight: 800; color: var(--text);
+  letter-spacing: -.2px; line-height: 1.1;
 }
-.nav-user { font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 16px; }
-.nav-user strong { color: var(--text); font-weight: 500; }
+.nav-brand-sub {
+  font-size: 9px; font-weight: 600; color: var(--accent);
+  letter-spacing: 1.2px; text-transform: uppercase;
+}
+.nav-user { font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 14px; font-weight: 500; }
+.nav-user strong { color: var(--text); font-weight: 700; }
 .nav-logout {
-  font-size: 12px; color: var(--text-3);
-  background: none; border: 1px solid var(--border);
-  border-radius: 8px; padding: 5px 12px; cursor: pointer;
-  font-family: inherit; transition: color .15s, border-color .15s;
+  font-size: 11px; font-weight: 700; color: var(--muted);
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 7px; padding: 5px 12px; cursor: pointer;
+  font-family: var(--font); transition: color .15s, border-color .15s, background .15s;
+  text-transform: uppercase; letter-spacing: .5px;
 }
-.nav-logout:hover { color: var(--text-2); border-color: var(--border-strong); }
+.nav-logout:hover { color: var(--text); border-color: var(--accent); }
 
-/* Hero */
+/* HERO */
 .hero {
-  max-width: 760px; margin: 0 auto;
-  padding: 52px 32px 40px;
+  max-width: 780px; margin: 0 auto;
+  padding: 48px 28px 36px;
   border-bottom: 1px solid var(--border);
 }
 
-.hero-greeting {
-  font-size: 28px; font-weight: 300;
-  letter-spacing: -0.5px; color: rgba(255,255,255,.75);
-  margin-bottom: 4px;
+.hero-label {
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 8px;
 }
 
-.hero-email { font-size: 13px; color: var(--text-2); margin-bottom: 36px; }
+.hero-greeting {
+  font-size: 30px; font-weight: 800;
+  letter-spacing: -.5px; color: var(--text);
+  margin-bottom: 4px;
+  line-height: 1.2;
+}
+
+.hero-email { font-size: 13px; color: var(--muted); margin-bottom: 32px; font-weight: 500; }
 
 .stats {
   display: grid;
@@ -237,199 +287,211 @@ html, body {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 16px 18px;
+  transition: border-color .15s, transform .15s;
+  cursor: default;
 }
+.stat:hover { border-color: var(--border2); transform: translateY(-2px); }
 
 .stat-num {
-  font-size: 26px; font-weight: 400;
-  color: var(--gold); letter-spacing: -0.5px;
+  font-size: 28px; font-weight: 900;
+  color: var(--accent); letter-spacing: -1px;
   margin-bottom: 4px;
+  animation: countUp .5s cubic-bezier(.16,1,.3,1) both;
 }
 
-.stat-label { font-size: 10px; color: var(--text-2); letter-spacing: 1.2px; text-transform: uppercase; }
+.stat-label {
+  font-size: 10px; color: var(--muted); letter-spacing: 1px;
+  text-transform: uppercase; font-weight: 600;
+}
 
-/* Content */
+/* CONTENT */
 .content {
-  max-width: 760px; margin: 0 auto;
-  padding: 36px 32px 80px;
+  max-width: 780px; margin: 0 auto;
+  padding: 32px 28px 80px;
 }
 
 .section-label {
-  font-size: 10px; font-weight: 600;
+  font-size: 10px; font-weight: 700;
   letter-spacing: 2px; text-transform: uppercase;
-  color: var(--text-2);
-  margin-bottom: 16px;
-  display: flex; align-items: center; gap: 12px;
+  color: var(--muted);
+  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
 }
 .section-label::before {
   content: '';
-  width: 16px; height: 2px;
-  background: var(--gold); flex-shrink: 0;
+  width: 14px; height: 2px;
+  background: var(--accent); flex-shrink: 0;
   border-radius: 2px;
 }
-
 .section-label::after {
   content: ''; flex: 1; height: 1px; background: var(--border);
 }
 
-/* Viagem card */
+/* VIAGEM CARD */
 .viagem-card {
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: 14px;
   overflow: hidden;
-  margin-bottom: 12px;
-  transition: border-color .2s;
+  margin-bottom: 10px;
+  transition: border-color .2s, transform .2s, box-shadow .2s;
+  animation: slideIn .35s cubic-bezier(.16,1,.3,1) both;
 }
+.viagem-card:hover { border-color: var(--border2); }
 .viagem-card.expanded {
-  border-color: var(--border-strong);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 1px rgba(255,88,94,.15), 0 4px 24px rgba(0,0,0,.25);
 }
-
-.viagem-card:hover { border-color: var(--border-strong); }
 
 .viagem-header {
-  padding: 20px 24px;
-  display: flex; align-items: center; gap: 16px;
+  padding: 18px 22px;
+  display: flex; align-items: center; gap: 14px;
   cursor: pointer; user-select: none;
+  transition: background .15s;
+}
+.viagem-header:hover { background: rgba(255,255,255,.02); }
+
+.viagem-icon {
+  width: 36px; height: 36px; flex-shrink: 0;
+  background: var(--card); border: 1px solid var(--border2);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
 }
 
+.viagem-info { flex: 1; min-width: 0; }
+
 .viagem-nome {
-  font-size: 15px; font-weight: 500;
-  color: var(--text); flex: 1; letter-spacing: -0.1px;
+  font-size: 15px; font-weight: 700;
+  color: var(--text); letter-spacing: -.2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
 .viagem-meta {
-  font-size: 12px; color: var(--text-2);
-  margin-top: 3px;
+  font-size: 12px; color: var(--muted);
+  margin-top: 3px; font-weight: 500;
 }
 
-.viagem-progress-wrap { flex-shrink: 0; text-align: right; }
+.viagem-progress-wrap { flex-shrink: 0; text-align: right; min-width: 80px; }
 
 .viagem-pct {
-  font-size: 11px; color: var(--text-2);
-  margin-bottom: 6px; letter-spacing: .3px; font-weight: 500;
+  font-size: 11px; font-weight: 700;
+  margin-bottom: 6px; letter-spacing: .3px;
 }
 
 .viagem-bar {
-  width: 72px; height: 3px;
-  background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden;
+  width: 72px; height: 4px;
+  background: var(--card); border-radius: 99px; overflow: hidden;
 }
 
 .viagem-bar-fill {
-  height: 100%; background: var(--blue); border-radius: 99px;
+  height: 100%; border-radius: 99px;
+  background: var(--blue);
+  animation: barFill .8s cubic-bezier(.16,1,.3,1) both;
   transition: width .6s cubic-bezier(.16,1,.3,1);
 }
 .viagem-bar-fill.done { background: var(--green); }
 
 .viagem-chevron {
-  font-size: 16px; color: var(--text-3);
-  transition: transform .25s; flex-shrink: 0; margin-left: 8px;
+  font-size: 18px; color: var(--muted2);
+  transition: transform .25s, color .15s; flex-shrink: 0;
+  font-weight: 700;
 }
-
-.viagem-chevron.open { transform: rotate(90deg); color: var(--text-2); }
+.viagem-chevron.open { transform: rotate(90deg); color: var(--accent); }
 
 .viagem-body {
   display: none;
   border-top: 1px solid var(--border);
-  padding: 16px 24px;
+  padding: 14px 22px;
+  background: rgba(0,0,0,.15);
 }
+.viagem-body.open { display: block; animation: slideIn .25s cubic-bezier(.16,1,.3,1) both; }
 
-.viagem-body.open { display: block; }
-
-/* Atividades */
+/* ATIVIDADES */
 .ativ-list { display: flex; flex-direction: column; gap: 6px; }
 
 .ativ-row {
-  display: flex; align-items: center; gap: 14px;
-  padding: 14px 16px;
+  display: flex; align-items: flex-start; gap: 12px;
+  padding: 13px 14px;
   background: var(--surface);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--border2);
   border-radius: 10px;
-  transition: background .15s;
+  transition: background .15s, border-color .15s, transform .15s;
 }
+.ativ-row:hover { background: var(--card); transform: translateX(2px); }
 
-.ativ-row:hover { background: var(--surface-hover); }
+.ativ-row.status-concluida { border-left-color: var(--green); }
+.ativ-row.status-andamento { border-left-color: var(--blue); }
+.ativ-row.status-pendente  { border-left-color: var(--amber); }
 
-.ativ-row.status-concluida {
-  border-left: 2px solid var(--green);
-}
-.ativ-row.status-andamento {
-  border-left: 2px solid var(--blue);
-}
-.ativ-row.status-pendente {
-  border-left: 2px solid var(--gold);
-}
+.ativ-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
-.ativ-icon { font-size: 16px; flex-shrink: 0; }
-
-.ativ-body { flex: 1; }
-.ativ-nome { font-size: 13px; font-weight: 500; color: rgba(255,255,255,.95); }
-.ativ-titulo { font-size: 11px; color: var(--text-2); margin-top: 2px; }
-.ativ-desc { font-size: 11px; color: var(--text-2); margin-top: 4px; line-height: 1.5; }
+.ativ-body { flex: 1; min-width: 0; }
+.ativ-nome  { font-size: 13px; font-weight: 700; color: var(--text); }
+.ativ-titulo { font-size: 11px; color: var(--muted); margin-top: 2px; font-weight: 500; }
+.ativ-desc   { font-size: 11px; color: var(--muted); margin-top: 4px; line-height: 1.5; font-weight: 500; }
 
 .badge {
-  font-size: 10px; font-weight: 600;
-  letter-spacing: .8px; text-transform: uppercase;
-  padding: 4px 10px; border-radius: 6px; white-space: nowrap; flex-shrink: 0;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: .6px; text-transform: uppercase;
+  padding: 3px 9px; border-radius: 6px;
+  white-space: nowrap; flex-shrink: 0;
+  border: 1px solid transparent;
 }
+.badge-concluida { color: var(--green); background: var(--green-dim); border-color: var(--green-border); }
+.badge-andamento { color: var(--blue);  background: var(--blue-dim);  border-color: var(--blue-border); }
+.badge-pendente  { color: var(--amber); background: var(--amber-dim); border-color: var(--amber-border); }
 
-.badge-concluida {
-  color: var(--green);
-  background: var(--green-bg);
-  border: 1px solid var(--green-border);
-}
-.badge-andamento {
-  color: var(--blue);
-  background: var(--blue-bg);
-  border: 1px solid var(--blue-border);
-}
-.badge-pendente {
-  color: var(--gold);
-  background: var(--gold-bg);
-  border: 1px solid var(--gold-border);
-}
-
-/* Reserva box */
+/* RESERVA BOX */
 .reserva-box {
   margin-top: 10px;
-  background: rgba(0,0,0,.3);
-  border: 1px solid var(--border);
+  background: var(--card);
+  border: 1px solid var(--border2);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 11px 13px;
 }
 
 .reserva-box-label {
-  font-size: 10px; font-weight: 600;
+  font-size: 9px; font-weight: 700;
   letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--text-2); margin-bottom: 8px;
+  color: var(--muted2); margin-bottom: 8px;
 }
 
-.res-cols { display: flex; flex-wrap: wrap; gap: 6px 18px; }
-.res-col label { display: block; font-size: 10px; color: var(--text-2); margin-bottom: 1px; letter-spacing: .5px; text-transform: uppercase; }
-.res-col span { font-size: 12px; color: var(--text); font-weight: 500; }
+.res-cols { display: flex; flex-wrap: wrap; gap: 6px 20px; }
+.res-col label {
+  display: block; font-size: 10px; color: var(--muted2);
+  margin-bottom: 2px; font-weight: 600; letter-spacing: .4px; text-transform: uppercase;
+}
+.res-col span { font-size: 12px; color: var(--text); font-weight: 600; }
 
-/* Empty */
-.empty { text-align: center; padding: 80px 24px; color: var(--text-3); }
-.empty-icon { font-size: 40px; margin-bottom: 16px; display: block; opacity: .5; }
-.empty-title { font-size: 15px; font-weight: 300; color: var(--text-2); margin-bottom: 6px; }
+/* EMPTY */
+.empty { text-align: center; padding: 80px 24px; color: var(--muted2); }
+.empty-icon { font-size: 40px; margin-bottom: 16px; display: block; }
+.empty-title { font-size: 15px; font-weight: 700; color: var(--muted); margin-bottom: 6px; }
 
-/* Spinner */
+/* SPINNER */
 .spinner-wrap { display: flex; align-items: center; justify-content: center; padding: 80px; }
-.spinner { width: 24px; height: 24px; border: 1.5px solid rgba(255,255,255,.1); border-top-color: rgba(255,255,255,.4); border-radius: 50%; animation: spin .7s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
+.spinner {
+  width: 28px; height: 28px;
+  border: 2.5px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
 
-/* Fade in */
-@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-.fade-in { animation: fadeUp .4s ease both; }
-
+/* RESPONSIVE */
 @media (max-width: 600px) {
-  .nav { padding: 0 18px; }
-  .hero, .content { padding-left: 18px; padding-right: 18px; }
-  .hero { padding-top: 36px; }
+  .nav { padding: 0 16px; }
+  .hero, .content { padding-left: 16px; padding-right: 16px; }
+  .hero { padding-top: 32px; }
   .stats { grid-template-columns: repeat(2, 1fr); }
   .nav-user span:first-child { display: none; }
-  .viagem-header { padding: 16px 18px; }
-  .viagem-body { padding: 14px 18px; }
+  .viagem-header { padding: 14px 16px; }
+  .viagem-body { padding: 12px 16px; }
   .viagem-bar { width: 52px; }
+  .hero-greeting { font-size: 24px; }
 }
 </style>
 </head>
@@ -440,19 +502,26 @@ html, body {
   <div class="login-box fade-in">
     <div class="login-wordmark">
       <div class="login-wordmark-icon">✈</div>
-      <span class="login-wordmark-text">CDV <span style="color:var(--gold)">Concierge</span></span>
+      <div>
+        <div class="login-brand-name">Travel Concierge</div>
+        <div class="login-brand-sub">Clube do Viajante</div>
+      </div>
     </div>
-    <h1 class="login-headline"><span style="color:rgba(255,255,255,.4);font-weight:300">Sua viagem,</span><br><span style="color:var(--gold);font-weight:400">acompanhada.</span></h1>
+
+    <div class="login-divider"></div>
+
+    <h1 class="login-headline">Sua viagem,<br><span>acompanhada.</span></h1>
     <p class="login-sub">Acesse com o e-mail cadastrado para acompanhar reservas e atividades em tempo real.</p>
+
     <div class="login-field">
       <span class="login-field-icon">✉</span>
       <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')entrar()"/>
     </div>
     <button class="login-btn" id="btn-entrar" onclick="entrar()">
-      Acessar <span style="opacity:.4">→</span>
+      Acessar →
     </button>
     <div class="login-error" id="login-error"></div>
-    <div class="login-footer">Acesso exclusivo · CDV Concierge</div>
+    <div class="login-footer">Acesso exclusivo · Travel Concierge CDV</div>
   </div>
 </div>
 
@@ -461,7 +530,10 @@ html, body {
   <nav class="nav">
     <div class="nav-brand">
       <div class="nav-brand-icon">✈</div>
-      <span class="nav-brand-name">CDV <span style="color:var(--gold)">Concierge</span></span>
+      <div class="nav-brand-col">
+        <span class="nav-brand-name">Travel Concierge</span>
+        <span class="nav-brand-sub">Clube do Viajante</span>
+      </div>
     </div>
     <div class="nav-user">
       <span>Olá, <strong id="nav-nome"></strong></span>
@@ -470,6 +542,7 @@ html, body {
   </nav>
 
   <div class="hero">
+    <div class="hero-label">Portal do Viajante</div>
     <h2 class="hero-greeting" id="portal-nome">Olá</h2>
     <p class="hero-email" id="portal-email"></p>
     <div class="stats">
@@ -555,7 +628,7 @@ function renderPortal() {
   document.getElementById('stat-reservas').textContent=reservas.length;
 
   if(!viagens.length){
-    el.innerHTML='<div class="empty"><span class="empty-icon">🗺</span><div class="empty-title">Nenhuma viagem encontrada</div></div>';
+    el.innerHTML='<div class="empty"><span class="empty-icon">🗺️</span><div class="empty-title">Nenhuma viagem encontrada</div></div>';
     return;
   }
 
@@ -564,12 +637,12 @@ function renderPortal() {
     var total=ativs.length, conc=ativs.filter(function(a){return a.status==='concluida';}).length;
     var pct=total?Math.round(conc/total*100):0;
     var isDone=pct===100;
-    var meta=[];
-    if(v.inicio&&v.fim) meta.push('📅 '+fmtDate(v.inicio)+' → '+fmtDate(v.fim));
-    else if(v.inicio) meta.push('📅 A partir de '+fmtDate(v.inicio));
-    if(total) meta.push(total+' atividade'+(total>1?'s':''));
-    var bodyId='vb'+vi;
     var pctColor=isDone?'var(--green)':'var(--blue)';
+    var meta=[];
+    if(v.inicio&&v.fim) meta.push('📅 '+fmtDate(v.inicio)+' — '+fmtDate(v.fim));
+    else if(v.inicio) meta.push('📅 A partir de '+fmtDate(v.inicio));
+    if(total) meta.push(conc+'/'+total+' atividade'+(total>1?'s':''));
+    var bodyId='vb'+vi;
 
     var ativsHtml=ativs.length?ativs.map(function(a){
       var res=a.reservaId?reservas.find(function(r){return r.id===a.reservaId;}):null;
@@ -579,9 +652,9 @@ function renderPortal() {
       var rowCls='ativ-row status-'+st;
       var resHtml=res?'<div class="reserva-box"><div class="reserva-box-label">Reserva vinculada</div><div class="res-cols">'+cols.map(function(c){return '<div class="res-col"><label>'+c.label+'</label><span>'+c.val+'</span></div>';}).join('')+'</div></div>':'';
       return '<div class="'+rowCls+'"><div class="ativ-icon">'+(a.icon||'·')+'</div><div class="ativ-body"><div class="ativ-nome">'+a.nome+'</div>'+(a.titulo?'<div class="ativ-titulo">'+a.titulo+'</div>':'')+(a.descricao?'<div class="ativ-desc">'+a.descricao+'</div>':'')+resHtml+'</div><span class="badge '+bc+'">'+statusLabel(a.status)+'</span></div>';
-    }).join(''):'<div style="color:var(--text-2);font-size:13px;padding:8px 0">Nenhuma atividade cadastrada.</div>';
+    }).join(''):'<div style="color:var(--muted);font-size:13px;padding:8px 0;font-weight:500">Nenhuma atividade cadastrada.</div>';
 
-    return '<div class="viagem-card"><div class="viagem-header" onclick="toggleViagem(\''+bodyId+'\','+vi+')"><div style="flex:1"><div class="viagem-nome">'+v.nome+'</div>'+(meta.length?'<div class="viagem-meta">'+meta.join(' · ')+'</div>':'')+'</div><div class="viagem-progress-wrap"><div class="viagem-pct" style="color:'+pctColor+'">'+pct+'%</div><div class="viagem-bar"><div class="viagem-bar-fill'+(isDone?' done':'')+'" style="width:'+pct+'%"></div></div></div><div class="viagem-chevron" id="chev'+vi+'">›</div></div><div class="viagem-body" id="'+bodyId+'"><div class="ativ-list">'+ativsHtml+'</div></div></div>';
+    return '<div class="viagem-card" style="animation-delay:'+(vi*60)+'ms"><div class="viagem-header" onclick="toggleViagem(\''+bodyId+'\','+vi+')"><div class="viagem-icon">✈</div><div class="viagem-info"><div class="viagem-nome">'+v.nome+'</div>'+(meta.length?'<div class="viagem-meta">'+meta.join(' · ')+'</div>':'')+'</div><div class="viagem-progress-wrap"><div class="viagem-pct" style="color:'+pctColor+'">'+pct+'%</div><div class="viagem-bar"><div class="viagem-bar-fill'+(isDone?' done':'')+'" style="width:'+pct+'%"></div></div></div><div class="viagem-chevron" id="chev'+vi+'">›</div></div><div class="viagem-body" id="'+bodyId+'"><div class="ativ-list">'+ativsHtml+'</div></div></div>';
   }).join('');
 }
 
@@ -626,20 +699,20 @@ function entrar() {
       });
     })
     .then(function(dados){
-      btn.innerHTML='Acessar <span style="opacity:.4">→</span>'; btn.disabled=false;
+      btn.innerHTML='Acessar →'; btn.disabled=false;
       _dados=dados;
       var nome=toTitleCase(dados.clientes[0].nome).split(' ')[0];
-      document.getElementById('portal-nome').innerHTML='Olá, <span style="font-weight:500;color:rgba(255,255,255,.95)">'+nome+'</span>.';
+      document.getElementById('portal-nome').innerHTML='Olá, <span style="color:var(--accent)">'+nome+'</span> 👋';
       document.getElementById('nav-nome').textContent=nome;
       document.getElementById('portal-email').textContent=email;
       document.getElementById('login-wrap').style.display='none';
       var pw=document.getElementById('portal-wrap');
-      pw.style.display='block'; pw.style.minHeight='100vh';
+      pw.style.display='block';
       pw.classList.add('fade-in');
       renderPortal();
     })
     .catch(function(e){
-      btn.innerHTML='Acessar <span style="opacity:.4">→</span>'; btn.disabled=false;
+      btn.innerHTML='Acessar →'; btn.disabled=false;
       errEl.textContent=e.message||'Erro de conexão. Tente novamente.';
     });
 }
@@ -647,7 +720,7 @@ function entrar() {
 function sair(){
   _dados=null;
   var pw=document.getElementById('portal-wrap');
-  pw.style.display='none'; pw.style.minHeight=''; pw.classList.remove('fade-in');
+  pw.style.display='none'; pw.classList.remove('fade-in');
   document.getElementById('login-wrap').style.display='flex';
   document.getElementById('login-email').value='';
   document.getElementById('login-error').textContent='';
