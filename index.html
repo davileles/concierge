@@ -3517,6 +3517,10 @@ function renderViagens() {
   var q = ((document.getElementById('viagens-search')||{}).value||'').toLowerCase().trim();
   var list = viagens.filter(function(v){
     return !q || v.nome.toLowerCase().includes(q) || v.clientes.toLowerCase().includes(q);
+  }).sort(function(a, b){
+    var da = a.inicio || '9999-12-31';
+    var db = b.inicio || '9999-12-31';
+    return da < db ? -1 : da > db ? 1 : 0;
   });
   var lbl = document.getElementById('viagens-count-label');
   if (lbl) lbl.textContent = list.length + ' viagem' + (list.length!==1?'s':'');
