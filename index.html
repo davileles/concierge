@@ -1163,7 +1163,7 @@ header{animation:fadeUp .45s ease both}
       <div class="field">
         <label>Slug / pasta no repositório</label>
         <input type="text" id="rg-slug" placeholder="Ex: santiago-2025" oninput="rgSlugInput()"/>
-        <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">URL: davileles.github.io/roteiros/<span id="rg-slug-preview" style="color:var(--accent)">…</span>/</span>
+        <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">URL: roteiros.clubedoviajante.com.br/<span id="rg-slug-preview" style="color:var(--accent)">…</span>/</span>
       </div>
       <div class="field">
         <label>Imagem de capa (URL Unsplash)</label>
@@ -3804,7 +3804,7 @@ function rgCarregarViagem() {
   document.getElementById('rg-status').style.display='none';
   if (v.slugRoteiro) {
     var linkEl = document.getElementById('rg-link-publicado');
-    linkEl.href = 'https://davileles.github.io/roteiros/'+v.slugRoteiro+'/';
+    linkEl.href = 'https://roteiros.clubedoviajante.com.br/'+v.slugRoteiro+'/';
     linkEl.style.display = 'inline';
   }
 }
@@ -4038,7 +4038,7 @@ async function rgPublicar() {
       body: JSON.stringify(body)
     });
     if (!putResp.ok) throw new Error('PUT falhou: '+(await putResp.text()));
-    var url = 'https://davileles.github.io/roteiros/'+slug+'/';
+    var url = 'https://roteiros.clubedoviajante.com.br/'+slug+'/';
     rgSetStatus('✅ Roteiro publicado! <a href="'+url+'" target="_blank" style="color:var(--accent);font-weight:700">'+url+'</a> (aguarde ~10min para o GitHub Pages atualizar)','ok');
     document.getElementById('rg-link-publicado').href=url;
     document.getElementById('rg-link-publicado').style.display='inline';
