@@ -1819,7 +1819,16 @@ function salvarReserva() {
         v.atividades.push({
           icon: iconAtiv,
           nome: nomeAtiv,
-          titulo: res.tipo === 'voo' ? (res.origem||'') + ' → ' + (res.destino||'') : (res.hotelNome || res.passeioNome || ''),
+          titulo: (function(){
+            if (res.tipo !== 'voo') return res.hotelNome || res.passeioNome || '';
+            var ori = res.origem || '?', dst = res.destino || '?';
+            var dIda = res.dataIda ? ' · ' + fmtDate(res.dataIda) : '';
+            if (res.dataVolta) {
+              var dVolta = fmtDate(res.dataVolta);
+              return ori + ' ⇄ ' + dst + dIda + ' a ' + dVolta;
+            }
+            return ori + ' → ' + dst + dIda;
+          })(),
           descricao: '',
           status: 'concluida',
           reservaId: res.id
