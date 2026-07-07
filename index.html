@@ -365,7 +365,7 @@ header{animation:fadeUp .45s ease both}
           <option value="">Selecione…</option>
           <option value="voo">✈️ Passagem Aérea</option>
           <option value="hotel">🏨 Hospedagem</option>
-          <option value="carro">🚗 Aluguel de Carro</option>
+          <option value="carro">🚗 Transporte</option>
           <option value="passeio">🎯 Passeio / Atividade</option>
         </select>
       </div>
@@ -755,7 +755,7 @@ header{animation:fadeUp .45s ease both}
         <button class="btn btn-ghost btn-sm" onclick="addAtividade('🏨','Hotel')">🏨 Hotel</button>
         <button class="btn btn-ghost btn-sm" onclick="addAtividade('🛡️','Seguro Viagem')">🛡️ Seguro Viagem</button>
         <button class="btn btn-ghost btn-sm" onclick="addAtividade('💳','Ativação Seguro Cartão')">💳 Seg. Cartão</button>
-        <button class="btn btn-ghost btn-sm" onclick="addAtividade('🚗','Aluguel de Carro')">🚗 Carro</button>
+        <button class="btn btn-ghost btn-sm" onclick="addAtividade('🚌','Transporte')">🚗 Carro</button>
         <button class="btn btn-ghost btn-sm" onclick="addAtividade('🎯','Passeio/Atividade')">🎯 Passeio</button>
         <button class="btn btn-ghost btn-sm" onclick="addAtividade('🗺️','Roteiro Personalizado')">🗺️ Roteiro</button>
         <button class="btn btn-ghost btn-sm" onclick="addAtividadeCustom()">➕ Outra</button>
@@ -1603,7 +1603,7 @@ function lerAtivoComIA(file) {
     var tipoSel = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
     if (tipoSel === 'voo') tipoCampos = 'passagem aérea';
     else if (tipoSel === 'hotel') tipoCampos = 'hospedagem';
-    else if (tipoSel === 'carro') tipoCampos = 'aluguel de carro';
+    else if (tipoSel === 'carro') tipoCampos = 'transporte';
     else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
     else tipoCampos = 'reserva de viagem';
 
@@ -1826,7 +1826,7 @@ function salvarReserva() {
         } else if (res.tipo === 'hotel') {
           nomeAtiv = 'Hotel'; iconAtiv = '🏨';
         } else if (res.tipo === 'carro') {
-          nomeAtiv = 'Aluguel de Carro'; iconAtiv = '🚗';
+          nomeAtiv = 'Transporte'; iconAtiv = '🚌';
         } else if (res.tipo === 'passeio') {
           nomeAtiv = 'Passeio/Atividade'; iconAtiv = '🎯';
         }
@@ -2934,7 +2934,7 @@ var ORDEM_ATIVIDADES = [
   'Passagem Doméstica',
   'Passagem Internacional',
   'Hotel',
-  'Aluguel de Carro',
+  'Transporte',
   'Seguro Viagem',
   'Ativação Seguro Cartão',
   'Passeio/Atividade',
@@ -3676,7 +3676,7 @@ function renderViagens() {
             '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🏨\',\'Hotel\')">🏨 Hotel</button>',
             '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🛡️\',\'Seguro Viagem\')">🛡️ Seguro</button>',
             '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'💳\',\'Ativação Seguro Cartão\')">💳 Seg. Cartão</button>',
-            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🚗\',\'Aluguel de Carro\')">🚗 Carro</button>',
+            '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🚗\',\'Transporte\')">🚗 Carro</button>',
             '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🎯\',\'Passeio/Atividade\')">🎯 Passeio</button>',
             '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeViagem(this.dataset.vid,\'🗺️\',\'Roteiro Personalizado\')">🗺️ Roteiro</button>',
             '<button class="btn btn-ghost btn-sm"'+dVid2+' onclick="adicionarAtividadeCustomViagem(this.dataset.vid)">➕ Outra</button>',
@@ -3988,12 +3988,12 @@ function rgMontarDataObj() {
   });
   var hospedagemData = hoteis.map(function(r){ return {nome:r.hotelNome,cidade:r.destino,checkin:r.checkin,checkout:r.checkout,noites:r.noites,conf:r.conf,hospedes:r.hospedes}; });
   var servicosData = [];
-  carros.forEach(function(r){ servicosData.push({tipo:'carro',icon:'🚗',nome:r.locadora+(r.categoria?' — '+r.categoria:''),meta:(r.retData?'Ret: '+fmtDate(r.retData)+' ':'')+(r.devData?'Dev: '+fmtDate(r.devData):''),badge:r.conf?'Conf. '+r.conf:''}); });
+  carros.forEach(function(r){ servicosData.push({tipo:'carro',icon:'🚌',nome:r.locadora+(r.categoria?' — '+r.categoria:''),meta:(r.retData?'Ret: '+fmtDate(r.retData)+' ':'')+(r.devData?'Dev: '+fmtDate(r.devData):''),badge:r.conf?'Conf. '+r.conf:''}); });
   passeios.forEach(function(r){ servicosData.push({tipo:'passeio',icon:'🎯',nome:r.passeioNome,meta:(r.dataPasseio?fmtDate(r.dataPasseio)+' ':'')+r.operadora,badge:r.conf?'Conf. '+r.conf:''}); });
   var documentos = [];
   if (voos.length) documentos.push({icon:'✈️',titulo:'Passagens Aéreas',meta:voos.map(function(r){return r.origem+'→'+r.destino;}).join(' · '),badge:'Confirmado'});
   if (hoteis.length) documentos.push({icon:'🏨',titulo:'Vouchers de Hotel',meta:hoteis.map(function(h){return h.hotelNome;}).join(' · '),badge:'Confirmado'});
-  if (carros.length) documentos.push({icon:'🚗',titulo:'Locação de Veículo',meta:carros.map(function(r){return r.locadora;}).join(', '),badge:'Confirmado'});
+  if (carros.length) documentos.push({icon:'🚌',titulo:'Locação de Veículo',meta:carros.map(function(r){return r.locadora;}).join(', '),badge:'Confirmado'});
   documentos.push({icon:'🛂',titulo:'Passaportes',meta:v.clientes||'',badge:'Verificar validade',badgeClass:'pending'});
   return {titulo:v.nome||'Roteiro',subtitulo:subtitulo,eyebrow:eyebrow,heroImage:heroImage,pills:pills,visaoGeral:visaoGeral,obs:v.obs||'',voos:voosData,hospedagem:hospedagemData,servicos:servicosData,dias:rgDias,documentos:documentos,footerNote:v.nome+(v.clientes?' · '+v.clientes:'')};
 }
