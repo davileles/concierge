@@ -287,20 +287,20 @@
       {
         "icon": "🌍",
         "nome": "Passagem Internacional",
-        "titulo": "CDG → SSA · 07/09/2026",
-        "descricao": "Emitir CDG-SSA via Smiles\nExecutiva Air France",
-        "status": "concluida",
-        "reservaId": "RES-1783248652970",
-        "pos": 30
-      },
-      {
-        "icon": "🌍",
-        "nome": "Passagem Internacional",
         "titulo": "",
         "descricao": "",
         "status": "concluida",
         "reservaId": "RES-1783430175258",
         "pos": 20
+      },
+      {
+        "icon": "🌍",
+        "nome": "Passagem Internacional",
+        "titulo": "CDG → SSA · 07/09/2026",
+        "descricao": "Emitir CDG-SSA via Smiles\nExecutiva Air France",
+        "status": "concluida",
+        "reservaId": "RES-1783248652970",
+        "pos": 30
       },
       {
         "icon": "🏨",
@@ -319,6 +319,15 @@
         "status": "pendente",
         "reservaId": null,
         "pos": 50
+      },
+      {
+        "icon": "🏨",
+        "nome": "Hotel",
+        "titulo": "",
+        "descricao": "",
+        "status": "pendente",
+        "reservaId": null,
+        "pos": 51
       }
     ],
     "cadastro": "2026-07-05"
