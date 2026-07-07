@@ -1819,16 +1819,23 @@ function salvarReserva() {
         v.atividades.push({
           icon: iconAtiv,
           nome: nomeAtiv,
-          titulo: (function(){
-            if (res.tipo !== 'voo') return res.hotelNome || res.passeioNome || '';
-            var ori = res.origem || '?', dst = res.destino || '?';
-            var dIda = res.dataIda ? ' · ' + fmtDate(res.dataIda) : '';
-            if (res.dataVolta) {
-              var dVolta = fmtDate(res.dataVolta);
-              return ori + ' ⇄ ' + dst + dIda + ' a ' + dVolta;
+          titulo: (function(r){
+            if (!r) return '';
+            if (r.tipo === 'voo') {
+              var ori = r.origem || '?', dst = r.destino || '?';
+              var dIda = r.dataIda ? ' · ' + fmtDate(r.dataIda) : '';
+              if (r.dataVolta) return ori + ' ⇄ ' + dst + dIda + ' a ' + fmtDate(r.dataVolta);
+              return ori + ' → ' + dst + dIda;
             }
-            return ori + ' → ' + dst + dIda;
-          })(),
+            if (r.tipo === 'hotel') {
+              var nome = r.hotelNome || r.destino || 'Hotel';
+              var ci = r.checkin ? fmtDate(r.checkin) : null;
+              var co = r.checkout ? fmtDate(r.checkout) : null;
+              if (ci && co) return nome + ' · ' + ci + ' a ' + co;
+              return nome;
+            }
+            return r.passeioNome || r.locadora || '';
+          })(res),
           descricao: '',
           status: 'concluida',
           reservaId: res.id
@@ -3518,7 +3525,27 @@ function confirmarVinculo() {
     var realIdx = getRealIdx(v, vinculoAlvo.ativIdx);
     if (realIdx !== -1) {
       v.atividades[realIdx].reservaId = reservaId || null;
-      if (reservaId) v.atividades[realIdx].status = 'concluida';
+      if (reservaId) {
+        v.atividades[realIdx].status = 'concluida';
+        var res = reservas.find(function(r){ return r.id === reservaId; });
+        if (res) v.atividades[realIdx].titulo = (function(r){
+            if (!r) return '';
+            if (r.tipo === 'voo') {
+              var ori = r.origem || '?', dst = r.destino || '?';
+              var dIda = r.dataIda ? ' · ' + fmtDate(r.dataIda) : '';
+              if (r.dataVolta) return ori + ' ⇄ ' + dst + dIda + ' a ' + fmtDate(r.dataVolta);
+              return ori + ' → ' + dst + dIda;
+            }
+            if (r.tipo === 'hotel') {
+              var nome = r.hotelNome || r.destino || 'Hotel';
+              var ci = r.checkin ? fmtDate(r.checkin) : null;
+              var co = r.checkout ? fmtDate(r.checkout) : null;
+              if (ci && co) return nome + ' · ' + ci + ' a ' + co;
+              return nome;
+            }
+            return r.passeioNome || r.locadora || '';
+          })(res);
+      }
       saveViagens(); renderViagens();
       setTimeout(function() {
         var body = document.getElementById('vbody-' + vinculoAlvo.viagemId);
