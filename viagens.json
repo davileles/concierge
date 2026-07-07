@@ -124,15 +124,6 @@
     "obs": "",
     "atividades": [
       {
-        "icon": "✈️",
-        "nome": "Passagem Doméstica",
-        "titulo": "GRU → CNF · 21/07/2026",
-        "descricao": "Data: 21/07",
-        "status": "concluida",
-        "reservaId": "RES-1783332687136",
-        "pos": 20
-      },
-      {
         "icon": "🌍",
         "nome": "Passagem Internacional",
         "titulo": "CNF → SCL · 14/07/2026",
@@ -149,6 +140,15 @@
         "status": "concluida",
         "reservaId": "RES-1783331313046",
         "pos": 10
+      },
+      {
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "GRU → CNF · 21/07/2026",
+        "descricao": "Data: 21/07",
+        "status": "concluida",
+        "reservaId": "RES-1783332687136",
+        "pos": 20
       },
       {
         "icon": "🏨",
@@ -178,15 +178,6 @@
         "pos": 50
       },
       {
-        "icon": "🚗",
-        "nome": "Aluguel de Carro",
-        "titulo": "Transfer para Apart Bianco Hotel",
-        "descricao": "Aguardando retorno da Vem Me Buscar",
-        "status": "pendente",
-        "reservaId": null,
-        "pos": 70
-      },
-      {
         "icon": "🛡️",
         "nome": "Seguro Viagem",
         "titulo": "Reservar via Porto Seguro e Livelo com 27 pontos por Real",
@@ -196,6 +187,15 @@
         "pos": 60
       },
       {
+        "icon": "🚗",
+        "nome": "Aluguel de Carro",
+        "titulo": "Transfer para Apart Bianco Hotel",
+        "descricao": "Aguardando retorno da Vem Me Buscar",
+        "status": "pendente",
+        "reservaId": null,
+        "pos": 70
+      },
+      {
         "icon": "🗺️",
         "nome": "Roteiro Personalizado",
         "titulo": "",
@@ -203,6 +203,15 @@
         "status": "pendente",
         "reservaId": null,
         "pos": 80
+      },
+      {
+        "icon": "🚗",
+        "nome": "Transporte",
+        "titulo": "",
+        "descricao": "",
+        "status": "pendente",
+        "reservaId": null,
+        "pos": 81
       }
     ],
     "cadastro": "2026-07-06"
