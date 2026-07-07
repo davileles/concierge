@@ -1517,7 +1517,21 @@ function populateViagemAssocSelect(reservadoParaId) {
   var sel = document.getElementById('f-viagem-assoc');
   if (!sel) return;
   sel.innerHTML = '<option value="">Não associar a nenhuma viagem</option>';
-  viagens.forEach(function(v) {
+  var clienteSel = toTitleCase((getVal('f-cliente') || '').trim());
+  var viagensFiltradas = viagens.filter(function(v) {
+    if (!clienteSel) return true;
+    var lista = v.clientes
+      ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(function(c){ return toTitleCase(c).toLowerCase(); })
+      : [];
+    return lista.some(function(c){ return c.includes(clienteSel.toLowerCase()); });
+  });
+  if (viagensFiltradas.length === 0 && clienteSel) {
+    var opt0 = document.createElement('option');
+    opt0.disabled = true;
+    opt0.textContent = 'Nenhuma viagem encontrada para ' + clienteSel;
+    sel.appendChild(opt0);
+  }
+  viagensFiltradas.forEach(function(v) {
     var clientes = v.clientes
       ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(toTitleCase).join(', ')
       : '';
@@ -3507,9 +3521,19 @@ function abrirVinculo(viagemId, ativIdx) {
   vinculoAlvo = {viagemId: viagemId, ativIdx: ativIdx};
   loadReservas();
   var sel = document.getElementById('modal-reserva-select');
+  var vAtual = viagens.find(function(x){ return x.id === viagemId; });
+  var clientesViagem = vAtual && vAtual.clientes
+    ? (Array.isArray(vAtual.clientes) ? vAtual.clientes : [vAtual.clientes]).map(function(c){ return toTitleCase(c).toLowerCase(); })
+    : [];
+  var reservasFiltradas = clientesViagem.length
+    ? reservas.filter(function(r){
+        var rc = toTitleCase(r.cliente || '').toLowerCase();
+        return clientesViagem.some(function(c){ return rc.includes(c) || c.includes(rc); });
+      })
+    : reservas;
   sel.innerHTML = '<option value="">Selecione uma reserva…</option>' +
-    reservas.map(function(r){
-      return '<option value="'+r.id+'">'+r.id+' · '+toTitleCase(r.cliente)+' · '+resTitle(r)+'</option>';
+    reservasFiltradas.map(function(r){
+      return '<option value="'+r.id+'">'+toTitleCase(r.cliente)+' · '+resTitle(r)+'</option>';
     }).join('');
   var v = viagens.find(function(x){ return x.id === viagemId; });
   var a = v ? getAtivByIdx(v, ativIdx) : null;
