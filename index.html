@@ -1342,11 +1342,13 @@ function loadReservas() {
 }
 
 function saveReservas() {
-  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', {
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body:JSON.stringify({data:reservas})
-  }).catch(function(e){console.error('[saveReservas]',e);});
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){ if(!d.ok) throw new Error(d.erro||'Erro desconhecido'); return true; });
 }
 
 function syncReservas() {
@@ -1831,10 +1833,18 @@ function salvarReserva() {
     showToast('✅ Reserva salva com sucesso!', 'ok');
   }
 
-  updateStats();
-  renderReservas();
-  limparForm();
-  switchTab('reservas');
+  saveReservas()
+    .then(function(){
+      updateStats();
+      renderReservas();
+      limparForm();
+      switchTab('reservas');
+    })
+    .catch(function(e){
+      reservas.shift();
+      showToast('❌ Erro ao salvar reserva: ' + e.message, 'err');
+      console.error('[salvarReserva]', e);
+    });
 }
 
 // ══════════════════════════════════════════
