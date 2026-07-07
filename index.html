@@ -501,7 +501,7 @@ header{animation:fadeUp .45s ease both}
       <!-- DINHEIRO C/ ACÚMULO: valor + programa fidelidade -->
       <div id="campos-dinheiro-acumulo" style="display:none">
         <div class="g2">
-          <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-acumulo" placeholder="Ex: 4.690,15"/></div>
+          <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-acumulo" placeholder="Ex: 4.690,15" oninput="calcMilhasAcumulo()"/></div>
           <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
             <select id="f-programa-acumulo-voo">
               <option value="">Selecione…</option>
@@ -513,6 +513,11 @@ header{animation:fadeUp .45s ease both}
               <option>SUMA</option>
             </select>
           </div>
+        </div>
+        <div class="g3">
+          <div class="field"><label>Fator Multiplicador <span class="tag">pts/R$</span></label><input type="number" id="f-fator-acumulo" min="0" step="0.1" placeholder="Ex: 2,5" oninput="calcMilhasAcumulo()"/></div>
+          <div class="field"><label>Milhas a Receber <span class="tag">automático</span></label><input type="text" id="f-milhas-acumulo" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
+          <div class="field"><label>Total de Passageiros <span style="color:var(--accent)">*</span></label><input type="number" id="f-pax-acumulo" min="1" placeholder="Ex: 2" oninput="calcMilhasAcumulo()"/></div>
         </div>
       </div>
 
@@ -1449,7 +1454,7 @@ function limparForm() {
   ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao',
    'f-programa','f-milhas-total','f-milhas','f-pax',
    'f-valor-dinheiro',
-   'f-valor-acumulo','f-programa-acumulo-voo',
+   'f-valor-acumulo','f-programa-acumulo-voo','f-fator-acumulo','f-milhas-acumulo','f-pax-acumulo',
    'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor',
    'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes',
    'f-hotel-valor','f-hotel-programa-milhas',
@@ -1748,6 +1753,9 @@ function salvarReserva() {
       // Dinheiro c/ acúmulo
       valorAcumulo: getVal('f-valor-acumulo'),
       programaAcumuloVoo: getVal('f-programa-acumulo-voo'),
+      fatorAcumulo: getVal('f-fator-acumulo'),
+      milhasAcumulo: getVal('f-milhas-acumulo'),
+      paxAcumulo: getVal('f-pax-acumulo'),
       // Balcão
       programaBalcao: getVal('f-programa-balcao'),
       paxBalcao: getVal('f-pax-balcao'),
@@ -2125,6 +2133,9 @@ function editarReserva(id) {
     // Dinheiro c/ acúmulo
     setVal('f-valor-acumulo',r.valorAcumulo||'');
     setVal('f-programa-acumulo-voo',r.programaAcumuloVoo||'');
+    setVal('f-fator-acumulo',r.fatorAcumulo||'');
+    setVal('f-milhas-acumulo',r.milhasAcumulo||'');
+    setVal('f-pax-acumulo',r.paxAcumulo||'');
     // Balcão
     setVal('f-programa-balcao',r.programaBalcao||'');
     setVal('f-pax-balcao',r.paxBalcao||'');
@@ -2736,7 +2747,7 @@ function onTipoEmissaoChange() {
   // Limpar campos ao trocar tipo
   if (tipo !== 'milhas')           { setVal('f-programa',''); setVal('f-milhas-total',''); setVal('f-milhas',''); setVal('f-pax',''); setVal('f-valor',''); }
   if (tipo !== 'dinheiro')         setVal('f-valor-dinheiro','');
-  if (tipo !== 'dinheiro_acumulo') { setVal('f-valor-acumulo',''); setVal('f-programa-acumulo-voo',''); }
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-valor-acumulo',''); setVal('f-programa-acumulo-voo',''); setVal('f-fator-acumulo',''); setVal('f-milhas-acumulo',''); setVal('f-pax-acumulo',''); }
   if (tipo !== 'balcao')           { setVal('f-programa-balcao',''); setVal('f-pax-balcao',''); setVal('f-valor-total-balcao',''); setVal('f-valor-pax-balcao',''); }
 }
 
@@ -2762,6 +2773,19 @@ function onMilhasChange() {
   var total = parseFloat(raw) || 0;
   var pax   = parseInt(getVal('f-pax')) || 1;
   setVal('f-milhas', total > 0 ? Math.round(total / pax).toLocaleString('pt-BR') : '');
+}
+
+function calcMilhasAcumulo() {
+  var valorRaw = (getVal('f-valor-acumulo') || '').replace(/[^\d,\.]/g, '').replace(',', '.');
+  var valor    = parseFloat(valorRaw) || 0;
+  var fator    = parseFloat(getVal('f-fator-acumulo')) || 0;
+  var pax      = parseInt(getVal('f-pax-acumulo')) || 1;
+  if (valor > 0 && fator > 0) {
+    var total = Math.round(valor * fator * pax);
+    setVal('f-milhas-acumulo', total.toLocaleString('pt-BR'));
+  } else {
+    setVal('f-milhas-acumulo', '');
+  }
 }
 
 function onValorBalcaoChange() {
