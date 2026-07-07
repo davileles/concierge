@@ -294,13 +294,22 @@
         "pos": 20
       },
       {
+        "icon": "🏨",
+        "nome": "Hotel",
+        "titulo": "NH Collection Roma Giustiniano · 19/08/2026 a 20/08/2026",
+        "descricao": "",
+        "status": "concluida",
+        "reservaId": "RES-1783457562573",
+        "pos": 30
+      },
+      {
         "icon": "🌍",
         "nome": "Passagem Internacional",
         "titulo": "CDG → SSA · 07/09/2026",
         "descricao": "Emitir CDG-SSA via Smiles\nExecutiva Air France",
         "status": "concluida",
         "reservaId": "RES-1783248652970",
-        "pos": 30
+        "pos": 60
       },
       {
         "icon": "🏨",
@@ -309,6 +318,15 @@
         "descricao": "",
         "status": "concluida",
         "reservaId": "RES-1783457243050",
+        "pos": 50
+      },
+      {
+        "icon": "🏨",
+        "nome": "Hotel",
+        "titulo": "",
+        "descricao": "",
+        "status": "pendente",
+        "reservaId": null,
         "pos": 40
       },
       {
@@ -318,16 +336,7 @@
         "descricao": "",
         "status": "pendente",
         "reservaId": null,
-        "pos": 60
-      },
-      {
-        "icon": "🏨",
-        "nome": "Hotel",
-        "titulo": "",
-        "descricao": "",
-        "status": "pendente",
-        "reservaId": null,
-        "pos": 50
+        "pos": 70
       }
     ],
     "cadastro": "2026-07-05"
