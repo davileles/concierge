@@ -1,5 +1,16 @@
 [
   {
+    "id": "MOD-1783515054523",
+    "nome": "Instruções pré voo - VOLTA",
+    "texto": "Está chegando seu voo e como a Azul diz nas suas instruções de voo: \"você já sabe, mas não custa lembrar\".\n\nEm caso de qualquer problema no voo, é importante solicitar à companhia aérea o documento correspondente ainda no aeroporto:\n\n- *Overbooking ou impedimento de embarque*: peçam a declaração de preterição.\n- *Voo alterado, atrasado ou cancelado*: solicitem a declaração de contingência.\n- *Dano, atraso ou extravio de bagagem*: registrem imediatamente o RIB — Relatório de Irregularidade de Bagagem. Façam isso ainda no local da retirada da bagagem no guichê da cia aérea.\n\nAlém desses documentos, registrem o máximo possível do que for pertinente: foto da fila de atendimento, foto do painel de voos, foto do cartão de embarque — sempre muito importante — e, em caso de dano na bagagem, fotos dos danos causados na mala.\n\nRecomendo fortemente que sempre que pegar a mala, inspecione a redor, verifique se houve algum dano, abra um pouco a mala para saber se algo foi furtado e girem a mala de um lado para o outro para garantir que as rodinhas estão em perfeito estado.\n\nEsses registros são importantes para comprovar o ocorrido e facilitar eventuais pedidos de reembolso, indenização ou assistência posteriormente.",
+    "modo": "programado",
+    "gatilho": "voo_ida_dt",
+    "antecedencia": {
+      "valor": 1,
+      "unidade": "dias"
+    }
+  },
+  {
     "id": "MOD-1783506805708",
     "nome": "Instruções pré voo - IDA",
     "texto": "Está chegando seu voo e como a Azul diz nas suas instruções de voo: \"você já sabe, mas não custa lembrar\".\n\nEm caso de qualquer problema no voo, é importante solicitar à companhia aérea o documento correspondente ainda no aeroporto:\n\n- *Overbooking ou impedimento de embarque*: peçam a declaração de preterição.\n- *Voo alterado, atrasado ou cancelado*: solicitem a declaração de contingência.\n- *Dano, atraso ou extravio de bagagem*: registrem imediatamente o RIB — Relatório de Irregularidade de Bagagem. Façam isso ainda no local da retirada da bagagem no guichê da cia aérea.\n\nAlém desses documentos, registrem o máximo possível do que for pertinente: foto da fila de atendimento, foto do painel de voos, foto do cartão de embarque — sempre muito importante — e, em caso de dano na bagagem, fotos dos danos causados na mala.\n\nRecomendo fortemente que sempre que pegar a mala, inspecione a redor, verifique se houve algum dano, abra um pouco a mala para saber se algo foi furtado e girem a mala de um lado para o outro para garantir que as rodinhas estão em perfeito estado.\n\nEsses registros são importantes para comprovar o ocorrido e facilitar eventuais pedidos de reembolso, indenização ou assistência posteriormente.",
