@@ -3871,9 +3871,9 @@ function dispararMensagem() {
   if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
   if (!url)   { showToast('⚠️ URL do Baileys não configurada', 'err'); return; }
   statusEl.style.color='#f59e0b'; statusEl.textContent='⏳ Enviando…';
-  fetch(url + '/send-message', {
+  fetch(url + '/enviar', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ number: grupo, message: texto })
+    body: JSON.stringify({ grupo: grupo, mensagem: texto })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
