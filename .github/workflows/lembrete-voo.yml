@@ -1,0 +1,23 @@
+name: Lembrete de Voo — 48h antes
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # toda hora (UTC) — cobre horários BR de 21h a 20h
+  workflow_dispatch: {}    # execução manual pela aba Actions
+
+jobs:
+  lembrete:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verificar e enviar lembretes de voo
+        env:
+          CDV_GITHUB_TOKEN: ${{ secrets.CDV_CONCIERGE_TOKEN }}
+        run: node lembrete-voo.js
