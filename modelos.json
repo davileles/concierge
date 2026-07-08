@@ -12,9 +12,12 @@
     "id": "MOD-1783538448279",
     "nome": "Seu voo está chegando! - IDA",
     "texto": "*Seu voo de {{origem}} para {{destino}} está chegando!* Veja os detalhes dele logo abaixo:\n\nData de partida: *{{data_ida}}*\nHorário de partida: *{{hora_partida}}*\nData de chegada: *{{data_chegada_ida}}*\nHorário de chegada: *{{hora_chegada}}*\n\nCia aérea: *{{cia}}*\nVoo: *{{nvoo_ida}}*\nLocalizador: *{{pnr}}*\n\nSe planeje para chegar com antecedência, especialmente se for despachar bagagem.",
-    "modo": "manual",
-    "gatilho": "",
-    "antecedencia": null,
+    "modo": "programado",
+    "gatilho": "voo_ida_dt",
+    "antecedencia": {
+      "valor": 48,
+      "unidade": "horas"
+    },
     "horaRef": null
   },
   {
