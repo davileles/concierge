@@ -2,12 +2,19 @@
  * lembrete-voo.js — Clube do Viajante
  * Roda via GitHub Action a cada hora.
  *
- * Cada modelo define seu próprio gatilho e antecedência:
- *   gatilho: 'voo_ida' | 'voo_volta' | 'checkin' | 'viagem' | '' (manual)
- *   antecedencia: { valor: 2, unidade: 'dias' | 'horas' }
+ * Cada modelo define:
+ *   modo: 'manual' | 'programado'
+ *   gatilho: qual campo de data usar como referência
+ *     'voo_ida_dt'   → dataIda + horaPartida
+ *     'voo_ida_d'    → dataIda (00:00)
+ *     'voo_volta_dt' → dataVolta + horaPartidaVolta
+ *     'voo_volta_d'  → dataVolta (00:00)
+ *     'checkin'      → checkin do hotel (14:00)
+ *     'viagem'       → dataInicio da viagem (00:00)
+ *   antecedencia: { valor: N, unidade: 'dias' | 'horas' }
  *
- * Modelos sem gatilho são ignorados (envio manual pelo painel).
- * Múltiplos modelos podem ter o mesmo gatilho com antecedências diferentes.
+ * Modelos com modo 'manual' (ou sem modo) são ignorados.
+ * Múltiplos modelos podem apontar para o mesmo gatilho com antecedências diferentes.
  */
 
 const BAILEYS      = 'https://baileys-server-production-ebfe.up.railway.app';
@@ -37,10 +44,22 @@ function antecedenciaEmHoras(ant) {
   return ant.unidade === 'horas' ? Number(ant.valor) : Number(ant.valor) * 24;
 }
 
-// A Action roda de hora em hora — a fatia de cada execução é ~1h.
-// Usamos 1.5h de margem para absorver desvios do cron.
+// A Action roda de hora em hora — margem de 1.5h para absorver desvios do cron
 function deveDisparar(horasRestantes, janela) {
   return horasRestantes >= 0 && horasRestantes <= janela && horasRestantes > (janela - 1.5);
+}
+
+// Resolve data+hora alvo de cada gatilho para uma reserva
+function resolverDataHora(gatilho, res, viagem) {
+  switch (gatilho) {
+    case 'voo_ida_dt':   return { data: res?.dataIda,    hora: res?.horaPartida        || '00:00', tipo: 'voo' };
+    case 'voo_ida_d':    return { data: res?.dataIda,    hora: '00:00',                            tipo: 'voo' };
+    case 'voo_volta_dt': return { data: res?.dataVolta,  hora: res?.horaPartidaVolta   || '00:00', tipo: 'voo' };
+    case 'voo_volta_d':  return { data: res?.dataVolta,  hora: '00:00',                            tipo: 'voo' };
+    case 'checkin':      return { data: res?.checkin,    hora: '14:00',                            tipo: 'hotel' };
+    case 'viagem':       return { data: viagem?.dataInicio, hora: '00:00',                         tipo: 'viagem' };
+    default:             return { data: null, hora: '00:00', tipo: null };
+  }
 }
 
 // ── interpolação ──────────────────────────────────────────────────────────────
@@ -59,27 +78,27 @@ function interpolar(texto, cli, res, viagem) {
     t = rv(t, 'origem',              res.origem    || '');
     t = rv(t, 'destino',             res.destino   || '');
     t = rv(t, 'data_ida',            fmtDateBR(res.dataIda));
-    t = rv(t, 'hora_partida',        res.horaPartida        || '');
-    t = rv(t, 'hora_chegada',        res.horaChegada        || '');
-    t = rv(t, 'nvoo_ida',            res.nvooIda            || '');
-    t = rv(t, 'cia',                 res.ciaIda || res.cia  || '');
+    t = rv(t, 'hora_partida',        res.horaPartida       || '');
+    t = rv(t, 'hora_chegada',        res.horaChegada       || '');
+    t = rv(t, 'nvoo_ida',            res.nvooIda           || '');
+    t = rv(t, 'cia',                 res.ciaIda || res.cia || '');
     t = rv(t, 'data_volta',          fmtDateBR(res.dataVolta));
-    t = rv(t, 'hora_partida_volta',  res.horaPartidaVolta   || '');
-    t = rv(t, 'hora_chegada_volta',  res.horaChegadaVolta   || '');
-    t = rv(t, 'nvoo_volta',          res.nvooVolta          || '');
-    t = rv(t, 'cia_volta',           res.ciaVolta           || '');
-    t = rv(t, 'origem_volta',        res.origemVolta  || res.destino  || '');
-    t = rv(t, 'destino_volta',       res.destinoVolta || res.origem   || '');
-    t = rv(t, 'classe',              res.classe    || '');
-    t = rv(t, 'pnr',                 res.pnr       || '');
-    t = rv(t, 'programa',            res.programa  || '');
-    t = rv(t, 'milhas',              res.milhas    || '');
-    t = rv(t, 'pax',                 res.pax       || '');
+    t = rv(t, 'hora_partida_volta',  res.horaPartidaVolta  || '');
+    t = rv(t, 'hora_chegada_volta',  res.horaChegadaVolta  || '');
+    t = rv(t, 'nvoo_volta',          res.nvooVolta         || '');
+    t = rv(t, 'cia_volta',           res.ciaVolta          || '');
+    t = rv(t, 'origem_volta',        res.origemVolta  || res.destino || '');
+    t = rv(t, 'destino_volta',       res.destinoVolta || res.origem  || '');
+    t = rv(t, 'classe',              res.classe   || '');
+    t = rv(t, 'pnr',                 res.pnr      || '');
+    t = rv(t, 'programa',            res.programa || '');
+    t = rv(t, 'milhas',              res.milhas   || '');
+    t = rv(t, 'pax',                 res.pax      || '');
     t = rv(t, 'hotel',               res.hotelNome || '');
     t = rv(t, 'checkin',             fmtDateBR(res.checkin));
     t = rv(t, 'checkout',            fmtDateBR(res.checkout));
-    t = rv(t, 'noites',              res.noites    || '');
-    t = rv(t, 'conf',                res.conf      || '');
+    t = rv(t, 'noites',              res.noites   || '');
+    t = rv(t, 'conf',                res.conf     || '');
   }
   if (viagem) {
     t = rv(t, 'viagem_nome',         viagem.nome        || '');
@@ -147,113 +166,27 @@ async function enviarWhatsApp(grupoId, mensagem) {
   if (!d.ok) throw new Error(d.erro || 'Falha no envio');
 }
 
-// Chave de marcação única por modelo (evita reenvio)
+// Chave única por modelo para evitar reenvio
 function flagKey(modeloId) { return `enviado_${modeloId}`; }
 
-// ── processamento por gatilho ─────────────────────────────────────────────────
-async function processarGatilhoVoo(mod, reservas, clientes, campo, horaPartida, resultados) {
-  const janela = antecedenciaEmHoras(mod.antecedencia);
-  const key    = flagKey(mod.id);
-  let alteracoes = 0;
+// ── migração de modelos antigos ───────────────────────────────────────────────
+const MIGRAR_GATILHO = {
+  lembrete_ida:     'voo_ida_dt',
+  lembrete_volta:   'voo_volta_dt',
+  lembrete_checkin: 'checkin',
+  lembrete_viagem:  'viagem',
+  voo_ida:          'voo_ida_dt',
+  voo_volta:        'voo_volta_dt',
+};
 
-  for (const res of reservas) {
-    if (res.tipo !== 'voo') continue;
-    if (res[key]) continue;
-
-    const dataAlvo = res[campo];
-    const hora     = res[horaPartida];
-    if (!dataAlvo) continue;
-
-    const cli = clientes.find(c => c.nome === res.cliente);
-    if (!cli?.grupo) continue;
-
-    const horas = horasAte(dataAlvo, hora);
-    console.log(`  [${mod.gatilho}] "${res.cliente}" ${dataAlvo} → ${horas.toFixed(1)}h (janela ≤${janela}h)`);
-
-    if (deveDisparar(horas, janela)) {
-      try {
-        await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, res, null));
-        res[key] = true;
-        res[`${key}Em`] = new Date().toISOString();
-        alteracoes++;
-        resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (${dataAlvo})`);
-      } catch(e) {
-        resultados.push(`❌ [${mod.nome}] "${cli.nome}": ${e.message}`);
-        console.error(`  ❌`, e.message);
-      }
-    }
+function normalizarModelo(m) {
+  // Modelos criados antes do campo modo/gatilho novo
+  if (!m.modo) {
+    const gatilhoMigrado = MIGRAR_GATILHO[m.gatilho] || MIGRAR_GATILHO[m.tipo];
+    m.modo    = gatilhoMigrado ? 'programado' : 'manual';
+    m.gatilho = gatilhoMigrado || m.gatilho || '';
   }
-  return alteracoes;
-}
-
-async function processarGatilhoCheckin(mod, reservas, clientes, resultados) {
-  const janela = antecedenciaEmHoras(mod.antecedencia);
-  const key    = flagKey(mod.id);
-  let alteracoes = 0;
-
-  for (const res of reservas) {
-    if (res.tipo !== 'hotel') continue;
-    if (res[key] || !res.checkin) continue;
-
-    const cli = clientes.find(c => c.nome === res.cliente);
-    if (!cli?.grupo) continue;
-
-    const horas = horasAte(res.checkin, '14:00');
-    console.log(`  [checkin] "${res.cliente}" ${res.checkin} → ${horas.toFixed(1)}h (janela ≤${janela}h)`);
-
-    if (deveDisparar(horas, janela)) {
-      try {
-        await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, res, null));
-        res[key] = true;
-        res[`${key}Em`] = new Date().toISOString();
-        alteracoes++;
-        resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (check-in ${res.checkin})`);
-      } catch(e) {
-        resultados.push(`❌ [${mod.nome}] "${cli.nome}": ${e.message}`);
-        console.error(`  ❌`, e.message);
-      }
-    }
-  }
-  return alteracoes;
-}
-
-async function processarGatilhoViagem(mod, viagens, clientes, resultados) {
-  const janela = antecedenciaEmHoras(mod.antecedencia);
-  const key    = flagKey(mod.id);
-  let alteracoes = 0;
-
-  for (const viagem of viagens) {
-    if (!viagem.dataInicio || viagem[key]) continue;
-
-    const horas = horasAte(viagem.dataInicio, '00:00');
-    console.log(`  [viagem] "${viagem.nome}" ${viagem.dataInicio} → ${horas.toFixed(1)}h (janela ≤${janela}h)`);
-
-    if (!deveDisparar(horas, janela)) continue;
-
-    const clientesViagem = Array.isArray(viagem.clientes)
-      ? viagem.clientes
-      : (viagem.cliente ? [viagem.cliente] : []);
-
-    let algumEnviado = false;
-    for (const nome of clientesViagem) {
-      const cli = clientes.find(c => c.nome === nome);
-      if (!cli?.grupo) continue;
-      try {
-        await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, null, viagem));
-        algumEnviado = true;
-        resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (viagem ${viagem.dataInicio})`);
-      } catch(e) {
-        resultados.push(`❌ [${mod.nome}] "${nome}": ${e.message}`);
-        console.error(`  ❌`, e.message);
-      }
-    }
-    if (algumEnviado) {
-      viagem[key] = true;
-      viagem[`${key}Em`] = new Date().toISOString();
-      alteracoes++;
-    }
-  }
-  return alteracoes;
+  return m;
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -270,44 +203,100 @@ async function main() {
   ]);
 
   const reservas = reservasResp.data;
-  const modelos  = modelosResp.data;
+  const modelos  = modelosResp.data.map(normalizarModelo);
   const viagens  = Array.isArray(viagensResp.data)
     ? viagensResp.data
     : (viagensResp.data?.items || []);
 
-  // Compatibilidade: modelos antigos usavam campo 'tipo' — migrar para 'gatilho'
-  const MIGRAR = { lembrete_ida:'voo_ida', lembrete_volta:'voo_volta', lembrete_checkin:'checkin', lembrete_viagem:'viagem' };
-  modelos.forEach(m => {
-    if (!m.gatilho && m.tipo && MIGRAR[m.tipo]) m.gatilho = MIGRAR[m.tipo];
-  });
+  const ativos = modelos.filter(m => m.modo === 'programado' && m.gatilho && m.antecedencia);
 
-  // Filtrar modelos com gatilho automático
-  const ativos = modelos.filter(m => m.gatilho);
   if (!ativos.length) {
-    console.log('[lembrete] Nenhum modelo com gatilho automático cadastrado.');
+    console.log('[lembrete] Nenhum modelo programado cadastrado.');
     return;
   }
 
-  console.log(`[lembrete] ${ativos.length} modelo(s) ativo(s) | ${reservas.length} reservas | ${clientes.length} clientes`);
+  console.log(`[lembrete] ${ativos.length} modelo(s) programado(s) | ${reservas.length} reservas | ${clientes.length} clientes`);
   ativos.forEach(m => {
-    const ant = m.antecedencia ? `${m.antecedencia.valor} ${m.antecedencia.unidade}` : '?';
-    console.log(`  • "${m.nome}" → gatilho: ${m.gatilho}, antecedência: ${ant}`);
+    const ant = `${m.antecedencia.valor} ${m.antecedencia.unidade}`;
+    console.log(`  • "${m.nome}" → ${m.gatilho} · ${ant} antes`);
   });
 
   let totalAlteracoes = 0;
   const resultados = [];
+  let viagensAlteradas = false;
 
   for (const mod of ativos) {
-    console.log(`\n[${mod.nome}]`);
-    let n = 0;
-    if      (mod.gatilho === 'voo_ida')  n = await processarGatilhoVoo(mod, reservas, clientes, 'dataIda',   'horaPartida',       resultados);
-    else if (mod.gatilho === 'voo_volta') n = await processarGatilhoVoo(mod, reservas, clientes, 'dataVolta', 'horaPartidaVolta',  resultados);
-    else if (mod.gatilho === 'checkin')  n = await processarGatilhoCheckin(mod, reservas, clientes, resultados);
-    else if (mod.gatilho === 'viagem')   n = await processarGatilhoViagem(mod, viagens, clientes, resultados);
-    else console.log(`  gatilho desconhecido: ${mod.gatilho}`);
-    totalAlteracoes += n;
+    const janela = antecedenciaEmHoras(mod.antecedencia);
+    const key    = flagKey(mod.id);
+    const isViagem = mod.gatilho === 'viagem';
+
+    console.log(`\n[${mod.nome}] gatilho=${mod.gatilho} janela=${janela}h`);
+
+    if (isViagem) {
+      // ── Gatilho: início de viagem ──
+      for (const viagem of viagens) {
+        if (!viagem.dataInicio || viagem[key]) continue;
+        const { data, hora } = resolverDataHora('viagem', null, viagem);
+        const horas = horasAte(data, hora);
+        console.log(`  "${viagem.nome}" ${data} → ${horas.toFixed(1)}h`);
+        if (!deveDisparar(horas, janela)) continue;
+
+        const clientesViagem = Array.isArray(viagem.clientes)
+          ? viagem.clientes : (viagem.cliente ? [viagem.cliente] : []);
+
+        let algum = false;
+        for (const nome of clientesViagem) {
+          const cli = clientes.find(c => c.nome === nome);
+          if (!cli?.grupo) continue;
+          try {
+            await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, null, viagem));
+            algum = true;
+            resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (viagem ${data})`);
+          } catch(e) {
+            resultados.push(`❌ [${mod.nome}] "${nome}": ${e.message}`);
+            console.error('  ❌', e.message);
+          }
+        }
+        if (algum) {
+          viagem[key] = true;
+          viagem[`${key}Em`] = new Date().toISOString();
+          totalAlteracoes++;
+          viagensAlteradas = true;
+        }
+      }
+    } else {
+      // ── Gatilhos de reserva (voo / hotel) ──
+      for (const res of reservas) {
+        if (res[key]) continue;
+        const { data, hora, tipo } = resolverDataHora(mod.gatilho, res, null);
+        if (!data) continue;
+        // Verificar tipo de reserva compatível com gatilho
+        if ((mod.gatilho === 'checkin') && res.tipo !== 'hotel') continue;
+        if ((mod.gatilho.startsWith('voo_')) && res.tipo !== 'voo') continue;
+
+        const cli = clientes.find(c => c.nome === res.cliente);
+        if (!cli?.grupo) continue;
+
+        const horas = horasAte(data, hora);
+        console.log(`  "${res.cliente}" ${data} ${hora} → ${horas.toFixed(1)}h`);
+
+        if (deveDisparar(horas, janela)) {
+          try {
+            await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, res, null));
+            res[key] = true;
+            res[`${key}Em`] = new Date().toISOString();
+            totalAlteracoes++;
+            resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (${data})`);
+          } catch(e) {
+            resultados.push(`❌ [${mod.nome}] "${cli.nome}": ${e.message}`);
+            console.error('  ❌', e.message);
+          }
+        }
+      }
+    }
   }
 
+  // ── Salvar alterações ─────────────────────────────────────────────────────
   if (totalAlteracoes > 0) {
     console.log(`\n[lembrete] Salvando ${totalAlteracoes} alteração(ões)…`);
     const { sha: shaRes } = await githubGet('reservas.json');
@@ -315,7 +304,7 @@ async function main() {
       `chore: lembretes enviados — ${new Date().toISOString().slice(0,16)}`);
     console.log('✅ reservas.json salvo');
 
-    if (viagens.length && ativos.some(m => m.gatilho === 'viagem')) {
+    if (viagensAlteradas) {
       const { sha: shaVia } = await githubGet('viagens.json');
       await githubPut('viagens.json', viagensResp.data, shaVia,
         `chore: lembretes de viagem enviados — ${new Date().toISOString().slice(0,16)}`);
