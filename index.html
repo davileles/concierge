@@ -943,11 +943,30 @@ header{animation:fadeUp .45s ease both}
         </div>
         <div class="field">
           <label>Tipo <span class="tag">para lembretes automáticos</span></label>
-          <select id="m-tipo">
+          <select id="m-tipo" onchange="onTipoModeloChange()">
             <option value="">— Geral (sem lembrete automático) —</option>
-            <option value="lembrete_ida">✈️ Lembrete — Voo de Ida (48h antes)</option>
-            <option value="lembrete_volta">↩️ Lembrete — Voo de Volta (48h antes)</option>
+            <option value="lembrete_ida">✈️ Lembrete — Voo de Ida</option>
+            <option value="lembrete_volta">↩️ Lembrete — Voo de Volta</option>
+            <option value="lembrete_checkin">🏨 Lembrete — Check-in (Hotel)</option>
+            <option value="lembrete_viagem">🌍 Lembrete — Início da Viagem</option>
           </select>
+        </div>
+      </div>
+
+      <!-- ANTECEDÊNCIA -->
+      <div id="m-antecedencia-wrap" style="display:none;margin-bottom:12px">
+        <div class="g2">
+          <div class="field">
+            <label>Antecedência para o disparo</label>
+            <div style="display:flex;gap:8px;align-items:center">
+              <input type="number" id="m-antecedencia-valor" min="1" max="999" placeholder="Ex: 2" style="max-width:90px"/>
+              <select id="m-antecedencia-unidade" style="flex:1">
+                <option value="horas">horas antes</option>
+                <option value="dias" selected>dias antes</option>
+              </select>
+            </div>
+            <span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">A Action rodará de hora em hora e enviará quando entrar na janela configurada.</span>
+          </div>
         </div>
       </div>
 
@@ -2486,16 +2505,22 @@ function insertVar(varStr) {
 
 // ── SALVAR MODELO ─────────────────────────────────────────────────────────────
 function salvarModelo() {
-  var nome  = getVal('m-nome');
-  var texto = document.getElementById('m-texto').value.trim();
-  var tipo  = getVal('m-tipo');
+  var nome    = getVal('m-nome');
+  var texto   = document.getElementById('m-texto').value.trim();
+  var tipo    = getVal('m-tipo');
+  var antValEl = document.getElementById('m-antecedencia-valor');
+  var antUniEl = document.getElementById('m-antecedencia-unidade');
+  var antValor  = antValEl ? parseInt(antValEl.value)||0 : 0;
+  var antUnidade = antUniEl ? antUniEl.value : 'dias';
   if (!nome)  { showToast('⚠️ Dê um nome ao modelo', 'err'); return; }
   if (!texto) { showToast('⚠️ O texto está vazio', 'err'); return; }
+  if (tipo && !antValor) { showToast('⚠️ Informe a antecedência do lembrete', 'err'); return; }
+  var antecedencia = tipo ? { valor: antValor, unidade: antUnidade } : null;
   if (editingModeloId) {
     var m = modelos.find(function(x){ return x.id===editingModeloId; });
-    if (m) { m.nome=nome; m.texto=texto; m.tipo=tipo||''; }
+    if (m) { m.nome=nome; m.texto=texto; m.tipo=tipo||''; m.antecedencia=antecedencia; }
   } else {
-    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, tipo: tipo||'' });
+    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, tipo: tipo||'', antecedencia: antecedencia });
   }
   saveModelos();
   cancelarEdicaoModelo();
@@ -2504,9 +2529,20 @@ function salvarModelo() {
   setTimeout(function(){ document.getElementById('modelo-ok').textContent=''; }, 3000);
 }
 
+function onTipoModeloChange() {
+  var tipo = getVal('m-tipo');
+  var wrap = document.getElementById('m-antecedencia-wrap');
+  if (wrap) wrap.style.display = tipo ? 'block' : 'none';
+}
+
 function cancelarEdicaoModelo() {
   editingModeloId = null;
   setVal('m-tipo', '');
+  onTipoModeloChange();
+  var v = document.getElementById('m-antecedencia-valor');
+  var u = document.getElementById('m-antecedencia-unidade');
+  if (v) v.value = '';
+  if (u) u.value = 'dias';
   setVal('m-nome', '');
   document.getElementById('m-texto').value = '';
   document.getElementById('modelos-form-title').textContent = '✏️ Novo Modelo';
@@ -2518,6 +2554,12 @@ function editarModelo(id) {
   editingModeloId = id;
   setVal('m-nome', m.nome);
   setVal('m-tipo', m.tipo||'');
+  onTipoModeloChange();
+  var ant = m.antecedencia || {};
+  var v = document.getElementById('m-antecedencia-valor');
+  var u = document.getElementById('m-antecedencia-unidade');
+  if (v) v.value = ant.valor || '';
+  if (u) u.value = ant.unidade || 'dias';
   document.getElementById('m-texto').value = m.texto;
   document.getElementById('modelos-form-title').textContent = '✏️ Editando: ' + m.nome;
   document.getElementById('msg-sub-modelos').scrollIntoView({ behavior:'smooth' });
@@ -2541,7 +2583,19 @@ function renderModelosLista() {
     // Preview: show first 120 chars with vars highlighted
     var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
     prev = prev.substring(0, 200) + (m.texto.length>200?'…':'');
-    var tipoBadge = m.tipo==='lembrete_ida' ? '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">✈️ Lembrete Ida</span>' : m.tipo==='lembrete_volta' ? '<span style="font-size:10px;background:rgba(18,110,255,.15);color:var(--blue);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">↩️ Lembrete Volta</span>' : '';
+    var TIPO_BADGE_MAP = {
+      lembrete_ida:    {emoji:'✈️', label:'Lembrete Ida',     color:'rgba(255,88,94,.15)',   text:'var(--accent)'},
+      lembrete_volta:  {emoji:'↩️', label:'Lembrete Volta',   color:'rgba(18,110,255,.15)',  text:'var(--blue)'},
+      lembrete_checkin:{emoji:'🏨', label:'Lembrete Check-in',color:'rgba(34,197,94,.15)',   text:'var(--green)'},
+      lembrete_viagem: {emoji:'🌍', label:'Lembrete Viagem',  color:'rgba(245,158,11,.15)', text:'var(--yellow)'},
+    };
+    var tipoBadge = '';
+    if (m.tipo && TIPO_BADGE_MAP[m.tipo]) {
+      var tb = TIPO_BADGE_MAP[m.tipo];
+      var ant = m.antecedencia ? (m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes') : '';
+      var antStr = ant ? ' · <span style="font-weight:500;opacity:.8">'+ant+'</span>' : '';
+      tipoBadge = '<span style="font-size:10px;background:'+tb.color+';color:'+tb.text+';border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">'+tb.emoji+' '+tb.label+antStr+'</span>';
+    }
     return '<div class="res-card" style="margin-bottom:10px">'+
       '<div class="res-card-header">'+
         '<div class="type-icon type-passeio">📝</div>'+
