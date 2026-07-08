@@ -952,7 +952,7 @@ header{animation:fadeUp .45s ease both}
 
       <!-- PROGRAMADO -->
       <div id="m-programado-wrap" style="display:none;margin-bottom:12px">
-        <div class="g3">
+        <div class="g3" style="margin-bottom:10px">
           <div class="field">
             <label>Antecedência</label>
             <div style="display:flex;gap:8px;align-items:center">
@@ -965,7 +965,7 @@ header{animation:fadeUp .45s ease both}
           </div>
           <div class="field" style="grid-column:span 2">
             <label>Comparar com</label>
-            <select id="m-gatilho">
+            <select id="m-gatilho" onchange="onGatilhoChange()">
               <option value="voo_ida_dt">Data + hora de partida (ida)</option>
               <option value="voo_ida_d">Somente data de ida</option>
               <option value="voo_volta_dt">Data + hora de partida (volta)</option>
@@ -973,6 +973,13 @@ header{animation:fadeUp .45s ease both}
               <option value="checkin">Data de check-in (hotel)</option>
               <option value="viagem">Data de inicio da viagem</option>
             </select>
+          </div>
+        </div>
+        <!-- Horário de referência — só para gatilhos sem hora fixa -->
+        <div id="m-hora-ref-wrap" style="display:none;margin-bottom:10px">
+          <div class="field" style="max-width:200px">
+            <label>Horário de referência <span class="tag">usado no cálculo da antecedência</span></label>
+            <input type="time" id="m-hora-ref" value="10:00"/>
           </div>
         </div>
         <span style="font-size:11px;color:var(--muted);display:block;margin-top:-4px">A Action roda de hora em hora e envia quando entrar na janela configurada.</span>
@@ -2524,12 +2531,15 @@ function salvarModelo() {
   if (!nome)  { showToast('⚠️ Dê um nome ao modelo', 'err'); return; }
   if (!texto) { showToast('⚠️ O texto está vazio', 'err'); return; }
   if (modo === 'programado' && !antValor) { showToast('⚠️ Informe a antecedência do disparo', 'err'); return; }
+  var horaRefEl = document.getElementById('m-hora-ref');
+  var horaRef = (modo === 'programado' && gatilho && !GATILHOS_COM_HORA[gatilho])
+    ? (horaRefEl ? horaRefEl.value || '10:00' : '10:00') : null;
   var antecedencia = modo === 'programado' ? { valor: antValor, unidade: antUnidade } : null;
   if (editingModeloId) {
     var m = modelos.find(function(x){ return x.id===editingModeloId; });
-    if (m) { m.nome=nome; m.texto=texto; m.modo=modo||'manual'; m.gatilho=gatilho; m.antecedencia=antecedencia; }
+    if (m) { m.nome=nome; m.texto=texto; m.modo=modo||'manual'; m.gatilho=gatilho; m.antecedencia=antecedencia; m.horaRef=horaRef; }
   } else {
-    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, modo: modo||'manual', gatilho: gatilho, antecedencia: antecedencia });
+    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, modo: modo||'manual', gatilho: gatilho, antecedencia: antecedencia, horaRef: horaRef });
   }
   saveModelos();
   cancelarEdicaoModelo();
@@ -2542,6 +2552,16 @@ function onModoChange() {
   var modo = getVal('m-modo');
   var wrap = document.getElementById('m-programado-wrap');
   if (wrap) wrap.style.display = modo === 'programado' ? 'block' : 'none';
+  if (modo === 'programado') onGatilhoChange();
+}
+
+// Gatilhos que usam hora da reserva — não precisam de horário de referência
+var GATILHOS_COM_HORA = { 'voo_ida_dt': true, 'voo_volta_dt': true };
+
+function onGatilhoChange() {
+  var gatilho = getVal('m-gatilho');
+  var horaWrap = document.getElementById('m-hora-ref-wrap');
+  if (horaWrap) horaWrap.style.display = GATILHOS_COM_HORA[gatilho] ? 'none' : 'block';
 }
 
 function cancelarEdicaoModelo() {
@@ -2551,8 +2571,10 @@ function cancelarEdicaoModelo() {
   onModoChange();
   var v = document.getElementById('m-antecedencia-valor');
   var u = document.getElementById('m-antecedencia-unidade');
+  var hr = document.getElementById('m-hora-ref');
   if (v) v.value = '';
   if (u) u.value = 'dias';
+  if (hr) hr.value = '10:00';
   setVal('m-nome', '');
   document.getElementById('m-texto').value = '';
   document.getElementById('modelos-form-title').textContent = '✏️ Novo Modelo';
@@ -2571,8 +2593,11 @@ function editarModelo(id) {
   var ant = m.antecedencia || {};
   var v = document.getElementById('m-antecedencia-valor');
   var u = document.getElementById('m-antecedencia-unidade');
+  var hr = document.getElementById('m-hora-ref');
   if (v) v.value = ant.valor || '';
   if (u) u.value = ant.unidade || 'dias';
+  if (hr) hr.value = m.horaRef || '10:00';
+  onGatilhoChange();
   document.getElementById('m-texto').value = m.texto;
   document.getElementById('modelos-form-title').textContent = '✏️ Editando: ' + m.nome;
   document.getElementById('msg-sub-modelos').scrollIntoView({ behavior:'smooth' });
@@ -2606,10 +2631,12 @@ function renderModelosLista() {
     };
     var tipoBadge = '';
     var modoM = m.modo || (m.gatilho ? 'programado' : 'manual');
+    var GATILHOS_COM_HORA_BADGE = { 'voo_ida_dt': true, 'voo_volta_dt': true };
     if (modoM === 'programado' && m.gatilho && m.antecedencia) {
       var ant = m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes';
       var ref = GATILHO_LABEL[m.gatilho] || m.gatilho;
-      tipoBadge = '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">Programado · '+ant+' de '+ref+'</span>';
+      var horaStr = (!GATILHOS_COM_HORA_BADGE[m.gatilho] && m.horaRef) ? ' às ' + m.horaRef : '';
+      tipoBadge = '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">Programado · '+ant+' de '+ref+horaStr+'</span>';
     } else {
       tipoBadge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600;margin-left:6px">Manual</span>';
     }
