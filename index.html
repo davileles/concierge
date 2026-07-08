@@ -936,9 +936,19 @@ header{animation:fadeUp .45s ease both}
     <div class="card">
       <div class="card-title" id="modelos-form-title">✏️ Novo Modelo</div>
 
-      <div class="field">
-        <label>Nome do Modelo</label>
-        <input type="text" id="m-nome" placeholder="Ex: Instrução para Problemas, Chegando o Voo…"/>
+      <div class="g2">
+        <div class="field">
+          <label>Nome do Modelo</label>
+          <input type="text" id="m-nome" placeholder="Ex: Instrução para Problemas, Chegando o Voo…"/>
+        </div>
+        <div class="field">
+          <label>Tipo <span class="tag">para lembretes automáticos</span></label>
+          <select id="m-tipo">
+            <option value="">— Geral (sem lembrete automático) —</option>
+            <option value="lembrete_ida">✈️ Lembrete — Voo de Ida (48h antes)</option>
+            <option value="lembrete_volta">↩️ Lembrete — Voo de Volta (48h antes)</option>
+          </select>
+        </div>
       </div>
 
       <!-- VARIÁVEIS -->
@@ -2365,22 +2375,29 @@ var VARS_CLIENTE = [
 ];
 
 var VARS_RESERVA = [
-  { label: '{{origem}}',           desc: 'Origem' },
-  { label: '{{destino}}',          desc: 'Destino' },
-  { label: '{{data_ida}}',         desc: 'Data de ida' },
-  { label: '{{hora_partida}}',     desc: 'Hora de partida' },
-  { label: '{{hora_chegada}}',     desc: 'Hora de chegada' },
-  { label: '{{data_volta}}',       desc: 'Data de volta' },
-  { label: '{{cia}}',              desc: 'Cia aérea' },
-  { label: '{{classe}}',           desc: 'Classe' },
-  { label: '{{pnr}}',              desc: 'Localizador' },
-  { label: '{{programa}}',         desc: 'Programa de emissão' },
-  { label: '{{milhas}}',           desc: 'Milhas por pax' },
-  { label: '{{pax}}',              desc: 'Total passageiros' },
-  { label: '{{hotel}}',            desc: 'Nome do hotel' },
-  { label: '{{checkin}}',          desc: 'Check-in' },
-  { label: '{{checkout}}',         desc: 'Check-out' },
-  { label: '{{conf}}',             desc: 'Confirmação' },
+  { label: '{{origem}}',                desc: 'Origem (ida)' },
+  { label: '{{destino}}',               desc: 'Destino (ida)' },
+  { label: '{{data_ida}}',              desc: 'Data de ida' },
+  { label: '{{hora_partida}}',          desc: 'Hora de partida (ida)' },
+  { label: '{{hora_chegada}}',          desc: 'Hora de chegada (ida)' },
+  { label: '{{nvoo_ida}}',              desc: 'Número do voo de ida' },
+  { label: '{{cia}}',                   desc: 'Cia aérea (ida)' },
+  { label: '{{data_volta}}',            desc: 'Data de volta' },
+  { label: '{{hora_partida_volta}}',    desc: 'Hora de partida (volta)' },
+  { label: '{{hora_chegada_volta}}',    desc: 'Hora de chegada (volta)' },
+  { label: '{{nvoo_volta}}',            desc: 'Número do voo de volta' },
+  { label: '{{cia_volta}}',             desc: 'Cia aérea (volta)' },
+  { label: '{{origem_volta}}',          desc: 'Origem do voo de volta' },
+  { label: '{{destino_volta}}',         desc: 'Destino do voo de volta' },
+  { label: '{{classe}}',                desc: 'Classe' },
+  { label: '{{pnr}}',                   desc: 'Localizador' },
+  { label: '{{programa}}',              desc: 'Programa de emissão' },
+  { label: '{{milhas}}',                desc: 'Milhas por pax' },
+  { label: '{{pax}}',                   desc: 'Total passageiros' },
+  { label: '{{hotel}}',                 desc: 'Nome do hotel' },
+  { label: '{{checkin}}',               desc: 'Check-in' },
+  { label: '{{checkout}}',              desc: 'Check-out' },
+  { label: '{{conf}}',                  desc: 'Confirmação' },
 ];
 
 function loadModelos() {
@@ -2471,13 +2488,14 @@ function insertVar(varStr) {
 function salvarModelo() {
   var nome  = getVal('m-nome');
   var texto = document.getElementById('m-texto').value.trim();
+  var tipo  = getVal('m-tipo');
   if (!nome)  { showToast('⚠️ Dê um nome ao modelo', 'err'); return; }
   if (!texto) { showToast('⚠️ O texto está vazio', 'err'); return; }
   if (editingModeloId) {
     var m = modelos.find(function(x){ return x.id===editingModeloId; });
-    if (m) { m.nome=nome; m.texto=texto; }
+    if (m) { m.nome=nome; m.texto=texto; m.tipo=tipo||''; }
   } else {
-    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto });
+    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, tipo: tipo||'' });
   }
   saveModelos();
   cancelarEdicaoModelo();
@@ -2488,6 +2506,7 @@ function salvarModelo() {
 
 function cancelarEdicaoModelo() {
   editingModeloId = null;
+  setVal('m-tipo', '');
   setVal('m-nome', '');
   document.getElementById('m-texto').value = '';
   document.getElementById('modelos-form-title').textContent = '✏️ Novo Modelo';
@@ -2498,6 +2517,7 @@ function editarModelo(id) {
   if (!m) return;
   editingModeloId = id;
   setVal('m-nome', m.nome);
+  setVal('m-tipo', m.tipo||'');
   document.getElementById('m-texto').value = m.texto;
   document.getElementById('modelos-form-title').textContent = '✏️ Editando: ' + m.nome;
   document.getElementById('msg-sub-modelos').scrollIntoView({ behavior:'smooth' });
@@ -2521,12 +2541,13 @@ function renderModelosLista() {
     // Preview: show first 120 chars with vars highlighted
     var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
     prev = prev.substring(0, 200) + (m.texto.length>200?'…':'');
+    var tipoBadge = m.tipo==='lembrete_ida' ? '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">✈️ Lembrete Ida</span>' : m.tipo==='lembrete_volta' ? '<span style="font-size:10px;background:rgba(18,110,255,.15);color:var(--blue);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">↩️ Lembrete Volta</span>' : '';
     return '<div class="res-card" style="margin-bottom:10px">'+
       '<div class="res-card-header">'+
         '<div class="type-icon type-passeio">📝</div>'+
         '<div class="res-card-info">'+
           '<div class="res-card-id">'+m.id+'</div>'+
-          '<div class="res-card-title">'+m.nome+'</div>'+
+          '<div class="res-card-title">'+m.nome+tipoBadge+'</div>'+
         '</div>'+
       '</div>'+
       '<div style="padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:100px;overflow:hidden">'+prev+'</div>'+
@@ -2662,8 +2683,15 @@ function onDispararChange() {
     txt = rv(txt, 'data_ida', fmtDate(res.dataIda));
     txt = rv(txt, 'hora_partida', res.horaPartida);
     txt = rv(txt, 'hora_chegada', res.horaChegada);
+    txt = rv(txt, 'nvoo_ida', res.nvooIda||'');
+    txt = rv(txt, 'cia', res.ciaIda||res.cia||'');
     txt = rv(txt, 'data_volta', res.dataVolta?fmtDate(res.dataVolta):'');
-    txt = rv(txt, 'cia', res.ciaIda||res.cia);
+    txt = rv(txt, 'hora_partida_volta', res.horaPartidaVolta||'');
+    txt = rv(txt, 'hora_chegada_volta', res.horaChegadaVolta||'');
+    txt = rv(txt, 'nvoo_volta', res.nvooVolta||'');
+    txt = rv(txt, 'cia_volta', res.ciaVolta||'');
+    txt = rv(txt, 'origem_volta', res.origemVolta||res.destino||'');
+    txt = rv(txt, 'destino_volta', res.destinoVolta||res.origem||'');
     txt = rv(txt, 'classe', res.classe);
     txt = rv(txt, 'pnr', res.pnr);
     txt = rv(txt, 'programa', res.programa);
