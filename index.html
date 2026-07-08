@@ -2421,12 +2421,14 @@ var VARS_CLIENTE = [
 var VARS_RESERVA = [
   { label: '{{origem}}',                desc: 'Origem (ida)' },
   { label: '{{destino}}',               desc: 'Destino (ida)' },
-  { label: '{{data_ida}}',              desc: 'Data de ida' },
+  { label: '{{data_ida}}',              desc: 'Data de partida (ida)' },
+  { label: '{{data_chegada_ida}}',      desc: 'Data de chegada (ida)' },
   { label: '{{hora_partida}}',          desc: 'Hora de partida (ida)' },
   { label: '{{hora_chegada}}',          desc: 'Hora de chegada (ida)' },
   { label: '{{nvoo_ida}}',              desc: 'Número do voo de ida' },
   { label: '{{cia}}',                   desc: 'Cia aérea (ida)' },
-  { label: '{{data_volta}}',            desc: 'Data de volta' },
+  { label: '{{data_volta}}',            desc: 'Data de partida (volta)' },
+  { label: '{{data_chegada_volta}}',    desc: 'Data de chegada (volta)' },
   { label: '{{hora_partida_volta}}',    desc: 'Hora de partida (volta)' },
   { label: '{{hora_chegada_volta}}',    desc: 'Hora de chegada (volta)' },
   { label: '{{nvoo_volta}}',            desc: 'Número do voo de volta' },
@@ -2789,11 +2791,13 @@ function onDispararChange() {
     txt = rv(txt, 'origem', res.origem);
     txt = rv(txt, 'destino', res.destino);
     txt = rv(txt, 'data_ida', fmtDate(res.dataIda));
+    txt = rv(txt, 'data_chegada_ida', res.dataChegadaIda?fmtDate(res.dataChegadaIda):'');
     txt = rv(txt, 'hora_partida', res.horaPartida);
     txt = rv(txt, 'hora_chegada', res.horaChegada);
     txt = rv(txt, 'nvoo_ida', res.nvooIda||'');
     txt = rv(txt, 'cia', res.ciaIda||res.cia||'');
     txt = rv(txt, 'data_volta', res.dataVolta?fmtDate(res.dataVolta):'');
+    txt = rv(txt, 'data_chegada_volta', res.dataChegadaVolta?fmtDate(res.dataChegadaVolta):'');
     txt = rv(txt, 'hora_partida_volta', res.horaPartidaVolta||'');
     txt = rv(txt, 'hora_chegada_volta', res.horaChegadaVolta||'');
     txt = rv(txt, 'nvoo_volta', res.nvooVolta||'');
