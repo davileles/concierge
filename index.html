@@ -942,32 +942,40 @@ header{animation:fadeUp .45s ease both}
           <input type="text" id="m-nome" placeholder="Ex: Instrução para Problemas, Chegando o Voo…"/>
         </div>
         <div class="field">
-          <label>Gatilho <span class="tag">o que aciona o envio automático</span></label>
-          <select id="m-gatilho" onchange="onGatilhoChange()">
-            <option value="">📋 Nenhum — envio manual</option>
-            <option value="voo_ida">✈️ Voo de Ida</option>
-            <option value="voo_volta">↩️ Voo de Volta</option>
-            <option value="checkin">🏨 Check-in (Hotel)</option>
-            <option value="viagem">🌍 Início da Viagem</option>
+          <label>Modo de envio</label>
+          <select id="m-modo" onchange="onModoChange()">
+            <option value="manual">Manual — você envia pelo painel</option>
+            <option value="programado">Programado — envio automático</option>
           </select>
         </div>
       </div>
 
-      <!-- ANTECEDÊNCIA -->
-      <div id="m-antecedencia-wrap" style="display:none;margin-bottom:12px">
-        <div class="g2">
+      <!-- PROGRAMADO -->
+      <div id="m-programado-wrap" style="display:none;margin-bottom:12px">
+        <div class="g3">
           <div class="field">
-            <label>Antecedência para o disparo</label>
+            <label>Antecedência</label>
             <div style="display:flex;gap:8px;align-items:center">
-              <input type="number" id="m-antecedencia-valor" min="1" max="999" placeholder="Ex: 2" style="max-width:90px"/>
+              <input type="number" id="m-antecedencia-valor" min="1" max="999" placeholder="Ex: 2" style="max-width:80px"/>
               <select id="m-antecedencia-unidade" style="flex:1">
-                <option value="horas">horas antes</option>
                 <option value="dias" selected>dias antes</option>
+                <option value="horas">horas antes</option>
               </select>
             </div>
-            <span style="font-size:11px;color:var(--muted);margin-top:4px;display:block">A Action roda de hora em hora e envia quando entrar na janela configurada.</span>
+          </div>
+          <div class="field" style="grid-column:span 2">
+            <label>Comparar com</label>
+            <select id="m-gatilho">
+              <option value="voo_ida_dt">Data + hora de partida (ida)</option>
+              <option value="voo_ida_d">Somente data de ida</option>
+              <option value="voo_volta_dt">Data + hora de partida (volta)</option>
+              <option value="voo_volta_d">Somente data de volta</option>
+              <option value="checkin">Data de check-in (hotel)</option>
+              <option value="viagem">Data de inicio da viagem</option>
+            </select>
           </div>
         </div>
+        <span style="font-size:11px;color:var(--muted);display:block;margin-top:-4px">A Action roda de hora em hora e envia quando entrar na janela configurada.</span>
       </div>
 
       <!-- VARIÁVEIS -->
@@ -2507,20 +2515,21 @@ function insertVar(varStr) {
 function salvarModelo() {
   var nome     = getVal('m-nome');
   var texto    = document.getElementById('m-texto').value.trim();
-  var gatilho  = getVal('m-gatilho');
+  var modo     = getVal('m-modo');
+  var gatilho  = modo === 'programado' ? getVal('m-gatilho') : '';
   var antValEl = document.getElementById('m-antecedencia-valor');
   var antUniEl = document.getElementById('m-antecedencia-unidade');
   var antValor   = antValEl ? parseInt(antValEl.value)||0 : 0;
   var antUnidade = antUniEl ? antUniEl.value : 'dias';
   if (!nome)  { showToast('⚠️ Dê um nome ao modelo', 'err'); return; }
   if (!texto) { showToast('⚠️ O texto está vazio', 'err'); return; }
-  if (gatilho && !antValor) { showToast('⚠️ Informe a antecedência do disparo', 'err'); return; }
-  var antecedencia = gatilho ? { valor: antValor, unidade: antUnidade } : null;
+  if (modo === 'programado' && !antValor) { showToast('⚠️ Informe a antecedência do disparo', 'err'); return; }
+  var antecedencia = modo === 'programado' ? { valor: antValor, unidade: antUnidade } : null;
   if (editingModeloId) {
     var m = modelos.find(function(x){ return x.id===editingModeloId; });
-    if (m) { m.nome=nome; m.texto=texto; m.gatilho=gatilho||''; m.antecedencia=antecedencia; }
+    if (m) { m.nome=nome; m.texto=texto; m.modo=modo||'manual'; m.gatilho=gatilho; m.antecedencia=antecedencia; }
   } else {
-    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, gatilho: gatilho||'', antecedencia: antecedencia });
+    modelos.unshift({ id: 'MOD-'+Date.now(), nome: nome, texto: texto, modo: modo||'manual', gatilho: gatilho, antecedencia: antecedencia });
   }
   saveModelos();
   cancelarEdicaoModelo();
@@ -2529,16 +2538,17 @@ function salvarModelo() {
   setTimeout(function(){ document.getElementById('modelo-ok').textContent=''; }, 3000);
 }
 
-function onGatilhoChange() {
-  var gatilho = getVal('m-gatilho');
-  var wrap = document.getElementById('m-antecedencia-wrap');
-  if (wrap) wrap.style.display = gatilho ? 'block' : 'none';
+function onModoChange() {
+  var modo = getVal('m-modo');
+  var wrap = document.getElementById('m-programado-wrap');
+  if (wrap) wrap.style.display = modo === 'programado' ? 'block' : 'none';
 }
 
 function cancelarEdicaoModelo() {
   editingModeloId = null;
-  setVal('m-gatilho', '');
-  onGatilhoChange();
+  setVal('m-modo', 'manual');
+  setVal('m-gatilho', 'voo_ida_dt');
+  onModoChange();
   var v = document.getElementById('m-antecedencia-valor');
   var u = document.getElementById('m-antecedencia-unidade');
   if (v) v.value = '';
@@ -2553,8 +2563,11 @@ function editarModelo(id) {
   if (!m) return;
   editingModeloId = id;
   setVal('m-nome', m.nome);
-  setVal('m-gatilho', m.gatilho||m.tipo||'');
-  onGatilhoChange();
+  // compatibilidade com modelos antigos
+  var modoVal = m.modo || (m.gatilho ? 'programado' : 'manual');
+  setVal('m-modo', modoVal);
+  onModoChange();
+  setVal('m-gatilho', m.gatilho || 'voo_ida_dt');
   var ant = m.antecedencia || {};
   var v = document.getElementById('m-antecedencia-valor');
   var u = document.getElementById('m-antecedencia-unidade');
@@ -2583,21 +2596,22 @@ function renderModelosLista() {
     // Preview: show first 120 chars with vars highlighted
     var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
     prev = prev.substring(0, 200) + (m.texto.length>200?'…':'');
-    var GATILHO_BADGE_MAP = {
-      voo_ida: {emoji:'✈️', label:'Voo de Ida',     color:'rgba(255,88,94,.15)',  text:'var(--accent)'},
-      voo_volta:{emoji:'↩️', label:'Voo de Volta',  color:'rgba(18,110,255,.15)', text:'var(--blue)'},
-      checkin: {emoji:'🏨', label:'Check-in',       color:'rgba(34,197,94,.15)',  text:'var(--green)'},
-      viagem:  {emoji:'🌍', label:'Início de Viagem',color:'rgba(245,158,11,.15)',text:'var(--yellow)'},
+    var GATILHO_LABEL = {
+      'voo_ida_dt':   'Partida (ida)',
+      'voo_ida_d':    'Data de ida',
+      'voo_volta_dt': 'Partida (volta)',
+      'voo_volta_d':  'Data de volta',
+      'checkin':      'Check-in',
+      'viagem':       'Inicio da viagem',
     };
     var tipoBadge = '';
-    var gatilhoKey = m.gatilho || m.tipo || '';
-    if (gatilhoKey && GATILHO_BADGE_MAP[gatilhoKey]) {
-      var tb = GATILHO_BADGE_MAP[gatilhoKey];
-      var ant = m.antecedencia ? (m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes') : '';
-      var antStr = ant ? ' · <span style="font-weight:500;opacity:.8">'+ant+'</span>' : '';
-      tipoBadge = '<span style="font-size:10px;background:'+tb.color+';color:'+tb.text+';border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">'+tb.emoji+' '+tb.label+antStr+'</span>';
-    } else if (!gatilhoKey) {
-      tipoBadge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600;margin-left:6px">📋 Manual</span>';
+    var modoM = m.modo || (m.gatilho ? 'programado' : 'manual');
+    if (modoM === 'programado' && m.gatilho && m.antecedencia) {
+      var ant = m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes';
+      var ref = GATILHO_LABEL[m.gatilho] || m.gatilho;
+      tipoBadge = '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">Programado · '+ant+' de '+ref+'</span>';
+    } else {
+      tipoBadge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600;margin-left:6px">Manual</span>';
     }
     return '<div class="res-card" style="margin-bottom:10px">'+
       '<div class="res-card-header">'+
