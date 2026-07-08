@@ -404,7 +404,14 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Conexão <span class="tag">opcional</span></label><div class="iata-wrap"><input type="text" id="f-conexao" placeholder="Ex: CDG ou Paris" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data de Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-ida"/></div>
+        <div class="field"><label>Data Partida — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-ida"/></div>
+        <div class="field"><label>Horário de Partida — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-partida"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Data Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-chegada-ida"/></div>
+        <div class="field"><label>Horário de Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-chegada"/></div>
+      </div>
+      <div class="g2">
         <div class="field"><label>Cia Aérea — Ida</label>
           <select id="f-cia-ida">
             <option value="">Selecione…</option>
@@ -416,11 +423,7 @@ header{animation:fadeUp .45s ease both}
             <option>Ryanair</option><option>TAP</option><option>Turkish Airlines</option><option>United</option>
           </select>
         </div>
-      </div>
-      <div class="g3">
-        <div class="field"><label>Horário de Partida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-partida"/></div>
-        <div class="field"><label>Horário de Chegada <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-chegada"/></div>
-        <div class="field"><label>Nº do Voo <span class="tag">opcional</span></label><input type="text" id="f-nvoo-ida" placeholder="Ex: LA8002"/></div>
+        <div class="field"><label>Nº do Voo — Ida <span class="tag">opcional</span></label><input type="text" id="f-nvoo-ida" placeholder="Ex: LA8002"/></div>
       </div>
 
       <!-- VOO DE VOLTA -->
@@ -432,7 +435,14 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Conexão <span class="tag">opcional</span></label><div class="iata-wrap"><input type="text" id="f-conexao-volta" placeholder="Ex: AMS ou Amsterdam" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data de Volta</label><input type="date" id="f-data-volta"/></div>
+        <div class="field"><label>Data Partida — Volta</label><input type="date" id="f-data-volta"/></div>
+        <div class="field"><label>Horário de Partida — Volta</label><input type="time" id="f-hora-partida-volta"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Data Chegada — Volta</label><input type="date" id="f-data-chegada-volta"/></div>
+        <div class="field"><label>Horário de Chegada — Volta</label><input type="time" id="f-hora-chegada-volta"/></div>
+      </div>
+      <div class="g2">
         <div class="field"><label>Cia Aérea — Volta</label>
           <select id="f-cia-volta">
             <option value="">Selecione…</option>
@@ -444,11 +454,7 @@ header{animation:fadeUp .45s ease both}
             <option>Ryanair</option><option>TAP</option><option>Turkish Airlines</option><option>United</option>
           </select>
         </div>
-      </div>
-      <div class="g3">
-        <div class="field"><label>Horário de Partida</label><input type="time" id="f-hora-partida-volta"/></div>
-        <div class="field"><label>Horário de Chegada</label><input type="time" id="f-hora-chegada-volta"/></div>
-        <div class="field"><label>Nº do Voo <span class="tag">opcional</span></label><input type="text" id="f-nvoo-volta" placeholder="Ex: LA8003"/></div>
+        <div class="field"><label>Nº do Voo — Volta <span class="tag">opcional</span></label><input type="text" id="f-nvoo-volta" placeholder="Ex: LA8003"/></div>
       </div>
 
       <div class="sep" style="margin:10px 0 12px"></div>
@@ -1495,7 +1501,7 @@ function onTipoChange() {
 }
 
 function limparForm() {
-  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao',
+  ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-chegada-ida','f-data-volta','f-data-chegada-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao',
    'f-programa','f-milhas-total','f-milhas','f-pax',
    'f-valor-dinheiro',
    'f-valor-acumulo','f-programa-acumulo-voo','f-fator-acumulo','f-milhas-acumulo','f-pax-acumulo',
@@ -1757,7 +1763,7 @@ function salvarReserva() {
   if (tipo === 'voo') {
     if (!getVal('f-origem'))       { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
     if (!getVal('f-destino'))      { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
-    if (!getVal('f-data-ida'))     { showToast('⚠️ Informe a Data de Ida', 'err'); return; }
+    if (!getVal('f-data-ida'))     { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
     if (!getVal('f-hora-partida')) { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
     if (!getVal('f-hora-chegada')) { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
     if (!getVal('f-tipo-emissao')) { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
@@ -1776,10 +1782,12 @@ function salvarReserva() {
     Object.assign(res, {
       origem: getVal('f-origem'), destino: getVal('f-destino'),
       dataIda: getVal('f-data-ida'),
+      dataChegadaIda: getVal('f-data-chegada-ida'),
       ciaIda: getVal('f-cia-ida'), nvooIda: getVal('f-nvoo-ida'),
       horaPartida: getVal('f-hora-partida'), horaChegada: getVal('f-hora-chegada'),
       conexao: getVal('f-conexao'),
       dataVolta: getVal('f-data-volta'),
+      dataChegadaVolta: getVal('f-data-chegada-volta'),
       ciaVolta: getVal('f-cia-volta'), nvooVolta: getVal('f-nvoo-volta'),
       origemVolta: getVal('f-origem-volta'),
       destinoVolta: getVal('f-destino-volta'),
@@ -2157,10 +2165,12 @@ function editarReserva(id) {
   if (r.tipo==='voo'){
     setVal('f-origem',r.origem); setVal('f-destino',r.destino);
     setVal('f-data-ida',r.dataIda);
+    setVal('f-data-chegada-ida',r.dataChegadaIda||'');
     setVal('f-cia-ida',r.ciaIda); setVal('f-nvoo-ida',r.nvooIda);
     setVal('f-hora-partida',r.horaPartida); setVal('f-hora-chegada',r.horaChegada);
     setVal('f-conexao',r.conexao||'');
     setVal('f-data-volta',r.dataVolta);
+    setVal('f-data-chegada-volta',r.dataChegadaVolta||'');
     setVal('f-cia-volta',r.ciaVolta); setVal('f-nvoo-volta',r.nvooVolta);
     setVal('f-origem-volta',r.origemVolta||'');
     setVal('f-destino-volta',r.destinoVolta||'');
