@@ -49,15 +49,20 @@ function deveDisparar(horasRestantes, janela) {
   return horasRestantes >= 0 && horasRestantes <= janela && horasRestantes > (janela - 1.5);
 }
 
-// Resolve data+hora alvo de cada gatilho para uma reserva
-function resolverDataHora(gatilho, res, viagem) {
+// Gatilhos que usam a hora já registrada na reserva
+const GATILHOS_COM_HORA = new Set(['voo_ida_dt', 'voo_volta_dt']);
+
+// Resolve data+hora alvo. horaRef é o horário de referência configurado no modelo
+// para gatilhos sem hora fixa (ex: '10:00').
+function resolverDataHora(gatilho, horaRef, res, viagem) {
+  const ref = horaRef || '10:00';
   switch (gatilho) {
-    case 'voo_ida_dt':   return { data: res?.dataIda,    hora: res?.horaPartida        || '00:00', tipo: 'voo' };
-    case 'voo_ida_d':    return { data: res?.dataIda,    hora: '00:00',                            tipo: 'voo' };
-    case 'voo_volta_dt': return { data: res?.dataVolta,  hora: res?.horaPartidaVolta   || '00:00', tipo: 'voo' };
-    case 'voo_volta_d':  return { data: res?.dataVolta,  hora: '00:00',                            tipo: 'voo' };
-    case 'checkin':      return { data: res?.checkin,    hora: '14:00',                            tipo: 'hotel' };
-    case 'viagem':       return { data: viagem?.dataInicio, hora: '00:00',                         tipo: 'viagem' };
+    case 'voo_ida_dt':   return { data: res?.dataIda,       hora: res?.horaPartida      || '00:00', tipo: 'voo'    };
+    case 'voo_ida_d':    return { data: res?.dataIda,       hora: ref,                              tipo: 'voo'    };
+    case 'voo_volta_dt': return { data: res?.dataVolta,     hora: res?.horaPartidaVolta || '00:00', tipo: 'voo'    };
+    case 'voo_volta_d':  return { data: res?.dataVolta,     hora: ref,                              tipo: 'voo'    };
+    case 'checkin':      return { data: res?.checkin,       hora: ref,                              tipo: 'hotel'  };
+    case 'viagem':       return { data: viagem?.dataInicio, hora: ref,                              tipo: 'viagem' };
     default:             return { data: null, hora: '00:00', tipo: null };
   }
 }
@@ -236,7 +241,7 @@ async function main() {
       // ── Gatilho: início de viagem ──
       for (const viagem of viagens) {
         if (!viagem.dataInicio || viagem[key]) continue;
-        const { data, hora } = resolverDataHora('viagem', null, viagem);
+        const { data, hora } = resolverDataHora('viagem', mod.horaRef, null, viagem);
         const horas = horasAte(data, hora);
         console.log(`  "${viagem.nome}" ${data} → ${horas.toFixed(1)}h`);
         if (!deveDisparar(horas, janela)) continue;
@@ -268,7 +273,7 @@ async function main() {
       // ── Gatilhos de reserva (voo / hotel) ──
       for (const res of reservas) {
         if (res[key]) continue;
-        const { data, hora, tipo } = resolverDataHora(mod.gatilho, res, null);
+        const { data, hora, tipo } = resolverDataHora(mod.gatilho, mod.horaRef, res, null);
         if (!data) continue;
         // Verificar tipo de reserva compatível com gatilho
         if ((mod.gatilho === 'checkin') && res.tipo !== 'hotel') continue;
