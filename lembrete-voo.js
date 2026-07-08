@@ -44,9 +44,9 @@ function antecedenciaEmHoras(ant) {
   return ant.unidade === 'horas' ? Number(ant.valor) : Number(ant.valor) * 24;
 }
 
-// A Action roda de hora em hora — margem de 1.5h para absorver desvios do cron
+// A Action roda de hora em hora — margem de 3h para absorver falhas ocasionais da Action
 function deveDisparar(horasRestantes, janela) {
-  return horasRestantes >= 0 && horasRestantes <= janela && horasRestantes > (janela - 1.5);
+  return horasRestantes >= 0 && horasRestantes <= janela && horasRestantes > (janela - 3);
 }
 
 // Gatilhos que usam a hora já registrada na reserva
