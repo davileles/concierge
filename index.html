@@ -151,7 +151,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .ativ-status.pendente{background:rgba(138,155,191,.15);color:var(--muted)}
 .ativ-status.andamento{background:rgba(245,158,11,.15);color:var(--yellow)}
 .ativ-status.concluida{background:rgba(34,197,94,.15);color:var(--green)}
-.ativ-reserva{font-size:11px;color:var(--blue);cursor:pointer;flex-shrink:0;text-decoration:underline}
+.ativ-reserva{font-size:11px;color:var(--blue);cursor:pointer;flex-shrink:0;text-decoration:underline;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
 .ativ-add-btn{background:none;border:1px dashed var(--border2);border-radius:8px;padding:7px 12px;width:100%;text-align:left;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px}
 .ativ-add-btn:hover{border-color:var(--accent);color:var(--accent)}
 .viagem-actions{display:flex;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border)}
@@ -1981,8 +1981,12 @@ function salvarReserva() {
               if (ci && co) return nomeH + ' · ' + ci + ' a ' + co;
               return nomeH;
             }
-            if (r.tipo === 'carro' && r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
-            return r.passeioNome || r.locadora || '';
+            if (r.tipo === 'carro') {
+              if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + fmtDate(r.retData);
+              var ic3 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
+              var dt2 = r.retData ? ' · ' + fmtDate(r.retData) : '';
+              return ic3 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt2;
+            }
           })(res);
           if (tituloGerado) v.atividades[realIdx].titulo = tituloGerado;
         }
@@ -2020,7 +2024,12 @@ function salvarReserva() {
               if (ci && co) return nome + ' · ' + ci + ' a ' + co;
               return nome;
             }
-            if (r.tipo === 'carro' && r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
+            if (r.tipo === 'carro') {
+              if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + fmtDate(r.retData);
+              var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
+              var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
+              return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
+            }
             return r.passeioNome || r.locadora || '';
           })(res),
           descricao: '',
@@ -2057,6 +2066,16 @@ var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚐 Transporte'
 var SUBTIPO_ICON = { transfer:'🚐', trem:'🚆', onibus:'🚌', ferry:'⛴️', locacao:'🚗' };
 var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio' };
 
+function abreviarLocal(s) {
+  if (!s) return '?';
+  // Remove conteúdo entre parênteses: "Hyatt Place Santiago/Vitacura (Américo Vespucio...)" → "Hyatt Place Santiago/Vitacura"
+  var s2 = s.replace(/\s*\(.*?\)\s*/g, '').trim();
+  // Pega só antes da primeira vírgula
+  var nome = s2.split(',')[0].trim();
+  // Trunca se ainda longo
+  return nome.length > 28 ? nome.substring(0, 26) + '…' : nome;
+}
+
 function resTitle(r) {
   if (r.tipo==='voo') {
     var ida = (r.origem||'?') + ' → ' + (r.destino||'?');
@@ -2066,7 +2085,8 @@ function resTitle(r) {
   if (r.tipo==='hotel')   return r.hotelNome || r.destino || 'Hotel';
   if (r.tipo==='carro') {
     if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
-    return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
+    var ic = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
+    return ic + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal);
   }
   if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
   return 'Reserva';
@@ -3944,7 +3964,12 @@ function confirmarVinculo() {
               if (ci && co) return nome + ' · ' + ci + ' a ' + co;
               return nome;
             }
-            if (r.tipo === 'carro' && r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
+            if (r.tipo === 'carro') {
+              if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + fmtDate(r.retData);
+              var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
+              var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
+              return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
+            }
             return r.passeioNome || r.locadora || '';
           })(res);
       }
@@ -4229,7 +4254,7 @@ function rgMontarDias(v) {
 function rgResNome(res) {
   if (res.tipo==='voo') return '✈️ '+res.origem+' → '+res.destino;
   if (res.tipo==='hotel') return '🏨 '+(res.hotelNome||res.destino);
-  if (res.tipo==='carro') return (res.subtipo==='transfer'?'🚐 '+(res.retLocal||'?')+' → '+(res.devLocal||'?'):'🚗 '+res.locadora);
+  if (res.tipo==='carro') { var ic4={transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️',locacao:'🚗'}[res.subtipo]||'🚐'; return res.subtipo==='locacao'?ic4+' '+res.locadora:ic4+' '+abreviarLocal(res.retLocal)+' → '+abreviarLocal(res.devLocal); }
   if (res.tipo==='passeio') return '🎯 '+res.passeioNome;
   return 'Reserva';
 }
