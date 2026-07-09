@@ -2038,11 +2038,16 @@ function salvarReserva() {
         });
         v.atividades = sortAtividades(v.atividades);
       }
+      // Adicionar reserva ao array local ANTES de renderViagens para o link aparecer
+      reservas.push(res);
       saveViagens();
+      renderReservas();
       showToast('✅ Reserva salva e vinculada à viagem!', 'ok');
     }
   } else {
     showToast('✅ Reserva salva com sucesso!', 'ok');
+    reservas.push(res);
+    renderReservas();
   }
 
   saveReservas()
