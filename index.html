@@ -1846,13 +1846,13 @@ function salvarReserva() {
     obs: getVal('f-obs'),
     cadastro: new Date().toISOString().split('T')[0],
   };
-  // Anexar arquivo se houver (base64 se couber, senão só metadados)
+  // Anexar metadados do arquivo (sem base64 — evita reservas.json > 1MB)
   if (ativoArquivoMeta) {
     res.arquivoAnexo = {
       nome: ativoArquivoMeta.nome,
       tipo: ativoArquivoMeta.tipo,
       tamanho: ativoArquivoMeta.tamanho,
-      base64: ativoArquivoBase64 || null
+      base64: null
     };
   }
 
