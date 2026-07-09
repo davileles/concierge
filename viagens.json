@@ -291,7 +291,8 @@
         "titulo": "Hyatt Place Santiago/Vitacura (Américo Vespucio Nte. 1597, Vitacura, Región Metropolitana, Chile) → Apart Bianco Hotel (Cam. la Paloma 64, Lo Barnechea, Región Metropolitana, Chile)",
         "descricao": "",
         "status": "concluida",
-        "reservaId": "RES-1783611911360"
+        "reservaId": "RES-1783611911360",
+        "pos": 50
       },
       {
         "icon": "🚌",
@@ -299,7 +300,26 @@
         "titulo": "Hyatt Place Santiago/Vitacura (Américo Vespucio Nte. 1597, Vitacura, Región Metropolitana, Chile) → Apart Bianco Hotel (Cam. la Paloma 64, Lo Barnechea, Región Metropolitana, Chile)",
         "descricao": "",
         "status": "concluida",
-        "reservaId": "RES-1783611912683"
+        "reservaId": "RES-1783611912683",
+        "pos": 40
+      },
+      {
+        "icon": "🚌",
+        "nome": "Transporte",
+        "titulo": "Hyatt Place Santiago/Vitacura (Américo Vespucio Nte. 1597, Vitacura, Región Metropolitana, Chile) → Apart Bianco Hotel (Cam. la Paloma 64, Lo Barnechea, Región Metropolitana, Chile)",
+        "descricao": "",
+        "status": "concluida",
+        "reservaId": "RES-1783611913584",
+        "pos": 60
+      },
+      {
+        "icon": "🚌",
+        "nome": "Transporte",
+        "titulo": "Hyatt Place Santiago/Vitacura (Américo Vespucio Nte. 1597, Vitacura, Región Metropolitana, Chile) → Apart Bianco Hotel (Cam. la Paloma 64, Lo Barnechea, Región Metropolitana, Chile)",
+        "descricao": "",
+        "status": "concluida",
+        "reservaId": "RES-1783611913938",
+        "pos": 70
       },
       {
         "icon": "🏨",
@@ -308,7 +328,7 @@
         "descricao": "",
         "status": "concluida",
         "reservaId": "RES-1783331577647",
-        "pos": 40
+        "pos": 80
       },
       {
         "icon": "🏨",
@@ -317,7 +337,7 @@
         "descricao": "",
         "status": "concluida",
         "reservaId": "RES-1783332405829",
-        "pos": 50
+        "pos": 90
       },
       {
         "icon": "🛡️",
@@ -326,7 +346,7 @@
         "descricao": "Vinícius fez a reserva.",
         "status": "pendente",
         "reservaId": null,
-        "pos": 60
+        "pos": 100
       },
       {
         "icon": "🚗",
@@ -335,7 +355,7 @@
         "descricao": "Aguardando retorno da Vem Me Buscar",
         "status": "pendente",
         "reservaId": null,
-        "pos": 70
+        "pos": 110
       },
       {
         "icon": "🗺️",
@@ -344,7 +364,7 @@
         "descricao": "",
         "status": "pendente",
         "reservaId": null,
-        "pos": 80
+        "pos": 120
       }
     ],
     "cadastro": "2026-07-06"
