@@ -2104,9 +2104,9 @@ function renderReservas() {
       '</div>'+
       '<div class="res-card-footer">'+
         '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+' </span>'+
-        (r.arquivoAnexo && r.arquivoAnexo.base64 ? '<button class="btn btn-ghost btn-sm" onclick="verArquivoAnexo(\\''+r.id+'\\')">📎 Ver arquivo</button>' : '')+
-        '<button class="btn btn-ghost btn-sm" onclick="editarReserva(\\''+r.id+'\\')">✏️ Editar</button>'+
-        '<button class="btn btn-danger btn-sm" onclick="pedirDelete(\\''+r.id+'\\')">🗑 Excluir</button>'+
+        (r.arquivoAnexo && r.arquivoAnexo.base64 ? '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎 Ver arquivo</button>' : '')+
+        '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️ Editar</button>'+
+        '<button class="btn btn-danger btn-sm" data-vid="'+r.id+'" onclick="pedirDelete(this.dataset.vid)">🗑 Excluir</button>'+
       '</div>'+
     '</div>';
   }).join('');
