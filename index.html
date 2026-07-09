@@ -1200,59 +1200,63 @@ header{animation:fadeUp .45s ease both}
      ABA: GERAR ROTEIRO
 ═══════════════════════════════════════════════════════ -->
 <div class="main-panel" id="panel-roteiro-gen">
-  <div class="card" style="max-width:860px">
+  <div class="card" style="max-width:900px">
     <div class="card-title" style="margin-bottom:1.2rem">🗺️ Gerar Roteiro do Cliente</div>
+
+    <!-- Seleção de viagem -->
     <div class="field" style="margin-bottom:1rem">
       <label>Viagem <span style="color:var(--accent)">*</span></label>
       <select id="rg-viagem" onchange="rgCarregarViagem()">
         <option value="">— Selecionar viagem —</option>
       </select>
     </div>
-    <div class="g2" id="rg-meta" style="display:none">
-      <div class="field">
-        <label>Slug / pasta no repositório</label>
-        <input type="text" id="rg-slug" placeholder="Ex: santiago-2025" oninput="rgSlugInput()"/>
-        <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">URL: roteiros.clubedoviajante.com.br/<span id="rg-slug-preview" style="color:var(--accent)">…</span>/</span>
+
+    <!-- Configurações de publicação (slug, capa, subtítulo) -->
+    <div id="rg-config" style="display:none">
+      <div class="g2">
+        <div class="field">
+          <label>Slug / pasta no repositório</label>
+          <input type="text" id="rg-slug" placeholder="Ex: santiago-2025" oninput="rgSlugInput()"/>
+          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">URL: roteiros.clubedoviajante.com.br/<span id="rg-slug-preview" style="color:var(--accent)">…</span>/</span>
+        </div>
+        <div class="field">
+          <label>Imagem de capa (URL Unsplash)</label>
+          <input type="text" id="rg-hero" placeholder="https://images.unsplash.com/…"/>
+        </div>
       </div>
-      <div class="field">
-        <label>Imagem de capa (URL Unsplash)</label>
-        <input type="text" id="rg-hero" placeholder="https://images.unsplash.com/…"/>
-      </div>
-    </div>
-    <div class="g2" id="rg-meta2" style="display:none">
-      <div class="field">
-        <label>Subtítulo do roteiro</label>
-        <input type="text" id="rg-subtitulo" placeholder="Ex: Andes em Família — Neve, Vinho e Memórias"/>
-      </div>
-      <div class="field">
-        <label>Eyebrow (linha pequena no hero)</label>
-        <input type="text" id="rg-eyebrow" placeholder="Ex: Travel Concierge · Santiago, Chile"/>
-      </div>
-    </div>
-    <div id="rg-dias-wrap" style="display:none">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:1rem 0 8px">
-        Atividades por Dia <span id="rg-dias-count" style="font-weight:400;color:var(--muted2)"></span>
-      </div>
-      <div id="rg-dias-list"></div>
-      <div style="margin-top:8px">
-        <button class="btn btn-ghost btn-sm" onclick="rgAdicionarDia()">＋ Adicionar dia manualmente</button>
-        <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="rgGerarDiasIA()">✨ Gerar dias com IA</button>
+      <div class="g2">
+        <div class="field">
+          <label>Subtítulo do roteiro</label>
+          <input type="text" id="rg-subtitulo" placeholder="Ex: Andes em Família — Neve, Vinho e Memórias"/>
+        </div>
+        <div class="field">
+          <label>Eyebrow (linha pequena no hero)</label>
+          <input type="text" id="rg-eyebrow" placeholder="Ex: Travel Concierge · Santiago, Chile"/>
+        </div>
       </div>
     </div>
-    <div id="rg-acoes" style="display:none;margin-top:1.5rem;gap:10px;flex-wrap:wrap;align-items:center">
+
+    <!-- Prévia do roteiro gerado automaticamente -->
+    <div id="rg-preview-wrap" style="display:none;margin-top:1.2rem">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Resumo da Viagem</div>
+      <div id="rg-preview-content"></div>
+    </div>
+
+    <!-- Ações -->
+    <div id="rg-acoes" style="display:none;margin-top:1.5rem;display:none;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-accent" onclick="rgPublicar()">🚀 Publicar Roteiro</button>
       <button class="btn btn-ghost" onclick="rgPrevisualizar()">👁 Pré-visualizar</button>
       <a id="rg-link-publicado" href="#" target="_blank" style="display:none;font-size:12px;color:var(--accent);font-weight:700">🔗 Ver roteiro publicado</a>
     </div>
     <div id="rg-status" style="display:none;margin-top:1rem"></div>
-    <div id="rg-ia-wrap" style="display:none;margin-top:1rem;background:rgba(18,110,255,.06);border:1px solid rgba(18,110,255,.2);border-radius:10px;padding:16px">
-      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px">✨ Gerar roteiro com IA</div>
-      <div class="field">
-        <label>Contexto adicional para a IA</label>
-        <textarea id="rg-ia-prompt" placeholder="Ex: família com 2 crianças pequenas, ritmo moderado, interesse em gastronomia e cultura local…" style="min-height:80px"></textarea>
-      </div>
-      <button class="btn btn-accent btn-sm" onclick="rgChamarIA()">✨ Gerar dias</button>
-      <button class="btn btn-ghost btn-sm" style="margin-left:6px" onclick="document.getElementById('rg-ia-wrap').style.display='none'">Cancelar</button>
+
+    <!-- Campos ocultos mantidos para compatibilidade com rgMontarDataObj -->
+    <div style="display:none">
+      <div id="rg-meta"></div>
+      <div id="rg-meta2"></div>
+      <div id="rg-dias-wrap"><div id="rg-dias-list"></div></div>
+      <textarea id="rg-ia-prompt"></textarea>
+      <div id="rg-ia-wrap"></div>
     </div>
   </div>
 </div>
@@ -4173,34 +4177,128 @@ function rgPopularSelect() {
 
 function rgCarregarViagem() {
   var vid = document.getElementById('rg-viagem').value;
+  var configEl = document.getElementById('rg-config');
+  var previewEl = document.getElementById('rg-preview-wrap');
+  var acoesEl = document.getElementById('rg-acoes');
   if (!vid) {
-    ['rg-meta','rg-meta2','rg-dias-wrap'].forEach(function(id){ document.getElementById(id).style.display='none'; });
-    document.getElementById('rg-acoes').style.display='none';
+    if (configEl) configEl.style.display = 'none';
+    if (previewEl) previewEl.style.display = 'none';
+    if (acoesEl) acoesEl.style.display = 'none';
     return;
   }
   loadViagens(); loadReservas();
   var v = viagens.find(function(x){ return x.id===vid; });
   if (!v) return;
+  // Slug padrão
   var slugDefault = (v.nome||'roteiro').toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
     .replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
   document.getElementById('rg-slug').value = v.slugRoteiro || slugDefault;
   document.getElementById('rg-slug-preview').textContent = document.getElementById('rg-slug').value || '…';
   var destino = rgExtrairDestino(v);
-  document.getElementById('rg-subtitulo').value = v.subtituloRoteiro || v.nome || '';
-  document.getElementById('rg-eyebrow').value = v.eyebrowRoteiro || ('Travel Concierge' + (destino ? ' · '+destino : ''));
+  document.getElementById('rg-eyebrow').value = v.eyebrowRoteiro || ('Travel Concierge · ' + (destino||''));
+  document.getElementById('rg-subtitulo').value = v.subtituloRoteiro || (v.nome||'');
   document.getElementById('rg-hero').value = v.heroImageRoteiro || '';
-  rgDias = rgMontarDias(v);
-  rgRenderDias();
-  ['rg-meta','rg-meta2','rg-dias-wrap'].forEach(function(id){ document.getElementById(id).style.display=''; });
-  document.getElementById('rg-acoes').style.display='flex';
-  document.getElementById('rg-status').style.display='none';
-  if (v.slugRoteiro) {
-    var linkEl = document.getElementById('rg-link-publicado');
-    linkEl.href = 'https://roteiros.clubedoviajante.com.br/'+v.slugRoteiro+'/';
-    linkEl.style.display = 'inline';
-  }
+  // Mostrar configurações e gerar prévia
+  if (configEl) configEl.style.display = '';
+  if (acoesEl) { acoesEl.style.display = 'flex'; }
+  rgGerarPrevia(v);
 }
+
+function rgGerarPrevia(v) {
+  var previewEl = document.getElementById('rg-preview-wrap');
+  var contentEl = document.getElementById('rg-preview-content');
+  if (!previewEl || !contentEl) return;
+
+  loadReservas();
+  var resViagem = reservas.filter(function(r){ return rgPertenceViagem(r, v); });
+
+  // Montar timeline de eventos ordenada por data
+  var eventos = [];
+
+  // Voos
+  resViagem.filter(function(r){ return r.tipo==='voo'; }).forEach(function(r){
+    if (r.dataIda) eventos.push({
+      data: r.dataIda, tipo: 'voo', icon: '✈️',
+      titulo: (r.origem||'?') + ' → ' + (r.destino||'?'),
+      meta: [r.ciaIda, r.nvooIda, r.horaPartida ? 'Partida '+r.horaPartida : '', r.horaChegada ? 'Chegada '+r.horaChegada : '', r.classe].filter(Boolean).join(' · '),
+      badge: r.pnr ? 'PNR: '+r.pnr : (r.conf||''),
+      sub: r.trechos && r.trechos.length > 1 ? r.trechos.length+' trechos' : ''
+    });
+    if (r.dataVolta) eventos.push({
+      data: r.dataVolta, tipo: 'voo', icon: '✈️',
+      titulo: (r.origemVolta||r.destino||'?') + ' → ' + (r.destinoVolta||r.origem||'?'),
+      meta: [r.ciaVolta, r.nvooVolta, r.horaPartidaVolta ? 'Partida '+r.horaPartidaVolta : '', r.horaChegadaVolta ? 'Chegada '+r.horaChegadaVolta : ''].filter(Boolean).join(' · '),
+      badge: r.pnr ? 'PNR: '+r.pnr : (r.conf||'')
+    });
+  });
+
+  // Hospedagens
+  resViagem.filter(function(r){ return r.tipo==='hotel'; }).forEach(function(r){
+    if (r.checkin) eventos.push({
+      data: r.checkin, tipo: 'hotel', icon: '🏨',
+      titulo: r.hotelNome || 'Hotel',
+      meta: [r.checkin ? 'Check-in '+fmtDate(r.checkin) : '', r.checkout ? 'Check-out '+fmtDate(r.checkout) : '', r.noites ? r.noites+' noites' : '', r.regime||''].filter(Boolean).join(' · '),
+      badge: r.hotelConf ? 'Conf: '+r.hotelConf : ''
+    });
+  });
+
+  // Transportes
+  resViagem.filter(function(r){ return r.tipo==='carro'; }).forEach(function(r){
+    var icMap = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️',locacao:'🚗'};
+    var ic = icMap[r.subtipo] || '🚐';
+    var isLoc = r.subtipo === 'locacao';
+    eventos.push({
+      data: r.retData || '', tipo: 'transporte', icon: ic,
+      titulo: isLoc ? (r.locadora||'Locação') + ' – ' + (r.categoria||'') : abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal),
+      meta: [r.retData ? fmtDate(r.retData) : '', r.horaTransfer||'', isLoc ? (r.devData?'Dev: '+fmtDate(r.devData):'') : '', r.locadora||'', r.pax ? r.pax+' pax' : ''].filter(Boolean).join(' · '),
+      badge: r.conf ? 'Conf: '+r.conf : ''
+    });
+  });
+
+  // Passeios
+  resViagem.filter(function(r){ return r.tipo==='passeio'; }).forEach(function(r){
+    eventos.push({
+      data: r.passeioData || '', tipo: 'passeio', icon: '🎯',
+      titulo: r.passeioNome || 'Passeio',
+      meta: [r.passeioData ? fmtDate(r.passeioData) : '', r.passeioHora||'', r.passeioOp||'', r.passeioPax ? r.passeioPax+' pax' : ''].filter(Boolean).join(' · '),
+      badge: r.passeioConf ? 'Conf: '+r.passeioConf : ''
+    });
+  });
+
+  // Ordenar por data
+  eventos.sort(function(a,b){
+    if (!a.data && !b.data) return 0;
+    if (!a.data) return 1;
+    if (!b.data) return -1;
+    return a.data < b.data ? -1 : a.data > b.data ? 1 : 0;
+  });
+
+  if (!eventos.length) {
+    contentEl.innerHTML = '<p style="color:var(--muted);font-size:13px">Nenhuma reserva vinculada a esta viagem ainda.</p>';
+    previewEl.style.display = '';
+    return;
+  }
+
+  // Renderizar timeline
+  var html = '<div style="display:flex;flex-direction:column;gap:10px">';
+  eventos.forEach(function(ev) {
+    html += '<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">';
+    html += '<span style="font-size:20px;line-height:1;margin-top:1px">'+ev.icon+'</span>';
+    html += '<div style="flex:1;min-width:0">';
+    html += '<div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+ev.titulo+'</div>';
+    if (ev.meta) html += '<div style="font-size:11px;color:var(--muted);margin-top:2px">'+ev.meta+'</div>';
+    if (ev.sub) html += '<div style="font-size:11px;color:var(--muted2);margin-top:1px">'+ev.sub+'</div>';
+    html += '</div>';
+    if (ev.badge) html += '<span style="font-size:10px;font-weight:700;color:var(--accent);background:rgba(18,110,255,.1);border-radius:6px;padding:2px 7px;white-space:nowrap;flex-shrink:0">'+ev.badge+'</span>';
+    html += '</div>';
+  });
+  html += '</div>';
+
+  contentEl.innerHTML = html;
+  previewEl.style.display = '';
+}
+
 
 function rgSlugInput() {
   document.getElementById('rg-slug-preview').textContent = document.getElementById('rg-slug').value || '…';
