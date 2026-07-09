@@ -343,8 +343,7 @@ header{animation:fadeUp .45s ease both}
     <span class="filter-chip active" data-filter="todos" onclick="setFilter(this)">Todos</span>
     <span class="filter-chip" data-filter="voo" onclick="setFilter(this)">✈️ Voo</span>
     <span class="filter-chip" data-filter="hotel" onclick="setFilter(this)">🏨 Hotel</span>
-    <span class="filter-chip" data-filter="transfer" onclick="setFilter(this)">🚐 Transfer</span>
-    <span class="filter-chip" data-filter="carro" onclick="setFilter(this)">🚗 Locação</span>
+    <span class="filter-chip" data-filter="carro" onclick="setFilter(this)">🚐 Transporte</span>
     <span class="filter-chip" data-filter="passeio" onclick="setFilter(this)">🎯 Passeio</span>
     <span class="filter-chip" data-filter="passadas" onclick="setFilter(this)">📅 Passadas</span>
   </div>
@@ -1641,8 +1640,7 @@ function lerAtivoComIA(file) {
     var tipoSel = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
     if (tipoSel === 'voo') tipoCampos = 'passagem aérea';
     else if (tipoSel === 'hotel') tipoCampos = 'hospedagem';
-    else if (tipoSel === 'transfer') tipoCampos = 'transfer/traslado';
-    else if (tipoSel === 'carro') tipoCampos = 'locação de carro';
+    else if (tipoSel === 'carro') tipoCampos = 'transporte (transfer/traslado ou locação de carro)';
     else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
     else tipoCampos = 'reserva de viagem';
 
@@ -1850,13 +1848,19 @@ function salvarReserva() {
       valor: getVal('f-transfer-valor'),
     });
   } else if (tipo === 'carro') {
-    Object.assign(res, {
-      locadora: getVal('f-locadora'), categoria: getVal('f-carro-cat'),
-      retLocal: getVal('f-ret-local'), devLocal: getVal('f-dev-local'),
-      retData: getVal('f-ret-data'), devData: getVal('f-dev-data'),
-      valor: getVal('f-carro-valor'), conf: getVal('f-carro-conf'),
-      seguro: getVal('f-seguro'),
-    });
+      var subtipoEl = document.querySelector('input[name="subtipo-transp"]:checked');
+      var subtipo = subtipoEl ? subtipoEl.value : 'transfer';
+      Object.assign(res, {
+        subtipo: subtipo,
+        locadora: getVal('f-locadora'),
+        retLocal: getVal('f-ret-local'), devLocal: getVal('f-dev-local'),
+        retData: getVal('f-ret-data'), devData: getVal('f-dev-data'),
+        categoria: subtipo === 'locacao' ? getVal('f-carro-cat-loc') : getVal('f-carro-cat'),
+        horaTransfer: subtipo === 'transfer' ? getVal('f-transfer-hora') : '',
+        pax: subtipo === 'transfer' ? getVal('f-transfer-pax') : '',
+        valor: getVal('f-carro-valor'), conf: getVal('f-carro-conf'),
+        seguro: getVal('f-seguro'),
+      });
   } else if (tipo === 'passeio') {
     Object.assign(res, {
       passeioNome: getVal('f-passeio-nome'), destino: getVal('f-passeio-dest'),
@@ -1904,7 +1908,7 @@ function salvarReserva() {
               if (ci && co) return nomeH + ' · ' + ci + ' a ' + co;
               return nomeH;
             }
-            if (r.tipo === 'transfer') return (r.origem||'?') + ' → ' + (r.destino||'?');
+            if (r.tipo === 'carro' && r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
             return r.passeioNome || r.locadora || '';
           })(res);
           if (tituloGerado) v.atividades[realIdx].titulo = tituloGerado;
@@ -1943,7 +1947,7 @@ function salvarReserva() {
               if (ci && co) return nome + ' · ' + ci + ' a ' + co;
               return nome;
             }
-            if (r.tipo === 'transfer') return (r.origem||'?') + ' → ' + (r.destino||'?');
+            if (r.tipo === 'carro' && r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
             return r.passeioNome || r.locadora || '';
           })(res),
           descricao: '',
@@ -1976,8 +1980,8 @@ function salvarReserva() {
 // ══════════════════════════════════════════
 //  RENDER RESERVAS
 // ══════════════════════════════════════════
-var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', transfer:'🚐 Transfer', carro:'🚗 Locação', passeio:'🎯 Passeio' };
-var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', transfer:'type-carro', carro:'type-carro', passeio:'type-passeio' };
+var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚐 Transporte', passeio:'🎯 Passeio' };
+var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio' };
 
 function resTitle(r) {
   if (r.tipo==='voo') {
@@ -1986,8 +1990,10 @@ function resTitle(r) {
     return ida + volta;
   }
   if (r.tipo==='hotel')   return r.hotelNome || r.destino || 'Hotel';
-  if (r.tipo==='transfer') return (r.origem||'?') + ' → ' + (r.destino||'?');
-  if (r.tipo==='carro')   return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
+  if (r.tipo==='carro') {
+    if (r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
+    return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
+  }
   if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
   return 'Reserva';
 }
@@ -2014,19 +2020,22 @@ function resCols(r) {
     ['Check-out', fmtDate(r.checkout)],
     ['Confirmação', r.conf||null],
   ];
-  if (r.tipo==='transfer') return [
-    ['Cliente', toTitleCase(r.cliente)],
-    ['Origem → Destino', (r.origem||'?')+' → '+(r.destino||'?')],
-    ['Data / Hora', fmtDate(r.dataTransfer)+(r.horaTransfer?' · '+r.horaTransfer:'')],
-    ['Fornecedor', r.operadora||'—'],
-    ['Confirmação', r.conf||'—'],
-  ];
-  if (r.tipo==='carro') return [
-    ['Cliente', toTitleCase(r.cliente)],
-    ['Retirada', fmtDate(r.retData)],
-    ['Devolução', fmtDate(r.devData)],
-    ['Confirmação', r.conf||'—'],
-  ];
+  if (r.tipo==='carro') {
+    if (r.subtipo === 'transfer') return [
+      ['Cliente', toTitleCase(r.cliente)],
+      ['Origem → Destino', (r.retLocal||'?')+' → '+(r.devLocal||'?')],
+      ['Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')],
+      ['Fornecedor', r.locadora||'—'],
+      ['Confirmação', r.conf||'—'],
+    ];
+    return [
+      ['Cliente', toTitleCase(r.cliente)],
+      ['Fornecedor', r.locadora||'—'],
+      ['Retirada', (r.retLocal||'—')+' · '+fmtDate(r.retData)],
+      ['Devolução', (r.devLocal||'—')+' · '+fmtDate(r.devData)],
+      ['Confirmação', r.conf||'—'],
+    ];
+  }
   if (r.tipo==='passeio') return [
     ['Cliente', toTitleCase(r.cliente)],
     ['Data', fmtDate(r.dataPasseio)],
@@ -2156,7 +2165,7 @@ function updateStats(lista) {
   document.getElementById('stat-total').textContent  = src.length;
   document.getElementById('stat-voo').textContent    = src.filter(function(r){ return r.tipo==='voo';     }).length;
   document.getElementById('stat-hotel').textContent  = src.filter(function(r){ return r.tipo==='hotel';   }).length;
-  document.getElementById('stat-outros').textContent = src.filter(function(r){ return r.tipo==='transfer'||r.tipo==='carro'||r.tipo==='passeio'; }).length;
+  document.getElementById('stat-outros').textContent = src.filter(function(r){ return r.tipo==='carro'||r.tipo==='passeio'; }).length;
 }
 
 function toggleRes(id) {
@@ -2271,18 +2280,17 @@ function editarReserva(id) {
     setVal('f-hotel-programa-acumulo',r.programaAcumulo||'');
     setVal('f-hotel-parceiro-acumulo',r.parceiroAcumulo||'');
     onHotelTipoEmissaoChange();
-  } else if (r.tipo==='transfer'){
-    setVal('f-transfer-origem',r.origem); setVal('f-transfer-destino',r.destino);
-    setVal('f-transfer-data',r.dataTransfer); setVal('f-transfer-hora',r.horaTransfer);
-    setVal('f-transfer-pax',r.pax); setVal('f-transfer-op',r.operadora);
-    setVal('f-transfer-veiculo',r.veiculo); setVal('f-transfer-conf',r.conf);
-    setVal('f-transfer-valor',r.valor);
   } else if (r.tipo==='carro'){
-    setVal('f-locadora',r.locadora); setVal('f-carro-cat',r.categoria);
+    var subRad = document.querySelector('input[name="subtipo-transp"][value="'+(r.subtipo||'transfer')+'"]');
+    if (subRad) { subRad.checked = true; onSubtipoTranspChange(); }
+    setVal('f-locadora',r.locadora);
     setVal('f-ret-local',r.retLocal); setVal('f-dev-local',r.devLocal);
     setVal('f-ret-data',r.retData); setVal('f-dev-data',r.devData);
     setVal('f-carro-valor',r.valor); setVal('f-carro-conf',r.conf);
     setVal('f-seguro',r.seguro);
+    setVal('f-transfer-hora',r.horaTransfer); setVal('f-transfer-pax',r.pax);
+    if (r.subtipo === 'locacao') setVal('f-carro-cat-loc',r.categoria);
+    else setVal('f-carro-cat',r.categoria);
   } else if (r.tipo==='passeio'){
     setVal('f-passeio-nome',r.passeioNome); setVal('f-passeio-dest',r.destino);
     setVal('f-passeio-op',r.operadora); setVal('f-passeio-data',r.dataPasseio);
@@ -2796,8 +2804,7 @@ function populateDispararReservas(nome) {
     opt.value = r.id;
     var label = r.tipo==='voo' ? (r.origem||'?')+'→'+(r.destino||'?')+' '+fmtDate(r.dataIda)
               : r.tipo==='hotel' ? (r.hotelNome||r.destino||'Hotel')+' '+fmtDate(r.checkin)
-              : r.tipo==='transfer' ? (r.origem||'?')+'→'+(r.destino||'?')+' '+fmtDate(r.dataTransfer)
-              : r.tipo==='carro' ? (r.locadora||'Carro')+' '+fmtDate(r.retData)
+              : r.tipo==='carro' ? (r.subtipo==='transfer'?(r.retLocal||'?')+'→'+(r.devLocal||'?'):(r.locadora||'Carro'))+' '+fmtDate(r.retData)
               : (r.passeioNome||'Passeio')+' '+fmtDate(r.dataPasseio);
     opt.textContent = '['+r.tipo.toUpperCase()+'] ' + label;
     sel.appendChild(opt);
@@ -3796,7 +3803,7 @@ function confirmarVinculo() {
               if (ci && co) return nome + ' · ' + ci + ' a ' + co;
               return nome;
             }
-            if (r.tipo === 'transfer') return (r.origem||'?') + ' → ' + (r.destino||'?');
+            if (r.tipo === 'carro' && r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
             return r.passeioNome || r.locadora || '';
           })(res);
       }
@@ -4051,7 +4058,6 @@ function rgMontarDias(v) {
       if (res) {
         if (res.tipo==='voo') data = res.dataIda || '';
         else if (res.tipo==='hotel') data = res.checkin || '';
-        else if (res.tipo==='transfer') data = res.dataTransfer || '';
         else if (res.tipo==='carro') data = res.retData || '';
         else if (res.tipo==='passeio') data = res.dataPasseio || '';
       }
@@ -4082,8 +4088,7 @@ function rgMontarDias(v) {
 function rgResNome(res) {
   if (res.tipo==='voo') return '✈️ '+res.origem+' → '+res.destino;
   if (res.tipo==='hotel') return '🏨 '+(res.hotelNome||res.destino);
-  if (res.tipo==='transfer') return '🚐 '+(res.origem||'?')+' → '+(res.destino||'?');
-  if (res.tipo==='carro') return '🚗 '+res.locadora;
+  if (res.tipo==='carro') return (res.subtipo==='transfer'?'🚐 '+(res.retLocal||'?')+' → '+(res.devLocal||'?'):'🚗 '+res.locadora);
   if (res.tipo==='passeio') return '🎯 '+res.passeioNome;
   return 'Reserva';
 }
@@ -4205,9 +4210,7 @@ function rgMontarDataObj() {
   });
   var hospedagemData = hoteis.map(function(r){ return {nome:r.hotelNome,cidade:r.destino,checkin:r.checkin,checkout:r.checkout,noites:r.noites,conf:r.conf,hospedes:r.hospedes}; });
   var servicosData = [];
-  var transfers = resViagem.filter(function(r){ return r.tipo==='transfer'; });
-  transfers.forEach(function(r){ servicosData.push({tipo:'transfer',icon:'🚐',nome:(r.origem||'?')+' → '+(r.destino||'?'),meta:(r.dataTransfer?fmtDate(r.dataTransfer)+' ':'')+(r.operadora||''),badge:r.conf?'Conf. '+r.conf:''}); });
-  carros.forEach(function(r){ servicosData.push({tipo:'carro',icon:'🚌',nome:r.locadora+(r.categoria?' — '+r.categoria:''),meta:(r.retData?'Ret: '+fmtDate(r.retData)+' ':'')+(r.devData?'Dev: '+fmtDate(r.devData):''),badge:r.conf?'Conf. '+r.conf:''}); });
+  carros.forEach(function(r){ var isT=r.subtipo==='transfer'; servicosData.push({tipo:'carro',icon:isT?'🚐':'🚗',nome:isT?(r.retLocal||'?')+' → '+(r.devLocal||'?'):r.locadora+(r.categoria?' — '+r.categoria:''),meta:isT?(r.retData?fmtDate(r.retData)+' ':'')+(r.locadora||''):(r.retData?'Ret: '+fmtDate(r.retData)+' ':'')+(r.devData?'Dev: '+fmtDate(r.devData):''),badge:r.conf?'Conf. '+r.conf:''}); });
   passeios.forEach(function(r){ servicosData.push({tipo:'passeio',icon:'🎯',nome:r.passeioNome,meta:(r.dataPasseio?fmtDate(r.dataPasseio)+' ':'')+r.operadora,badge:r.conf?'Conf. '+r.conf:''}); });
   var documentos = [];
   if (voos.length) documentos.push({icon:'✈️',titulo:'Passagens Aéreas',meta:voos.map(function(r){return r.origem+'→'+r.destino;}).join(' · '),badge:'Confirmado'});
