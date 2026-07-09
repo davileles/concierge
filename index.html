@@ -1492,6 +1492,8 @@ function limparForm() {
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
   if (btnCancelar) btnCancelar.style.display = 'none';
   onTipoChange(false);
+  var radioTransfer = document.getElementById('f-subtipo-transfer');
+  if (radioTransfer) { radioTransfer.checked = true; onSubtipoTranspChange(); }
   var ac = document.getElementById('hotel-campos-acumulo');
   if (ac) ac.style.display = 'none';
   var hm = document.getElementById('hotel-campos-milhas');
@@ -1734,11 +1736,36 @@ function aplicarDadosAtivo(d) {
   sv('f-hotel-conf', d.hotelConf); sv('f-hotel-valor', d.hotelValor);
   if (d.tipoEmissao) ssv('f-hotel-tipo-emissao', d.tipoEmissao);
 
-  // Carro
-  sv('f-locadora', d.locadora); sv('f-carro-cat', d.carroCat);
-  sv('f-ret-local', d.retLocal); sv('f-dev-local', d.devLocal);
-  sv('f-ret-data', d.retData); sv('f-dev-data', d.devData);
-  sv('f-carro-conf', d.carroConf); sv('f-carro-valor', d.carroValor);
+  // Transporte (Transfer ou Locação)
+  if (d.subtipo) {
+    var radioEl = document.querySelector('input[name="subtipo-transp"][value="'+d.subtipo+'"]');
+    if (radioEl) { radioEl.checked = true; onSubtipoTranspChange(); }
+  } else if (d.transferOrigem || d.transferData) {
+    // sem subtipo mas tem campos de transfer — forçar transfer
+    var radioT = document.getElementById('f-subtipo-transfer');
+    if (radioT) { radioT.checked = true; onSubtipoTranspChange(); }
+  }
+  // Campos comuns
+  sv('f-locadora', d.locadora || d.transferOp);
+  sv('f-carro-conf', d.carroConf || d.transferConf);
+  sv('f-carro-valor', d.carroValor || d.transferValor);
+  sv('f-ret-data', d.retData || d.transferData);
+  sv('f-dev-data', d.devData);
+  sv('f-transfer-hora', d.transferHora);
+  sv('f-transfer-pax', d.transferPax || String(d.pax||''));
+  sv('f-carro-cat', d.transferVeiculo || d.carroCat);
+  sv('f-carro-cat-loc', d.carroCat);
+  // Origem/destino — transfer usa texto livre, não IATA
+  var retEl = document.getElementById('f-ret-local');
+  if (retEl && (d.retLocal || d.transferOrigem)) {
+    retEl.value = d.retLocal || d.transferOrigem;
+    retEl.dataset.iataCode = '';
+  }
+  var devEl = document.getElementById('f-dev-local');
+  if (devEl && (d.devLocal || d.transferDestino)) {
+    devEl.value = d.devLocal || d.transferDestino;
+    devEl.dataset.iataCode = '';
+  }
 
   // Passeio
   sv('f-passeio-nome', d.passeioNome); sv('f-passeio-dest', d.passeioDest); sv('f-passeio-op', d.passeioOp);
@@ -2944,6 +2971,22 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('.iata-dropdown').forEach(function(d) { d.style.display = 'none'; });
   }
 });
+
+function onSubtipoTranspChange() {
+  var el = document.querySelector('input[name="subtipo-transp"]:checked');
+  var subtipo = el ? el.value : 'transfer';
+  var isTransfer = subtipo === 'transfer';
+  var elT = document.getElementById('campos-transfer-extra');
+  var elL = document.getElementById('campos-locacao-extra');
+  if (elT) elT.style.display = isTransfer ? '' : 'none';
+  if (elL) elL.style.display = isTransfer ? 'none' : '';
+  var lblRet  = document.getElementById('lbl-ret-local');
+  var lblDev  = document.getElementById('lbl-dev-local');
+  var lblForn = document.getElementById('lbl-fornecedor');
+  if (lblRet)  lblRet.innerHTML  = isTransfer ? 'Origem <span style="color:var(--accent)">*</span>' : 'Local de Retirada <span style="color:var(--accent)">*</span>';
+  if (lblDev)  lblDev.textContent = isTransfer ? 'Destino' : 'Local de Devolução';
+  if (lblForn) lblForn.textContent = isTransfer ? 'Fornecedor / Operadora' : 'Locadora';
+}
 
 function onTipoEmissaoChange() {
   var tipo = getVal('f-tipo-emissao');
