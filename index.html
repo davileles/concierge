@@ -4280,8 +4280,15 @@ function rgGerarPrevia(v) {
     return;
   }
 
-  // Renderizar timeline
-  var html = '<div style="display:flex;flex-direction:column;gap:10px">';
+  // Cabeçalho com dados da viagem
+  var cliStr = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
+  var periodoStr = (v.inicio && v.fim) ? fmtDate(v.inicio) + ' a ' + fmtDate(v.fim) : '';
+  var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+  if (periodoStr) html += '<span style="font-size:11px;font-weight:600;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:3px 10px">📅 '+periodoStr+'</span>';
+  if (cliStr) html += '<span style="font-size:11px;font-weight:600;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:3px 10px">👤 '+cliStr+'</span>';
+  html += '</div>';
+  // Timeline de eventos
+  html += '<div style="display:flex;flex-direction:column;gap:10px">';
   eventos.forEach(function(ev) {
     html += '<div style="display:flex;gap:12px;align-items:flex-start;padding:12px 14px;background:var(--card2);border-radius:10px;border:1px solid var(--border)">';
     html += '<span style="font-size:20px;line-height:1;margin-top:1px">'+ev.icon+'</span>';
@@ -4307,8 +4314,20 @@ function rgSlugInput() {
 function rgExtrairDestino(v) {
   loadReservas();
   var voos = reservas.filter(function(r){ return r.tipo==='voo' && rgPertenceViagem(r,v); });
-  if (voos.length) return voos[0].destino || '';
-  return '';
+  if (!voos.length) return '';
+  // Preferir o destino do voo internacional de ida (destino fora do Brasil)
+  var iatasBR = ['CNF','GRU','GIG','SSA','FOR','REC','BSB','CWB','POA','BEL','MAO','NAT','MCZ','AJU','THE','VCP','CGH','SDU','CGR','CGB','PMW','PVH','MCP','BVB','GYN','IOS','IMP','JOI','LDB','MCP','MGF','MOC','NVT','PHB','PNZ','PPB','QPS','REC','SAO','SLZ','THE','UDI','VDC','XAP'];
+  var intl = voos.find(function(r){
+    return r.dataIda && r.destino && iatasBR.indexOf(r.destino.toUpperCase()) === -1;
+  });
+  if (intl) return intl.destino;
+  // Fallback: usar o destino do voo com data de ida mais antiga (primeiro a partir)
+  var comData = voos.filter(function(r){ return r.dataIda; });
+  if (comData.length) {
+    comData.sort(function(a,b){ return a.dataIda < b.dataIda ? -1 : 1; });
+    return comData[0].destino || '';
+  }
+  return voos[0].destino || '';
 }
 
 function rgPertenceViagem(res, v) {
@@ -4465,12 +4484,18 @@ function rgMontarDataObj() {
   var visaoGeral = [];
   if (voos.length && voos[0].destino) visaoGeral.push({label:'Destino',value:voos[0].destino,variant:'coral'});
   if (v.inicio && v.fim) visaoGeral.push({label:'Período',value:fmtDate(v.inicio)+' a '+fmtDate(v.fim)});
-  if (v.clientes) visaoGeral.push({label:'Viajantes',value:v.clientes});
+  if (v.clientes) {
+    var cli = Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes);
+    visaoGeral.push({label:'Viajantes',value:cli});
+  }
   if (hoteis.length) visaoGeral.push({label:'Hospedagem',value:hoteis.map(function(h){return h.hotelNome;}).join(' · ')});
   if (rgDias.length) visaoGeral.push({label:'Duração',value:rgDias.length+' dia'+(rgDias.length!==1?'s':''),variant:'coral'});
   var pills = [];
   if (v.inicio && v.fim) pills.push('📅 '+fmtDate(v.inicio)+' – '+fmtDate(v.fim));
-  if (v.clientes) pills.push('👤 '+v.clientes);
+  if (v.clientes) {
+    var cliStr = Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes);
+    pills.push('👤 '+cliStr);
+  }
   if (hoteis.length) pills.push('🏨 '+hoteis.map(function(h){return h.hotelNome;}).join(' · '));
   var voosData = [];
   voos.forEach(function(r){
