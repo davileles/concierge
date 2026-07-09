@@ -2483,6 +2483,7 @@ var VARS_RESERVA = [
   { label: '{{checkin}}',               desc: 'Check-in' },
   { label: '{{checkout}}',              desc: 'Check-out' },
   { label: '{{conf}}',                  desc: 'Confirmação' },
+  { label: '{{nome_viagem}}',           desc: 'Nome da viagem associada' },
 ];
 
 function loadModelos() {
@@ -2840,6 +2841,11 @@ function onDispararChange() {
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
     txt = rv(txt, 'checkout', fmtDate(res.checkout));
     txt = rv(txt, 'conf', res.conf||res.hotelConf);
+    // Nome da viagem associada a esta reserva
+    var viagemAssoc = (viagens||[]).find(function(v){
+      return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
+    });
+    txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : '');
   }
   document.getElementById('d-msg-final').value = txt;
 }
