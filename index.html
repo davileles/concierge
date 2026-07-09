@@ -279,6 +279,9 @@ header{animation:fadeUp .45s ease both}
 .viagem-progress-fill{height:100%;border-radius:3px;width:0;transition:none}
 .viagem-progress-fill.anim-done{transition:width .65s .1s cubic-bezier(.4,0,.2,1)}
 .stat-val{animation:countUp .45s .18s ease both}
+.subtipo-chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap;line-height:1.4}
+.subtipo-chip:hover{border-color:var(--accent);color:var(--accent)}
+.subtipo-chip-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}
 </style>
 <script src="iata.js"></script>
 </head>
@@ -1517,8 +1520,7 @@ function limparForm() {
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
   if (btnCancelar) btnCancelar.style.display = 'none';
   onTipoChange(false);
-  var radioTransfer = document.getElementById('f-subtipo-transfer');
-  if (radioTransfer) { radioTransfer.checked = true; onSubtipoTranspChange(); }
+  selectSubtipo('transfer');
   var ac = document.getElementById('hotel-campos-acumulo');
   if (ac) ac.style.display = 'none';
   var hm = document.getElementById('hotel-campos-milhas');
@@ -1762,14 +1764,8 @@ function aplicarDadosAtivo(d) {
   if (d.tipoEmissao) ssv('f-hotel-tipo-emissao', d.tipoEmissao);
 
   // Transporte (Transfer ou Locação)
-  if (d.subtipo) {
-    var radioEl = document.querySelector('input[name="subtipo-transp"][value="'+d.subtipo+'"]');
-    if (radioEl) { radioEl.checked = true; onSubtipoTranspChange(); }
-  } else if (d.transferOrigem || d.transferData) {
-    // sem subtipo mas tem campos de transfer — forçar transfer
-    var radioT = document.getElementById('f-subtipo-transfer');
-    if (radioT) { radioT.checked = true; onSubtipoTranspChange(); }
-  }
+  var subtipoDetect = d.subtipo || (d.transferOrigem || d.transferData ? 'transfer' : null);
+  if (subtipoDetect) selectSubtipo(subtipoDetect);
   // Campos comuns
   sv('f-locadora', d.locadora || d.transferOp);
   sv('f-carro-conf', d.carroConf || d.transferConf);
@@ -1900,8 +1896,8 @@ function salvarReserva() {
       valor: getVal('f-transfer-valor'),
     });
   } else if (tipo === 'carro') {
-      var subtipoEl = document.querySelector('input[name="subtipo-transp"]:checked');
-      var subtipo = subtipoEl ? subtipoEl.value : 'transfer';
+      var hidSub = document.getElementById('f-subtipo-transp-val');
+      var subtipo = hidSub ? (hidSub.value || 'transfer') : 'transfer';
       Object.assign(res, {
         subtipo: subtipo,
         locadora: getVal('f-locadora'),
@@ -2033,6 +2029,7 @@ function salvarReserva() {
 //  RENDER RESERVAS
 // ══════════════════════════════════════════
 var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚐 Transporte', passeio:'🎯 Passeio' };
+var SUBTIPO_ICON = { transfer:'🚐', trem:'🚆', onibus:'🚌', ferry:'⛴️', locacao:'🚗' };
 var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio' };
 
 function resTitle(r) {
@@ -2043,8 +2040,8 @@ function resTitle(r) {
   }
   if (r.tipo==='hotel')   return r.hotelNome || r.destino || 'Hotel';
   if (r.tipo==='carro') {
-    if (r.subtipo === 'transfer') return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
-    return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
+    if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
+    return (r.retLocal||'?') + ' → ' + (r.devLocal||'?');
   }
   if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
   return 'Reserva';
@@ -2073,18 +2070,18 @@ function resCols(r) {
     ['Confirmação', r.conf||null],
   ];
   if (r.tipo==='carro') {
-    if (r.subtipo === 'transfer') return [
+    if (r.subtipo === 'locacao') return [
       ['Cliente', toTitleCase(r.cliente)],
-      ['Origem → Destino', (r.retLocal||'?')+' → '+(r.devLocal||'?')],
-      ['Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')],
-      ['Fornecedor', r.locadora||'—'],
+      ['Locadora', r.locadora||'—'],
+      ['Retirada', (r.retLocal||'—')+' · '+fmtDate(r.retData)],
+      ['Devolução', (r.devLocal||'—')+' · '+fmtDate(r.devData)],
       ['Confirmação', r.conf||'—'],
     ];
     return [
       ['Cliente', toTitleCase(r.cliente)],
+      ['Origem → Destino', (r.retLocal||'?')+' → '+(r.devLocal||'?')],
+      ['Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')],
       ['Fornecedor', r.locadora||'—'],
-      ['Retirada', (r.retLocal||'—')+' · '+fmtDate(r.retData)],
-      ['Devolução', (r.devLocal||'—')+' · '+fmtDate(r.devData)],
       ['Confirmação', r.conf||'—'],
     ];
   }
@@ -2193,7 +2190,7 @@ function renderReservas() {
     var urgenteBadge = urgente ? '<span class="urgente-badge">🔴 ' + (diasRestantes === 0 ? 'Hoje!' : diasRestantes === 1 ? 'Amanhã!' : 'Em ' + diasRestantes + ' dias') + '</span>' : '';
     return '<div class="res-card' + (urgente ? ' urgente' : '') + '">'+
       '<div class="res-card-header">'+
-        '<div class="type-icon '+TIPO_CLASS[r.tipo]+'">'+TIPO_LABEL[r.tipo].split(' ')[0]+'</div>'+
+        '<div class="type-icon '+TIPO_CLASS[r.tipo]+'">'+((r.tipo==='carro'&&r.subtipo&&SUBTIPO_ICON[r.subtipo])||TIPO_LABEL[r.tipo].split(' ')[0])+'</div>'+
         '<div class="res-card-info">'+
           '<div class="res-card-id">'+r.id+' · Cadastro: '+fmtDate(r.cadastro)+'</div>'+
           '<div class="res-card-title">'+resTitle(r)+urgenteBadge+'</div>'+
@@ -2333,8 +2330,7 @@ function editarReserva(id) {
     setVal('f-hotel-parceiro-acumulo',r.parceiroAcumulo||'');
     onHotelTipoEmissaoChange();
   } else if (r.tipo==='carro'){
-    var subRad = document.querySelector('input[name="subtipo-transp"][value="'+(r.subtipo||'transfer')+'"]');
-    if (subRad) { subRad.checked = true; onSubtipoTranspChange(); }
+    selectSubtipo(r.subtipo || 'transfer');
     setVal('f-locadora',r.locadora);
     setVal('f-ret-local',r.retLocal); setVal('f-dev-local',r.devLocal);
     setVal('f-ret-data',r.retData); setVal('f-dev-data',r.devData);
@@ -2997,20 +2993,38 @@ document.addEventListener('click', function(e) {
   }
 });
 
-function onSubtipoTranspChange() {
-  var el = document.querySelector('input[name="subtipo-transp"]:checked');
-  var subtipo = el ? el.value : 'transfer';
-  var isTransfer = subtipo === 'transfer';
+function selectSubtipo(subtipo) {
+  var hid = document.getElementById('f-subtipo-transp-val');
+  if (hid) hid.value = subtipo;
+  document.querySelectorAll('.subtipo-chip').forEach(function(btn){
+    btn.classList.toggle('subtipo-chip-active', btn.dataset.subtipo === subtipo);
+  });
+  var isLocacao = subtipo === 'locacao';
   var elT = document.getElementById('campos-transfer-extra');
   var elL = document.getElementById('campos-locacao-extra');
-  if (elT) elT.style.display = isTransfer ? '' : 'none';
-  if (elL) elL.style.display = isTransfer ? 'none' : '';
+  if (elT) elT.style.display = isLocacao ? 'none' : '';
+  if (elL) elL.style.display = isLocacao ? '' : 'none';
   var lblRet  = document.getElementById('lbl-ret-local');
   var lblDev  = document.getElementById('lbl-dev-local');
   var lblForn = document.getElementById('lbl-fornecedor');
-  if (lblRet)  lblRet.innerHTML  = isTransfer ? 'Origem <span style="color:var(--accent)">*</span>' : 'Local de Retirada <span style="color:var(--accent)">*</span>';
-  if (lblDev)  lblDev.textContent = isTransfer ? 'Destino' : 'Local de Devolução';
-  if (lblForn) lblForn.textContent = isTransfer ? 'Fornecedor / Operadora' : 'Locadora';
+  var lblHora = document.getElementById('lbl-hora-transp');
+  var lblVeic = document.getElementById('lbl-veiculo-transp');
+  var lblData = document.getElementById('lbl-ret-data');
+  var forn = document.getElementById('f-locadora');
+  var veic = document.getElementById('f-carro-cat');
+  var fPlaceholder = {transfer:'Ex: Vem Me Buscar, Uber',trem:'Ex: Renfe, Eurostar',onibus:'Ex: FlixBus, Comfortbus',ferry:'Ex: Corsica Ferries',locacao:'Ex: Localiza, Hertz'};
+  var vPlaceholder = {transfer:'Ex: Van, Sedan',trem:'Ex: 1ª classe, AVE',onibus:'Ex: Leito, Executivo',ferry:'Ex: Cabine, Poltrona',locacao:''};
+  var lblFornMap = {transfer:'Fornecedor / Operadora',trem:'Companhia Ferroviária',onibus:'Empresa de Ônibus',ferry:'Companhia de Ferry',locacao:'Locadora'};
+  if (lblRet) lblRet.innerHTML = isLocacao ? 'Local de Retirada <span style="color:var(--accent)">*</span>' : 'Origem <span style="color:var(--accent)">*</span>';
+  if (lblDev) lblDev.textContent = isLocacao ? 'Local de Devolução' : 'Destino';
+  if (lblForn) lblForn.textContent = lblFornMap[subtipo]||'Fornecedor';
+  if (forn) forn.placeholder = fPlaceholder[subtipo]||'';
+  if (veic) veic.placeholder = vPlaceholder[subtipo]||'';
+  if (lblData) lblData.innerHTML = isLocacao ? 'Data de Retirada <span style="color:var(--accent)">*</span>' : 'Data <span style="color:var(--accent)">*</span>';
+}
+function onSubtipoTranspChange() {
+  var hid = document.getElementById('f-subtipo-transp-val');
+  selectSubtipo(hid ? (hid.value||'transfer') : 'transfer');
 }
 
 function onTipoEmissaoChange() {
