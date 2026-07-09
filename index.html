@@ -1211,8 +1211,24 @@ header{animation:fadeUp .45s ease both}
       </select>
     </div>
 
-    <!-- Configurações de publicação (slug, capa, subtítulo) -->
+    <!-- Configurações do roteiro -->
     <div id="rg-config" style="display:none">
+      <!-- Destino e Viajantes -->
+      <div class="g2" style="margin-bottom:4px">
+        <div class="field">
+          <label>Destino principal <span class="tag">opcional</span></label>
+          <input type="text" id="rg-destino-manual" placeholder="Ex: Toscana, Itália"
+            oninput="rgSalvarCampo('destinoManual', this.value)"/>
+          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Deixe em branco para detectar automaticamente pelo voo</span>
+        </div>
+        <div class="field">
+          <label>Viajantes adicionais <span class="tag">opcional</span></label>
+          <input type="text" id="rg-viajantes-extra" placeholder="Ex: Andrea Bocelli, Marco Silva"
+            oninput="rgSalvarCampo('viajantesExtra', this.value)"/>
+          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Nomes além do cliente principal, separados por vírgula</span>
+        </div>
+      </div>
+      <!-- Publicação -->
       <div class="g2">
         <div class="field">
           <label>Slug / pasta no repositório</label>
@@ -4196,9 +4212,12 @@ function rgCarregarViagem() {
   document.getElementById('rg-slug').value = v.slugRoteiro || slugDefault;
   document.getElementById('rg-slug-preview').textContent = document.getElementById('rg-slug').value || '…';
   var destino = rgExtrairDestino(v);
-  document.getElementById('rg-eyebrow').value = v.eyebrowRoteiro || ('Travel Concierge · ' + (destino||''));
+  var destinoLabel = v.destinoManual || destino || '';
+  document.getElementById('rg-eyebrow').value = v.eyebrowRoteiro || ('Travel Concierge · ' + destinoLabel);
   document.getElementById('rg-subtitulo').value = v.subtituloRoteiro || (v.nome||'');
   document.getElementById('rg-hero').value = v.heroImageRoteiro || '';
+  document.getElementById('rg-destino-manual').value = v.destinoManual || '';
+  document.getElementById('rg-viajantes-extra').value = v.viajantesExtra || '';
   // Mostrar configurações e gerar prévia
   if (configEl) configEl.style.display = '';
   if (acoesEl) { acoesEl.style.display = 'flex'; }
@@ -4281,9 +4300,13 @@ function rgGerarPrevia(v) {
   }
 
   // Cabeçalho com dados da viagem
-  var cliStr = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
+  var cliBase = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
+  var cliExtra = v.viajantesExtra ? v.viajantesExtra.trim() : '';
+  var cliStr = cliExtra ? cliBase + (cliBase ? ', ' : '') + cliExtra : cliBase;
   var periodoStr = (v.inicio && v.fim) ? fmtDate(v.inicio) + ' a ' + fmtDate(v.fim) : '';
+  var destinoStr = v.destinoManual || rgExtrairDestino(v);
   var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
+  if (destinoStr) html += '<span style="font-size:11px;font-weight:600;color:var(--accent);background:rgba(255,88,94,.08);border:1px solid rgba(255,88,94,.2);border-radius:20px;padding:3px 10px">📍 '+destinoStr+'</span>';
   if (periodoStr) html += '<span style="font-size:11px;font-weight:600;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:3px 10px">📅 '+periodoStr+'</span>';
   if (cliStr) html += '<span style="font-size:11px;font-weight:600;color:var(--muted);background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:3px 10px">👤 '+cliStr+'</span>';
   html += '</div>';
@@ -4309,6 +4332,19 @@ function rgGerarPrevia(v) {
 
 function rgSlugInput() {
   document.getElementById('rg-slug-preview').textContent = document.getElementById('rg-slug').value || '…';
+}
+
+function rgSalvarCampo(campo, valor) {
+  var vid = document.getElementById('rg-viagem').value;
+  if (!vid) return;
+  var v = viagens.find(function(x){ return x.id===vid; });
+  if (!v) return;
+  v[campo] = valor;
+  saveViagens();
+  // Atualizar a prévia se for campo de destino ou viajantes
+  if (campo === 'destinoManual' || campo === 'viajantesExtra') {
+    rgGerarPrevia(v);
+  }
 }
 
 function rgExtrairDestino(v) {
@@ -4482,20 +4518,18 @@ function rgMontarDataObj() {
   var carros = resViagem.filter(function(r){ return r.tipo==='carro'; });
   var passeios = resViagem.filter(function(r){ return r.tipo==='passeio'; });
   var visaoGeral = [];
-  if (voos.length && voos[0].destino) visaoGeral.push({label:'Destino',value:voos[0].destino,variant:'coral'});
+  var destinoPub = v.destinoManual || rgExtrairDestino(v) || (voos.length ? voos[0].destino : '');
+  if (destinoPub) visaoGeral.push({label:'Destino',value:destinoPub,variant:'coral'});
   if (v.inicio && v.fim) visaoGeral.push({label:'Período',value:fmtDate(v.inicio)+' a '+fmtDate(v.fim)});
-  if (v.clientes) {
-    var cli = Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes);
-    visaoGeral.push({label:'Viajantes',value:cli});
-  }
+  var cliBasePub = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
+  var cliExtraPub = v.viajantesExtra ? v.viajantesExtra.trim() : '';
+  var cliPub = cliExtraPub ? cliBasePub + (cliBasePub ? ', ' : '') + cliExtraPub : cliBasePub;
+  if (cliPub) visaoGeral.push({label:'Viajantes',value:cliPub});
   if (hoteis.length) visaoGeral.push({label:'Hospedagem',value:hoteis.map(function(h){return h.hotelNome;}).join(' · ')});
   if (rgDias.length) visaoGeral.push({label:'Duração',value:rgDias.length+' dia'+(rgDias.length!==1?'s':''),variant:'coral'});
   var pills = [];
   if (v.inicio && v.fim) pills.push('📅 '+fmtDate(v.inicio)+' – '+fmtDate(v.fim));
-  if (v.clientes) {
-    var cliStr = Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes);
-    pills.push('👤 '+cliStr);
-  }
+  if (cliPub) pills.push('👤 '+cliPub);
   if (hoteis.length) pills.push('🏨 '+hoteis.map(function(h){return h.hotelNome;}).join(' · '));
   var voosData = [];
   voos.forEach(function(r){
@@ -4535,6 +4569,8 @@ async function rgPublicar() {
     v.heroImageRoteiro = document.getElementById('rg-hero').value.trim();
     v.subtituloRoteiro = document.getElementById('rg-subtitulo').value.trim();
     v.eyebrowRoteiro = document.getElementById('rg-eyebrow').value.trim();
+    v.destinoManual = document.getElementById('rg-destino-manual').value.trim();
+    v.viajantesExtra = document.getElementById('rg-viajantes-extra').value.trim();
     saveViagens();
   }
   var data = rgMontarDataObj();
