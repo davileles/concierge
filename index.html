@@ -1458,12 +1458,18 @@ function populateClienteSelect() {
 // ══════════════════════════════════════════
 //  FORMULÁRIO
 // ══════════════════════════════════════════
-function onTipoChange() {
+function onTipoChange(reprocessar) {
   ['voo','hotel','carro','passeio'].forEach(function(t){
     document.getElementById('fields-'+t).style.display = 'none';
   });
-  var tipo = getVal('f-tipo');
+  var tipo = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
   if (tipo) document.getElementById('fields-'+tipo).style.display = 'block';
+  // Se há arquivo carregado e o usuário trocou o tipo manualmente, reanalisar
+  if (reprocessar !== false && ativoArquivo && tipo) {
+    var okEl = document.getElementById('upload-ok');
+    if (okEl) { okEl.style.color = 'var(--muted)'; okEl.textContent = '🔄 Reprocessando com tipo: ' + tipo + '…'; }
+    lerAtivoComIA(ativoArquivo);
+  }
 }
 
 function limparForm() {
@@ -1485,7 +1491,7 @@ function limparForm() {
   window._reservaEditandoOriginal = null;
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
   if (btnCancelar) btnCancelar.style.display = 'none';
-  onTipoChange();
+  onTipoChange(false);
   var ac = document.getElementById('hotel-campos-acumulo');
   if (ac) ac.style.display = 'none';
   var hm = document.getElementById('hotel-campos-milhas');
@@ -1526,7 +1532,10 @@ function onViagemAssocChange() {
 
 function getVal(id) {
   var el = document.getElementById(id);
-  return el ? el.value.trim() : '';
+  if (!el) return '';
+  // Campos IATA: retornar só o código (ex: "GRU" de "GRU – São Paulo")
+  if (el.dataset && el.dataset.iataCode) return el.dataset.iataCode;
+  return el.value.trim();
 }
 function setVal(id, v) {
   var el = document.getElementById(id);
@@ -1575,6 +1584,8 @@ function toTitleCase(str) {
 
 // ── UPLOAD DE ATIVO ────────────────────────────────────────
 var ativoArquivo = null;
+var ativoArquivoBase64 = null;  // base64 do arquivo ativo para salvar na reserva
+var ativoArquivoMeta = null;    // {nome, tipo, tamanho} do arquivo ativo
 
 function onAtivoDrop(e) {
   e.preventDefault();
@@ -1604,6 +1615,8 @@ function processarAtivo(file) {
 
 function removerAtivo() {
   ativoArquivo = null;
+  ativoArquivoBase64 = null;
+  ativoArquivoMeta = null;
   document.getElementById('upload-preview').style.display = 'none';
   document.getElementById('upload-preview').innerHTML = '';
   document.getElementById('upload-ativo-input').value = '';
@@ -1616,6 +1629,9 @@ function lerAtivoComIA(file) {
     var base64 = e.target.result.split(',')[1];
     var mediaType = file.type || 'image/jpeg';
     var isPdf = file.type === 'application/pdf';
+    // Salvar metadados e base64 para anexar à reserva
+    ativoArquivoMeta = { nome: file.name, tipo: file.type, tamanho: file.size };
+    ativoArquivoBase64 = (file.size <= 512000) ? base64 : null; // só salva se < 500KB
 
     document.getElementById('upload-lendo').style.display = 'flex';
     document.getElementById('upload-ok').textContent = '';
@@ -1678,17 +1694,31 @@ function aplicarDadosAtivo(d) {
     el.value = val;
   }
 
-  if (d.tipo) { ssv('f-tipo', d.tipo); onTipoChange(); }
+  if (d.tipo) { ssv('f-tipo', d.tipo); onTipoChange(false); }
+
+  // Setar campo IATA com exibição "GRU – São Paulo"
+  function svIata(id, code) {
+    if (!code) return;
+    var el = document.getElementById(id);
+    if (!el) return;
+    var nome = '';
+    if (typeof IATA_AIRPORTS !== 'undefined') {
+      var match = IATA_AIRPORTS.find(function(a){ return a.code.toUpperCase() === code.toUpperCase(); });
+      if (match) nome = match.label.replace(/ *\(.*?\)/g, '').trim();
+    }
+    el.value = nome ? code + ' – ' + nome : code;
+    el.dataset.iataCode = code;
+  }
 
   // Voo
-  sv('f-origem', d.origem); sv('f-destino', d.destino);
+  svIata('f-origem', d.origem); svIata('f-destino', d.destino);
   sv('f-data-ida', d.dataIda); sv('f-hora-partida', d.horaPartida); sv('f-hora-chegada', d.horaChegada);
   ssv('f-cia-ida', d.ciaIda); sv('f-nvoo-ida', d.nvooIda);
   sv('f-conexao', d.conexao);
   sv('f-data-volta', d.dataVolta); sv('f-hora-partida-volta', d.horaPartidaVolta); sv('f-hora-chegada-volta', d.horaChegadaVolta);
   ssv('f-cia-volta', d.ciaVolta); sv('f-nvoo-volta', d.nvooVolta);
-  sv('f-origem-volta', d.origemVolta);
-  sv('f-destino-volta', d.destinoVolta);
+  svIata('f-origem-volta', d.origemVolta);
+  svIata('f-destino-volta', d.destinoVolta);
   sv('f-conexao-volta', d.conexaoVolta);
   ssv('f-classe', d.classe); sv('f-pnr', d.pnr);
   if (d.tipoEmissao) { ssv('f-tipo-emissao', d.tipoEmissao); onTipoEmissaoChange(); }
@@ -1743,6 +1773,15 @@ function salvarReserva() {
     obs: getVal('f-obs'),
     cadastro: new Date().toISOString().split('T')[0],
   };
+  // Anexar arquivo se houver (base64 se couber, senão só metadados)
+  if (ativoArquivoMeta) {
+    res.arquivoAnexo = {
+      nome: ativoArquivoMeta.nome,
+      tipo: ativoArquivoMeta.tipo,
+      tamanho: ativoArquivoMeta.tamanho,
+      base64: ativoArquivoBase64 || null
+    };
+  }
 
   if (tipo === 'voo') {
     Object.assign(res, {
@@ -2064,9 +2103,10 @@ function renderReservas() {
         cols.filter(function(c){ return c[1] !== null && c[1] !== undefined && c[1] !== ''; }).map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
       '</div>'+
       '<div class="res-card-footer">'+
-        '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+'</span>'+
-        '<button class="btn btn-ghost btn-sm" onclick="editarReserva(\''+r.id+'\')">✏️ Editar</button>'+
-        '<button class="btn btn-danger btn-sm" onclick="pedirDelete(\''+r.id+'\')">🗑 Excluir</button>'+
+        '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+' </span>'+
+        (r.arquivoAnexo && r.arquivoAnexo.base64 ? '<button class="btn btn-ghost btn-sm" onclick="verArquivoAnexo(\\''+r.id+'\\')">📎 Ver arquivo</button>' : '')+
+        '<button class="btn btn-ghost btn-sm" onclick="editarReserva(\\''+r.id+'\\')">✏️ Editar</button>'+
+        '<button class="btn btn-danger btn-sm" onclick="pedirDelete(\\''+r.id+'\\')">🗑 Excluir</button>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -2103,6 +2143,20 @@ function confirmarDelete() {
   showToast('🗑 Reserva excluída', 'ok');
 }
 
+function verArquivoAnexo(id) {
+  var r = reservas.find(function(x){ return x.id === id; });
+  if (!r || !r.arquivoAnexo || !r.arquivoAnexo.base64) return;
+  var a = r.arquivoAnexo;
+  var dataUrl = 'data:' + (a.tipo || 'application/octet-stream') + ';base64,' + a.base64;
+  var w = window.open('', '_blank');
+  if (!w) { showToast('⚠️ Popup bloqueado. Permita popups para este site.', 'err'); return; }
+  if (a.tipo === 'application/pdf') {
+    w.document.write('<html><body style="margin:0"><iframe src="' + dataUrl + '" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
+  } else {
+    w.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + dataUrl + '" style="max-width:100%;max-height:100vh;object-fit:contain"/></body></html>');
+  }
+}
+
 function editarReserva(id) {
   var r = reservas.find(function(x){ return x.id===id; });
   if (!r) return;
@@ -2125,7 +2179,7 @@ function editarReserva(id) {
       }, 50);
     }
   }
-  setVal('f-tipo', r.tipo); onTipoChange();
+  setVal('f-tipo', r.tipo); onTipoChange(false);
   setVal('f-cliente', r.cliente);
   setVal('f-obs', r.obs||'');
   if (r.tipo==='voo'){
@@ -2795,7 +2849,12 @@ function iataSelect(e, code, label) {
   if (!wrap) return;
   var input = wrap.querySelector('input');
   var dropdown = wrap.querySelector('.iata-dropdown');
-  if (input) input.value = code;
+  if (input) {
+    // Mostrar "GRU – São Paulo" no campo (código + nome sem parênteses)
+    var nomeLimpo = label ? label.replace(/ *\(.*?\)/g, '').trim() : '';
+    input.value = nomeLimpo ? code + ' – ' + nomeLimpo : code;
+    input.dataset.iataCode = code; // guardar só o código para salvar
+  }
   if (dropdown) dropdown.style.display = 'none';
 }
 
