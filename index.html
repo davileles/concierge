@@ -636,17 +636,17 @@ header{animation:fadeUp .45s ease both}
     <!-- CAMPOS CARRO -->
     <div id="fields-carro" style="display:none">
       <div class="sep"></div>
-      <!-- Subtipo -->
-      <div class="field" style="margin-bottom:10px">
+      <!-- Subtipo chips -->
+      <div class="field" style="margin-bottom:14px">
         <label>Tipo de Serviço</label>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:6px">
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
-            <input type="radio" name="subtipo-transp" id="f-subtipo-transfer" value="transfer" onchange="onSubtipoTranspChange()" checked/> 🚐 Transfer
-          </label>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:600">
-            <input type="radio" name="subtipo-transp" id="f-subtipo-locacao" value="locacao" onchange="onSubtipoTranspChange()"/> 🚗 Locação de Carro
-          </label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+          <button type="button" class="subtipo-chip subtipo-chip-active" data-subtipo="transfer" onclick="selectSubtipo('transfer')">🚐 Transfer</button>
+          <button type="button" class="subtipo-chip" data-subtipo="trem"     onclick="selectSubtipo('trem')">🚆 Trem</button>
+          <button type="button" class="subtipo-chip" data-subtipo="onibus"   onclick="selectSubtipo('onibus')">🚌 Ônibus</button>
+          <button type="button" class="subtipo-chip" data-subtipo="ferry"    onclick="selectSubtipo('ferry')">⛴️ Ferry</button>
+          <button type="button" class="subtipo-chip" data-subtipo="locacao"  onclick="selectSubtipo('locacao')">🚗 Locação de Carro</button>
         </div>
+        <input type="hidden" id="f-subtipo-transp-val" value="transfer"/>
       </div>
       <!-- Campos comuns -->
       <div class="g2">
@@ -661,12 +661,12 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label id="lbl-ret-data">Data <span style="color:var(--accent)">*</span></label><input type="date" id="f-ret-data"/></div>
         <div class="field"><label>Confirmação / Voucher</label><input type="text" id="f-carro-conf" placeholder="Ex: TRF-001 ou LOC-987654"/></div>
       </div>
-      <!-- Extra Transfer -->
+      <!-- Extra ponto-a-ponto (Transfer, Trem, Ônibus, Ferry) -->
       <div id="campos-transfer-extra">
         <div class="g3">
-          <div class="field"><label>Horário</label><input type="time" id="f-transfer-hora"/></div>
+          <div class="field"><label id="lbl-hora-transp">Horário de Partida</label><input type="time" id="f-transfer-hora"/></div>
           <div class="field"><label>Nº de Passageiros</label><input type="number" id="f-transfer-pax" min="1" placeholder="Ex: 2"/></div>
-          <div class="field"><label>Tipo de Veículo <span class="tag">opcional</span></label><input type="text" id="f-carro-cat" placeholder="Ex: Van, Sedan"/></div>
+          <div class="field"><label id="lbl-classe-transp">Tipo de Veículo <span class="tag">opcional</span></label><input type="text" id="f-carro-cat" placeholder="Ex: Van, Sedan"/></div>
         </div>
       </div>
       <!-- Extra Locação -->
@@ -3021,31 +3021,37 @@ document.addEventListener('click', function(e) {
 function selectSubtipo(subtipo) {
   var hid = document.getElementById('f-subtipo-transp-val');
   if (hid) hid.value = subtipo;
+  // Atualizar chips visuais
   document.querySelectorAll('.subtipo-chip').forEach(function(btn){
     btn.classList.toggle('subtipo-chip-active', btn.dataset.subtipo === subtipo);
   });
   var isLocacao = subtipo === 'locacao';
+  // Mostrar/ocultar blocos de campos extras
   var elT = document.getElementById('campos-transfer-extra');
   var elL = document.getElementById('campos-locacao-extra');
   if (elT) elT.style.display = isLocacao ? 'none' : '';
   if (elL) elL.style.display = isLocacao ? '' : 'none';
-  var lblRet  = document.getElementById('lbl-ret-local');
-  var lblDev  = document.getElementById('lbl-dev-local');
-  var lblForn = document.getElementById('lbl-fornecedor');
-  var lblHora = document.getElementById('lbl-hora-transp');
-  var lblVeic = document.getElementById('lbl-veiculo-transp');
-  var lblData = document.getElementById('lbl-ret-data');
-  var forn = document.getElementById('f-locadora');
-  var veic = document.getElementById('f-carro-cat');
-  var fPlaceholder = {transfer:'Ex: Vem Me Buscar, Uber',trem:'Ex: Renfe, Eurostar',onibus:'Ex: FlixBus, Comfortbus',ferry:'Ex: Corsica Ferries',locacao:'Ex: Localiza, Hertz'};
-  var vPlaceholder = {transfer:'Ex: Van, Sedan',trem:'Ex: 1ª classe, AVE',onibus:'Ex: Leito, Executivo',ferry:'Ex: Cabine, Poltrona',locacao:''};
-  var lblFornMap = {transfer:'Fornecedor / Operadora',trem:'Companhia Ferroviária',onibus:'Empresa de Ônibus',ferry:'Companhia de Ferry',locacao:'Locadora'};
-  if (lblRet) lblRet.innerHTML = isLocacao ? 'Local de Retirada <span style="color:var(--accent)">*</span>' : 'Origem <span style="color:var(--accent)">*</span>';
-  if (lblDev) lblDev.textContent = isLocacao ? 'Local de Devolução' : 'Destino';
-  if (lblForn) lblForn.textContent = lblFornMap[subtipo]||'Fornecedor';
-  if (forn) forn.placeholder = fPlaceholder[subtipo]||'';
-  if (veic) veic.placeholder = vPlaceholder[subtipo]||'';
-  if (lblData) lblData.innerHTML = isLocacao ? 'Data de Retirada <span style="color:var(--accent)">*</span>' : 'Data <span style="color:var(--accent)">*</span>';
+  // Adaptar labels e placeholders por modal
+  var cfg = {
+    transfer: { orig:'Origem',         dest:'Destino',              forn:'Fornecedor / Operadora',   fornPh:'Ex: Vem Me Buscar, Uber',    hora:'Horário de Partida', classe:'Tipo de Veículo',    classePh:'Ex: Van, Sedan, Executivo', data:'Data' },
+    trem:     { orig:'Estação de Origem', dest:'Estação de Destino', forn:'Companhia Ferroviária',   fornPh:'Ex: Renfe, Eurostar, VLT',   hora:'Horário de Partida', classe:'Classe / Bilhete',   classePh:'Ex: 1ª Classe, AVE, TGV',   data:'Data de Partida' },
+    onibus:   { orig:'Terminal de Origem', dest:'Terminal de Destino', forn:'Empresa de Ônibus',     fornPh:'Ex: FlixBus, Comfortbus',    hora:'Horário de Partida', classe:'Tipo de Serviço',    classePh:'Ex: Leito, Semi-Leito, Convencional', data:'Data de Partida' },
+    ferry:    { orig:'Porto de Embarque', dest:'Porto de Desembarque', forn:'Companhia de Ferry',    fornPh:'Ex: Corsica Ferries, Baleària', hora:'Horário de Partida', classe:'Tipo de Cabine', classePh:'Ex: Cabine Privada, Poltrona, Deck', data:'Data de Partida' },
+    locacao:  { orig:'Local de Retirada', dest:'Local de Devolução',   forn:'Locadora',              fornPh:'Ex: Localiza, Hertz, Avis',  hora:'Horário',            classe:'Categoria do Veículo', classePh:'Ex: Econômico, SUV, Pickup', data:'Data de Retirada' }
+  };
+  var m = cfg[subtipo] || cfg.transfer;
+  var acc = '<span style="color:var(--accent)">*</span>';
+  var el = function(id){ return document.getElementById(id); };
+  if (el('lbl-ret-local'))    el('lbl-ret-local').innerHTML    = m.orig + ' ' + acc;
+  if (el('lbl-dev-local'))    el('lbl-dev-local').textContent  = m.dest;
+  if (el('lbl-fornecedor'))   el('lbl-fornecedor').textContent = m.forn;
+  if (el('f-locadora'))       el('f-locadora').placeholder     = m.fornPh;
+  if (el('lbl-hora-transp'))  el('lbl-hora-transp').textContent = m.hora;
+  if (el('lbl-classe-transp')) el('lbl-classe-transp').innerHTML = m.classe + ' <span class="tag">opcional</span>';
+  if (el('f-carro-cat'))      el('f-carro-cat').placeholder    = m.classePh;
+  if (el('lbl-ret-data'))     el('lbl-ret-data').innerHTML     = m.data + ' ' + acc;
+  if (el('f-ret-local'))      el('f-ret-local').placeholder    = isLocacao ? 'Ex: Aeroporto GRU' : 'Ex: Aeroporto, Terminal, Porto';
+  if (el('f-dev-local'))      el('f-dev-local').placeholder    = isLocacao ? 'Ex: Hotel ou outra cidade' : 'Ex: Hotel, Terminal, Porto de chegada';
 }
 function onSubtipoTranspChange() {
   var hid = document.getElementById('f-subtipo-transp-val');
