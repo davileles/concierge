@@ -143,15 +143,6 @@
         "pos": 0
       },
       {
-        "icon": "✈️",
-        "nome": "Passagem Doméstica",
-        "titulo": "",
-        "descricao": "",
-        "status": "pendente",
-        "reservaId": null,
-        "pos": 30
-      },
-      {
         "icon": "🌍",
         "nome": "Passagem Internacional",
         "titulo": "GRU → MAD · 18/07/2026",
@@ -161,13 +152,30 @@
         "pos": 10
       },
       {
-        "icon": "🌍",
+        "icon": "✈️",
         "nome": "Passagem Internacional",
-        "titulo": "LIS → VCP · 27/07/2026",
+        "titulo": "MAD → AHO · 19/07/2026",
         "descricao": "",
         "status": "concluida",
-        "reservaId": "RES-1783539738040",
+        "reservaId": "RES-1783625218444"
+      },
+      {
+        "icon": "🌍",
+        "nome": "Passagem Internacional",
+        "titulo": "OPO → VCP · 27/07/2026",
+        "descricao": "",
+        "status": "concluida",
+        "reservaId": "RES-1783625899717",
         "pos": 20
+      },
+      {
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "",
+        "descricao": "",
+        "status": "pendente",
+        "reservaId": null,
+        "pos": 30
       },
       {
         "icon": "🏨",
