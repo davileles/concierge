@@ -4238,14 +4238,14 @@ function rgGerarPrevia(v) {
   // Voos
   resViagem.filter(function(r){ return r.tipo==='voo'; }).forEach(function(r){
     if (r.dataIda) eventos.push({
-      data: r.dataIda, tipo: 'voo', icon: '✈️',
+      data: r.dataIda, hora: r.horaPartida||'', tipo: 'voo', icon: '✈️',
       titulo: (r.origem||'?') + ' → ' + (r.destino||'?'),
       meta: [r.ciaIda, r.nvooIda, r.horaPartida ? 'Partida '+r.horaPartida : '', r.horaChegada ? 'Chegada '+r.horaChegada : '', r.classe].filter(Boolean).join(' · '),
       badge: r.pnr ? 'PNR: '+r.pnr : (r.conf||''),
       sub: r.trechos && r.trechos.length > 1 ? r.trechos.length+' trechos' : ''
     });
     if (r.dataVolta) eventos.push({
-      data: r.dataVolta, tipo: 'voo', icon: '✈️',
+      data: r.dataVolta, hora: r.horaPartidaVolta||'', tipo: 'voo', icon: '✈️',
       titulo: (r.origemVolta||r.destino||'?') + ' → ' + (r.destinoVolta||r.origem||'?'),
       meta: [r.ciaVolta, r.nvooVolta, r.horaPartidaVolta ? 'Partida '+r.horaPartidaVolta : '', r.horaChegadaVolta ? 'Chegada '+r.horaChegadaVolta : ''].filter(Boolean).join(' · '),
       badge: r.pnr ? 'PNR: '+r.pnr : (r.conf||'')
@@ -4255,7 +4255,7 @@ function rgGerarPrevia(v) {
   // Hospedagens
   resViagem.filter(function(r){ return r.tipo==='hotel'; }).forEach(function(r){
     if (r.checkin) eventos.push({
-      data: r.checkin, tipo: 'hotel', icon: '🏨',
+      data: r.checkin, hora: '', tipo: 'hotel', icon: '🏨',
       titulo: r.hotelNome || 'Hotel',
       meta: [r.checkin ? 'Check-in '+fmtDate(r.checkin) : '', r.checkout ? 'Check-out '+fmtDate(r.checkout) : '', r.noites ? r.noites+' noites' : '', r.regime||''].filter(Boolean).join(' · '),
       badge: r.hotelConf ? 'Conf: '+r.hotelConf : ''
@@ -4268,7 +4268,7 @@ function rgGerarPrevia(v) {
     var ic = icMap[r.subtipo] || '🚐';
     var isLoc = r.subtipo === 'locacao';
     eventos.push({
-      data: r.retData || '', tipo: 'transporte', icon: ic,
+      data: r.retData || '', hora: r.horaTransfer||'', tipo: 'transporte', icon: ic,
       titulo: isLoc ? (r.locadora||'Locação') + ' – ' + (r.categoria||'') : abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal),
       meta: [r.retData ? fmtDate(r.retData) : '', r.horaTransfer||'', isLoc ? (r.devData?'Dev: '+fmtDate(r.devData):'') : '', r.locadora||'', r.pax ? r.pax+' pax' : ''].filter(Boolean).join(' · '),
       badge: r.conf ? 'Conf: '+r.conf : ''
@@ -4278,7 +4278,7 @@ function rgGerarPrevia(v) {
   // Passeios
   resViagem.filter(function(r){ return r.tipo==='passeio'; }).forEach(function(r){
     eventos.push({
-      data: r.passeioData || '', tipo: 'passeio', icon: '🎯',
+      data: r.passeioData || '', hora: r.passeioHora||'', tipo: 'passeio', icon: '🎯',
       titulo: r.passeioNome || 'Passeio',
       meta: [r.passeioData ? fmtDate(r.passeioData) : '', r.passeioHora||'', r.passeioOp||'', r.passeioPax ? r.passeioPax+' pax' : ''].filter(Boolean).join(' · '),
       badge: r.passeioConf ? 'Conf: '+r.passeioConf : ''
@@ -4290,7 +4290,14 @@ function rgGerarPrevia(v) {
     if (!a.data && !b.data) return 0;
     if (!a.data) return 1;
     if (!b.data) return -1;
-    return a.data < b.data ? -1 : a.data > b.data ? 1 : 0;
+    if (a.data !== b.data) return a.data < b.data ? -1 : 1;
+    // Mesma data: desempatar por horário de partida
+    var ha = a.hora || '';
+    var hb = b.hora || '';
+    if (ha && hb) return ha < hb ? -1 : ha > hb ? 1 : 0;
+    if (ha) return -1;
+    if (hb) return 1;
+    return 0;
   });
 
   if (!eventos.length) {
