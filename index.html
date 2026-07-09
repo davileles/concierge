@@ -1400,16 +1400,41 @@ function saveReservas() {
   .then(function(d){ if(!d.ok) throw new Error(d.erro||'Erro desconhecido'); return true; });
 }
 
-function syncReservas() {
-  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas')
-    .then(function(r){return r.json();})
-    .then(function(d){
-      if(d.ok){
-        reservas = d.data || [];
+function syncReservasGitHub(callback) {
+  var token = window._ghToken || '';
+  var url = 'https://api.github.com/repos/davileles/concierge/contents/reservas.json';
+  fetch(url, { headers: { 'Authorization': 'token '+token, 'Accept': 'application/vnd.github.raw+json' } })
+    .then(function(r) {
+      if (!r.ok) throw new Error('GitHub API status ' + r.status);
+      // GitHub retorna JSON cru com Accept raw
+      return r.json();
+    })
+    .then(function(d) {
+      if (Array.isArray(d)) {
+        reservas = d;
         renderReservas();
+        if (callback) callback();
       }
     })
-    .catch(function(e){console.error('[syncReservas]',e);});
+    .catch(function(e) { console.error('[syncReservas GitHub fallback]', e); });
+}
+
+function syncReservas() {
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok && d.data && d.data.length >= 0) {
+        reservas = d.data || [];
+        renderReservas();
+      } else {
+        console.warn('[syncReservas] proxy ok=false ou data vazio — usando fallback GitHub');
+        syncReservasGitHub();
+      }
+    })
+    .catch(function(e){
+      console.error('[syncReservas] proxy falhou — usando fallback GitHub:', e.message);
+      syncReservasGitHub();
+    });
 }
 
 // ══════════════════════════════════════════
@@ -3102,11 +3127,39 @@ function saveViagens() {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:viagens})}).catch(function(e){console.error('[saveViagens]',e);});
 }
 
+function syncViagensGitHub() {
+  var token = window._ghToken || '';
+  var url = 'https://api.github.com/repos/davileles/concierge/contents/viagens.json';
+  fetch(url, { headers: { 'Authorization': 'token '+token, 'Accept': 'application/vnd.github.raw+json' } })
+    .then(function(r) {
+      if (!r.ok) throw new Error('GitHub API status ' + r.status);
+      return r.json();
+    })
+    .then(function(d) {
+      if (Array.isArray(d)) {
+        viagens = d;
+        renderViagens();
+      }
+    })
+    .catch(function(e) { console.error('[syncViagens GitHub fallback]', e); });
+}
+
 function syncViagens() {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens')
-    .then(function(r){return r.json();})
-    .then(function(d){if(d.ok){viagens=d.data||[];renderViagens();}})
-    .catch(function(e){console.error('[syncViagens]',e);});
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok && d.data && d.data.length >= 0) {
+        viagens = d.data || [];
+        renderViagens();
+      } else {
+        console.warn('[syncViagens] proxy ok=false — usando fallback GitHub');
+        syncViagensGitHub();
+      }
+    })
+    .catch(function(e){
+      console.error('[syncViagens] proxy falhou — usando fallback GitHub:', e.message);
+      syncViagensGitHub();
+    });
 }
 
 // ── MULTI-SELECT CLIENTES ──
