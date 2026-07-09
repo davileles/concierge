@@ -1878,6 +1878,25 @@ function salvarReserva() {
         if (realIdx !== -1) {
           v.atividades[realIdx].reservaId = res.id;
           v.atividades[realIdx].status = 'concluida';
+          // Sobrescrever título com dados da reserva (igual ao fluxo pela tela de viagem)
+          var tituloGerado = (function(r) {
+            if (!r) return '';
+            if (r.tipo === 'voo') {
+              var ori = r.origem || '?', dst = r.destino || '?';
+              var dIda = r.dataIda ? ' · ' + fmtDate(r.dataIda) : '';
+              if (r.dataVolta) return ori + ' ⇄ ' + dst + dIda + ' a ' + fmtDate(r.dataVolta);
+              return ori + ' → ' + dst + dIda;
+            }
+            if (r.tipo === 'hotel') {
+              var nomeH = r.hotelNome || r.destino || 'Hotel';
+              var ci = r.checkin ? fmtDate(r.checkin) : null;
+              var co = r.checkout ? fmtDate(r.checkout) : null;
+              if (ci && co) return nomeH + ' · ' + ci + ' a ' + co;
+              return nomeH;
+            }
+            return r.passeioNome || r.locadora || '';
+          })(res);
+          if (tituloGerado) v.atividades[realIdx].titulo = tituloGerado;
         }
       } else {
         // Criar NOVA atividade na viagem
