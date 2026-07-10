@@ -1850,12 +1850,32 @@ function salvarReserva() {
 
   // Validações específicas para voo
   if (tipo === 'voo') {
-    if (!getVal('f-origem'))       { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
-    if (!getVal('f-destino'))      { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
-    if (!getVal('f-data-ida'))     { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
-    if (!getVal('f-hora-partida')) { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
-    if (!getVal('f-hora-chegada')) { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
-    if (!getVal('f-tipo-emissao')) { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+    // Ida — obrigatórios
+    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
+    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
+    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
+    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
+    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
+    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
+    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
+    var _vOrigem    = getVal('f-origem-volta');
+    var _vDestino   = getVal('f-destino-volta');
+    var _vDataPart  = getVal('f-data-volta');
+    var _vHoraPart  = getVal('f-hora-partida-volta');
+    var _vDataCheg  = getVal('f-data-chegada-volta');
+    var _vHoraCheg  = getVal('f-hora-chegada-volta');
+    var _vCia       = getVal('f-cia-volta');
+    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
+    if (_voltaPreenchida) {
+      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
+      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
+      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
+      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
+      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
+      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
+      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
+    }
   }
 
   var id = 'RES-' + Date.now();
