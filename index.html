@@ -374,7 +374,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="field">
         <label>Cliente <span style="color:var(--accent)">*</span></label>
-        <select id="f-cliente">
+        <select id="f-cliente" onchange="populateViagemAssocSelect()">
           <option value="">Selecione o cliente…</option>
         </select>
       </div>
@@ -2058,20 +2058,14 @@ function salvarReserva() {
         });
         v.atividades = sortAtividades(v.atividades);
       }
-      // Adicionar reserva ao array local ANTES de renderViagens para o link aparecer
-      reservas.push(res);
       saveViagens();
-      renderReservas();
-      showToast('✅ Reserva salva e vinculada à viagem!', 'ok');
     }
-  } else {
-    showToast('✅ Reserva salva com sucesso!', 'ok');
-    reservas.push(res);
-    renderReservas();
   }
 
+  var _comViagem = !!viagemId;
   saveReservas()
     .then(function(){
+      showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
       updateStats();
       renderReservas();
       limparForm();
