@@ -683,6 +683,69 @@ header{animation:fadeUp .45s ease both}
             </select>
           </div>
         </div>
+        <div class="g2">
+          <div class="field"><label>Horário de Retirada</label><input type="time" id="f-loc-hora-ret"/></div>
+          <div class="field"><label>Horário de Devolução</label><input type="time" id="f-loc-hora-dev"/></div>
+        </div>
+        <div class="sep" style="margin:12px 0 14px"></div>
+        <div class="field"><label>Tipo de Emissão <span style="color:var(--accent)">*</span></label>
+          <select id="f-loc-tipo-emissao" onchange="onLocTipoEmissaoChange()">
+            <option value="">Selecione…</option>
+            <option value="dinheiro">Dinheiro</option>
+            <option value="milhas">Milhas</option>
+            <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
+          </select>
+        </div>
+        <!-- LOCAÇÃO: DINHEIRO -->
+        <div id="loc-campos-dinheiro" style="display:none">
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-dinheiro" placeholder="Ex: 1.200,00"/></div>
+        </div>
+        <!-- LOCAÇÃO: MILHAS -->
+        <div id="loc-campos-milhas" style="display:none">
+          <div class="g2">
+            <div class="field"><label>Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-milhas" placeholder="Ex: 25.000"/></div>
+            <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+              <select id="f-loc-programa-milhas">
+                <option value="">Selecione…</option>
+                <option>AAdvantage</option><option>Azul Fidelidade</option>
+                <option>Esfera</option><option>Executive Club</option>
+                <option>Finnair Plus</option><option>Iberia Plus</option>
+                <option>LATAM Pass</option><option>Livelo</option>
+                <option>Privilege Club</option><option>Smiles</option>
+                <option>SUMA</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <!-- LOCAÇÃO: DINHEIRO C/ ACÚMULO -->
+        <div id="loc-campos-acumulo" style="display:none">
+          <div class="g2">
+            <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-acumulo" placeholder="Ex: 1.200,00"/></div>
+            <div class="field"><label>Milhas a Receber <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-milhas-acumulo" placeholder="Ex: 3.000"/></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+              <select id="f-loc-programa-acumulo">
+                <option value="">Selecione…</option>
+                <option>AAdvantage</option><option>Azul Fidelidade</option>
+                <option>Esfera</option><option>Executive Club</option>
+                <option>Finnair Plus</option><option>Iberia Plus</option>
+                <option>LATAM Pass</option><option>Livelo</option>
+                <option>Privilege Club</option><option>Smiles</option>
+                <option>SUMA</option>
+              </select>
+            </div>
+            <div class="field"><label>Parceiro <span style="color:var(--accent)">*</span></label>
+              <select id="f-loc-parceiro-acumulo">
+                <option value="">Selecione o parceiro…</option>
+                <option>Alamo</option><option>Avis</option><option>Budget</option>
+                <option>Europcar</option><option>Hertz</option>
+                <option>Localiza Rent a Car</option><option>Movida</option>
+                <option>Rentcars</option><option>Unidas</option><option>Outro</option>
+              </select>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1556,6 +1619,7 @@ function limparForm() {
    'f-hotel-valor-dinheiro',
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
+   'f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-obs','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
@@ -1566,6 +1630,9 @@ function limparForm() {
   if (btnCancelar) btnCancelar.style.display = 'none';
   onTipoChange(false);
   selectSubtipo('transfer');
+  ['loc-campos-dinheiro','loc-campos-milhas','loc-campos-acumulo'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   var ac = document.getElementById('hotel-campos-acumulo');
   if (ac) ac.style.display = 'none';
   var hm = document.getElementById('hotel-campos-milhas');
@@ -1974,6 +2041,20 @@ function salvarReserva() {
         valor: getVal('f-carro-valor'), conf: getVal('f-carro-conf'),
         seguro: getVal('f-seguro'),
       });
+      if (subtipo === 'locacao') {
+        Object.assign(res, {
+          horaRetirada: getVal('f-loc-hora-ret'),
+          horaDevolucao: getVal('f-loc-hora-dev'),
+          tipoEmissao: getVal('f-loc-tipo-emissao'),
+          valorDinheiro: getVal('f-loc-valor-dinheiro'),
+          valorMilhas: getVal('f-loc-valor-milhas'),
+          programaMilhas: getVal('f-loc-programa-milhas'),
+          valorAcumulo: getVal('f-loc-valor-acumulo'),
+          milhasAcumulo: getVal('f-loc-milhas-acumulo'),
+          programaAcumulo: getVal('f-loc-programa-acumulo'),
+          parceiroAcumulo: getVal('f-loc-parceiro-acumulo'),
+        });
+      }
   } else if (tipo === 'passeio') {
     Object.assign(res, {
       passeioNome: getVal('f-passeio-nome'), destino: getVal('f-passeio-dest'),
@@ -2185,8 +2266,8 @@ function resCols(r) {
     if (r.subtipo === 'locacao') return [
       ['Cliente', toTitleCase(r.cliente)],
       ['Locadora', r.locadora||'—'],
-      ['Retirada', (r.retLocal||'—')+' · '+fmtDate(r.retData)],
-      ['Devolução', (r.devLocal||'—')+' · '+fmtDate(r.devData)],
+      ['Retirada', (r.retLocal||'—')+' · '+fmtDate(r.retData)+(r.horaRetirada?' '+r.horaRetirada:'')],
+      ['Devolução', (r.devLocal||'—')+' · '+fmtDate(r.devData)+(r.horaDevolucao?' '+r.horaDevolucao:'')],
       ['Confirmação', r.conf||'—'],
     ];
     return [
@@ -2449,8 +2530,20 @@ function editarReserva(id) {
     setVal('f-carro-valor',r.valor); setVal('f-carro-conf',r.conf);
     setVal('f-seguro',r.seguro);
     setVal('f-transfer-hora',r.horaTransfer); setVal('f-transfer-pax',r.pax);
-    if (r.subtipo === 'locacao') setVal('f-carro-cat-loc',r.categoria);
-    else setVal('f-carro-cat',r.categoria);
+    if (r.subtipo === 'locacao') {
+      setVal('f-carro-cat-loc',r.categoria);
+      setVal('f-loc-hora-ret',r.horaRetirada||'');
+      setVal('f-loc-hora-dev',r.horaDevolucao||'');
+      setVal('f-loc-tipo-emissao',r.tipoEmissao||'');
+      onLocTipoEmissaoChange();
+      setVal('f-loc-valor-dinheiro',r.valorDinheiro||'');
+      setVal('f-loc-valor-milhas',r.valorMilhas||'');
+      setVal('f-loc-programa-milhas',r.programaMilhas||'');
+      setVal('f-loc-valor-acumulo',r.valorAcumulo||'');
+      setVal('f-loc-milhas-acumulo',r.milhasAcumulo||'');
+      setVal('f-loc-programa-acumulo',r.programaAcumulo||'');
+      setVal('f-loc-parceiro-acumulo',r.parceiroAcumulo||'');
+    } else setVal('f-carro-cat',r.categoria);
   } else if (r.tipo==='passeio'){
     setVal('f-passeio-nome',r.passeioNome); setVal('f-passeio-dest',r.destino);
     setVal('f-passeio-op',r.operadora); setVal('f-passeio-data',r.dataPasseio);
@@ -3161,6 +3254,20 @@ function onTipoEmissaoChange() {
   if (tipo !== 'dinheiro')         setVal('f-valor-dinheiro','');
   if (tipo !== 'dinheiro_acumulo') { setVal('f-valor-acumulo',''); setVal('f-programa-acumulo-voo',''); setVal('f-fator-acumulo',''); setVal('f-milhas-acumulo',''); setVal('f-pax-acumulo',''); }
   if (tipo !== 'balcao')           { setVal('f-programa-balcao',''); setVal('f-pax-balcao',''); setVal('f-valor-total-balcao',''); setVal('f-valor-pax-balcao',''); }
+}
+
+function onLocTipoEmissaoChange() {
+  var tipo = getVal('f-loc-tipo-emissao');
+  ['loc-campos-dinheiro','loc-campos-milhas','loc-campos-acumulo'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
+  if (tipo === 'dinheiro')         { var el = document.getElementById('loc-campos-dinheiro'); if (el) el.style.display = ''; }
+  if (tipo === 'milhas')           { var el = document.getElementById('loc-campos-milhas');   if (el) el.style.display = ''; }
+  if (tipo === 'dinheiro_acumulo') { var el = document.getElementById('loc-campos-acumulo');  if (el) el.style.display = ''; }
+  // Limpar ao trocar
+  if (tipo !== 'dinheiro')         setVal('f-loc-valor-dinheiro','');
+  if (tipo !== 'milhas')           { setVal('f-loc-valor-milhas',''); setVal('f-loc-programa-milhas',''); }
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-loc-valor-acumulo',''); setVal('f-loc-milhas-acumulo',''); setVal('f-loc-programa-acumulo',''); setVal('f-loc-parceiro-acumulo',''); }
 }
 
 function onHotelTipoEmissaoChange() {
