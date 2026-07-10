@@ -658,7 +658,7 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label id="lbl-fornecedor">Fornecedor / Operadora</label><input type="text" id="f-locadora" placeholder="Ex: Vem Me Buscar, Uber"/></div>
         <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-carro-valor" placeholder="Ex: 1.200,00"/></div>
       </div>
-      <div class="g2">
+      <div class="g2" id="campos-carro-data-comum">
         <div class="field"><label id="lbl-ret-data">Data <span style="color:var(--accent)">*</span></label><input type="date" id="f-ret-data"/></div>
         <div class="field"><label>Confirmação / Voucher</label><input type="text" id="f-carro-conf" placeholder="Ex: TRF-001 ou LOC-987654"/></div>
       </div>
@@ -3226,6 +3226,8 @@ function selectSubtipo(subtipo) {
   var elL = document.getElementById('campos-locacao-extra');
   if (elT) elT.style.display = isLocacao ? 'none' : '';
   if (elL) elL.style.display = isLocacao ? '' : 'none';
+  var elDC = document.getElementById('campos-carro-data-comum');
+  if (elDC) elDC.style.display = isLocacao ? 'none' : '';
   // Sincronizar campo data ao entrar em locação
   if (isLocacao) {
     var rdLoc = document.getElementById('f-ret-data-loc');
