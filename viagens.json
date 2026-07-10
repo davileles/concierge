@@ -170,13 +170,13 @@
         "pos": 30
       },
       {
-        "icon": "💳",
-        "nome": "Ativação Seguro Cartão",
-        "titulo": "",
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "VCP → CNF · 27/07/2026",
         "descricao": "",
-        "status": "pendente",
-        "reservaId": null,
-        "pos": 60
+        "pos": 40,
+        "status": "concluida",
+        "reservaId": "RES-1783688664699"
       },
       {
         "icon": "🏨",
@@ -188,13 +188,22 @@
         "pos": 50
       },
       {
+        "icon": "💳",
+        "nome": "Ativação Seguro Cartão",
+        "titulo": "",
+        "descricao": "",
+        "status": "pendente",
+        "reservaId": null,
+        "pos": 60
+      },
+      {
         "icon": "✈️",
         "nome": "Passagem Doméstica",
         "titulo": "VCP → CNF · 27/07/2026",
         "descricao": "",
-        "pos": 40,
+        "pos": 70,
         "status": "concluida",
-        "reservaId": "RES-1783688664699"
+        "reservaId": "RES-1783688871885"
       }
     ],
     "cadastro": "2026-07-06",
