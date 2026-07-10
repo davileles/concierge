@@ -2026,6 +2026,33 @@ function salvarReserva() {
         } else if (res.tipo === 'passeio') {
           nomeAtiv = 'Passeio/Atividade'; iconAtiv = '🎯';
         }
+        // Calcular pos cronológico para inserir na posição correta
+        var _dataRes = res.dataIda || res.checkin || res.retData || res.dataTransfer || res.dataPasseio || '';
+        var _posNova = (function(ativs, dataRes) {
+          // Mapear atividades com data (via reserva vinculada) e pos
+          var comPos = ativs.filter(function(a){ return a.pos !== undefined && a.pos !== null; });
+          if (!comPos.length || !dataRes) return 0;
+          // Ordenar por pos
+          var sorted = comPos.slice().sort(function(a,b){ return a.pos - b.pos; });
+          // Encontrar a data de cada atividade via reservaId
+          var getDataAtiv = function(a) {
+            if (!a.reservaId) return null;
+            var r = reservas.find(function(x){ return x.id === a.reservaId; });
+            if (!r) return null;
+            return r.dataIda || r.checkin || r.retData || r.dataTransfer || r.dataPasseio || null;
+          };
+          // Inserir antes da primeira atividade com data >= dataRes
+          for (var si = 0; si < sorted.length; si++) {
+            var dAtiv = getDataAtiv(sorted[si]);
+            if (dAtiv && dAtiv > dataRes) {
+              // Inserir antes desta: pos = média entre anterior e atual
+              var posAntes = si > 0 ? sorted[si-1].pos : sorted[si].pos - 10;
+              return (posAntes + sorted[si].pos) / 2;
+            }
+          }
+          // Inserir depois de todas com data: pos = último pos + 10
+          return sorted[sorted.length - 1].pos + 10;
+        })(v.atividades, _dataRes);
         v.atividades.push({
           icon: iconAtiv,
           nome: nomeAtiv,
@@ -2053,6 +2080,7 @@ function salvarReserva() {
             return r.passeioNome || r.locadora || '';
           })(res),
           descricao: '',
+          pos: _posNova,
           status: 'concluida',
           reservaId: res.id
         });
