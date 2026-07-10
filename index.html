@@ -4789,7 +4789,10 @@ async function rgPublicar() {
   var htmlGerado = rgGerarHTML(data);
   rgSetStatus('⏳ Publicando roteiro no GitHub…','info');
   try {
-    var _tok = (getCfg().ghToken || window._ghToken || '').trim();
+    // Sanitizar token: remover espaços, quebras de linha e caracteres não-ASCII
+    var _tok = (getCfg().ghToken || window._ghToken || '')
+      .replace(/[^\x20-\x7E]/g, '')  // apenas ASCII imprimível
+      .trim();
     if (!_tok) return rgSetStatus('❌ Configure o GitHub Token na aba Configuração antes de publicar.','err');
     var caminho = slug+'/index.html';
     var shaResp = await fetch('https://api.github.com/repos/davileles/roteiros/contents/'+caminho, {
