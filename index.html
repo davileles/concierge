@@ -944,6 +944,10 @@ header{animation:fadeUp .45s ease both}
     <div class="field">
       <label>URL do Servidor Baileys (Railway)</label>
       <input type="text" id="cfg-baileys" placeholder="https://seu-servidor.railway.app" oninput="saveCfg()"/>
+      </div>
+      <div class="field">
+        <label>GitHub Token <span class="tag">para publicar roteiros</span></label>
+        <input type="password" id="cfg-gh-token" placeholder="Cole aqui seu Personal Access Token" oninput="saveCfg()" autocomplete="new-password" style="font-family:monospace;font-size:12px"/>
     </div>
     <div class="field">
       <label>Nome da aba de clientes na planilha</label>
@@ -1425,6 +1429,9 @@ function _applyCfg(c) {
   setVal('cfg-col-grupo',         c.colGrupo        || 'O');
   setVal('cfg-linha',             c.linha           || '2');
   setVal('cfg-baileys',           c.baileys         || '');
+  setVal('cfg-gh-token',          c.ghToken         || '');
+  // Atualizar token para uso imediato
+  window._ghToken = c.ghToken || '';
   document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
 }
 
@@ -1448,7 +1455,8 @@ function saveCfg() {
     colAcompanhantes: getVal('cfg-col-acompanhantes').toUpperCase() || 'N',
     colGrupo:         getVal('cfg-col-grupo').toUpperCase()         || 'O',
     linha:            getVal('cfg-linha') || '2',
-    baileys:          getVal('cfg-baileys')
+    baileys:          getVal('cfg-baileys'),
+    ghToken:          getVal('cfg-gh-token')
   };
   _cfg = c;
   fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg', {
@@ -4376,8 +4384,8 @@ window.addEventListener('DOMContentLoaded', function(){
 //  GERADOR DE ROTEIRO
 // ════════════════════════════════════════════════════════════════
 var rgDias = [];
-var _RG_TOKEN = atob('Z2l0aHViX3BhdF8xMUFQVENTU1EweVQyeEJIcjZQTFJOX2xjS3ZLRFJBWDkyVlRITFM1VWpDZEtDNUxRbGNLanp6Tm5HOXVYc1MwMEpKU0czM0ZLWUVMYk5tdGlhSw==');
-window._ghToken = _RG_TOKEN;
+// Token GitHub vem da configuração do usuário (aba Configuração → GitHub Token)
+window._ghToken = '';
 
 function rgPopularSelect() {
   loadViagens();
