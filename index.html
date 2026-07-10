@@ -4385,7 +4385,7 @@ window.addEventListener('DOMContentLoaded', function(){
 // ════════════════════════════════════════════════════════════════
 var rgDias = [];
 // Token GitHub vem da configuração do usuário (aba Configuração → GitHub Token)
-window._ghToken = '';
+// window._ghToken é setado por _applyCfg() ao carregar as configurações
 
 function rgPopularSelect() {
   loadViagens();
@@ -4789,16 +4789,18 @@ async function rgPublicar() {
   var htmlGerado = rgGerarHTML(data);
   rgSetStatus('⏳ Publicando roteiro no GitHub…','info');
   try {
+    var _tok = (getCfg().ghToken || window._ghToken || '').trim();
+    if (!_tok) return rgSetStatus('❌ Configure o GitHub Token na aba Configuração antes de publicar.','err');
     var caminho = slug+'/index.html';
     var shaResp = await fetch('https://api.github.com/repos/davileles/roteiros/contents/'+caminho, {
-      headers:{'Authorization':'token '+window._ghToken+''}
+      headers:{'Authorization':'token '+_tok}
     });
     var shaData = shaResp.ok ? await shaResp.json() : null;
     var body = {message:'roteiro: '+data.titulo+' ('+slug+')', content:btoa(unescape(encodeURIComponent(htmlGerado)))};
     if (shaData && shaData.sha) body.sha = shaData.sha;
     var putResp = await fetch('https://api.github.com/repos/davileles/roteiros/contents/'+caminho, {
       method:'PUT',
-      headers:{'Authorization':'token '+window._ghToken+'','Content-Type':'application/json'},
+      headers:{'Authorization':'token '+_tok,'Content-Type':'application/json'},
       body: JSON.stringify(body)
     });
     if (!putResp.ok) throw new Error('PUT falhou: '+(await putResp.text()));
