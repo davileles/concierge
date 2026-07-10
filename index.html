@@ -2103,7 +2103,7 @@ function salvarReserva() {
               return nomeH;
             }
             if (r.tipo === 'carro') {
-              if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + fmtDate(r.retData);
+              if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
               var ic3 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt2 = r.retData ? ' · ' + fmtDate(r.retData) : '';
               return ic3 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt2;
@@ -2173,7 +2173,7 @@ function salvarReserva() {
               return nome;
             }
             if (r.tipo === 'carro') {
-              if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + fmtDate(r.retData);
+              if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
               var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
               return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
@@ -2232,7 +2232,7 @@ function resTitle(r) {
   }
   if (r.tipo==='hotel')   return r.hotelNome || r.destino || 'Hotel';
   if (r.tipo==='carro') {
-    if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + (r.categoria||'Veículo');
+    if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
     var ic = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
     return ic + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal);
   }
@@ -4139,7 +4139,7 @@ function confirmarVinculo() {
               return nome;
             }
             if (r.tipo === 'carro') {
-              if (r.subtipo === 'locacao') return (r.locadora||'Locadora') + ' – ' + fmtDate(r.retData);
+              if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
               var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
               return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
