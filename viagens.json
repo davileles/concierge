@@ -143,15 +143,6 @@
         "pos": 0
       },
       {
-        "icon": "✈️",
-        "nome": "Passagem Doméstica",
-        "titulo": "BLQ → OPO · 26/07/2026",
-        "descricao": "",
-        "status": "concluida",
-        "reservaId": "RES-1783687019084",
-        "pos": 25
-      },
-      {
         "icon": "🌍",
         "nome": "Passagem Internacional",
         "titulo": "GRU → MAD · 18/07/2026",
@@ -161,13 +152,31 @@
         "pos": 10
       },
       {
+        "icon": "✈️",
+        "nome": "Passagem Internacional",
+        "titulo": "MAD → AHO · 19/07/2026",
+        "descricao": "",
+        "pos": 20,
+        "status": "concluida",
+        "reservaId": "RES-1783688619940"
+      },
+      {
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "BLQ → OPO · 26/07/2026",
+        "descricao": "",
+        "status": "concluida",
+        "reservaId": "RES-1783687019084",
+        "pos": 30
+      },
+      {
         "icon": "💳",
         "nome": "Ativação Seguro Cartão",
         "titulo": "",
         "descricao": "",
         "status": "pendente",
         "reservaId": null,
-        "pos": 50
+        "pos": 60
       },
       {
         "icon": "🏨",
@@ -176,7 +185,16 @@
         "descricao": "",
         "status": "pendente",
         "reservaId": null,
-        "pos": 60
+        "pos": 50
+      },
+      {
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "VCP → CNF · 27/07/2026",
+        "descricao": "",
+        "pos": 40,
+        "status": "concluida",
+        "reservaId": "RES-1783688664699"
       }
     ],
     "cadastro": "2026-07-06",
