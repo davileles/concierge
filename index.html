@@ -2229,8 +2229,7 @@ function salvarReserva() {
       switchTab('reservas');
       // Upload do arquivo em background — completamente isolado da chain de saveReservas
       if (_base64Upload && _metaUpload) {
-        var _proxy = (getCfg().proxy || '').replace(/\/+$/, '');
-        fetch(_proxy + '/concierge/arquivo', {
+        fetch('https://cdv-proxy-production.up.railway.app/concierge/arquivo', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ reservaId: _resId, base64: _base64Upload, mediaType: _metaUpload.tipo, nome: _metaUpload.nome })
@@ -2501,9 +2500,8 @@ function verArquivoAnexo(id) {
     }
     return;
   }
-  var proxy = (getCfg().proxy || '').replace(/\/+$/, '');
   showToast('⏳ Carregando arquivo…', 'ok');
-  fetch(proxy + '/concierge/arquivo/' + encodeURIComponent(id))
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/arquivo/' + encodeURIComponent(id))
     .then(function(res){
       if (!res.ok) throw new Error('Proxy retornou HTTP ' + res.status + '. Faça o redeploy no Railway.');
       return res.json();
