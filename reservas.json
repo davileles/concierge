@@ -1,5 +1,35 @@
 [
   {
+    "id": "RES-1783803709389",
+    "tipo": "hotel",
+    "cliente": "Maria Alice",
+    "obs": "",
+    "cadastro": "2026-07-11",
+    "arquivoAnexo": {
+      "nome": "Mercure Hotel Muenchen City Center 31-07 a 02-08.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 82839,
+      "base64": null
+    },
+    "temArquivo": true,
+    "hotelNome": "Mercure Hotel Muenchen City Center",
+    "destino": "MUC",
+    "checkin": "2026-07-31",
+    "checkout": "2026-08-02",
+    "noites": "2",
+    "conf": "202-9059440",
+    "hospedes": "2",
+    "tipoEmissao": "milhas",
+    "valorMilhas": "123517",
+    "programaMilhas": "Azul Fidelidade",
+    "valorDinheiro": "",
+    "valorAcumulo": "",
+    "fatorAcumulo": "",
+    "milhasAcumulo": "",
+    "programaAcumulo": "",
+    "parceiroAcumulo": ""
+  },
+  {
     "id": "RES-1783802674718",
     "tipo": "carro",
     "cliente": "Maria Alice",
