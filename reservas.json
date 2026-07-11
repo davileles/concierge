@@ -1,5 +1,30 @@
 [
   {
+    "id": "RES-1783801171399",
+    "tipo": "carro",
+    "cliente": "Maria Alice",
+    "obs": "",
+    "cadastro": "2026-07-11",
+    "arquivoAnexo": {
+      "nome": "Ferry - Amalfi-Salerno - 06-08.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 66718,
+      "base64": null
+    },
+    "subtipo": "ferry",
+    "locadora": "Travelmar",
+    "retLocal": "Amalfi",
+    "devLocal": "Salerno Concordia",
+    "retData": "2026-08-06",
+    "devData": "",
+    "categoria": "Ferry",
+    "horaTransfer": "",
+    "pax": "",
+    "valor": "24.00",
+    "conf": "TRB2638167",
+    "seguro": ""
+  },
+  {
     "id": "RES-1783800984251",
     "tipo": "carro",
     "cliente": "Maria Alice",
