@@ -666,6 +666,7 @@ header{animation:fadeUp .45s ease both}
       <div id="campos-transfer-extra">
         <div class="g3">
           <div class="field"><label id="lbl-hora-transp">Horário de Partida</label><input type="time" id="f-transfer-hora"/></div>
+          <div class="field" id="campo-hora-chegada-transp" style="display:none"><label>Horário de Chegada</label><input type="time" id="f-transfer-hora-chegada"/></div>
           <div class="field"><label>Nº de Passageiros</label><input type="number" id="f-transfer-pax" min="1" placeholder="Ex: 2"/></div>
           <div class="field"><label id="lbl-classe-transp">Tipo de Veículo <span class="tag">opcional</span></label><input type="text" id="f-carro-cat" placeholder="Ex: Van, Sedan"/></div>
         </div>
@@ -1635,6 +1636,7 @@ function limparForm() {
    'f-hotel-valor-dinheiro',
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
+   'f-transfer-hora','f-transfer-hora-chegada','f-transfer-pax',
    'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-hotel-fator-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -2054,8 +2056,9 @@ function salvarReserva() {
         retLocal: getVal('f-ret-local'), devLocal: getVal('f-dev-local'),
         retData: getVal('f-ret-data'), devData: getVal('f-dev-data'),
         categoria: subtipo === 'locacao' ? getVal('f-carro-cat-loc') : getVal('f-carro-cat'),
-        horaTransfer: subtipo === 'transfer' ? getVal('f-transfer-hora') : '',
-        pax: subtipo === 'transfer' ? getVal('f-transfer-pax') : '',
+        horaTransfer: getVal('f-transfer-hora'),
+        horaChegadaTransp: (subtipo === 'trem' || subtipo === 'onibus' || subtipo === 'ferry') ? getVal('f-transfer-hora-chegada') : '',
+        pax: getVal('f-transfer-pax'),
         valor: getVal('f-carro-valor'), conf: getVal('f-carro-conf'),
         seguro: getVal('f-seguro'),
       });
@@ -2292,7 +2295,7 @@ function resCols(r) {
     return [
       ['Cliente', toTitleCase(r.cliente)],
       ['Origem → Destino', (r.retLocal||'?')+' → '+(r.devLocal||'?')],
-      ['Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')],
+      ['Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')+(r.horaChegadaTransp?' → '+r.horaChegadaTransp:'')],
       ['Fornecedor', r.locadora||'—'],
       ['Confirmação', r.conf||'—'],
     ];
@@ -2549,7 +2552,7 @@ function editarReserva(id) {
     setVal('f-ret-data',r.retData); setVal('f-dev-data',r.devData);
     setVal('f-carro-valor',r.valor); setVal('f-carro-conf',r.conf);
     setVal('f-seguro',r.seguro);
-    setVal('f-transfer-hora',r.horaTransfer); setVal('f-transfer-pax',r.pax);
+    setVal('f-transfer-hora',r.horaTransfer); setVal('f-transfer-hora-chegada',r.horaChegadaTransp||''); setVal('f-transfer-pax',r.pax);
     if (r.subtipo === 'locacao') {
       setVal('f-carro-cat-loc',r.categoria);
       setVal('f-ret-data-loc',r.retData||'');
@@ -3261,6 +3264,9 @@ function selectSubtipo(subtipo) {
   if (el('lbl-fornecedor'))   el('lbl-fornecedor').textContent = m.forn;
   if (el('f-locadora'))       el('f-locadora').placeholder     = m.fornPh;
   if (el('lbl-hora-transp'))  el('lbl-hora-transp').textContent = m.hora;
+  // Mostrar Horário de Chegada apenas para trem, ônibus e ferry
+  var elChegada = document.getElementById('campo-hora-chegada-transp');
+  if (elChegada) elChegada.style.display = (subtipo === 'trem' || subtipo === 'onibus' || subtipo === 'ferry') ? '' : 'none';
   if (el('lbl-classe-transp')) el('lbl-classe-transp').innerHTML = m.classe + ' <span class="tag">opcional</span>';
   if (el('f-carro-cat'))      el('f-carro-cat').placeholder    = m.classePh;
   if (el('lbl-ret-data'))     el('lbl-ret-data').innerHTML     = m.data + ' ' + acc;
