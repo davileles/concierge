@@ -2504,7 +2504,10 @@ function verArquivoAnexo(id) {
   var proxy = (getCfg().proxy || '').replace(/\/+$/, '');
   showToast('⏳ Carregando arquivo…', 'ok');
   fetch(proxy + '/concierge/arquivo/' + encodeURIComponent(id))
-    .then(function(res){ return res.json(); })
+    .then(function(res){
+      if (!res.ok) throw new Error('Proxy retornou HTTP ' + res.status + '. Faça o redeploy no Railway.');
+      return res.json();
+    })
     .then(function(data){
       if (!data.ok || !data.arquivos || !data.arquivos.length) {
         showToast('⚠️ Arquivo não encontrado no servidor.', 'err'); return;
