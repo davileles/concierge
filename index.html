@@ -1972,14 +1972,15 @@ function salvarReserva() {
     obs: getVal('f-obs'),
     cadastro: new Date().toISOString().split('T')[0],
   };
-  // Anexar metadados do arquivo (sem base64 — evita reservas.json > 1MB)
+  // Registrar metadados do arquivo na reserva (base64 vai para /concierge/arquivo)
   if (ativoArquivoMeta) {
     res.arquivoAnexo = {
       nome: ativoArquivoMeta.nome,
       tipo: ativoArquivoMeta.tipo,
       tamanho: ativoArquivoMeta.tamanho,
-      base64: null
+      base64: null   // nunca armazenado inline — buscar via /concierge/arquivo/:reservaId
     };
+    res.temArquivo = !!ativoArquivoBase64;
   }
 
   if (tipo === 'voo') {
@@ -2214,8 +2215,38 @@ function salvarReserva() {
   }
 
   var _comViagem = !!viagemId;
+  var _resId = res.id;
   saveReservas()
     .then(function(){
+      // Após salvar a reserva, fazer upload do arquivo (se houver) em background
+      if (ativoArquivoBase64 && ativoArquivoMeta) {
+        var _base64  = ativoArquivoBase64;
+        var _meta    = ativoArquivoMeta;
+        fetch(getCfg().proxy + '/concierge/arquivo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ reservaId: _resId, base64: _base64, mediaType: _meta.tipo, nome: _meta.nome })
+        })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (d.ok) {
+            showToast('✅ Reserva e arquivo salvos!', 'ok');
+            // Marcar reserva como tendo arquivo (sem base64 inline)
+            var idx = reservas.findIndex(function(x){ return x.id === _resId; });
+            if (idx !== -1) {
+              reservas[idx].temArquivo = true;
+              saveReservas().catch(function(){});
+            }
+          } else {
+            showToast('✅ Reserva salva. ⚠️ Falha no arquivo: ' + d.erro, 'err');
+          }
+          renderReservas();
+        })
+        .catch(function(e){
+          showToast('✅ Reserva salva. ⚠️ Falha no arquivo: ' + e.message, 'err');
+          renderReservas();
+        });
+      }
       showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
       updateStats();
       renderReservas();
@@ -2416,7 +2447,7 @@ function renderReservas() {
       '</div>'+
       '<div class="res-card-footer">'+
         '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+' </span>'+
-        (r.arquivoAnexo && r.arquivoAnexo.base64 ? '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎 Ver arquivo</button>' : '')+
+        (r.temArquivo ? '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎 Ver bilhete</button>' : '')+
         '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️ Editar</button>'+
         '<button class="btn btn-danger btn-sm" data-vid="'+r.id+'" onclick="pedirDelete(this.dataset.vid)">🗑 Excluir</button>'+
       '</div>'+
@@ -2457,16 +2488,29 @@ function confirmarDelete() {
 
 function verArquivoAnexo(id) {
   var r = reservas.find(function(x){ return x.id === id; });
-  if (!r || !r.arquivoAnexo || !r.arquivoAnexo.base64) return;
-  var a = r.arquivoAnexo;
-  var dataUrl = 'data:' + (a.tipo || 'application/octet-stream') + ';base64,' + a.base64;
-  var w = window.open('', '_blank');
-  if (!w) { showToast('⚠️ Popup bloqueado. Permita popups para este site.', 'err'); return; }
-  if (a.tipo === 'application/pdf') {
-    w.document.write('<html><body style="margin:0"><iframe src="' + dataUrl + '" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
-  } else {
-    w.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + dataUrl + '" style="max-width:100%;max-height:100vh;object-fit:contain"/></body></html>');
-  }
+  if (!r) return;
+  if (!r.temArquivo) { showToast('⚠️ Nenhum arquivo salvo para esta reserva.', 'err'); return; }
+  var proxy = (getCfg().proxy || '').replace(/\/+$/, '');
+  showToast('⏳ Carregando arquivo…', 'ok');
+  fetch(proxy + '/concierge/arquivo/' + encodeURIComponent(id))
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      if (!data.ok || !data.arquivos || !data.arquivos.length) {
+        showToast('⚠️ Arquivo não encontrado no servidor.', 'err'); return;
+      }
+      // Abrir o primeiro arquivo (suporte a múltiplos futuramente via idx)
+      var a = data.arquivos[0];
+      var dataUrl = 'data:' + (a.mediaType || 'application/octet-stream') + ';base64,' + a.base64;
+      var w = window.open('', '_blank');
+      if (!w) { showToast('⚠️ Popup bloqueado. Permita popups para este site.', 'err'); return; }
+      if (a.mediaType === 'application/pdf') {
+        w.document.write('<html><body style="margin:0"><iframe src="' + dataUrl + '" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
+      } else {
+        w.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + dataUrl + '" style="max-width:100%;max-height:100vh;object-fit:contain"/></body></html>');
+      }
+      w.document.close();
+    })
+    .catch(function(e){ showToast('❌ Erro ao carregar arquivo: ' + e.message, 'err'); });
 }
 
 function editarReserva(id) {
@@ -2575,6 +2619,24 @@ function editarReserva(id) {
     setVal('f-passeio-op',r.operadora); setVal('f-passeio-data',r.dataPasseio);
     setVal('f-passeio-hora',r.hora); setVal('f-passeio-pax',r.pax);
     setVal('f-passeio-conf',r.conf); setVal('f-passeio-valor',r.valor);
+  }
+  // Se a reserva já tem arquivo salvo no servidor, mostrar indicação
+  if (r.temArquivo && r.arquivoAnexo) {
+    var _prevEl = document.getElementById('upload-preview');
+    var _okEl   = document.getElementById('upload-ok');
+    if (_prevEl) {
+      var _icon = (r.arquivoAnexo.tipo||'').indexOf('pdf') !== -1 ? '📄' : '🖼️';
+      _prevEl.style.display = 'flex';
+      _prevEl.innerHTML = '<div class="upload-preview">'
+        + '<span class="upload-preview-icon">' + _icon + '</span>'
+        + '<span class="upload-preview-name">' + (r.arquivoAnexo.nome||'arquivo salvo') + '</span>'
+        + '<span style="font-size:11px;color:#22c55e;flex-shrink:0;font-weight:700">✅ Salvo</span>'
+        + '</div>';
+    }
+    if (_okEl) { _okEl.style.color='#22c55e'; _okEl.textContent='Arquivo salvo no servidor — carregue outro para substituir.'; }
+    // Não há base64 local; se o usuário não carregar um novo, o existente é mantido
+    ativoArquivoBase64 = null;
+    ativoArquivoMeta   = null;
   }
   // Guarda a reserva original para restaurar se o usuário cancelar
   window._reservaEditandoId = id;
