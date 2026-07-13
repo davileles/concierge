@@ -1381,20 +1381,23 @@ header{animation:fadeUp .45s ease both}
      ABA: DEMANDAS
 ════════════════════════════════════════ -->
 <div class="main-panel" id="panel-demandas">
-  <div style="padding:1.2rem 1.5rem .6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
-    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
-      <span style="font-size:15px;font-weight:800;color:var(--text)">📋 Demandas</span>
-      <span class="reservas-count" id="demandas-count-label">0 demandas</span>
+  <div style="padding:1.2rem 1.5rem .8rem;border-bottom:1px solid var(--border)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:15px;font-weight:800;color:var(--text)">📋 Demandas</span>
+        <span class="reservas-count" id="demandas-count-label">0 demandas</span>
+      </div>
+      <button class="btn btn-accent btn-sm" onclick="abrirNovaDemanda()">➕ Nova Demanda</button>
     </div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <select id="dem-filtro-status" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="dem-filtro-status" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex-shrink:0">
         <option value="todas">Todos os status</option>
         <option value="pendente">🔴 Pendente</option>
         <option value="em_andamento">🟡 Em andamento</option>
         <option value="aguardando">🔵 Aguardando</option>
         <option value="concluida">✅ Concluída</option>
       </select>
-      <select id="dem-filtro-tipo" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px">
+      <select id="dem-filtro-tipo" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex-shrink:0">
         <option value="todos">Todos os tipos</option>
         <option value="✈️">✈️ Passagem</option>
         <option value="🏨">🏨 Hotel</option>
@@ -1404,8 +1407,7 @@ header{animation:fadeUp .45s ease both}
         <option value="🎯">🎯 Passeio</option>
         <option value="📌">📌 Outro</option>
       </select>
-      <input type="text" id="dem-busca" placeholder="🔍 Buscar cliente ou demanda…" oninput="renderDemandas()" style="font-size:12px;padding:5px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;min-width:200px"/>
-      <button class="btn btn-accent btn-sm" onclick="abrirNovaDemanda()">➕ Nova Demanda</button>
+      <input type="text" id="dem-busca" placeholder="🔍 Buscar cliente ou demanda…" oninput="renderDemandas()" style="font-size:12px;padding:5px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex:1;min-width:160px"/>
     </div>
   </div>
 
