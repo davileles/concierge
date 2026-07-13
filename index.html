@@ -1082,6 +1082,7 @@ header{animation:fadeUp .45s ease both}
               <option value="voo_volta_d">Somente data de volta</option>
               <option value="checkin">Data de check-in (hotel)</option>
               <option value="viagem">Data de inicio da viagem</option>
+              <option value="primeiro_voo_viagem">✈️ Primeiro voo da viagem</option>
             </select>
           </div>
         </div>
@@ -2995,7 +2996,7 @@ function onModoChange() {
 }
 
 // Gatilhos que usam hora da reserva — não precisam de horário de referência
-var GATILHOS_COM_HORA = { 'voo_ida_dt': true, 'voo_volta_dt': true };
+var GATILHOS_COM_HORA = { 'voo_ida_dt': true, 'voo_volta_dt': true, 'primeiro_voo_viagem': true };
 
 function onGatilhoChange() {
   var gatilho = getVal('m-gatilho');
@@ -3067,10 +3068,11 @@ function renderModelosLista() {
       'voo_volta_d':  'Data de volta',
       'checkin':      'Check-in',
       'viagem':       'Inicio da viagem',
+      'primeiro_voo_viagem': 'Primeiro voo da viagem',
     };
     var tipoBadge = '';
     var modoM = m.modo || (m.gatilho ? 'programado' : 'manual');
-    var GATILHOS_COM_HORA_BADGE = { 'voo_ida_dt': true, 'voo_volta_dt': true };
+    var GATILHOS_COM_HORA_BADGE = { 'voo_ida_dt': true, 'voo_volta_dt': true, 'primeiro_voo_viagem': true };
     if (modoM === 'programado' && m.gatilho && m.antecedencia) {
       var ant = m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes';
       var ref = GATILHO_LABEL[m.gatilho] || m.gatilho;
