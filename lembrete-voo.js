@@ -5,12 +5,13 @@
  * Cada modelo define:
  *   modo: 'manual' | 'programado'
  *   gatilho: qual campo de data usar como referência
- *     'voo_ida_dt'   → dataIda + horaPartida
- *     'voo_ida_d'    → dataIda (00:00)
- *     'voo_volta_dt' → dataVolta + horaPartidaVolta
- *     'voo_volta_d'  → dataVolta (00:00)
- *     'checkin'      → checkin do hotel (14:00)
- *     'viagem'       → dataInicio da viagem (00:00)
+ *     'voo_ida_dt'         → dataIda + horaPartida (por reserva)
+ *     'voo_ida_d'          → dataIda (00:00) (por reserva)
+ *     'voo_volta_dt'       → dataVolta + horaPartidaVolta (por reserva)
+ *     'voo_volta_d'        → dataVolta (00:00) (por reserva)
+ *     'checkin'            → checkin do hotel (14:00)
+ *     'viagem'             → dataInicio da viagem (00:00)
+ *     'primeiro_voo_viagem'→ data+hora do primeiro voo da viagem (por viagem)
  *   antecedencia: { valor: N, unidade: 'dias' | 'horas' }
  *
  * Modelos com modo 'manual' (ou sem modo) são ignorados.
@@ -50,7 +51,7 @@ function deveDisparar(horasRestantes, janela) {
 }
 
 // Gatilhos que usam a hora já registrada na reserva
-const GATILHOS_COM_HORA = new Set(['voo_ida_dt', 'voo_volta_dt']);
+const GATILHOS_COM_HORA = new Set(['voo_ida_dt', 'voo_volta_dt', 'primeiro_voo_viagem']);
 
 // Resolve data+hora alvo. horaRef é o horário de referência configurado no modelo
 // para gatilhos sem hora fixa (ex: '10:00').
@@ -65,6 +66,37 @@ function resolverDataHora(gatilho, horaRef, res, viagem) {
     case 'viagem':       return { data: viagem?.dataInicio, hora: ref,                              tipo: 'viagem' };
     default:             return { data: null, hora: '00:00', tipo: null };
   }
+}
+
+// ── primeiro voo de uma viagem ────────────────────────────────────────────────
+// Retorna { data, hora, reserva } do primeiro voo vinculado à viagem,
+// ou null se não houver voos vinculados.
+function resolverPrimeiroVoo(viagem, reservasMap) {
+  if (!Array.isArray(viagem.atividades)) return null;
+
+  const voosIds = viagem.atividades
+    .filter(a => a.reservaId)
+    .map(a => a.reservaId);
+
+  let melhor = null;
+
+  for (const rid of voosIds) {
+    const res = reservasMap[rid];
+    if (!res || res.tipo !== 'voo' || !res.dataIda) continue;
+    const horaPartida = res.horaPartida || '00:00';
+    if (!melhor) {
+      melhor = { data: res.dataIda, hora: horaPartida, reserva: res };
+      continue;
+    }
+    // Comparar data + hora
+    const dtAtual  = new Date(`${res.dataIda}T${horaPartida}:00-03:00`);
+    const dtMelhor = new Date(`${melhor.data}T${melhor.hora}:00-03:00`);
+    if (dtAtual < dtMelhor) {
+      melhor = { data: res.dataIda, hora: horaPartida, reserva: res };
+    }
+  }
+
+  return melhor;
 }
 
 // ── interpolação ──────────────────────────────────────────────────────────────
@@ -108,8 +140,8 @@ function interpolar(texto, cli, res, viagem) {
   if (viagem) {
     t = rv(t, 'viagem_nome',         viagem.nome        || '');
     t = rv(t, 'viagem_destino',      viagem.destino     || '');
-    t = rv(t, 'viagem_data_inicio',  fmtDateBR(viagem.dataInicio));
-    t = rv(t, 'viagem_data_fim',     fmtDateBR(viagem.dataFim));
+    t = rv(t, 'viagem_data_inicio',  fmtDateBR(viagem.dataInicio || viagem.inicio));
+    t = rv(t, 'viagem_data_fim',     fmtDateBR(viagem.dataFim    || viagem.fim));
     t = rv(t, 'viagem_pax',          viagem.pax         || '');
   }
   return t;
@@ -213,6 +245,12 @@ async function main() {
     ? viagensResp.data
     : (viagensResp.data?.items || []);
 
+  // Mapa de reservas por ID (para lookup eficiente no gatilho primeiro_voo_viagem)
+  const reservasMap = {};
+  for (const res of reservas) {
+    if (res.id) reservasMap[res.id] = res;
+  }
+
   const ativos = modelos.filter(m => m.modo === 'programado' && m.gatilho && m.antecedencia);
 
   if (!ativos.length) {
@@ -233,12 +271,56 @@ async function main() {
   for (const mod of ativos) {
     const janela = antecedenciaEmHoras(mod.antecedencia);
     const key    = flagKey(mod.id);
-    const isViagem = mod.gatilho === 'viagem';
 
     console.log(`\n[${mod.nome}] gatilho=${mod.gatilho} janela=${janela}h`);
 
-    if (isViagem) {
-      // ── Gatilho: início de viagem ──
+    // ── Gatilho: primeiro voo da viagem ────────────────────────────────────
+    if (mod.gatilho === 'primeiro_voo_viagem') {
+      for (const viagem of viagens) {
+        if (viagem[key]) continue; // já enviado para esta viagem
+
+        const primeiroVoo = resolverPrimeiroVoo(viagem, reservasMap);
+        if (!primeiroVoo) {
+          console.log(`  "${viagem.nome}" — sem voos vinculados, ignorando`);
+          continue;
+        }
+
+        const horas = horasAte(primeiroVoo.data, primeiroVoo.hora);
+        console.log(`  "${viagem.nome}" → primeiro voo ${primeiroVoo.data} ${primeiroVoo.hora} → ${horas.toFixed(1)}h`);
+        if (!deveDisparar(horas, janela)) continue;
+
+        const clientesViagem = Array.isArray(viagem.clientes)
+          ? viagem.clientes
+          : (viagem.clientes ? [viagem.clientes] : []);
+
+        let algum = false;
+        for (const nomeCliente of clientesViagem) {
+          const cli = clientes.find(c => c.nome === nomeCliente);
+          if (!cli?.grupo) {
+            console.log(`  ⚠️ Cliente "${nomeCliente}" sem grupo WhatsApp`);
+            continue;
+          }
+          try {
+            // Interpola com contexto da viagem + dados do primeiro voo
+            const msg = interpolar(mod.texto, cli, primeiroVoo.reserva, viagem);
+            await enviarWhatsApp(cli.grupo, msg);
+            algum = true;
+            resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (viagem "${viagem.nome}", primeiro voo ${primeiroVoo.data})`);
+          } catch(e) {
+            resultados.push(`❌ [${mod.nome}] "${nomeCliente}": ${e.message}`);
+            console.error('  ❌', e.message);
+          }
+        }
+        if (algum) {
+          viagem[key] = true;
+          viagem[`${key}Em`] = new Date().toISOString();
+          totalAlteracoes++;
+          viagensAlteradas = true;
+        }
+      }
+
+    // ── Gatilho: início de viagem ──────────────────────────────────────────
+    } else if (mod.gatilho === 'viagem') {
       for (const viagem of viagens) {
         if (!viagem.dataInicio || viagem[key]) continue;
         const { data, hora } = resolverDataHora('viagem', mod.horaRef, null, viagem);
@@ -269,8 +351,9 @@ async function main() {
           viagensAlteradas = true;
         }
       }
+
+    // ── Gatilhos de reserva (voo / hotel) ─────────────────────────────────
     } else {
-      // ── Gatilhos de reserva (voo / hotel) ──
       for (const res of reservas) {
         if (res[key]) continue;
         const { data, hora, tipo } = resolverDataHora(mod.gatilho, mod.horaRef, res, null);
