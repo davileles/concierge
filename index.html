@@ -130,6 +130,28 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .cli-dropdown-item:hover{background:rgba(255,88,94,.1);color:var(--accent)}
 .cli-dropdown-empty{padding:8px 12px;font-size:12px;color:var(--muted);font-style:italic}
 
+
+/* DEMANDAS */
+.demanda-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;transition:border-color .2s,transform .2s}
+.demanda-card:hover{transform:translateY(-1px);border-color:rgba(255,88,94,.3)}
+.demanda-card.prioridade-alta{border-left:3px solid var(--accent)}
+.demanda-header{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;cursor:pointer}
+.demanda-tipo-icon{font-size:22px;flex-shrink:0;line-height:1;margin-top:2px}
+.demanda-info{flex:1;min-width:0}
+.demanda-titulo{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.demanda-meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.demanda-status-badge{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;text-transform:uppercase;letter-spacing:.4px}
+.dem-status-pendente{background:rgba(255,88,94,.15);color:var(--accent)}
+.dem-status-em_andamento{background:rgba(250,200,50,.15);color:#fac832}
+.dem-status-aguardando{background:rgba(90,160,255,.15);color:#5aa0ff}
+.dem-status-concluida{background:rgba(50,200,120,.15);color:#32c878}
+.demanda-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:rgba(255,255,255,.01)}
+.demanda-body.open{display:block}
+.demanda-descricao{font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:12px}
+.demanda-vinculo{font-size:12px;color:var(--accent);background:rgba(255,88,94,.08);padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:12px;cursor:pointer}
+.demanda-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.demanda-numero{font-size:10px;font-weight:700;color:var(--muted);background:var(--surface2);padding:2px 6px;border-radius:6px}
+
 /* VIAGENS */
 .viagem-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:border-color .2s}
 .viagem-card.urgente{border-color:var(--accent)}
@@ -306,6 +328,7 @@ header{animation:fadeUp .45s ease both}
   <button class="main-tab" onclick="switchTab('mensagens')">💬 Mensagens</button>
   <button class="main-tab" onclick="switchTab('config')">⚙️ Config</button>
   <button class="main-tab" onclick="switchTab('roteiro-gen')">🗺️✨ Gerar Roteiro</button>
+  <button class="main-tab" onclick="switchTab('demandas')">📋 Demandas</button>
 </div>
 
 <div class="wrap">
@@ -1353,6 +1376,100 @@ header{animation:fadeUp .45s ease both}
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════════════════════════
+     ABA: DEMANDAS
+════════════════════════════════════════ -->
+<div class="main-panel" id="panel-demandas">
+  <div style="padding:1.2rem 1.5rem .6rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <span style="font-size:15px;font-weight:800;color:var(--text)">📋 Demandas</span>
+      <span class="reservas-count" id="demandas-count-label">0 demandas</span>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <select id="dem-filtro-status" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px">
+        <option value="todas">Todos os status</option>
+        <option value="pendente">🔴 Pendente</option>
+        <option value="em_andamento">🟡 Em andamento</option>
+        <option value="aguardando">🔵 Aguardando</option>
+        <option value="concluida">✅ Concluída</option>
+      </select>
+      <select id="dem-filtro-tipo" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px">
+        <option value="todos">Todos os tipos</option>
+        <option value="✈️">✈️ Passagem</option>
+        <option value="🏨">🏨 Hotel</option>
+        <option value="🛡️">🛡️ Seguro</option>
+        <option value="💳">💳 Seg. Cartão</option>
+        <option value="🚌">🚗 Carro/Transp.</option>
+        <option value="🎯">🎯 Passeio</option>
+        <option value="📌">📌 Outro</option>
+      </select>
+      <input type="text" id="dem-busca" placeholder="🔍 Buscar cliente ou demanda…" oninput="renderDemandas()" style="font-size:12px;padding:5px 12px;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:8px;min-width:200px"/>
+      <button class="btn btn-accent btn-sm" onclick="abrirNovaDemanda()">➕ Nova Demanda</button>
+    </div>
+  </div>
+
+  <!-- FORM NOVA DEMANDA -->
+  <div id="nova-demanda-form" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1.5rem;margin:0 1.5rem 1rem">
+    <div class="card-title" style="margin-bottom:1rem">📋 <span id="demanda-form-titulo">Nova Demanda</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field">
+        <label>Tipo <span class="tag required">*</span></label>
+        <select id="df-tipo" onchange="demandaTipoChange()">
+          <option value="✈️ Passagem Doméstica">✈️ Passagem Doméstica</option>
+          <option value="🌍 Passagem Internacional">🌍 Passagem Internacional</option>
+          <option value="🏨 Hotel">🏨 Hotel</option>
+          <option value="🛡️ Seguro Viagem">🛡️ Seguro Viagem</option>
+          <option value="💳 Ativação Seguro Cartão">💳 Ativação Seguro Cartão</option>
+          <option value="🚌 Transporte">🚗 Transporte/Carro</option>
+          <option value="🎯 Passeio/Atividade">🎯 Passeio/Atividade</option>
+          <option value="📌 Outro">📌 Outro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Prioridade</label>
+        <select id="df-prioridade">
+          <option value="normal">Normal</option>
+          <option value="alta">🔴 Alta</option>
+          <option value="baixa">Baixa</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>Título <span class="tag required">*</span></label><input type="text" id="df-titulo" placeholder="Ex: Reservar passagem GRU→MIA em junho" /></div>
+    <div class="field"><label>Cliente(s) <span class="tag required">*</span></label><input type="text" id="df-clientes" placeholder="Nome do(s) cliente(s)" /></div>
+    <div class="field"><label>Descrição / Instruções</label><textarea id="df-descricao" rows="3" placeholder="Detalhes para o funcionário: datas, preferências, orçamento, programa de milhas, etc." style="min-height:70px"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field">
+        <label>Prazo</label>
+        <input type="date" id="df-prazo" />
+      </div>
+      <div class="field">
+        <label>Responsável</label>
+        <input type="text" id="df-responsavel" placeholder="Funcionário responsável" />
+      </div>
+    </div>
+    <div class="field">
+      <label>Vincular à viagem <span class="tag">opcional</span></label>
+      <select id="df-viagem-assoc" onchange="demandaViagemChange()">
+        <option value="">— Não vincular a nenhuma viagem —</option>
+      </select>
+    </div>
+    <div class="field" id="df-field-atividade" style="display:none">
+      <label>Atividade na viagem</label>
+      <select id="df-atividade-assoc">
+        <option value="">➕ Criar nova atividade na viagem</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="btn btn-accent" onclick="salvarDemanda()">💾 Salvar Demanda</button>
+      <button class="btn btn-ghost" onclick="fecharNovaDemanda()">Cancelar</button>
+    </div>
+  </div>
+
+  <!-- LISTA DE DEMANDAS -->
+  <div id="demandas-grid" style="padding:0 1.5rem 1.5rem"></div>
+</div>
+
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
@@ -2789,12 +2906,13 @@ function switchTab(name) {
   if (name === 'viagens') renderViagens();
   if (name === 'nova' && !window._editandoReserva) populateViagemAssocSelect();
   var tabs = document.querySelectorAll('.main-tab');
-  var map = {reservas:0, nova:1, viagens:2, clientes:3, mensagens:4, config:5, 'roteiro-gen':6};
+  var map = {reservas:0, nova:1, viagens:2, clientes:3, mensagens:4, config:5, 'roteiro-gen':6, 'demandas':7};
   if (name==='mensagens') { loadModelos(); initMensagens(); }
   if (tabs[map[name]]) tabs[map[name]].classList.add('active');
   if (name==='clientes') renderClientes();
   if (name==='reservas') renderReservas();
   if (name==='roteiro-gen') rgPopularSelect();
+  if (name==='demandas') renderDemandas();
 }
 
 // ══════════════════════════════════════════
@@ -4053,14 +4171,14 @@ function salvarDetalheAtiv() {
 }
 
 function addAtividade(icon, nome) {
-  atividadesTemp.push({icon:icon, nome:nome, titulo:'', descricao:'', status:'pendente', reservaId:null});
+  atividadesTemp.push({id:'atv-'+Date.now()+'-'+Math.random().toString(36).slice(2,6), icon:icon, nome:nome, titulo:'', descricao:'', status:'pendente', reservaId:null});
   renderAtividadesTemp();
 }
 
 function addAtividadeCustom() {
   var nome = prompt('Nome da atividade:');
   if (!nome) return;
-  atividadesTemp.push({icon:'📌', nome:nome, titulo:'', descricao:'', status:'pendente', reservaId:null});
+  atividadesTemp.push({id:'atv-'+Date.now()+'-'+Math.random().toString(36).slice(2,6), icon:'📌', nome:nome, titulo:'', descricao:'', status:'pendente', reservaId:null});
   renderAtividadesTemp();
 }
 
@@ -4919,6 +5037,370 @@ function rgSetStatus(msg, type) {
 function rgEsc(s) {
   return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ══════════════════════════════════════════
+//  DEMANDAS
+// ══════════════════════════════════════════
+var demandas = [];
+var demandaEditandoId = null;
+var _demandaCounter = 0;
+
+function loadDemandas() {
+  var raw = [];
+  // Derivar demandas a partir das atividades de viagens existentes
+  // Mantém sincronizado: toda atividade de viagem aparece como demanda
+  viagens.forEach(function(v) {
+    (v.atividades || []).forEach(function(a) {
+      // Checa se já existe demanda para esta atividade
+      var existe = demandas.find(function(d) { return d.viagemId === v.id && d.atividadeRef === a.id; });
+      if (!existe && a.id) {
+        // Importa atividade existente como demanda (somente se tiver id)
+        demandas.push({
+          id: 'DEM-' + a.id,
+          numero: ++_demandaCounter,
+          tipo: (a.icon || '📌') + ' ' + (a.nome || 'Atividade'),
+          titulo: a.titulo || a.nome || 'Sem título',
+          clientes: v.clientes || '',
+          descricao: a.descricao || '',
+          status: a.status === 'concluida' ? 'concluida' : 'pendente',
+          prioridade: 'normal',
+          prazo: '',
+          responsavel: '',
+          viagemId: v.id,
+          viagemNome: v.nome || '',
+          atividadeRef: a.id,
+          reservaId: a.reservaId || null,
+          criadoEm: new Date().toISOString().split('T')[0]
+        });
+      }
+    });
+  });
+}
+
+function saveDemandas() {
+  // Demandas são espelho das viagens — persistência via saveViagens()
+  // Demandas avulsas (sem viagemId) ficam em memória (sem localStorage — regra CDV)
+  saveViagens();
+}
+
+function abrirNovaDemanda() {
+  demandaEditandoId = null;
+  document.getElementById('demanda-form-titulo').textContent = 'Nova Demanda';
+  ['df-titulo','df-clientes','df-descricao','df-prazo','df-responsavel'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('df-prioridade').value = 'normal';
+  document.getElementById('df-tipo').value = '✈️ Passagem Doméstica';
+  // Popular viagens
+  var sel = document.getElementById('df-viagem-assoc');
+  sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
+  viagens.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = v.nome + (v.clientes ? ' · ' + v.clientes : '');
+    sel.appendChild(opt);
+  });
+  document.getElementById('df-field-atividade').style.display = 'none';
+  document.getElementById('nova-demanda-form').style.display = 'block';
+  document.getElementById('nova-demanda-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function fecharNovaDemanda() {
+  document.getElementById('nova-demanda-form').style.display = 'none';
+  demandaEditandoId = null;
+}
+
+function demandaTipoChange() {}
+
+function demandaViagemChange() {
+  var vid = document.getElementById('df-viagem-assoc').value;
+  var fieldAtiv = document.getElementById('df-field-atividade');
+  var selAtiv = document.getElementById('df-atividade-assoc');
+  if (!vid) { fieldAtiv.style.display = 'none'; return; }
+  var v = viagens.find(function(x){ return x.id === vid; });
+  if (!v || !(v.atividades||[]).length) { fieldAtiv.style.display = 'none'; return; }
+  fieldAtiv.style.display = 'block';
+  selAtiv.innerHTML = '<option value="">➕ Criar nova atividade na viagem</option>';
+  sortAtividades(v.atividades).forEach(function(a, i) {
+    var opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = (a.icon || '') + ' ' + (a.titulo || a.nome || 'Sem título') + (a.status === 'concluida' ? ' ✅' : '');
+    selAtiv.appendChild(opt);
+  });
+}
+
+function salvarDemanda() {
+  var titulo = document.getElementById('df-titulo').value.trim();
+  var clientes = document.getElementById('df-clientes').value.trim();
+  if (!titulo) { showToast('⚠️ Informe o título da demanda', 'err'); return; }
+  if (!clientes) { showToast('⚠️ Informe o(s) cliente(s)', 'err'); return; }
+
+  var tipo = document.getElementById('df-tipo').value;
+  var descricao = document.getElementById('df-descricao').value.trim();
+  var prazo = document.getElementById('df-prazo').value;
+  var responsavel = document.getElementById('df-responsavel').value.trim();
+  var prioridade = document.getElementById('df-prioridade').value;
+  var vid = document.getElementById('df-viagem-assoc').value;
+  var ativIdxSel = document.getElementById('df-atividade-assoc').value;
+  var v = vid ? viagens.find(function(x){ return x.id === vid; }) : null;
+
+  var icon = tipo.split(' ')[0];
+  var nomeAtiv = tipo.split(' ').slice(1).join(' ');
+
+  if (demandaEditandoId) {
+    var idx = demandas.findIndex(function(d){ return d.id === demandaEditandoId; });
+    if (idx !== -1) {
+      demandas[idx].titulo = titulo;
+      demandas[idx].clientes = clientes;
+      demandas[idx].tipo = tipo;
+      demandas[idx].descricao = descricao;
+      demandas[idx].prazo = prazo;
+      demandas[idx].responsavel = responsavel;
+      demandas[idx].prioridade = prioridade;
+    }
+  } else {
+    var novaDem = {
+      id: 'DEM-' + Date.now(),
+      numero: ++_demandaCounter,
+      tipo: tipo,
+      titulo: titulo,
+      clientes: clientes,
+      descricao: descricao,
+      status: 'pendente',
+      prioridade: prioridade,
+      prazo: prazo,
+      responsavel: responsavel,
+      viagemId: vid || null,
+      viagemNome: v ? (v.nome || '') : '',
+      atividadeRef: null,
+      reservaId: null,
+      criadoEm: new Date().toISOString().split('T')[0]
+    };
+
+    // Vincular/criar atividade na viagem
+    if (v) {
+      v.atividades = v.atividades || [];
+      var idAtiv = 'atv-' + Date.now();
+      if (ativIdxSel !== '') {
+        // Vincular atividade existente
+        var sorted = sortAtividades(v.atividades);
+        var ativRef = sorted[parseInt(ativIdxSel)];
+        var realIdx = v.atividades.indexOf(ativRef);
+        if (realIdx !== -1) {
+          v.atividades[realIdx].titulo = titulo;
+          novaDem.atividadeRef = v.atividades[realIdx].id;
+        }
+      } else {
+        // Criar nova atividade na viagem
+        var novaAtiv = {
+          id: idAtiv,
+          icon: icon,
+          nome: nomeAtiv,
+          titulo: titulo,
+          descricao: descricao,
+          status: 'pendente',
+          reservaId: null,
+          pos: (v.atividades.reduce(function(mx,a){ return (a.pos||0)>mx?(a.pos||0):mx; }, -1)) + 1
+        };
+        v.atividades.push(novaAtiv);
+        v.atividades = sortAtividades(v.atividades);
+        novaDem.atividadeRef = idAtiv;
+      }
+    }
+
+    demandas.unshift(novaDem);
+  }
+
+  saveDemandas();
+  fecharNovaDemanda();
+  renderDemandas();
+  showToast('✅ Demanda salva!', 'ok');
+}
+
+function editarDemanda(id) {
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d) return;
+  demandaEditandoId = id;
+  document.getElementById('demanda-form-titulo').textContent = 'Editar Demanda';
+  document.getElementById('df-titulo').value = d.titulo || '';
+  document.getElementById('df-clientes').value = d.clientes || '';
+  document.getElementById('df-descricao').value = d.descricao || '';
+  document.getElementById('df-prazo').value = d.prazo || '';
+  document.getElementById('df-responsavel').value = d.responsavel || '';
+  document.getElementById('df-prioridade').value = d.prioridade || 'normal';
+  document.getElementById('df-tipo').value = d.tipo || '✈️ Passagem Doméstica';
+  var sel = document.getElementById('df-viagem-assoc');
+  sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
+  viagens.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = v.nome + (v.clientes ? ' · ' + v.clientes : '');
+    sel.appendChild(opt);
+  });
+  sel.value = d.viagemId || '';
+  document.getElementById('df-field-atividade').style.display = 'none';
+  document.getElementById('nova-demanda-form').style.display = 'block';
+  document.getElementById('nova-demanda-form').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function excluirDemanda(id) {
+  if (!confirm('Remover esta demanda? A atividade na viagem não será afetada.')) return;
+  demandas = demandas.filter(function(d){ return d.id !== id; });
+  saveDemandas();
+  renderDemandas();
+  showToast('🗑️ Demanda removida', 'ok');
+}
+
+function alterarStatusDemanda(id, novoStatus) {
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d) return;
+  d.status = novoStatus;
+  // Atualizar atividade vinculada
+  if (d.viagemId && d.atividadeRef) {
+    var v = viagens.find(function(x){ return x.id === d.viagemId; });
+    if (v) {
+      var a = (v.atividades || []).find(function(x){ return x.id === d.atividadeRef; });
+      if (a) a.status = novoStatus === 'concluida' ? 'concluida' : 'pendente';
+    }
+  }
+  saveDemandas();
+  renderDemandas();
+}
+
+function irParaViagem(vid) {
+  if (!vid) return;
+  switchTab('viagens');
+  // Abre o card da viagem
+  setTimeout(function() {
+    var el = document.querySelector('[data-vid="' + vid + '"] .viagem-header');
+    if (el) { el.click(); el.scrollIntoView({behavior:'smooth', block:'center'}); }
+  }, 200);
+}
+
+function criarReservaParaDemanda(demandaId) {
+  var d = demandas.find(function(x){ return x.id === demandaId; });
+  if (!d) return;
+  switchTab('nova');
+  setTimeout(function() {
+    // Pré-preencher cliente
+    if (d.clientes) setVal('f-cliente', d.clientes);
+    // Pré-selecionar viagem
+    if (d.viagemId) {
+      populateViagemSelect();
+      setVal('f-viagem-assoc', d.viagemId);
+      onViagemAssocChange();
+    }
+    showToast('ℹ️ Preencha os dados da reserva. Ao salvar, vincule à viagem para concluir a demanda.', 'ok');
+  }, 300);
+}
+
+function renderDemandas() {
+  // Recarregar demandas das viagens (pode ter mudado)
+  // Apenas adiciona demandas que ainda não estão na lista
+  viagens.forEach(function(v) {
+    (v.atividades || []).forEach(function(a) {
+      if (!a.id) return;
+      var existe = demandas.find(function(d){ return d.atividadeRef === a.id; });
+      if (!existe) {
+        demandas.push({
+          id: 'DEM-' + a.id,
+          numero: ++_demandaCounter,
+          tipo: (a.icon || '📌') + ' ' + (a.nome || 'Atividade'),
+          titulo: a.titulo || a.nome || 'Sem título',
+          clientes: v.clientes || '',
+          descricao: a.descricao || '',
+          status: a.status === 'concluida' ? 'concluida' : 'pendente',
+          prioridade: 'normal',
+          prazo: '',
+          responsavel: '',
+          viagemId: v.id,
+          viagemNome: v.nome || '',
+          atividadeRef: a.id,
+          reservaId: a.reservaId || null,
+          criadoEm: new Date().toISOString().split('T')[0]
+        });
+      } else {
+        // Atualiza status se mudou na viagem
+        if (a.status === 'concluida') existe.status = 'concluida';
+        if (a.reservaId) existe.reservaId = a.reservaId;
+      }
+    });
+  });
+
+  var filtroStatus = document.getElementById('dem-filtro-status') ? document.getElementById('dem-filtro-status').value : 'todas';
+  var filtroTipo = document.getElementById('dem-filtro-tipo') ? document.getElementById('dem-filtro-tipo').value : 'todos';
+  var busca = (document.getElementById('dem-busca') ? document.getElementById('dem-busca').value : '').toLowerCase();
+
+  var lista = demandas.filter(function(d) {
+    if (filtroStatus !== 'todas' && d.status !== filtroStatus) return false;
+    if (filtroTipo !== 'todos' && d.tipo.indexOf(filtroTipo) === -1) return false;
+    if (busca && d.titulo.toLowerCase().indexOf(busca) === -1 && (d.clientes||'').toLowerCase().indexOf(busca) === -1) return false;
+    return true;
+  });
+
+  // Ordenar: alta prioridade primeiro, depois por status (pendente > em_andamento > aguardando > concluida)
+  var ordemStatus = {pendente:0, em_andamento:1, aguardando:2, concluida:3};
+  lista.sort(function(a,b) {
+    if (a.prioridade === 'alta' && b.prioridade !== 'alta') return -1;
+    if (b.prioridade === 'alta' && a.prioridade !== 'alta') return 1;
+    return (ordemStatus[a.status]||0) - (ordemStatus[b.status]||0);
+  });
+
+  document.getElementById('demandas-count-label').textContent = lista.length + ' demanda' + (lista.length !== 1 ? 's' : '');
+
+  var grid = document.getElementById('demandas-grid');
+  if (!lista.length) {
+    grid.innerHTML = '<div class="status-box"><div style="font-size:2rem">📋</div><div style="color:var(--muted);font-size:14px;margin-top:8px">Nenhuma demanda encontrada</div><button class="btn btn-accent btn-sm" style="margin-top:12px" onclick="abrirNovaDemanda()">➕ Criar primeira demanda</button></div>';
+    return;
+  }
+
+  var statusLabels = {pendente:'🔴 Pendente', em_andamento:'🟡 Em andamento', aguardando:'🔵 Aguardando', concluida:'✅ Concluída'};
+  var statusClasses = {pendente:'dem-status-pendente', em_andamento:'dem-status-em_andamento', aguardando:'dem-status-aguardando', concluida:'dem-status-concluida'};
+
+  grid.innerHTML = lista.map(function(d) {
+    var prazoHtml = d.prazo ? '<span>📅 ' + d.prazo + '</span>' : '';
+    var respHtml = d.responsavel ? '<span>👤 ' + d.responsavel + '</span>' : '';
+    var numHtml = '<span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>';
+    var vinculoHtml = d.viagemId ? '<div class="demanda-vinculo" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️ ' + (d.viagemNome || 'Viagem vinculada') + ' →</div>' : '';
+    var reservaHtml = d.reservaId ? '<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ Reserva vinculada: ' + d.reservaId + '</div>' : '';
+
+    var icon = (d.tipo || '📌').split(' ')[0];
+    return '<div class="demanda-card' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + '" id="dem-' + d.id + '">'
+      + '<div class="demanda-header" onclick="toggleDemanda(\'' + d.id + '\')">'
+      + '<div class="demanda-tipo-icon">' + icon + '</div>'
+      + '<div class="demanda-info">'
+      + '<div class="demanda-titulo">' + d.titulo + '</div>'
+      + '<div class="demanda-meta">'
+      + numHtml
+      + '<span class="demanda-status-badge ' + (statusClasses[d.status]||'dem-status-pendente') + '">' + (statusLabels[d.status]||d.status) + '</span>'
+      + '<span>👥 ' + (d.clientes || '') + '</span>'
+      + prazoHtml + respHtml
+      + '</div>'
+      + '</div>'
+      + '</div>'
+      + '<div class="demanda-body" id="dem-body-' + d.id + '">'
+      + (d.descricao ? '<div class="demanda-descricao">' + d.descricao + '</div>' : '')
+      + vinculoHtml
+      + reservaHtml
+      + '<div class="demanda-actions">'
+      + '<select style="font-size:12px;padding:4px 8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px" onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
+      + ['pendente','em_andamento','aguardando','concluida'].map(function(s){ return '<option value="' + s + '"' + (d.status===s?' selected':'') + '>' + (statusLabels[s]||s) + '</option>'; }).join('')
+      + '</select>'
+      + (d.viagemId && !d.reservaId ? '<button class="btn btn-accent btn-sm" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋 Criar Reserva</button>' : '')
+      + '<button class="btn btn-ghost btn-sm" onclick="editarDemanda(\'' + d.id + '\')">✏️ Editar</button>'
+      + '<button class="btn btn-ghost btn-sm" style="color:var(--accent)" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>'
+      + '</div>'
+      + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function toggleDemanda(id) {
+  var body = document.getElementById('dem-body-' + id);
+  if (!body) return;
+  body.classList.toggle('open');
+}
+
 </script>
 </body>
 </html>
