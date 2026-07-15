@@ -3178,9 +3178,14 @@ function renderModelosLista() {
   var el = document.getElementById('modelos-lista');
   if (!el) return;
   if (!modelos.length) {
+    el.style.display = '';
     el.innerHTML = '<div class="empty"><span class="empty-icon">📝</span>Nenhum modelo cadastrado.<br><small style="font-size:12px;margin-top:6px;display:block">Crie um modelo acima para começar.</small></div>';
     return;
   }
+  el.style.display = 'grid';
+  el.style.gridTemplateColumns = 'repeat(auto-fill,minmax(380px,1fr))';
+  el.style.gap = '12px';
+  el.style.marginTop = '12px';
   el.innerHTML = modelos.map(function(m){
     // Preview: show first 120 chars with vars highlighted
     var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
@@ -3205,7 +3210,7 @@ function renderModelosLista() {
     } else {
       tipoBadge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600;margin-left:6px">Manual</span>';
     }
-    return '<div class="res-card" style="margin-bottom:10px">'+
+    return '<div class="res-card" style="margin-bottom:0">'+
       '<div class="res-card-header">'+
         '<div class="type-icon type-passeio">📝</div>'+
         '<div class="res-card-info">'+
