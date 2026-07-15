@@ -1026,6 +1026,7 @@ header{animation:fadeUp .45s ease both}
     <div class="sep"></div>
     <div class="btn-row">
       <button class="btn btn-blue" onclick="syncClientes()">🔄 Testar Conexão e Sincronizar</button>
+      <button class="btn btn-ghost btn-sm" onclick="backfillGrupos()">🔗 Atualizar grupo em todas as reservas</button>
       <button class="btn btn-danger btn-sm" onclick="limparDados()">🗑 Apagar todas as reservas</button>
     </div>
     <p id="cfg-ok" style="font-size:12px;font-weight:700;margin-top:10px;min-height:16px;color:#22c55e"></p>
@@ -2211,6 +2212,9 @@ function salvarReserva() {
   window._reservaEditandoOriginal = null;
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
   if (btnCancelar) btnCancelar.style.display = 'none';
+  // Injetar grupo do cliente (col BN da planilha) na reserva
+  var cliGrupo = clientes.find(function(c){ return c.nome === cliente; });
+  if (cliGrupo && cliGrupo.grupo) res.grupo = cliGrupo.grupo;
   reservas.unshift(res);
   saveReservas();
 
@@ -4568,6 +4572,30 @@ function copiarDisparar() {
 }
 
 
+
+// ── BACKFILL: preenche campo grupo em reservas existentes ──────────────────────
+function backfillGrupos() {
+  var okEl = document.getElementById('cfg-ok');
+  if (!clientes.length) {
+    if (okEl) { okEl.style.color='#f59e0b'; okEl.textContent='⚠️ Sincronize os clientes primeiro.'; }
+    setTimeout(function(){ if(okEl) okEl.textContent=''; }, 4000);
+    return;
+  }
+  var atualizados = 0;
+  reservas.forEach(function(res) {
+    if (res.grupo) return; // já tem grupo, pula
+    var cli = clientes.find(function(c){ return c.nome === res.cliente; });
+    if (cli && cli.grupo) { res.grupo = cli.grupo; atualizados++; }
+  });
+  if (atualizados === 0) {
+    if (okEl) { okEl.style.color='#22c55e'; okEl.textContent='✅ Todas as reservas já têm grupo cadastrado.'; }
+    setTimeout(function(){ if(okEl) okEl.textContent=''; }, 4000);
+    return;
+  }
+  saveReservas();
+  if (okEl) { okEl.style.color='#22c55e'; okEl.textContent='✅ ' + atualizados + ' reserva(s) atualizadas com o grupo.'; }
+  setTimeout(function(){ if(okEl) okEl.textContent=''; }, 5000);
+}
 
 // ══════════════════════════════════════════
 //  INIT
