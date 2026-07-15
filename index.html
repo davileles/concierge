@@ -3182,8 +3182,8 @@ function renderModelosLista() {
     el.innerHTML = '<div class="empty"><span class="empty-icon">📝</span>Nenhum modelo cadastrado.<br><small style="font-size:12px;margin-top:6px;display:block">Crie um modelo acima para começar.</small></div>';
     return;
   }
-  el.style.display = 'grid';
-  el.style.gridTemplateColumns = 'repeat(auto-fill,minmax(380px,1fr))';
+  el.style.display = 'flex';
+  el.style.flexDirection = 'column';
   el.style.gap = '12px';
   el.style.marginTop = '12px';
   el.innerHTML = modelos.map(function(m){
