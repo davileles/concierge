@@ -344,13 +344,13 @@
         "reservaId": "RES-1783688664699"
       },
       {
-        "icon": "🏨",
-        "nome": "Hotel",
-        "titulo": "",
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "VCP → CNF · 27/07/2026",
         "descricao": "",
-        "status": "pendente",
-        "reservaId": null,
-        "pos": 70
+        "pos": 50,
+        "status": "concluida",
+        "reservaId": "RES-1783688818872"
       },
       {
         "icon": "💳",
@@ -362,13 +362,22 @@
         "pos": 60
       },
       {
+        "icon": "🏨",
+        "nome": "Hotel",
+        "titulo": "",
+        "descricao": "",
+        "status": "pendente",
+        "reservaId": null,
+        "pos": 70
+      },
+      {
         "icon": "✈️",
         "nome": "Passagem Doméstica",
-        "titulo": "VCP → CNF · 27/07/2026",
+        "titulo": "OPO → VCP · 27/07/2026",
         "descricao": "",
-        "pos": 50,
+        "pos": 80,
         "status": "concluida",
-        "reservaId": "RES-1783688818872"
+        "reservaId": "RES-1784204692666"
       }
     ],
     "cadastro": "2026-07-06",
