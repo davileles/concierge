@@ -2,7 +2,7 @@
   {
     "id": "MOD-1784160612861",
     "nome": "Reserva de hotel com ganho de pontos",
-    "texto": "Reserva do hotel {{hotel}} concluída com sucesso.\n\nCheckin: {{checkin}}\nCheckout: {{checkout}}\n\nNessa estratégia serão ganhos XXX pontos além dos pontos do cartão.",
+    "texto": "Reserva do hotel {{hotel}} concluída com sucesso.\n\nCheckin: {{checkin}}\nCheckout: {{checkout}}\n\nNessa estratégia serão ganhos {{milhas}} pontos na {{programa}} além dos pontos do cartão.",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
