@@ -2996,6 +2996,8 @@ var VARS_RESERVA = [
   { label: '{{checkout}}',              desc: 'Check-out' },
   { label: '{{conf}}',                  desc: 'Confirmação' },
   { label: '{{nome_viagem}}',           desc: 'Nome da viagem associada' },
+  { label: '{{programa_fidelidade}}',   desc: 'Programa de fidelidade (emissão)' },
+  { label: '{{milhas_a_receber}}',       desc: 'Milhas a receber (total pax)' },
 ];
 
 function loadModelos() {
@@ -3360,6 +3362,8 @@ function onDispararChange() {
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
     txt = rv(txt, 'checkout', fmtDate(res.checkout));
     txt = rv(txt, 'conf', res.conf||res.hotelConf);
+    txt = rv(txt, 'programa_fidelidade', res.programa||'');
+    txt = rv(txt, 'milhas_a_receber', res.milhas||'');
     // Nome da viagem associada a esta reserva
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
