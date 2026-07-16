@@ -3189,7 +3189,8 @@ function renderModelosLista() {
   el.innerHTML = modelos.map(function(m){
     // Preview: show first 120 chars with vars highlighted
     var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
-    prev = prev.substring(0, 200) + (m.texto.length>200?'…':'');
+    // Cortar após substituição para não partir tags HTML ao meio
+    if (prev.length > 200) { var ci = prev.lastIndexOf('<', 200); prev = prev.substring(0, ci > 150 ? ci : 200) + '…'; }
     var GATILHO_LABEL = {
       'voo_ida_dt':   'Partida (ida)',
       'voo_ida_d':    'Data de ida',
