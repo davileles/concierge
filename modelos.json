@@ -1,5 +1,14 @@
 [
   {
+    "id": "MOD-1784160612861",
+    "nome": "Reserva de hotel com ganho de pontos",
+    "texto": "Reserva do hotel {{hotel}} concluída com sucesso.\n\nCheckin: {{checkin}}\nCheckout: {{checkout}}\n\nNessa estratégia serão ganhos XXX pontos além dos pontos do cartão.",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
     "id": "MOD-1784159164517",
     "nome": "Passagem emitida",
     "texto": "Passagem emitida com sucesso!\n\n*Localizador* {{pnr}}\n\n*Voo de ida*\n\n- Origem: {{origem}}\n- Destino: {{destino}}\n- Data: {{data_ida}}\n- Hora de partida: {{hora_partida}}\n- Hora de chegada: {{hora_chegada}}\n\n*Voo de volta*\n\n- Origem: {{origem_volta}}\n- Destino: {{destino_volta}}\n- Data: {{data_volta}}\n- Hora de partida: {{hora_partida_volta}}\n- Hora de chegada: {{hora_chegada_volta}}",
