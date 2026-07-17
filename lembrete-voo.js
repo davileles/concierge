@@ -194,17 +194,39 @@ async function carregarClientes() {
 
 // ── envio ─────────────────────────────────────────────────────────────────────
 async function enviarWhatsApp(grupoId, mensagem) {
-  const r = await fetch(`${BAILEYS}/enviar`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ grupo: grupoId, mensagem })
-  });
-  const d = await r.json();
-  if (!d.ok) throw new Error(d.erro || 'Falha no envio');
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 25000);
+  let r;
+  try {
+    r = await fetch(`${BAILEYS}/enviar`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ grupo: grupoId, mensagem }),
+      signal: controller.signal
+    });
+  } catch (e) {
+    throw new Error(`Falha de rede ao chamar Baileys: ${e.message}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+  const bodyText = await r.text();
+  let d;
+  try { d = JSON.parse(bodyText); }
+  catch { throw new Error(`Baileys retornou HTTP ${r.status} com corpo não-JSON: ${bodyText.slice(0,200)}`); }
+  if (!d.ok) throw new Error(`${d.erro || 'Falha no envio'} (HTTP ${r.status})`);
 }
 
 // Chave única por modelo para evitar reenvio
 function flagKey(modeloId) { return `enviado_${modeloId}`; }
+
+// ── log de diagnóstico ──────────────────────────────────────────────────────
+// Registrado a cada execução em debug-log.json, independente de ter havido
+// envio ou não. Objetivo: dar visibilidade real sobre por que um lembrete
+// disparou ou não, sem depender dos logs nativos da Action.
+const debugLog = [];
+function logDebug(entry) {
+  debugLog.push({ ...entry, ts: new Date().toISOString() });
+}
 
 // ── migração de modelos antigos ───────────────────────────────────────────────
 const MIGRAR_GATILHO = {
@@ -297,7 +319,9 @@ async function main() {
 
         const horas = horasAte(primeiroVoo.data, primeiroVoo.hora);
         console.log(`  "${viagem.nome}" → primeiro voo ${primeiroVoo.data} ${primeiroVoo.hora} → ${horas.toFixed(1)}h`);
-        if (!deveDisparar(horas, janela)) continue;
+        const disparar = deveDisparar(horas, janela);
+        logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, horasRestantes: Number(horas.toFixed(2)), janela, disparar });
+        if (!disparar) continue;
 
         const clientesViagem = Array.isArray(viagem.clientes)
           ? viagem.clientes
@@ -309,6 +333,7 @@ async function main() {
           const grupo = cli?.grupo || primeiroVoo.reserva?.grupo || grupoPorCliente[nomeCliente];
           if (!grupo) {
             console.log(`  ⚠️ Cliente "${nomeCliente}" sem grupo WhatsApp (Apps Script nem reservas)`);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nomeCliente, erro: 'sem grupo WhatsApp' });
             continue;
           }
           try {
@@ -317,9 +342,11 @@ async function main() {
             await enviarWhatsApp(grupo, msg);
             algum = true;
             resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nomeCliente}" (viagem "${viagem.nome}", primeiro voo ${primeiroVoo.data})`);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nomeCliente, grupo, tentativa: 'sucesso' });
           } catch(e) {
             resultados.push(`❌ [${mod.nome}] "${nomeCliente}": ${e.message}`);
             console.error('  ❌', e.message);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nomeCliente, grupo, tentativa: 'erro', erro: e.message });
           }
         }
         if (algum) {
@@ -337,7 +364,9 @@ async function main() {
         const { data, hora } = resolverDataHora('viagem', mod.horaRef, null, viagem);
         const horas = horasAte(data, hora);
         console.log(`  "${viagem.nome}" ${data} → ${horas.toFixed(1)}h`);
-        if (!deveDisparar(horas, janela)) continue;
+        const disparar = deveDisparar(horas, janela);
+        logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, horasRestantes: Number(horas.toFixed(2)), janela, disparar });
+        if (!disparar) continue;
 
         const clientesViagem = Array.isArray(viagem.clientes)
           ? viagem.clientes : (viagem.cliente ? [viagem.cliente] : []);
@@ -348,15 +377,18 @@ async function main() {
           const grupo = cli?.grupo || grupoPorCliente[nome];
           if (!grupo) {
             console.log(`  ⚠️ Cliente "${nome}" sem grupo WhatsApp (Apps Script nem reservas)`);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nome, erro: 'sem grupo WhatsApp' });
             continue;
           }
           try {
             await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome }, null, viagem));
             algum = true;
             resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nome}" (viagem ${data})`);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nome, grupo, tentativa: 'sucesso' });
           } catch(e) {
             resultados.push(`❌ [${mod.nome}] "${nome}": ${e.message}`);
             console.error('  ❌', e.message);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nome, grupo, tentativa: 'erro', erro: e.message });
           }
         }
         if (algum) {
@@ -386,9 +418,16 @@ async function main() {
         const horas = horasAte(data, hora);
         console.log(`  "${res.cliente}" ${data} ${hora} → ${horas.toFixed(1)}h${grupo ? '' : '  ⚠️ sem grupo WhatsApp (nem via Apps Script, nem na reserva)'}`);
 
+        const disparar = deveDisparar(horas, janela);
+        // Loga qualquer reserva próxima da janela (ou dentro dela), com ou sem grupo,
+        // pra dar visibilidade mesmo quando o motivo de não disparar é falta de grupo.
+        if (disparar || (horas >= 0 && horas <= janela + 6)) {
+          logDebug({ modelo: mod.nome, gatilho: mod.gatilho, reservaId: res.id, cliente: res.cliente, horasRestantes: Number(horas.toFixed(2)), janela, temGrupo: !!grupo, disparar });
+        }
+
         if (!grupo) continue;
 
-        if (deveDisparar(horas, janela)) {
+        if (disparar) {
           try {
             const nomeCliente = cli?.nome || res.cliente;
             await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome: res.cliente }, res, null));
@@ -396,9 +435,11 @@ async function main() {
             res[`${key}Em`] = new Date().toISOString();
             totalAlteracoes++;
             resultados.push(`✅ [${mod.nome}] → "${nomeCliente}" (${data})`);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, reservaId: res.id, cliente: res.cliente, grupo, tentativa: 'sucesso' });
           } catch(e) {
             resultados.push(`❌ [${mod.nome}] "${res.cliente}": ${e.message}`);
             console.error('  ❌', e.message);
+            logDebug({ modelo: mod.nome, gatilho: mod.gatilho, reservaId: res.id, cliente: res.cliente, grupo, tentativa: 'erro', erro: e.message, erroStack: String(e.stack||'').slice(0,500) });
           }
         }
       }
@@ -426,6 +467,23 @@ async function main() {
   console.log('\n=== Resumo ===');
   resultados.forEach(r => console.log(r));
   if (!resultados.length) console.log('(nenhum envio)');
+
+  // ── Salvar log de diagnóstico (sempre, mesmo sem envios) ──────────────────
+  try {
+    let shaLog;
+    try { shaLog = (await githubGet('debug-log.json')).sha; } catch { shaLog = undefined; }
+    const payload = {
+      executadoEm: new Date().toISOString(),
+      modelosAtivos: ativos.map(m => ({ nome: m.nome, gatilho: m.gatilho, antecedencia: m.antecedencia })),
+      totalAlteracoes,
+      resultados,
+      eventos: debugLog
+    };
+    await githubPut('debug-log.json', payload, shaLog, `chore: debug-log — ${new Date().toISOString().slice(0,16)}`);
+    console.log('✅ debug-log.json salvo');
+  } catch (e) {
+    console.error('⚠️ Falha ao salvar debug-log.json:', e.message);
+  }
 }
 
 main().catch(e => { console.error('❌ Erro fatal:', e); process.exit(1); });
