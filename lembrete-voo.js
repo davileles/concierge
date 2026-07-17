@@ -251,6 +251,16 @@ async function main() {
     if (res.id) reservasMap[res.id] = res;
   }
 
+  // Fallback de grupo WhatsApp por cliente: cada reserva já salva o grupo
+  // (coluna BN da planilha) no momento do cadastro. Usamos isso quando o
+  // lookup via Apps Script falhar (nome divergente, coluna vazia, etc).
+  const grupoPorCliente = {};
+  for (const res of reservas) {
+    if (res.cliente && res.grupo && !grupoPorCliente[res.cliente]) {
+      grupoPorCliente[res.cliente] = res.grupo;
+    }
+  }
+
   const ativos = modelos.filter(m => m.modo === 'programado' && m.gatilho && m.antecedencia);
 
   if (!ativos.length) {
@@ -295,17 +305,18 @@ async function main() {
 
         let algum = false;
         for (const nomeCliente of clientesViagem) {
-          const cli = clientes.find(c => c.nome === nomeCliente);
-          if (!cli?.grupo) {
-            console.log(`  ⚠️ Cliente "${nomeCliente}" sem grupo WhatsApp`);
+          const cli   = clientes.find(c => c.nome === nomeCliente);
+          const grupo = cli?.grupo || primeiroVoo.reserva?.grupo || grupoPorCliente[nomeCliente];
+          if (!grupo) {
+            console.log(`  ⚠️ Cliente "${nomeCliente}" sem grupo WhatsApp (Apps Script nem reservas)`);
             continue;
           }
           try {
             // Interpola com contexto da viagem + dados do primeiro voo
-            const msg = interpolar(mod.texto, cli, primeiroVoo.reserva, viagem);
-            await enviarWhatsApp(cli.grupo, msg);
+            const msg = interpolar(mod.texto, cli || { nome: nomeCliente }, primeiroVoo.reserva, viagem);
+            await enviarWhatsApp(grupo, msg);
             algum = true;
-            resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (viagem "${viagem.nome}", primeiro voo ${primeiroVoo.data})`);
+            resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nomeCliente}" (viagem "${viagem.nome}", primeiro voo ${primeiroVoo.data})`);
           } catch(e) {
             resultados.push(`❌ [${mod.nome}] "${nomeCliente}": ${e.message}`);
             console.error('  ❌', e.message);
@@ -333,12 +344,16 @@ async function main() {
 
         let algum = false;
         for (const nome of clientesViagem) {
-          const cli = clientes.find(c => c.nome === nome);
-          if (!cli?.grupo) continue;
+          const cli   = clientes.find(c => c.nome === nome);
+          const grupo = cli?.grupo || grupoPorCliente[nome];
+          if (!grupo) {
+            console.log(`  ⚠️ Cliente "${nome}" sem grupo WhatsApp (Apps Script nem reservas)`);
+            continue;
+          }
           try {
-            await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, null, viagem));
+            await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome }, null, viagem));
             algum = true;
-            resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (viagem ${data})`);
+            resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nome}" (viagem ${data})`);
           } catch(e) {
             resultados.push(`❌ [${mod.nome}] "${nome}": ${e.message}`);
             console.error('  ❌', e.message);
@@ -362,21 +377,27 @@ async function main() {
         if ((mod.gatilho === 'checkin') && res.tipo !== 'hotel') continue;
         if ((mod.gatilho.startsWith('voo_')) && res.tipo !== 'voo') continue;
 
-        const cli = clientes.find(c => c.nome === res.cliente);
-        if (!cli?.grupo) continue;
+        const cli   = clientes.find(c => c.nome === res.cliente);
+        // Fallback: a reserva já guarda o grupo (coluna BN) no momento do cadastro.
+        // O lookup via Apps Script pode falhar por nome divergente/coluna vazia,
+        // então não dependemos exclusivamente dele.
+        const grupo = cli?.grupo || res.grupo;
 
         const horas = horasAte(data, hora);
-        console.log(`  "${res.cliente}" ${data} ${hora} → ${horas.toFixed(1)}h`);
+        console.log(`  "${res.cliente}" ${data} ${hora} → ${horas.toFixed(1)}h${grupo ? '' : '  ⚠️ sem grupo WhatsApp (nem via Apps Script, nem na reserva)'}`);
+
+        if (!grupo) continue;
 
         if (deveDisparar(horas, janela)) {
           try {
-            await enviarWhatsApp(cli.grupo, interpolar(mod.texto, cli, res, null));
+            const nomeCliente = cli?.nome || res.cliente;
+            await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome: res.cliente }, res, null));
             res[key] = true;
             res[`${key}Em`] = new Date().toISOString();
             totalAlteracoes++;
-            resultados.push(`✅ [${mod.nome}] → "${cli.nome}" (${data})`);
+            resultados.push(`✅ [${mod.nome}] → "${nomeCliente}" (${data})`);
           } catch(e) {
-            resultados.push(`❌ [${mod.nome}] "${cli.nome}": ${e.message}`);
+            resultados.push(`❌ [${mod.nome}] "${res.cliente}": ${e.message}`);
             console.error('  ❌', e.message);
           }
         }
@@ -408,3 +429,4 @@ async function main() {
 }
 
 main().catch(e => { console.error('❌ Erro fatal:', e); process.exit(1); });
+
