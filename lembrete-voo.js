@@ -45,9 +45,12 @@ function antecedenciaEmHoras(ant) {
   return ant.unidade === 'horas' ? Number(ant.valor) : Number(ant.valor) * 24;
 }
 
-// A Action roda de hora em hora — margem de 3h para absorver falhas ocasionais da Action
+// A Action deveria rodar de hora em hora, mas o agendador do GitHub Actions
+// já apresentou gaps reais de até ~4h12min entre execuções (cron scheduling
+// não é garantido). Margem ampliada de 3h para 6h para não perder disparos
+// quando a Action atrasa além do esperado.
 function deveDisparar(horasRestantes, janela) {
-  return horasRestantes >= 0 && horasRestantes <= janela && horasRestantes > (janela - 3);
+  return horasRestantes >= 0 && horasRestantes <= janela && horasRestantes > (janela - 6);
 }
 
 // Gatilhos que usam a hora já registrada na reserva
