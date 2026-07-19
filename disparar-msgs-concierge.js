@@ -166,6 +166,10 @@ async function main() {
           if (!v) continue;
           const pv = primeiroVooPorViagem[v.id];
           if (!pv) continue;
+          // Só dispara para a própria reserva do primeiro voo da viagem —
+          // evita que outras reservas da mesma viagem (2ª perna, hotel, etc.)
+          // recebam o mesmo lembrete de voo por estarem na mesma janela de tempo.
+          if (res.id !== pv.id) continue;
           dataRef = parseSP(`${pv.dataIda}T${pv.horaPartida || '00:00'}`);
           break;
         }
