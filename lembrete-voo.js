@@ -103,7 +103,7 @@ function resolverPrimeiroVoo(viagem, reservasMap) {
 }
 
 // ── interpolação ──────────────────────────────────────────────────────────────
-function interpolar(texto, cli, res, viagem) {
+function interpolar(texto, cli, res, viagem, viagens) {
   const rv = (t, key, val) => t.split(`{{${key}}}`).join(val || '');
   let t = texto;
   if (cli) {
@@ -118,11 +118,13 @@ function interpolar(texto, cli, res, viagem) {
     t = rv(t, 'origem',              res.origem    || '');
     t = rv(t, 'destino',             res.destino   || '');
     t = rv(t, 'data_ida',            fmtDateBR(res.dataIda));
+    t = rv(t, 'data_chegada_ida',    fmtDateBR(res.dataChegadaIda));
     t = rv(t, 'hora_partida',        res.horaPartida       || '');
     t = rv(t, 'hora_chegada',        res.horaChegada       || '');
     t = rv(t, 'nvoo_ida',            res.nvooIda           || '');
     t = rv(t, 'cia',                 res.ciaIda || res.cia || '');
     t = rv(t, 'data_volta',          fmtDateBR(res.dataVolta));
+    t = rv(t, 'data_chegada_volta',  fmtDateBR(res.dataChegadaVolta));
     t = rv(t, 'hora_partida_volta',  res.horaPartidaVolta  || '');
     t = rv(t, 'hora_chegada_volta',  res.horaChegadaVolta  || '');
     t = rv(t, 'nvoo_volta',          res.nvooVolta         || '');
@@ -140,6 +142,12 @@ function interpolar(texto, cli, res, viagem) {
     t = rv(t, 'noites',              res.noites   || '');
     t = rv(t, 'conf',                res.conf     || '');
   }
+  // nome_viagem: viagem do contexto do gatilho ou, para gatilhos de reserva,
+  // a viagem que contém a reserva entre suas atividades
+  const viagemAssoc = viagem || ((viagens || []).find(v =>
+    (v.atividades || []).some(a => a.reservaId === res?.id)
+  ) || null);
+  t = rv(t, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome || viagemAssoc.destino || '') : '');
   if (viagem) {
     t = rv(t, 'viagem_nome',         viagem.nome        || '');
     t = rv(t, 'viagem_destino',      viagem.destino     || '');
@@ -341,7 +349,7 @@ async function main() {
           }
           try {
             // Interpola com contexto da viagem + dados do primeiro voo
-            const msg = interpolar(mod.texto, cli || { nome: nomeCliente }, primeiroVoo.reserva, viagem);
+            const msg = interpolar(mod.texto, cli || { nome: nomeCliente }, primeiroVoo.reserva, viagem, viagens);
             await enviarWhatsApp(grupo, msg);
             algum = true;
             resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nomeCliente}" (viagem "${viagem.nome}", primeiro voo ${primeiroVoo.data})`);
@@ -384,7 +392,7 @@ async function main() {
             continue;
           }
           try {
-            await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome }, null, viagem));
+            await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome }, null, viagem, viagens));
             algum = true;
             resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nome}" (viagem ${data})`);
             logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nome, grupo, tentativa: 'sucesso' });
@@ -433,7 +441,7 @@ async function main() {
         if (disparar) {
           try {
             const nomeCliente = cli?.nome || res.cliente;
-            await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome: res.cliente }, res, null));
+            await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome: res.cliente }, res, null, viagens));
             res[key] = true;
             res[`${key}Em`] = new Date().toISOString();
             totalAlteracoes++;
