@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-19T22:04:13.489Z",
+  "executadoEm": "2026-07-20T00:03:43.347Z",
   "modelosAtivos": [
     {
       "nome": "Seu voo está chegando! - VOLTA",
@@ -32,114 +32,103 @@
     {
       "modelo": "Seu voo está chegando! - IDA",
       "gatilho": "voo_ida_dt",
-      "reservaId": "RES-1783539634114",
-      "cliente": "Diogo Ottoni",
-      "horasRestantes": 1.01,
-      "janela": 48,
-      "temGrupo": true,
-      "disparar": false,
-      "ts": "2026-07-19T22:04:13.370Z"
-    },
-    {
-      "modelo": "Seu voo está chegando! - IDA",
-      "gatilho": "voo_ida_dt",
       "reservaId": "RES-1783539695580",
       "cliente": "Vinícius Gontijo",
-      "horasRestantes": 50.6,
+      "horasRestantes": 48.6,
       "janela": 48,
       "temGrupo": true,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.254Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -67.9,
+      "horasRestantes": -69.9,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.254Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Visto Rachel",
-      "horasRestantes": 908.35,
+      "horasRestantes": 906.35,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.254Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip - Miguel e Maria",
-      "horasRestantes": 256.93,
+      "horasRestantes": 254.94,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.254Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior do Rio Grande",
-      "horasRestantes": 60.85,
+      "horasRestantes": 58.85,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem teste",
-      "horasRestantes": -215.57,
+      "horasRestantes": -217.56,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -36.99,
+      "horasRestantes": -38.98,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -119.49,
+      "horasRestantes": -121.48,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.371Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 3001.43,
+      "horasRestantes": 2999.44,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.372Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 667.01,
+      "horasRestantes": 665.02,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.372Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -51.57,
+      "horasRestantes": -53.56,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-19T22:04:13.372Z"
+      "ts": "2026-07-20T00:03:43.255Z"
     }
   ]
 }
