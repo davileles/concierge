@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -15,7 +15,15 @@
   --green:#22c55e;--yellow:#f59e0b;--purple:#c084fc;
   --r:10px;--font:'Montserrat',sans-serif;
 }
-body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding:0;display:block}
+[data-theme="light"]{
+  --bg:#f4f6fb;--surface:#ffffff;--surface2:#eef1f8;
+  --border:#dde3ee;--border2:#c7d0e2;
+  --accent:#e2434a;--accent2:#c9363d;
+  --blue:#0d5fdb;--text:#1b2436;--muted:#5c6b8a;--muted2:#8592ad;
+  --green:#178a4c;--yellow:#a9660a;--purple:#8b3fd6;
+  --r:10px;--font:'Montserrat',sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;padding:0;display:block;transition:background .2s,color .2s}
 .wrap{width:100%;max-width:1200px;margin:0 auto;padding:1.2rem 1.5rem 4rem;box-sizing:border-box}
 header{background:var(--surface);border-bottom:3px solid var(--accent);padding:14px 22px;position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
 .logo-row{display:flex;align-items:center;gap:14px}
@@ -304,6 +312,8 @@ header{animation:fadeUp .45s ease both}
 .subtipo-chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;white-space:nowrap;line-height:1.4}
 .subtipo-chip:hover{border-color:var(--accent);color:var(--accent)}
 .subtipo-chip-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}
+.theme-toggle{margin-left:auto;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background .15s,border-color .15s;flex-shrink:0}
+.theme-toggle:hover{border-color:var(--accent)}
 </style>
 <script src="iata.js"></script>
 </head>
@@ -317,6 +327,7 @@ header{animation:fadeUp .45s ease both}
       <span class="brand-sub">Painel de Gestão</span>
     </div>
   </div>
+  <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" title="Alternar tema claro/escuro">🌙</button>
 </header>
 
 <!-- TABS -->
@@ -1555,6 +1566,27 @@ function _applyCfg(c) {
   // Atualizar token para uso imediato
   window._ghToken = c.ghToken || '';
   document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
+  aplicarTema(c.tema || 'dark');
+}
+
+// ══════════════════════════════════════════
+//  TEMA (claro/escuro) — persistido via cfg no servidor
+// ══════════════════════════════════════════
+function aplicarTema(tema) {
+  document.documentElement.setAttribute('data-theme', tema);
+  var btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = tema === 'light' ? '☀️' : '🌙';
+  _cfg.tema = tema;
+}
+
+function toggleTema() {
+  var atual = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  aplicarTema(atual);
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({data: _cfg})
+  }).catch(function(e){ console.error('[toggleTema]', e); });
 }
 
 function saveCfg() {
@@ -1578,7 +1610,8 @@ function saveCfg() {
     colGrupo:         getVal('cfg-col-grupo').toUpperCase()         || 'O',
     linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys'),
-    ghToken:          getVal('cfg-gh-token')
+    ghToken:          getVal('cfg-gh-token'),
+    tema:             _cfg.tema || 'dark'
   };
   _cfg = c;
   fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg', {
