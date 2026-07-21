@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" data-theme="dark">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -32,6 +32,28 @@
   --font: 'Montserrat', sans-serif;
 }
 
+[data-theme="light"] {
+  --bg: #f6f4ef;
+  --surface: #ffffff;
+  --card: #f4f1ea;
+  --border: #e3ddd0;
+  --border2: #d2c9b6;
+  --text: #22201b;
+  --muted: #6b6456;
+  --muted2: #948c78;
+  --accent: #e2434a;
+  --accent2: #c9363d;
+  --green: #16874c;
+  --green-dim: rgba(22,135,76,.10);
+  --green-border: rgba(22,135,76,.25);
+  --blue: #1a5fc4;
+  --blue-dim: rgba(26,95,196,.10);
+  --blue-border: rgba(26,95,196,.25);
+  --amber: #a9660a;
+  --amber-dim: rgba(169,102,10,.10);
+  --amber-border: rgba(169,102,10,.25);
+}
+
 html, body {
   min-height: 100vh;
   background: var(--bg);
@@ -39,6 +61,7 @@ html, body {
   font-family: var(--font);
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
+  transition: background .2s, color .2s;
 }
 
 /* ── ANIMAÇÕES ── */
@@ -254,6 +277,14 @@ html, body {
   text-transform: uppercase; letter-spacing: .5px;
 }
 .nav-logout:hover { color: var(--text); border-color: var(--accent); }
+.theme-toggle {
+  width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+  background: var(--card); border: 1px solid var(--border2); color: var(--text);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  font-size: 14px; transition: border-color .15s;
+}
+.theme-toggle:hover { border-color: var(--accent); }
+#theme-toggle-login { position: fixed; top: 18px; right: 18px; z-index: 50; }
 
 /* HERO */
 .hero {
@@ -592,6 +623,8 @@ html, body {
 </head>
 <body>
 
+<button class="theme-toggle" id="theme-toggle-login" onclick="toggleTema()" title="Alternar tema claro/escuro">🌙</button>
+
 <!-- LOGIN -->
 <div id="login-wrap">
   <div class="login-box fade-in">
@@ -632,6 +665,7 @@ html, body {
     </div>
     <div class="nav-user">
       <span>Olá, <strong id="nav-nome"></strong></span>
+      <button class="theme-toggle" id="theme-toggle" onclick="toggleTema()" title="Alternar tema claro/escuro">🌙</button>
       <button class="nav-logout" onclick="sair()">Sair</button>
     </div>
   </nav>
@@ -657,6 +691,40 @@ html, body {
 <script>
 var PROXY = 'https://cdv-proxy-production.up.railway.app';
 var _dados = null;
+
+// ══════════════════════════════════════════
+//  TEMA (claro/escuro) — persistido via cfg no servidor
+// ══════════════════════════════════════════
+var _cfgTema = {};
+function aplicarTema(tema) {
+  document.documentElement.setAttribute('data-theme', tema);
+  var icone = tema === 'light' ? '☀️' : '🌙';
+  var b1 = document.getElementById('theme-toggle-login');
+  var b2 = document.getElementById('theme-toggle');
+  if (b1) b1.textContent = icone;
+  if (b2) b2.textContent = icone;
+  _cfgTema.tema = tema;
+}
+function toggleTema() {
+  var atual = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  aplicarTema(atual);
+  fetch(PROXY + '/concierge/cfg')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var c = d.data || {};
+      c.tema = atual;
+      return fetch(PROXY + '/concierge/cfg', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({data: c})
+      });
+    })
+    .catch(function(e){ console.error('[toggleTema]', e); });
+}
+fetch(PROXY + '/concierge/cfg')
+  .then(function(r){ return r.json(); })
+  .then(function(d){ aplicarTema((d.data || {}).tema || 'dark'); })
+  .catch(function(e){ console.error('[tema init]', e); });
 
 function fmtDate(d) {
   if (!d) return '—';
