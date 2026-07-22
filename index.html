@@ -529,22 +529,22 @@ header{animation:fadeUp .45s ease both}
           </select>
         </div>
         <div class="g2">
-          <div class="field"><label>Quantidade Total de Milhas Gastas <span style="color:var(--accent)">*</span></label><input type="text" id="f-milhas-total" placeholder="Ex: 90.000" oninput="onMilhasChange()"/></div>
+          <div class="field"><label>Quantidade Total de Milhas Gastas <span style="color:var(--accent)">*</span></label><input type="text" id="f-milhas-total" placeholder="Ex: 90.000" oninput="formatMilhar(this);onMilhasChange()"/></div>
           <div class="field"><label>Milhas por Passageiro <span class="tag">automático</span></label><input type="text" id="f-milhas" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
         </div>
         <div class="field"><label>Total de Passageiros <span style="color:var(--accent)">*</span></label><input type="number" id="f-pax" min="1" placeholder="Ex: 2" oninput="onPaxChange()"/></div>
-        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" placeholder="Ex: 320,00"/></div>
+        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
       </div>
 
       <!-- DINHEIRO: só valor -->
       <div id="campos-dinheiro" style="display:none">
-        <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-dinheiro" placeholder="Ex: 4.690,15"/></div>
+        <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 4.690,15"/></div>
       </div>
 
       <!-- DINHEIRO C/ ACÚMULO: valor + programa fidelidade -->
       <div id="campos-dinheiro-acumulo" style="display:none">
         <div class="g2">
-          <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-acumulo" placeholder="Ex: 4.690,15" oninput="calcMilhasAcumulo()"/></div>
+          <div class="field"><label>Valor Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-acumulo" placeholder="Ex: 4.690,15" oninput="formatMilhar(this);calcMilhasAcumulo()"/></div>
           <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
             <select id="f-programa-acumulo-voo">
               <option value="">Selecione…</option>
@@ -579,10 +579,10 @@ header{animation:fadeUp .45s ease both}
         </div>
         <div class="g2">
           <div class="field"><label>Total de Passageiros <span style="color:var(--accent)">*</span></label><input type="number" id="f-pax-balcao" min="1" placeholder="Ex: 2" oninput="onValorBalcaoChange()"/></div>
-          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-total-balcao" placeholder="Ex: 6.400,00" oninput="onValorBalcaoChange()"/></div>
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-total-balcao" placeholder="Ex: 6.400,00" oninput="formatMilhar(this);onValorBalcaoChange()"/></div>
         </div>
         <div class="g2">
-          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" placeholder="Ex: 320,00"/></div>
+          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
           <div class="field"><label>Valor por Passageiro <span class="tag">automático</span></label><input type="text" id="f-valor-pax-balcao" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
         </div>
       </div>
@@ -615,7 +615,7 @@ header{animation:fadeUp .45s ease both}
       <!-- HOTEL: MILHAS — valor total milhas + programa -->
       <div id="hotel-campos-milhas" style="display:none">
         <div class="g2">
-          <div class="field"><label>Valor Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor" placeholder="Ex: 60.000"/></div>
+          <div class="field"><label>Valor Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor" oninput="formatMilhar(this)" placeholder="Ex: 60.000"/></div>
           <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
             <select id="f-hotel-programa-milhas">
               <option value="">Selecione…</option>
@@ -632,13 +632,13 @@ header{animation:fadeUp .45s ease both}
 
       <!-- HOTEL: DINHEIRO — valor total -->
       <div id="hotel-campos-dinheiro" style="display:none">
-        <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor-dinheiro" placeholder="Ex: 4.500,00"/></div>
+        <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 4.500,00"/></div>
       </div>
 
       <!-- HOTEL: DINHEIRO C/ ACÚMULO — valor + milhas + programa + parceiro -->
       <div id="hotel-campos-acumulo" style="display:none">
         <div class="g2">
-          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor-acumulo" placeholder="Ex: 4.500,00" oninput="calcMilhasAcumuloHotel()"/></div>
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-hotel-valor-acumulo" placeholder="Ex: 4.500,00" oninput="formatMilhar(this);calcMilhasAcumuloHotel()"/></div>
           <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
             <select id="f-hotel-programa-acumulo">
               <option value="">Selecione…</option>
@@ -690,7 +690,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="g2">
         <div class="field"><label id="lbl-fornecedor">Fornecedor / Operadora</label><input type="text" id="f-locadora" placeholder="Ex: Vem Me Buscar, Uber"/></div>
-        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-carro-valor" placeholder="Ex: 1.200,00"/></div>
+        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-carro-valor" oninput="formatMilhar(this)" placeholder="Ex: 1.200,00"/></div>
       </div>
       <div class="g2" id="campos-carro-data-comum">
         <div class="field"><label id="lbl-ret-data">Data <span style="color:var(--accent)">*</span></label><input type="date" id="f-ret-data"/></div>
@@ -740,12 +740,12 @@ header{animation:fadeUp .45s ease both}
         </div>
         <!-- LOCAÇÃO: DINHEIRO -->
         <div id="loc-campos-dinheiro" style="display:none">
-          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-dinheiro" placeholder="Ex: 1.200,00"/></div>
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 1.200,00"/></div>
         </div>
         <!-- LOCAÇÃO: MILHAS -->
         <div id="loc-campos-milhas" style="display:none">
           <div class="g2">
-            <div class="field"><label>Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-milhas" placeholder="Ex: 25.000"/></div>
+            <div class="field"><label>Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-milhas" oninput="formatMilhar(this)" placeholder="Ex: 25.000"/></div>
             <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
               <select id="f-loc-programa-milhas">
                 <option value="">Selecione…</option>
@@ -762,7 +762,7 @@ header{animation:fadeUp .45s ease both}
         <!-- LOCAÇÃO: DINHEIRO C/ ACÚMULO -->
         <div id="loc-campos-acumulo" style="display:none">
           <div class="g2">
-            <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-acumulo" placeholder="Ex: 1.200,00" oninput="calcMilhasAcumuloLoc()"/></div>
+            <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-loc-valor-acumulo" placeholder="Ex: 1.200,00" oninput="formatMilhar(this);calcMilhasAcumuloLoc()"/></div>
             <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
               <select id="f-loc-programa-acumulo">
                 <option value="">Selecione…</option>
@@ -807,7 +807,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="g2">
         <div class="field"><label>Voucher / Confirmação</label><input type="text" id="f-passeio-conf" placeholder="Ex: GYG-ABCDEF"/></div>
-        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-passeio-valor" placeholder="Ex: 980,00"/></div>
+        <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-passeio-valor" oninput="formatMilhar(this)" placeholder="Ex: 980,00"/></div>
       </div>
     </div>
 
@@ -3602,6 +3602,21 @@ function onHotelTipoEmissaoChange() {
 }
 
 function onHospedesChange() { /* reservado para cálculos futuros */ }
+
+// Aplica separador de milhar (ponto) em tempo real nos campos de valor/milhas.
+// Preserva a parte decimal (após a vírgula) digitada livremente pelo usuário.
+function formatMilhar(el) {
+  var v = el.value;
+  var partes = v.split(',');
+  var intPart = partes[0].replace(/\D/g, '');
+  intPart = intPart.replace(/^0+(?=\d)/, '');
+  intPart = intPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  var resultado = intPart;
+  if (partes.length > 1) {
+    resultado += ',' + partes[1].replace(/\D/g, '');
+  }
+  el.value = resultado;
+}
 
 function onMilhasChange() {
   var raw   = (getVal('f-milhas-total') || '').replace(/\D/g, '');
