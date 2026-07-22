@@ -846,7 +846,7 @@ header{animation:fadeUp .45s ease both}
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-accent" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
+      <button class="btn btn-accent" id="btn-salvar-reserva" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
       <button class="btn btn-ghost" id="btn-cancelar-edicao" style="display:none" onclick="cancelarEdicaoReserva()">✕ Cancelar Edição</button>
       <button class="btn btn-ghost" onclick="limparForm()">🗑 Limpar</button>
     </div>
@@ -2111,6 +2111,9 @@ function aplicarDadosAtivo(d) {
 }
 
 function salvarReserva() {
+  var _btnSalvar = document.getElementById('btn-salvar-reserva');
+  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
+
   var tipo = getVal('f-tipo');
   var cliente = toTitleCase(getVal('f-cliente'));
   if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
@@ -2405,8 +2408,11 @@ function salvarReserva() {
   var _base64Upload = ativoArquivoBase64;
   var _metaUpload   = ativoArquivoMeta;
 
+  if (_btnSalvar) { _btnSalvar.disabled = true; _btnSalvar.style.opacity = '0.6'; }
+
   saveReservas()
     .then(function(){
+      if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
       showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
       updateStats();
       renderReservas();
@@ -2443,6 +2449,7 @@ function salvarReserva() {
     })
     .catch(function(e){
       reservas.shift();
+      if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
       showToast('❌ Erro ao salvar reserva: ' + e.message, 'err');
       console.error('[salvarReserva]', e);
     });
@@ -5525,4 +5532,5 @@ function toggleDemanda(id) {
 </script>
 </body>
 </html>
+
 
