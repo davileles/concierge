@@ -3050,6 +3050,8 @@ var VARS_RESERVA = [
   { label: '{{pnr}}',                   desc: 'Localizador' },
   { label: '{{programa}}',              desc: 'Programa de emissão' },
   { label: '{{milhas}}',                desc: 'Milhas por pax' },
+  { label: '{{milhas_total}}',          desc: 'Quantidade total de milhas gastas' },
+  { label: '{{valor_tarifa}}',          desc: 'Valor da tarifa pagante (R$)' },
   { label: '{{pax}}',                   desc: 'Total passageiros' },
   { label: '{{hotel}}',                 desc: 'Nome do hotel' },
   { label: '{{checkin}}',               desc: 'Check-in' },
@@ -3418,6 +3420,8 @@ function onDispararChange() {
     txt = rv(txt, 'pnr', res.pnr);
     txt = rv(txt, 'programa', res.programa);
     txt = rv(txt, 'milhas', res.milhas);
+    txt = rv(txt, 'milhas_total', res.milhasTotal||'');
+    txt = rv(txt, 'valor_tarifa', res.valor||'');
     txt = rv(txt, 'pax', res.pax);
     txt = rv(txt, 'hotel', res.hotelNome);
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
