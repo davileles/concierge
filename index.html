@@ -628,6 +628,7 @@ header{animation:fadeUp .45s ease both}
             </select>
           </div>
         </div>
+        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-hotel-valor-tarifa" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
       </div>
 
       <!-- HOTEL: DINHEIRO — valor total -->
@@ -1814,7 +1815,7 @@ function limparForm() {
    'f-valor-acumulo','f-programa-acumulo-voo','f-fator-acumulo','f-milhas-acumulo','f-pax-acumulo',
    'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor',
    'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes',
-   'f-hotel-valor','f-hotel-programa-milhas',
+   'f-hotel-valor','f-hotel-programa-milhas','f-hotel-valor-tarifa',
    'f-hotel-valor-dinheiro',
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
@@ -2074,6 +2075,7 @@ function aplicarDadosAtivo(d) {
   sv('f-hotel-nome', d.hotelNome); sv('f-hotel-destino', d.hotelDestino);
   sv('f-checkin', d.checkin); sv('f-checkout', d.checkout); sv('f-noites', d.noites);
   sv('f-hotel-conf', d.hotelConf); sv('f-hotel-valor', d.hotelValor);
+  sv('f-hotel-valor-tarifa', d.hotelValorTarifa);
   if (d.tipoEmissao) ssv('f-hotel-tipo-emissao', d.tipoEmissao);
 
   // Transporte (Transfer ou Locação)
@@ -2216,6 +2218,7 @@ function salvarReserva() {
       // Milhas
       valorMilhas: getVal('f-hotel-valor'),
       programaMilhas: getVal('f-hotel-programa-milhas'),
+      valorTarifaPagante: getVal('f-hotel-valor-tarifa'),
       // Dinheiro
       valorDinheiro: getVal('f-hotel-valor-dinheiro'),
       // Dinheiro c/ acúmulo
@@ -2783,6 +2786,7 @@ function editarReserva(id) {
     // Milhas
     setVal('f-hotel-valor',r.valorMilhas||r.valor||'');
     setVal('f-hotel-programa-milhas',r.programaMilhas||'');
+    setVal('f-hotel-valor-tarifa',r.valorTarifaPagante||'');
     // Dinheiro
     setVal('f-hotel-valor-dinheiro',r.valorDinheiro||'');
     // Dinheiro c/ acúmulo
@@ -3603,7 +3607,7 @@ function onHotelTipoEmissaoChange() {
   if (tipo === 'dinheiro')         document.getElementById('hotel-campos-dinheiro').style.display = '';
   if (tipo === 'dinheiro_acumulo') document.getElementById('hotel-campos-acumulo').style.display = '';
   // Limpar ao trocar
-  if (tipo !== 'milhas')           { setVal('f-hotel-valor',''); setVal('f-hotel-programa-milhas',''); }
+  if (tipo !== 'milhas')           { setVal('f-hotel-valor',''); setVal('f-hotel-programa-milhas',''); setVal('f-hotel-valor-tarifa',''); }
   if (tipo !== 'dinheiro')         setVal('f-hotel-valor-dinheiro','');
   if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-valor-acumulo',''); setVal('f-hotel-fator-acumulo',''); setVal('f-hotel-milhas-acumulo',''); setVal('f-hotel-programa-acumulo',''); setVal('f-hotel-parceiro-acumulo',''); }
 }
