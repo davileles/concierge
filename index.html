@@ -400,10 +400,10 @@ header{animation:fadeUp .45s ease both}
         <label>Tipo de Reserva <span style="color:var(--accent)">*</span></label>
         <select id="f-tipo" onchange="onTipoChange()">
           <option value="">Selecione…</option>
-          <option value="voo">✈️ Passagem Aérea</option>
           <option value="hotel">🏨 Hospedagem</option>
-          <option value="carro">🚐 Transporte</option>
+          <option value="voo">✈️ Passagem Aérea</option>
           <option value="passeio">🎯 Passeio / Atividade</option>
+          <option value="carro">🚐 Transporte</option>
         </select>
       </div>
       <div class="field">
@@ -456,8 +456,8 @@ header{animation:fadeUp .45s ease both}
             <option>Azul</option><option>British Airways</option><option>Copa</option>
             <option>Delta</option><option>Emirates</option><option>Gol</option>
             <option>Iberia</option><option>KLM</option><option>LATAM</option>
-            <option>Lufthansa</option><option>Qatar Airways</option><option>Sky</option><option>South African</option>
-            <option>Ryanair</option><option>TAP</option><option>Turkish Airlines</option><option>United</option>
+            <option>Lufthansa</option><option>Qatar Airways</option><option>Ryanair</option>
+            <option>Sky</option><option>South African</option><option>TAP</option><option>Turkish Airlines</option><option>United</option>
           </select>
         </div>
         <div class="field"><label>Nº do Voo — Ida <span class="tag">opcional</span></label><input type="text" id="f-nvoo-ida" placeholder="Ex: LA8002"/></div>
@@ -487,8 +487,8 @@ header{animation:fadeUp .45s ease both}
             <option>Azul</option><option>British Airways</option><option>Copa</option>
             <option>Delta</option><option>Emirates</option><option>Gol</option>
             <option>Iberia</option><option>KLM</option><option>LATAM</option>
-            <option>Lufthansa</option><option>Qatar Airways</option><option>Sky</option><option>South African</option>
-            <option>Ryanair</option><option>TAP</option><option>Turkish Airlines</option><option>United</option>
+            <option>Lufthansa</option><option>Qatar Airways</option><option>Ryanair</option>
+            <option>Sky</option><option>South African</option><option>TAP</option><option>Turkish Airlines</option><option>United</option>
           </select>
         </div>
         <div class="field"><label>Nº do Voo — Volta <span class="tag">opcional</span></label><input type="text" id="f-nvoo-volta" placeholder="Ex: LA8003"/></div>
@@ -507,10 +507,10 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Tipo de Emissão <span style="color:var(--accent)">*</span></label>
           <select id="f-tipo-emissao" onchange="onTipoEmissaoChange()">
             <option value="">Selecione…</option>
-            <option value="milhas">Milhas</option>
+            <option value="balcao">Balcão</option>
             <option value="dinheiro">Dinheiro</option>
             <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
-            <option value="balcao">Balcão</option>
+            <option value="milhas">Milhas</option>
           </select>
         </div>
       </div>
@@ -606,9 +606,9 @@ header{animation:fadeUp .45s ease both}
       <div class="field"><label>Tipo de Emissão <span style="color:var(--accent)">*</span></label>
         <select id="f-hotel-tipo-emissao" onchange="onHotelTipoEmissaoChange()">
           <option value="">Selecione…</option>
-          <option value="milhas">Milhas</option>
           <option value="dinheiro">Dinheiro</option>
           <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
+          <option value="milhas">Milhas</option>
         </select>
       </div>
 
@@ -723,9 +723,9 @@ header{animation:fadeUp .45s ease both}
           <div class="field"><label>Seguro <span class="tag">opcional</span></label>
             <select id="f-seguro">
               <option value="">Selecione…</option>
-              <option>Sem seguro adicional</option>
               <option>Cobertura Básica</option>
               <option>Cobertura Total</option>
+              <option>Sem seguro adicional</option>
             </select>
           </div>
         </div>
@@ -734,8 +734,8 @@ header{animation:fadeUp .45s ease both}
           <select id="f-loc-tipo-emissao" onchange="onLocTipoEmissaoChange()">
             <option value="">Selecione…</option>
             <option value="dinheiro">Dinheiro</option>
-            <option value="milhas">Milhas</option>
             <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
+            <option value="milhas">Milhas</option>
           </select>
         </div>
         <!-- LOCAÇÃO: DINHEIRO -->
@@ -1411,12 +1411,12 @@ header{animation:fadeUp .45s ease both}
       </select>
       <select id="dem-filtro-tipo" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex-shrink:0">
         <option value="todos">Todos os tipos</option>
-        <option value="✈️">✈️ Passagem</option>
-        <option value="🏨">🏨 Hotel</option>
-        <option value="🛡️">🛡️ Seguro</option>
-        <option value="💳">💳 Seg. Cartão</option>
         <option value="🚌">🚗 Carro/Transp.</option>
+        <option value="🏨">🏨 Hotel</option>
+        <option value="✈️">✈️ Passagem</option>
         <option value="🎯">🎯 Passeio</option>
+        <option value="💳">💳 Seg. Cartão</option>
+        <option value="🛡️">🛡️ Seguro</option>
         <option value="📌">📌 Outro</option>
       </select>
       <input type="text" id="dem-busca" placeholder="🔍 Buscar cliente ou demanda…" oninput="renderDemandas()" style="font-size:12px;padding:5px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex:1;min-width:160px"/>
@@ -1430,13 +1430,13 @@ header{animation:fadeUp .45s ease both}
       <div class="field">
         <label>Tipo <span class="tag required">*</span></label>
         <select id="df-tipo" onchange="demandaTipoChange()">
+          <option value="💳 Ativação Seguro Cartão">💳 Ativação Seguro Cartão</option>
+          <option value="🏨 Hotel">🏨 Hotel</option>
           <option value="✈️ Passagem Doméstica">✈️ Passagem Doméstica</option>
           <option value="🌍 Passagem Internacional">🌍 Passagem Internacional</option>
-          <option value="🏨 Hotel">🏨 Hotel</option>
-          <option value="🛡️ Seguro Viagem">🛡️ Seguro Viagem</option>
-          <option value="💳 Ativação Seguro Cartão">💳 Ativação Seguro Cartão</option>
-          <option value="🚌 Transporte">🚗 Transporte/Carro</option>
           <option value="🎯 Passeio/Atividade">🎯 Passeio/Atividade</option>
+          <option value="🛡️ Seguro Viagem">🛡️ Seguro Viagem</option>
+          <option value="🚌 Transporte">🚗 Transporte/Carro</option>
           <option value="📌 Outro">📌 Outro</option>
         </select>
       </div>
@@ -1903,7 +1903,7 @@ function populateViagemAssocSelect(reservadoParaId) {
     opt0.textContent = 'Nenhuma viagem encontrada para ' + clienteSel;
     sel.appendChild(opt0);
   }
-  viagensFiltradas.forEach(function(v) {
+  viagensFiltradas.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
     var clientes = v.clientes
       ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(toTitleCase).join(', ')
       : '';
@@ -5215,7 +5215,7 @@ function abrirNovaDemanda() {
   // Popular viagens
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
-  viagens.forEach(function(v) {
+  viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
     var opt = document.createElement('option');
     opt.value = v.id;
     opt.textContent = v.nome + (v.clientes ? ' · ' + v.clientes : '');
@@ -5352,7 +5352,7 @@ function editarDemanda(id) {
   document.getElementById('df-tipo').value = d.tipo || '✈️ Passagem Doméstica';
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
-  viagens.forEach(function(v) {
+  viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
     var opt = document.createElement('option');
     opt.value = v.id;
     opt.textContent = v.nome + (v.clientes ? ' · ' + v.clientes : '');
