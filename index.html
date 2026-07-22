@@ -1589,7 +1589,21 @@ function toggleTema() {
   }).catch(function(e){ console.error('[toggleTema]', e); });
 }
 
+var _saveCfgTimer = null;
+var _saveCfgInFlight = false;
+var _saveCfgPending = false;
+
 function saveCfg() {
+  // Debounce: evita disparar um POST a cada tecla digitada (isso causava
+  // requisições concorrentes competindo pelo SHA do cfg.json no GitHub,
+  // e a última a chegar nem sempre era a que tinha o valor mais recente —
+  // ex.: o token do GitHub "não gravava" mesmo o toast dizendo sucesso).
+  clearTimeout(_saveCfgTimer);
+  _saveCfgTimer = setTimeout(_saveCfgNow, 700);
+}
+
+function _saveCfgNow() {
+  if (_saveCfgInFlight) { _saveCfgPending = true; return; }
   var c = {
     url:         getVal('cfg-url'),
     aba:         getVal('cfg-aba') || 'Clientes',
@@ -1614,12 +1628,26 @@ function saveCfg() {
     tema:             _cfg.tema || 'dark'
   };
   _cfg = c;
+  _saveCfgInFlight = true;
   fetch('https://cdv-proxy-production.up.railway.app/concierge/cfg', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({data: c})
-  }).then(function(){ showToast('✅ Configurações salvas!', 'ok'); })
-    .catch(function(e){ console.error('[saveCfg]', e); showToast('❌ Erro ao salvar configurações', 'err'); });
+  }).then(function(r){ return r.json().then(function(j){ return {status:r.status, body:j}; }); })
+    .then(function(res){
+      if (!res.body || res.body.ok !== true) {
+        throw new Error((res.body && res.body.erro) || ('HTTP ' + res.status));
+      }
+      showToast('✅ Configurações salvas!', 'ok');
+    })
+    .catch(function(e){
+      console.error('[saveCfg]', e);
+      showToast('❌ Erro ao salvar configurações — tente novamente', 'err');
+    })
+    .finally(function(){
+      _saveCfgInFlight = false;
+      if (_saveCfgPending) { _saveCfgPending = false; _saveCfgNow(); }
+    });
 }
 
 function getCfg() {
@@ -5478,3 +5506,4 @@ function toggleDemanda(id) {
 </script>
 </body>
 </html>
+
