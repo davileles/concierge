@@ -759,6 +759,7 @@ header{animation:fadeUp .45s ease both}
               </select>
             </div>
           </div>
+          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-loc-valor-tarifa" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
         </div>
         <!-- LOCAÇÃO: DINHEIRO C/ ACÚMULO -->
         <div id="loc-campos-acumulo" style="display:none">
@@ -1820,7 +1821,7 @@ function limparForm() {
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-transfer-hora','f-transfer-hora-chegada','f-transfer-pax',
-   'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
+   'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-tarifa','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-hotel-fator-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-obs','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
@@ -2259,6 +2260,7 @@ function salvarReserva() {
           valorDinheiro: getVal('f-loc-valor-dinheiro'),
           valorMilhas: getVal('f-loc-valor-milhas'),
           programaMilhas: getVal('f-loc-programa-milhas'),
+          valorTarifaPagante: getVal('f-loc-valor-tarifa'),
           valorAcumulo: getVal('f-loc-valor-acumulo'),
           fatorAcumulo: getVal('f-loc-fator-acumulo'),
           milhasAcumulo: getVal('f-loc-milhas-acumulo'),
@@ -2815,6 +2817,7 @@ function editarReserva(id) {
       setVal('f-loc-valor-dinheiro',r.valorDinheiro||'');
       setVal('f-loc-valor-milhas',r.valorMilhas||'');
       setVal('f-loc-programa-milhas',r.programaMilhas||'');
+      setVal('f-loc-valor-tarifa',r.valorTarifaPagante||'');
       setVal('f-loc-valor-acumulo',r.valorAcumulo||'');
       setVal('f-loc-fator-acumulo',r.fatorAcumulo||'');
       setVal('f-loc-milhas-acumulo',r.milhasAcumulo||'');
@@ -3593,7 +3596,7 @@ function onLocTipoEmissaoChange() {
   if (tipo === 'dinheiro_acumulo') { var el = document.getElementById('loc-campos-acumulo');  if (el) el.style.display = ''; }
   // Limpar ao trocar
   if (tipo !== 'dinheiro')         setVal('f-loc-valor-dinheiro','');
-  if (tipo !== 'milhas')           { setVal('f-loc-valor-milhas',''); setVal('f-loc-programa-milhas',''); }
+  if (tipo !== 'milhas')           { setVal('f-loc-valor-milhas',''); setVal('f-loc-programa-milhas',''); setVal('f-loc-valor-tarifa',''); }
   if (tipo !== 'dinheiro_acumulo') { setVal('f-loc-valor-acumulo',''); setVal('f-loc-fator-acumulo',''); setVal('f-loc-milhas-acumulo',''); setVal('f-loc-programa-acumulo',''); setVal('f-loc-parceiro-acumulo',''); }
 }
 
