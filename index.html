@@ -3075,6 +3075,10 @@ var VARS_RESERVA = [
   { label: '{{acumulo_programa}}',       desc: 'Programa de fidelidade (acúmulo hotel)' },
   { label: '{{acumulo_milhas}}',         desc: 'Milhas/pontos a acumular (hotel)' },
   { label: '{{acumulo_parceiro}}',       desc: 'Parceiro de acúmulo (hotel)' },
+  { label: '{{hotel_milhas}}',           desc: 'Quantidade total de milhas gastas (hotel)' },
+  { label: '{{hotel_valor_tarifa}}',     desc: 'Valor da tarifa pagante do hotel (R$)' },
+  { label: '{{loc_milhas}}',             desc: 'Quantidade total de milhas gastas (locação de carro)' },
+  { label: '{{loc_valor_tarifa}}',       desc: 'Valor da tarifa pagante da locação de carro (R$)' },
 ];
 
 function loadModelos() {
@@ -3444,6 +3448,10 @@ function onDispararChange() {
     txt = rv(txt, 'acumulo_programa', res.programaAcumulo||'');
     txt = rv(txt, 'acumulo_milhas',   res.milhasAcumulo||'');
     txt = rv(txt, 'acumulo_parceiro', res.parceiroAcumulo||'');
+    txt = rv(txt, 'hotel_milhas',       res.tipo==='hotel' ? (res.valorMilhas||'') : '');
+    txt = rv(txt, 'hotel_valor_tarifa', res.tipo==='hotel' ? (res.valorTarifaPagante||'') : '');
+    txt = rv(txt, 'loc_milhas',         (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorMilhas||'') : '');
+    txt = rv(txt, 'loc_valor_tarifa',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorTarifaPagante||'') : '');
     // Nome da viagem associada a esta reserva
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
