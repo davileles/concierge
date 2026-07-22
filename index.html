@@ -2972,9 +2972,9 @@ function switchTab(name) {
   if (name === 'viagens') renderViagens();
   if (name === 'nova' && !window._editandoReserva) populateViagemAssocSelect();
   var tabs = document.querySelectorAll('.main-tab');
-  var map = {reservas:0, nova:1, viagens:2, clientes:3, mensagens:4, config:5, 'roteiro-gen':6, 'demandas':7};
   if (name==='mensagens') { loadModelos(); initMensagens(); }
-  if (tabs[map[name]]) tabs[map[name]].classList.add('active');
+  var activeTab = document.querySelector('.main-tab[onclick*="switchTab(\'' + name + '\')"]');
+  if (activeTab) activeTab.classList.add('active');
   if (name==='clientes') renderClientes();
   if (name==='reservas') renderReservas();
   if (name==='roteiro-gen') rgPopularSelect();
