@@ -3079,6 +3079,11 @@ var VARS_RESERVA = [
   { label: '{{hotel_valor_tarifa}}',     desc: 'Valor da tarifa pagante do hotel (R$)' },
   { label: '{{loc_milhas}}',             desc: 'Quantidade total de milhas gastas (locação de carro)' },
   { label: '{{loc_valor_tarifa}}',       desc: 'Valor da tarifa pagante da locação de carro (R$)' },
+  { label: '{{loc_local_retirada}}',     desc: 'Local de retirada do carro' },
+  { label: '{{loc_local_devolucao}}',    desc: 'Local de devolução/entrega do carro' },
+  { label: '{{loc_data_retirada}}',      desc: 'Data de retirada do carro' },
+  { label: '{{loc_data_devolucao}}',     desc: 'Data de devolução/entrega do carro' },
+  { label: '{{loc_categoria}}',          desc: 'Categoria/modelo do carro' },
 ];
 
 function loadModelos() {
@@ -3452,6 +3457,11 @@ function onDispararChange() {
     txt = rv(txt, 'hotel_valor_tarifa', res.tipo==='hotel' ? (res.valorTarifaPagante||'') : '');
     txt = rv(txt, 'loc_milhas',         (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorMilhas||'') : '');
     txt = rv(txt, 'loc_valor_tarifa',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorTarifaPagante||'') : '');
+    txt = rv(txt, 'loc_local_retirada',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retLocal||'') : '');
+    txt = rv(txt, 'loc_local_devolucao', (res.tipo==='carro' && res.subtipo==='locacao') ? (res.devLocal||'') : '');
+    txt = rv(txt, 'loc_data_retirada',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retData?fmtDate(res.retData):'') : '');
+    txt = rv(txt, 'loc_data_devolucao',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.devData?fmtDate(res.devData):'') : '');
+    txt = rv(txt, 'loc_categoria',       (res.tipo==='carro' && res.subtipo==='locacao') ? (res.categoria||'') : '');
     // Nome da viagem associada a esta reserva
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
