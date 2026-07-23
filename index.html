@@ -5327,6 +5327,7 @@ function loadDemandas() {
   viagens.forEach(function(v) {
     (v.atividades || []).forEach(function(a) {
       // Checa se já existe demanda para esta atividade
+      if (a.demandaOculta) return;
       var existe = demandas.find(function(d) { return d.viagemId === v.id && d.atividadeRef === a.id; });
       if (!existe && a.id) {
         // Importa atividade existente como demanda (somente se tiver id)
@@ -5525,8 +5526,27 @@ function editarDemanda(id) {
 }
 
 function excluirDemanda(id) {
-  if (!confirm('Remover esta demanda? A atividade na viagem não será afetada.')) return;
-  demandas = demandas.filter(function(d){ return d.id !== id; });
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d) return;
+
+  // Demanda espelhada de uma atividade de viagem: precisa marcar a atividade,
+  // senão renderDemandas() reimporta a demanda a cada render.
+  if (d.viagemId && d.atividadeRef) {
+    if (!confirm('Remover a demanda #' + String(d.numero||'').padStart(3,'0') + ' da lista?\n\nA atividade continua existindo na viagem "' + (d.viagemNome || '') + '" — para apagá-la de vez, use a aba Viagens.')) return;
+    var v = viagens.find(function(x){ return x.id === d.viagemId; });
+    if (v) {
+      var a = (v.atividades || []).find(function(x){ return x.id === d.atividadeRef; });
+      if (a) a.demandaOculta = true;
+    }
+    demandas = demandas.filter(function(x){ return x.id !== id; });
+    saveDemandas();
+    renderDemandas();
+    showToast('🗑️ Demanda removida da lista', 'ok');
+    return;
+  }
+
+  if (!confirm('Remover esta demanda?')) return;
+  demandas = demandas.filter(function(x){ return x.id !== id; });
   saveDemandas();
   renderDemandas();
   showToast('🗑️ Demanda removida', 'ok');
@@ -5581,6 +5601,10 @@ function renderDemandas() {
   viagens.forEach(function(v) {
     (v.atividades || []).forEach(function(a) {
       if (!a.id) return;
+      if (a.demandaOculta) {
+        demandas = demandas.filter(function(d){ return d.atividadeRef !== a.id; });
+        return;
+      }
       var existe = demandas.find(function(d){ return d.atividadeRef === a.id; });
       if (!existe) {
         demandas.push({
