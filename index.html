@@ -144,6 +144,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 #demandas-grid{padding:1rem 1.5rem 1.5rem}
 @media(max-width:640px){#demandas-grid{padding:.85rem .75rem 1.5rem}}
 .dem-tabela-wrap{border:1px solid var(--border);border-radius:12px;overflow-x:auto;background:var(--surface)}
+.dem-linha-det{display:none}
+.dem-linha-det.open{display:table-row}
+.dem-linha-det>td{background:var(--bg);border-top:1px solid var(--border);padding:14px 16px}
+.dem-td-abrir{color:var(--muted2);font-size:11px;transition:transform .2s;display:inline-block}
+tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-tabela{width:100%;min-width:900px;border-collapse:collapse;font-size:13px}
 .dem-tabela thead th{position:sticky;top:0;z-index:2;background:var(--surface2);color:var(--muted2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
 .dem-linha{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
@@ -197,7 +202,6 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .dem-chip span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .dem-cli-chips{min-width:0}
 .dem-cliente-box,.dem-cliente-inner,.dem-cli-linha{min-width:0;overflow:hidden}
-.modal{min-width:0}
 .dem-cli-senhas{margin-top:7px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:flex;align-items:flex-start;gap:8px}
 .dem-cli-senhas pre{flex:1;margin:0;font-family:inherit;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.6}
 .demanda-vinculo{font-size:12px;color:var(--accent);background:rgba(255,88,94,.08);padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:12px;cursor:pointer}
@@ -290,7 +294,11 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;align-items:center;justify-content:center;padding:16px}
 .modal-overlay.open{display:flex}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:540px;width:100%;max-height:85vh;overflow-y:auto}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;max-width:540px;width:100%;max-height:85vh;overflow-y:auto;min-width:0;scrollbar-width:thin;scrollbar-color:var(--border2) transparent}
+.modal::-webkit-scrollbar{width:10px}
+.modal::-webkit-scrollbar-track{background:transparent;margin:16px 0}
+.modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;border:3px solid transparent;background-clip:padding-box}
+.modal::-webkit-scrollbar-thumb:hover{background:var(--muted2);background-clip:padding-box;border:3px solid transparent}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px}
 .modal-title{font-size:15px;font-weight:800;color:var(--text)}
 .modal-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0}
@@ -2775,38 +2783,63 @@ function renderReservas() {
     return ha < hb ? -1 : ha > hb ? 1 : 0;
   });
 
-  grid.innerHTML = list.map(function(r){
-    var cols = resCols(r);
-    // Verificar se a reserva é nos próximos 7 dias
-    var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
-    var urgente = false;
-    var diasRestantes = null;
-    if (dataRef) {
-      var hoje = new Date(); hoje.setHours(0,0,0,0);
-      var dRef = new Date(dataRef + 'T00:00:00');
-      var diff = Math.round((dRef - hoje) / 86400000);
-      if (diff >= 0 && diff <= 7) { urgente = true; diasRestantes = diff; }
-    }
-    var urgenteBadge = urgente ? '<span class="urgente-badge">🔴 ' + (diasRestantes === 0 ? 'Hoje!' : diasRestantes === 1 ? 'Amanhã!' : 'Em ' + diasRestantes + ' dias') + '</span>' : '';
-    return '<div class="res-card' + (urgente ? ' urgente' : '') + '">'+
-      '<div class="res-card-header">'+
-        '<div class="type-icon '+TIPO_CLASS[r.tipo]+'">'+((r.tipo==='carro'&&r.subtipo&&SUBTIPO_ICON[r.subtipo])||TIPO_LABEL[r.tipo].split(' ')[0])+'</div>'+
-        '<div class="res-card-info">'+
-          '<div class="res-card-id">'+r.id+' · Cadastro: '+fmtDate(r.cadastro)+'</div>'+
-          '<div class="res-card-title">'+resTitle(r)+urgenteBadge+'</div>'+
-        '</div>'+
-      '</div>'+
-      '<div class="res-card-body" style="grid-template-columns:'+resGridCols(r, cols)+';gap:0">'+
-        cols.filter(function(c){ return c[1] !== null && c[1] !== undefined && c[1] !== ''; }).map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('') +
-      '</div>'+
-      '<div class="res-card-footer">'+
-        '<span class="res-obs">'+(r.obs ? '📝 '+r.obs : '')+' </span>'+
-        ((r.temArquivo || (r.arquivoAnexo && r.arquivoAnexo.nome)) ? '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎 Ver bilhete</button>' : '')+
-        '<button class="btn btn-ghost btn-sm" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️ Editar</button>'+
-        '<button class="btn btn-danger btn-sm" data-vid="'+r.id+'" onclick="pedirDelete(this.dataset.vid)">🗑 Excluir</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
+  grid.innerHTML = '<div class="dem-tabela-wrap"><table class="dem-tabela">'
+    + '<thead><tr>'
+    + '<th style="width:34px"></th>'
+    + '<th>Reserva</th>'
+    + '<th style="width:160px">Cliente</th>'
+    + '<th style="width:130px">Data</th>'
+    + '<th style="width:120px">Localizador</th>'
+    + '<th style="width:120px"></th>'
+    + '<th style="width:26px"></th>'
+    + '</tr></thead><tbody>'
+    + list.map(function(r){
+      var cols = resCols(r);
+      var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
+      var urgente = false, diasRestantes = null;
+      if (dataRef) {
+        var h0 = new Date(); h0.setHours(0,0,0,0);
+        var dRef = new Date(dataRef + 'T00:00:00');
+        var diff = Math.round((dRef - h0) / 86400000);
+        if (diff >= 0 && diff <= 7) { urgente = true; diasRestantes = diff; }
+      }
+      var urgenteBadge = urgente
+        ? '<span class="urgente-badge">🔴 ' + (diasRestantes === 0 ? 'Hoje!' : diasRestantes === 1 ? 'Amanhã!' : 'Em ' + diasRestantes + ' dias') + '</span>'
+        : '';
+      var icon = ((r.tipo==='carro' && r.subtipo && SUBTIPO_ICON[r.subtipo]) || TIPO_LABEL[r.tipo].split(' ')[0]);
+      var loc = r.pnr || r.conf || '—';
+
+      var detalhe = '<div class="res-card-body" style="grid-template-columns:' + resGridCols(r, cols) + ';gap:0">'
+        + cols.filter(function(c){ return c[1] !== null && c[1] !== undefined && c[1] !== ''; })
+              .map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('')
+        + '</div>'
+        + (r.obs ? '<div style="font-size:12px;color:var(--muted);margin-top:10px;white-space:pre-wrap">📝 ' + escHtml(r.obs) + '</div>' : '');
+
+      return '<tr class="dem-linha' + (urgente ? ' prioridade-alta' : '') + '" onclick="toggleLinha(this)">'
+        + '<td class="dem-td-icon">' + icon + '</td>'
+        + '<td><div class="dem-td-titulo">' + resTitle(r) + urgenteBadge + '</div>'
+        +   '<div class="dem-td-sub">' + r.id + ' · cadastro ' + fmtDate(r.cadastro) + '</div></td>'
+        + '<td class="dem-td-sec">' + escHtml(r.cliente || '—') + '</td>'
+        + '<td class="dem-td-sec">' + (dataRef ? fmtDate(dataRef) : '—') + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(loc) + '</td>'
+        + '<td class="dem-td-acoes" onclick="event.stopPropagation()">'
+        +   ((r.temArquivo || (r.arquivoAnexo && r.arquivoAnexo.nome)) ? '<button class="dem-acao" title="Ver bilhete" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎</button>' : '')
+        +   '<button class="dem-acao" title="Editar" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️</button>'
+        +   '<button class="dem-acao del" title="Excluir" data-vid="'+r.id+'" onclick="pedirDelete(this.dataset.vid)">🗑️</button>'
+        + '</td>'
+        + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
+        + '</tr>'
+        + '<tr class="dem-linha-det"><td colspan="7">' + detalhe + '</td></tr>';
+    }).join('')
+    + '</tbody></table></div>';
+}
+
+// Expande/recolhe a linha de detalhe seguinte
+function toggleLinha(tr) {
+  var det = tr.nextElementSibling;
+  if (!det || !det.classList.contains('dem-linha-det')) return;
+  det.classList.toggle('open');
+  tr.classList.toggle('aberto');
 }
 
 function updateStats(lista) {
@@ -3045,42 +3078,54 @@ function renderClientes() {
     return;
   }
 
-  grid.innerHTML = list.map(function(c){
-    var initials = c.nome.split(' ').slice(0,2).map(function(w){ return w[0]||''; }).join('').toUpperCase();
-    var resCount = reservas.filter(function(r){ return r.cliente===c.nome; }).length;
-    return '<div class="cli-card">'+
-      '<div class="cli-header" onclick="toggleCli(\''+c.id+'\')">'+
-        '<div class="cli-avatar">'+initials+'</div>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div class="cli-name">'+c.nome+'</div>'+
-          '<div class="cli-email">'+(c.email||c.tel||'')+(resCount?' · <span style="color:var(--accent)">'+resCount+' reserva'+(resCount!==1?'s':'')+'</span>':'')+'</div>'+
-        '</div>'+
-        '<div class="cli-toggle" id="tog-'+c.id+'">▼</div>'+
-      '</div>'+
-      '<div class="cli-body" id="body-'+c.id+'">'+
-        '<div class="cli-grid">'+
-          cliFieldCopy('CPF', c.cpf) +
-          cliField('Data de Nascimento', fmtDate(c.nasc)) +
-          cliField('Telefone', c.tel) +
-          cliField('E-mail', c.email) +
-        '</div>'+
-        (c.logradouro || c.cep ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🏠 Endereço</div><div class="cli-grid">'+
-          cliField('Logradouro', c.logradouro) +
-          cliField('Número', c.numero) +
-          cliField('Complemento', c.complemento) +
-          cliFieldCopy('CEP', c.cep) +
-          cliField('Bairro', c.bairro) +
-          cliField('Cidade', c.cidade) +
-          cliField('Estado', c.estado) +
-        '</div>' : '') +
-        (c.senhas ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔑 Senhas / Acessos</div>'+
-          '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7;word-break:break-all">'+escHtml(c.senhas)+'</div>' : '') +
-        (c.acompanhantes ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👨‍👩‍👧 Quem Viaja Junto</div>'+
-          '<div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">'+escHtml(c.acompanhantes)+'</div>' : '') +
-        (resCount ? '<span class="cli-reservas-link" onclick="verReservasCliente(\''+c.nome+'\')">📋 Ver '+resCount+' reserva'+(resCount!==1?'s':'')+' deste cliente →</span>' : '') +
-      '</div>'+
-    '</div>';
-  }).join('');
+  grid.innerHTML = '<div class="dem-tabela-wrap"><table class="dem-tabela">'
+    + '<thead><tr>'
+    + '<th>Cliente</th>'
+    + '<th style="width:130px">CPF</th>'
+    + '<th style="width:135px">Telefone</th>'
+    + '<th style="width:200px">E-mail</th>'
+    + '<th style="width:130px">Cidade</th>'
+    + '<th style="width:90px">Reservas</th>'
+    + '<th style="width:26px"></th>'
+    + '</tr></thead><tbody>'
+    + list.map(function(c){
+      var resCount = reservas.filter(function(r){ return r.cliente === c.nome; }).length;
+
+      var detalhe = '<div class="cli-grid">'
+        + cliFieldCopy('CPF', c.cpf) + cliField('Data de Nascimento', fmtDate(c.nasc))
+        + cliField('Telefone', c.tel) + cliField('E-mail', c.email)
+        + '</div>'
+        + (c.logradouro || c.cep
+          ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🏠 Endereço</div><div class="cli-grid">'
+            + cliField('Logradouro', c.logradouro) + cliField('Número', c.numero)
+            + cliField('Complemento', c.complemento) + cliFieldCopy('CEP', c.cep)
+            + cliField('Bairro', c.bairro) + cliField('Cidade', c.cidade) + cliField('Estado', c.estado)
+            + '</div>' : '')
+        + (c.senhas
+          ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔑 Senhas / Acessos</div>'
+            + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7;word-break:break-all">' + escHtml(c.senhas) + '</div>' : '')
+        + (c.acompanhantes
+          ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👨‍👩‍👧 Quem Viaja Junto</div>'
+            + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>' : '');
+
+      return '<tr class="dem-linha" onclick="toggleLinha(this)">'
+        + '<td><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
+        +   (c.acompanhantes ? '<div class="dem-td-sub">👨‍👩‍👧 ' + escHtml(String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ')) + '</div>' : '')
+        + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(c.cpf || '—') + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(c.tel || '—') + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(c.email || '—') + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(c.cidade || '—') + '</td>'
+        + '<td class="dem-td-sec" onclick="event.stopPropagation()">'
+        +   (resCount
+              ? '<span class="cli-reservas-link" style="cursor:pointer;color:var(--accent);font-weight:700" onclick="verReservasCliente(\'' + String(c.nome).split("'").join("\\'") + '\')">' + resCount + '</span>'
+              : '—')
+        + '</td>'
+        + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
+        + '</tr>'
+        + '<tr class="dem-linha-det"><td colspan="7">' + detalhe + '</td></tr>';
+    }).join('')
+    + '</tbody></table></div>';
 }
 
 function cliField(label, val) {
