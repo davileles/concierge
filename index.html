@@ -3860,7 +3860,9 @@ function loadViagens() {
 
 function saveViagens() {
 
-  fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:viagens})}).catch(function(e){console.error('[saveViagens]',e);});
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({data:viagens})})
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r; })
+    .catch(function(e){ console.error('[saveViagens]', e); throw e; });
 }
 
 function syncViagensGitHub() {
@@ -5348,6 +5350,33 @@ function rgEsc(s) {
 var demandas = [];
 var demandaEditandoId = null;
 var _demandaCounter = 0;
+// Barreira de sessão: vale mesmo que a gravação no servidor falhe
+var _demandasExcluidas = [];
+
+function demandaEstaOculta(v, a) {
+  if (!a || !a.id) return false;
+  if (a.demandaOculta) return true;
+  if (v && Array.isArray(v.demandasOcultas) && v.demandasOcultas.indexOf(a.id) !== -1) return true;
+  return _demandasExcluidas.indexOf(a.id) !== -1;
+}
+
+// Grava na atividade os campos que só existem na demanda
+function aplicarNaAtividade(d, dados) {
+  if (!d || !d.viagemId || !d.atividadeRef) return false;
+  var v = viagens.find(function(x){ return x.id === d.viagemId; });
+  if (!v) return false;
+  var a = (v.atividades || []).find(function(x){ return x.id === d.atividadeRef; });
+  if (!a) return false;
+  if (dados.titulo !== undefined)      a.titulo = dados.titulo;
+  if (dados.descricao !== undefined)   a.descricao = dados.descricao;
+  if (dados.icon !== undefined)        a.icon = dados.icon;
+  if (dados.nome !== undefined)        a.nome = dados.nome;
+  if (dados.prazo !== undefined)       a.demPrazo = dados.prazo;
+  if (dados.responsavel !== undefined) a.demResponsavel = dados.responsavel;
+  if (dados.prioridade !== undefined)  a.demPrioridade = dados.prioridade;
+  if (dados.clientes !== undefined)    a.demClientes = dados.clientes;
+  return true;
+}
 
 function loadDemandas() {
   var raw = [];
@@ -5356,6 +5385,7 @@ function loadDemandas() {
   viagens.forEach(function(v) {
     (v.atividades || []).forEach(function(a) {
       // Checa se já existe demanda para esta atividade
+      if (demandaEstaOculta(v, a)) return;
       var existe = demandas.find(function(d) { return d.viagemId === v.id && d.atividadeRef === a.id; });
       if (!existe && a.id) {
         // Importa atividade existente como demanda (somente se tiver id)
@@ -5364,12 +5394,12 @@ function loadDemandas() {
           numero: ++_demandaCounter,
           tipo: (a.icon || '📌') + ' ' + (a.nome || 'Atividade'),
           titulo: a.titulo || a.nome || 'Sem título',
-          clientes: v.clientes || '',
+          clientes: a.demClientes || v.clientes || '',
           descricao: a.descricao || '',
           status: a.status === 'concluida' ? 'concluida' : 'pendente',
-          prioridade: 'normal',
-          prazo: '',
-          responsavel: '',
+          prioridade: a.demPrioridade || 'normal',
+          prazo: a.demPrazo || '',
+          responsavel: a.demResponsavel || '',
           viagemId: v.id,
           viagemNome: v.nome || '',
           atividadeRef: a.id,
@@ -5465,6 +5495,11 @@ function salvarDemanda() {
       demandas[idx].prazo = prazo;
       demandas[idx].responsavel = responsavel;
       demandas[idx].prioridade = prioridade;
+      // Espelha na atividade da viagem — sem isso os campos somem no reload
+      aplicarNaAtividade(demandas[idx], {
+        titulo: titulo, descricao: descricao, icon: icon, nome: nomeAtiv,
+        prazo: prazo, responsavel: responsavel, prioridade: prioridade, clientes: clientes
+      });
     }
   } else {
     var novaDem = {
@@ -5495,8 +5530,14 @@ function salvarDemanda() {
         var ativRef = sorted[parseInt(ativIdxSel)];
         var realIdx = v.atividades.indexOf(ativRef);
         if (realIdx !== -1) {
-          v.atividades[realIdx].titulo = titulo;
-          novaDem.atividadeRef = v.atividades[realIdx].id;
+          var aExi = v.atividades[realIdx];
+          aExi.titulo = titulo;
+          if (descricao) aExi.descricao = descricao;
+          aExi.demPrazo = prazo;
+          aExi.demResponsavel = responsavel;
+          aExi.demPrioridade = prioridade;
+          aExi.demClientes = clientes;
+          novaDem.atividadeRef = aExi.id;
         }
       } else {
         // Criar nova atividade na viagem
@@ -5508,6 +5549,10 @@ function salvarDemanda() {
           descricao: descricao,
           status: 'pendente',
           reservaId: null,
+          demPrazo: prazo,
+          demResponsavel: responsavel,
+          demPrioridade: prioridade,
+          demClientes: clientes,
           pos: (v.atividades.reduce(function(mx,a){ return (a.pos||0)>mx?(a.pos||0):mx; }, -1)) + 1
         };
         v.atividades.push(novaAtiv);
@@ -5554,11 +5599,39 @@ function editarDemanda(id) {
 }
 
 function excluirDemanda(id) {
-  if (!confirm('Remover esta demanda? A atividade na viagem não será afetada.')) return;
-  demandas = demandas.filter(function(d){ return d.id !== id; });
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d) return;
+  var num = '#' + String(d.numero||'').padStart(3,'0');
+
+  // Demanda espelhada de atividade de viagem: só sumir do array não basta —
+  // renderDemandas() reimporta a partir de viagens[].atividades.
+  if (d.viagemId && d.atividadeRef) {
+    if (!confirm('Remover a demanda ' + num + ' da lista?\n\nA atividade continua na viagem "' + (d.viagemNome || '') + '" — para apagá-la de vez, use a aba Viagens.')) return;
+
+    _demandasExcluidas.push(d.atividadeRef);
+    var v = viagens.find(function(x){ return x.id === d.viagemId; });
+    if (v) {
+      var a = (v.atividades || []).find(function(x){ return x.id === d.atividadeRef; });
+      if (a) a.demandaOculta = true;
+      // Redundância: lista no nível da viagem, sobrevive a reescritas da atividade
+      v.demandasOcultas = v.demandasOcultas || [];
+      if (v.demandasOcultas.indexOf(d.atividadeRef) === -1) v.demandasOcultas.push(d.atividadeRef);
+    }
+
+    demandas = demandas.filter(function(x){ return x.id !== id; });
+    renderDemandas();
+
+    saveViagens()
+      .then(function(){ showToast('🗑️ Demanda ' + num + ' removida', 'ok'); })
+      .catch(function(){ showToast('⚠️ Removida na tela, mas falhou ao gravar no servidor — pode voltar ao recarregar', 'err'); });
+    return;
+  }
+
+  if (!confirm('Remover a demanda ' + num + '?')) return;
+  demandas = demandas.filter(function(x){ return x.id !== id; });
   saveDemandas();
   renderDemandas();
-  showToast('🗑️ Demanda removida', 'ok');
+  showToast('🗑️ Demanda ' + num + ' removida', 'ok');
 }
 
 function alterarStatusDemanda(id, novoStatus) {
@@ -5610,6 +5683,10 @@ function renderDemandas() {
   viagens.forEach(function(v) {
     (v.atividades || []).forEach(function(a) {
       if (!a.id) return;
+      if (demandaEstaOculta(v, a)) {
+        demandas = demandas.filter(function(d){ return d.atividadeRef !== a.id; });
+        return;
+      }
       var existe = demandas.find(function(d){ return d.atividadeRef === a.id; });
       if (!existe) {
         demandas.push({
@@ -5617,12 +5694,12 @@ function renderDemandas() {
           numero: ++_demandaCounter,
           tipo: (a.icon || '📌') + ' ' + (a.nome || 'Atividade'),
           titulo: a.titulo || a.nome || 'Sem título',
-          clientes: v.clientes || '',
+          clientes: a.demClientes || v.clientes || '',
           descricao: a.descricao || '',
           status: a.status === 'concluida' ? 'concluida' : 'pendente',
-          prioridade: 'normal',
-          prazo: '',
-          responsavel: '',
+          prioridade: a.demPrioridade || 'normal',
+          prazo: a.demPrazo || '',
+          responsavel: a.demResponsavel || '',
           viagemId: v.id,
           viagemNome: v.nome || '',
           atividadeRef: a.id,
