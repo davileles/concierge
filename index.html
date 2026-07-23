@@ -1467,7 +1467,12 @@ header{animation:fadeUp .45s ease both}
       </div>
     </div>
     <div class="field"><label>Título <span class="tag required">*</span></label><input type="text" id="df-titulo" placeholder="Ex: Reservar passagem GRU→MIA em junho" /></div>
-    <div class="field"><label>Cliente(s) <span class="tag required">*</span></label><input type="text" id="df-clientes" placeholder="Nome do(s) cliente(s)" /></div>
+    <div class="field">
+      <label>Cliente(s) <span class="tag required">*</span></label>
+      <input type="text" id="df-clientes" list="df-clientes-list" autocomplete="off" placeholder="🔍 Digite para buscar ou selecione o cliente…" oninput="demandaClienteChange()" onchange="demandaClienteChange()" />
+      <datalist id="df-clientes-list"></datalist>
+    </div>
+    <div id="df-cliente-dados" style="display:none;margin-bottom:14px"></div>
     <div class="field"><label>Descrição / Instruções</label><textarea id="df-descricao" rows="3" placeholder="Detalhes para o funcionário: datas, preferências, orçamento, programa de milhas, etc." style="min-height:70px"></textarea></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="field">
@@ -1805,6 +1810,80 @@ function populateClienteSelect() {
     sel.appendChild(opt);
   });
   if (cur) sel.value = toTitleCase(cur);
+  popularDatalistClientes();
+}
+
+// Datalist usado no campo de cliente das Demandas (busca por qualquer parte do nome)
+function popularDatalistClientes() {
+  var dl = document.getElementById('df-clientes-list');
+  if (!dl) return;
+  var sorted = clientes.slice().sort(function(a,b){ return toTitleCase(a.nome).localeCompare(toTitleCase(b.nome),'pt-BR'); });
+  dl.innerHTML = sorted.map(function(c){
+    return '<option value="' + toTitleCase(c.nome).split('"').join('&quot;') + '"></option>';
+  }).join('');
+}
+
+// Localiza no cadastro os clientes referenciados por um texto livre
+function buscarClientesPorNome(str) {
+  var alvo = String(str || '').trim().toLowerCase();
+  if (!alvo || !clientes.length) return [];
+  var exatos = clientes.filter(function(c){ return String(c.nome||'').trim().toLowerCase() === alvo; });
+  if (exatos.length) return exatos;
+  if (alvo.length < 3) return [];
+  // nomes do cadastro contidos no texto (ex.: "João Silva e Maria Silva")
+  var contidos = clientes.filter(function(c){
+    var n = String(c.nome||'').trim().toLowerCase();
+    return n.length >= 3 && alvo.indexOf(n) !== -1;
+  });
+  if (contidos.length) return contidos;
+  // busca parcial (digitação em andamento)
+  return clientes.filter(function(c){
+    return String(c.nome||'').toLowerCase().indexOf(alvo) !== -1;
+  }).slice(0,3);
+}
+
+// Bloco visual com os dados de cadastro + senhas do(s) cliente(s)
+function blocoDadosCliente(nomeStr) {
+  var achados = buscarClientesPorNome(nomeStr);
+  if (!achados.length) return '';
+  return achados.map(function(c){
+    var endereco = (c.logradouro || c.cep)
+      ? '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px">🏠 Endereço</div><div class="cli-grid">'
+        + cliField('Logradouro', c.logradouro) + cliField('Número', c.numero)
+        + cliField('Complemento', c.complemento) + cliField('CEP', c.cep)
+        + cliField('Bairro', c.bairro) + cliField('Cidade', c.cidade) + cliField('Estado', c.estado)
+        + '</div>'
+      : '';
+    var senhas = c.senhas
+      ? '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px">🔑 Senhas / Acessos</div>'
+        + '<div style="display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">'
+        + '<span style="flex:1;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7;word-break:break-all">' + escHtml(c.senhas) + '</span>'
+        + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="' + String(c.senhas).split("'").join('&#39;').split('"').join('&quot;') + '" title="Copiar senhas">📋</button>'
+        + '</div>'
+      : '';
+    var acomp = c.acompanhantes
+      ? '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px">👨‍👩‍👧 Quem Viaja Junto</div>'
+        + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>'
+      : '';
+    return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">'
+      + '<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:10px">👤 ' + escHtml(toTitleCase(c.nome)) + '</div>'
+      + '<div class="cli-grid">'
+      + cliField('CPF', c.cpf) + cliField('Nascimento', fmtDate(c.nasc))
+      + cliField('Telefone', c.tel) + cliField('E-mail', c.email)
+      + '</div>'
+      + endereco + senhas + acomp
+      + '</div>';
+  }).join('');
+}
+
+// Atualiza o painel de dados do cliente no formulário de demanda
+function demandaClienteChange() {
+  var box = document.getElementById('df-cliente-dados');
+  if (!box) return;
+  var html = blocoDadosCliente(document.getElementById('df-clientes').value);
+  if (!html) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = 'block';
+  box.innerHTML = html;
 }
 
 // ══════════════════════════════════════════
@@ -5297,12 +5376,16 @@ function abrirNovaDemanda() {
     sel.appendChild(opt);
   });
   document.getElementById('df-field-atividade').style.display = 'none';
+  popularDatalistClientes();
+  demandaClienteChange();
   document.getElementById('nova-demanda-form').style.display = 'block';
   document.getElementById('nova-demanda-form').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function fecharNovaDemanda() {
   document.getElementById('nova-demanda-form').style.display = 'none';
+  var box = document.getElementById('df-cliente-dados');
+  if (box) { box.style.display = 'none'; box.innerHTML = ''; }
   demandaEditandoId = null;
 }
 
@@ -5435,6 +5518,8 @@ function editarDemanda(id) {
   });
   sel.value = d.viagemId || '';
   document.getElementById('df-field-atividade').style.display = 'none';
+  popularDatalistClientes();
+  demandaClienteChange();
   document.getElementById('nova-demanda-form').style.display = 'block';
   document.getElementById('nova-demanda-form').scrollIntoView({behavior:'smooth', block:'start'});
 }
@@ -5559,6 +5644,10 @@ function renderDemandas() {
     var numHtml = '<span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>';
     var vinculoHtml = d.viagemId ? '<div class="demanda-vinculo" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️ ' + (d.viagemNome || 'Viagem vinculada') + ' →</div>' : '';
     var reservaHtml = d.reservaId ? '<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ Reserva vinculada: ' + d.reservaId + '</div>' : '';
+    var dadosCli = blocoDadosCliente(d.clientes);
+    var dadosCliHtml = dadosCli
+      ? '<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👤 Dados do Cliente</div>' + dadosCli + '</div>'
+      : '';
 
     var icon = (d.tipo || '📌').split(' ')[0];
     return '<div class="demanda-card' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + '" id="dem-' + d.id + '">'
@@ -5576,6 +5665,7 @@ function renderDemandas() {
       + '</div>'
       + '<div class="demanda-body" id="dem-body-' + d.id + '">'
       + (d.descricao ? '<div class="demanda-descricao">' + d.descricao + '</div>' : '')
+      + dadosCliHtml
       + vinculoHtml
       + reservaHtml
       + '<div class="demanda-actions">'
