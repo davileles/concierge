@@ -1453,7 +1453,7 @@ header{animation:fadeUp .45s ease both}
         <option value="🛡️">🛡️ Seguro</option>
         <option value="📌">📌 Outro</option>
       </select>
-      <input type="text" id="dem-busca" placeholder="🔍 Buscar cliente ou demanda…" oninput="renderDemandas()" style="font-size:12px;padding:5px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex:1;min-width:160px"/>
+      <input type="text" id="dem-busca" placeholder="🔍 Buscar por nº, cliente ou demanda…" oninput="renderDemandas()" style="font-size:12px;padding:5px 12px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex:1;min-width:160px"/>
     </div>
   </div>
 
@@ -5716,12 +5716,20 @@ function renderDemandas() {
 
   var filtroStatus = document.getElementById('dem-filtro-status') ? document.getElementById('dem-filtro-status').value : 'todas';
   var filtroTipo = document.getElementById('dem-filtro-tipo') ? document.getElementById('dem-filtro-tipo').value : 'todos';
-  var busca = (document.getElementById('dem-busca') ? document.getElementById('dem-busca').value : '').toLowerCase();
+  var busca = (document.getElementById('dem-busca') ? document.getElementById('dem-busca').value : '').trim().toLowerCase();
+  // Nº da demanda: aceita "7", "007", "#007" e "#7"
+  var buscaNum = busca.replace(/^#/, '').replace(/^0+/, '');
+  var ehNum = buscaNum !== '' && /^\d+$/.test(buscaNum);
 
   var lista = demandas.filter(function(d) {
     if (filtroStatus !== 'todas' && d.status !== filtroStatus) return false;
     if (filtroTipo !== 'todos' && d.tipo.indexOf(filtroTipo) === -1) return false;
-    if (busca && d.titulo.toLowerCase().indexOf(busca) === -1 && (d.clientes||'').toLowerCase().indexOf(busca) === -1) return false;
+    if (busca) {
+      var bateNum   = ehNum && String(d.numero || '') === buscaNum;
+      var bateTexto = d.titulo.toLowerCase().indexOf(busca) !== -1
+                   || (d.clientes || '').toLowerCase().indexOf(busca) !== -1;
+      if (!bateNum && !bateTexto) return false;
+    }
     return true;
   });
 
