@@ -3657,10 +3657,22 @@ function onMilhasChange() {
   setVal('f-milhas', total > 0 ? Math.round(total / pax).toLocaleString('pt-BR') : '');
 }
 
+function parseValorBR(v) {
+  var s = String(v || '').replace(/[^\d,\.]/g, '');
+  if (!s) return 0;
+  if (s.indexOf(',') >= 0) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else {
+    var partes = s.split('.');
+    if (partes.length > 2) s = partes.join('');
+    else if (partes.length === 2 && partes[1].length === 3) s = partes.join('');
+  }
+  return parseFloat(s) || 0;
+}
+
 function calcMilhasAcumulo() {
-  var valorRaw = (getVal('f-valor-acumulo') || '').replace(/[^\d,\.]/g, '').replace(',', '.');
-  var valor    = parseFloat(valorRaw) || 0;
-  var fator    = parseFloat(getVal('f-fator-acumulo')) || 0;
+  var valor    = parseValorBR(getVal('f-valor-acumulo'));
+  var fator    = parseValorBR(getVal('f-fator-acumulo'));
   var pax      = parseInt(getVal('f-pax-acumulo')) || 1;
   if (valor > 0 && fator > 0) {
     var total = Math.round(valor * fator * pax);
@@ -3671,9 +3683,8 @@ function calcMilhasAcumulo() {
 }
 
 function calcMilhasAcumuloHotel() {
-  var valorRaw = (getVal('f-hotel-valor-acumulo') || '').replace(/[^\d,\.]/g, '').replace(',', '.');
-  var valor    = parseFloat(valorRaw) || 0;
-  var fator    = parseFloat(getVal('f-hotel-fator-acumulo')) || 0;
+  var valor    = parseValorBR(getVal('f-hotel-valor-acumulo'));
+  var fator    = parseValorBR(getVal('f-hotel-fator-acumulo'));
   if (valor > 0 && fator > 0) {
     setVal('f-hotel-milhas-acumulo', Math.round(valor * fator).toLocaleString('pt-BR'));
   } else {
@@ -3682,9 +3693,8 @@ function calcMilhasAcumuloHotel() {
 }
 
 function calcMilhasAcumuloLoc() {
-  var valorRaw = (getVal('f-loc-valor-acumulo') || '').replace(/[^\d,\.]/g, '').replace(',', '.');
-  var valor    = parseFloat(valorRaw) || 0;
-  var fator    = parseFloat(getVal('f-loc-fator-acumulo')) || 0;
+  var valor    = parseValorBR(getVal('f-loc-valor-acumulo'));
+  var fator    = parseValorBR(getVal('f-loc-fator-acumulo'));
   if (valor > 0 && fator > 0) {
     setVal('f-loc-milhas-acumulo', Math.round(valor * fator).toLocaleString('pt-BR'));
   } else {
@@ -3693,8 +3703,7 @@ function calcMilhasAcumuloLoc() {
 }
 
 function onValorBalcaoChange() {
-  var raw   = (getVal('f-valor-total-balcao') || '').replace(',', '.').replace(/[^\d.]/g, '');
-  var total = parseFloat(raw) || 0;
+  var total = parseValorBR(getVal('f-valor-total-balcao'));
   var pax   = parseInt(getVal('f-pax-balcao')) || 1;
   setVal('f-valor-pax-balcao', total > 0 ? 'R$ ' + (total / pax).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}) : '');
 }
