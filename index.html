@@ -1216,16 +1216,7 @@ header{animation:fadeUp .45s ease both}
     <div class="card">
       <div class="card-title">📚 Modelos Salvos</div>
       <div class="field">
-        <label>Selecione um modelo</label>
-        <select id="modelos-select" onchange="onModeloSelecionado()">
-          <option value="">Selecione um modelo…</option>
-        </select>
-      </div>
-      <div id="modelo-preview" style="display:none"></div>
-      <div class="btn-row" id="modelo-acoes" style="display:none">
-        <button class="btn btn-blue btn-sm" onclick="usarModeloSelecionado()">🚀 Usar</button>
-        <button class="btn btn-ghost btn-sm" onclick="editarModeloSelecionado()">✏️ Editar</button>
-        <button class="btn btn-danger btn-sm" onclick="excluirModeloSelecionado()">🗑 Excluir</button>
+        <input type="text" id="modelos-busca" placeholder="🔍 Buscar por nome ou conteúdo do modelo…" oninput="renderModelosLista()"/>
       </div>
       <div id="modelos-lista"></div>
     </div>
@@ -3536,8 +3527,6 @@ function excluirModelo(id) {
   if (!confirm('Excluir o modelo "' + (m ? m.nome : id) + '"?')) return;
   modelos = modelos.filter(function(x){ return x.id!==id; });
   saveModelos();
-  var sel = document.getElementById('modelos-select');
-  if (sel) sel.value = '';
   renderModelosLista();
 }
 
@@ -3557,72 +3546,83 @@ function modelosOrdenados() {
   });
 }
 
-function renderModelosLista() {
-  var sel   = document.getElementById('modelos-select');
-  var vazio = document.getElementById('modelos-lista');
-  if (!sel || !vazio) return;
-
-  if (!modelos.length) {
-    sel.innerHTML = '<option value="">Nenhum modelo cadastrado</option>';
-    sel.disabled = true;
-    vazio.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCDD</span>Nenhum modelo cadastrado.<br><small style="font-size:12px;margin-top:6px;display:block">Crie um modelo acima para come\u00e7ar.</small></div>';
-    document.getElementById('modelo-preview').style.display = 'none';
-    document.getElementById('modelo-acoes').style.display   = 'none';
-    return;
-  }
-
-  vazio.innerHTML = '';
-  sel.disabled = false;
-  var cur = sel.value;
-  sel.innerHTML = '<option value="">Selecione um modelo\u2026</option>';
-  modelosOrdenados().forEach(function(m){
-    var opt = document.createElement('option');
-    opt.value = m.id;
-    opt.textContent = m.nome;
-    sel.appendChild(opt);
-  });
-  if (cur && modelos.some(function(x){ return x.id === cur; })) sel.value = cur;
-  onModeloSelecionado();
-}
-
-function onModeloSelecionado() {
-  var sel   = document.getElementById('modelos-select');
-  var prev  = document.getElementById('modelo-preview');
-  var acoes = document.getElementById('modelo-acoes');
-  if (!sel || !prev || !acoes) return;
-  var m = modelos.find(function(x){ return x.id === sel.value; });
-  if (!m) { prev.style.display = 'none'; acoes.style.display = 'none'; return; }
-
-  var txt = String(m.texto||'').replace(/[&<>]/g, function(ch){
+function modeloPreviewHtml(m) {
+  return String(m.texto||'').replace(/[&<>]/g, function(ch){
     return ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : '&gt;';
   }).replace(/\{\{[^}]+\}\}/g, function(v){
     return '<span style="color:var(--accent);font-weight:700">'+v+'</span>';
   });
+}
 
+function modeloMeta(m) {
   var modoM = m.modo || (m.gatilho ? 'programado' : 'manual');
-  var badge;
-  var GATILHOS_COM_HORA_BADGE = { 'voo_ida_dt': true, 'voo_volta_dt': true, 'primeiro_voo_viagem': true };
+  var COM_HORA = { 'voo_ida_dt': true, 'voo_volta_dt': true, 'primeiro_voo_viagem': true };
   if (modoM === 'programado' && m.gatilho && m.antecedencia) {
     var ant = m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes';
     var ref = GATILHO_LABEL_MOD[m.gatilho] || m.gatilho;
-    var horaStr = (!GATILHOS_COM_HORA_BADGE[m.gatilho] && m.horaRef) ? ' \u00e0s ' + m.horaRef : '';
-    badge = '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700">Programado \u00b7 '+ant+' de '+ref+horaStr+'</span>';
-  } else {
-    badge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600">Manual</span>';
+    var horaStr = (!COM_HORA[m.gatilho] && m.horaRef) ? ' \u00e0s ' + m.horaRef : '';
+    return {
+      icon: '\u23F0',
+      badge: '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700">Programado</span>',
+      quando: ant + ' de ' + ref + horaStr
+    };
   }
-
-  prev.style.display = 'block';
-  prev.innerHTML =
-    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+badge+
-      '<span style="font-size:10px;color:var(--muted2)">'+m.id+'</span>'+
-    '</div>'+
-    '<div style="padding:12px 14px;border-radius:10px;background:rgba(138,155,191,.06);font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:220px;overflow:auto">'+txt+'</div>';
-  acoes.style.display = 'flex';
+  return {
+    icon: '\u270F\uFE0F',
+    badge: '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600">Manual</span>',
+    quando: '\u2014'
+  };
 }
 
-function usarModeloSelecionado()    { var v = getVal('modelos-select'); if (v) usarModelo(v); }
-function editarModeloSelecionado()  { var v = getVal('modelos-select'); if (v) editarModelo(v); }
-function excluirModeloSelecionado() { var v = getVal('modelos-select'); if (v) excluirModelo(v); }
+function renderModelosLista() {
+  var grid = document.getElementById('modelos-lista');
+  if (!grid) return;
+
+  var q = ((document.getElementById('modelos-busca')||{value:''}).value || '').toLowerCase();
+  var lista = modelosOrdenados().filter(function(m){
+    return !q || String(m.nome||'').toLowerCase().indexOf(q) >= 0
+              || String(m.texto||'').toLowerCase().indexOf(q) >= 0;
+  });
+
+  if (!lista.length) {
+    grid.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCDD</span>'
+      + (modelos.length ? 'Nenhum modelo encontrado.' : 'Nenhum modelo cadastrado.')
+      + '<br><small style="font-size:12px;margin-top:6px;display:block">'
+      + (modelos.length ? 'Ajuste a busca acima.' : 'Crie um modelo acima para come\u00e7ar.')
+      + '</small></div>';
+    return;
+  }
+
+  grid.innerHTML = '<div class="dem-tabela-wrap"><table class="dem-tabela" style="min-width:760px">'
+    + '<thead><tr>'
+    + '<th style="width:34px"></th>'
+    + '<th>Modelo</th>'
+    + '<th style="width:120px">Tipo</th>'
+    + '<th style="width:240px">Quando</th>'
+    + '<th style="width:130px"></th>'
+    + '<th style="width:26px"></th>'
+    + '</tr></thead><tbody>'
+    + lista.map(function(m){
+      var meta = modeloMeta(m);
+      var detalhe = '<div style="padding:12px 14px;border-radius:10px;background:rgba(138,155,191,.06);font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:260px;overflow:auto">'
+        + modeloPreviewHtml(m) + '</div>';
+      return '<tr class="dem-linha" onclick="toggleLinha(this)">'
+        + '<td class="dem-td-icon">' + meta.icon + '</td>'
+        + '<td><div class="dem-td-titulo">' + escHtml(m.nome || '\u2014') + '</div>'
+        +   '<div class="dem-td-sub">' + escHtml(m.id || '') + '</div></td>'
+        + '<td>' + meta.badge + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(meta.quando) + '</td>'
+        + '<td class="dem-td-acoes" onclick="event.stopPropagation()">'
+        +   '<button class="dem-acao" title="Usar" data-vid="'+m.id+'" onclick="usarModelo(this.dataset.vid)">\uD83D\uDE80</button>'
+        +   '<button class="dem-acao" title="Editar" data-vid="'+m.id+'" onclick="editarModelo(this.dataset.vid)">\u270F\uFE0F</button>'
+        +   '<button class="dem-acao del" title="Excluir" data-vid="'+m.id+'" onclick="excluirModelo(this.dataset.vid)">\uD83D\uDDD1\uFE0F</button>'
+        + '</td>'
+        + '<td style="text-align:center"><span class="dem-td-abrir">\u25BC</span></td>'
+        + '</tr>'
+        + '<tr class="dem-linha-det"><td colspan="6">' + detalhe + '</td></tr>';
+    }).join('')
+    + '</tbody></table></div>';
+}
 
 function usarModelo(id) {
   loadModelos();
