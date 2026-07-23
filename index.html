@@ -1153,8 +1153,23 @@ header{animation:fadeUp .45s ease both}
       <p id="modelo-ok" style="font-size:12px;color:#22c55e;font-weight:700;margin-top:8px;min-height:14px"></p>
     </div>
 
-    <!-- LISTA DE MODELOS -->
-    <div id="modelos-lista"></div>
+    <!-- MODELOS SALVOS -->
+    <div class="card">
+      <div class="card-title">📚 Modelos Salvos</div>
+      <div class="field">
+        <label>Selecione um modelo</label>
+        <select id="modelos-select" onchange="onModeloSelecionado()">
+          <option value="">Selecione um modelo…</option>
+        </select>
+      </div>
+      <div id="modelo-preview" style="display:none"></div>
+      <div class="btn-row" id="modelo-acoes" style="display:none">
+        <button class="btn btn-blue btn-sm" onclick="usarModeloSelecionado()">🚀 Usar</button>
+        <button class="btn btn-ghost btn-sm" onclick="editarModeloSelecionado()">✏️ Editar</button>
+        <button class="btn btn-danger btn-sm" onclick="excluirModeloSelecionado()">🗑 Excluir</button>
+      </div>
+      <div id="modelos-lista"></div>
+    </div>
   </div>
 
   <!-- ── SUB: DISPARAR ────────────────────────────────── -->
@@ -3077,8 +3092,6 @@ var VARS_RESERVA = [
   { label: '{{acumulo_parceiro}}',       desc: 'Parceiro de acúmulo (hotel)' },
   { label: '{{hotel_milhas}}',           desc: 'Quantidade total de milhas gastas (hotel)' },
   { label: '{{hotel_valor_tarifa}}',     desc: 'Valor da tarifa pagante do hotel (R$)' },
-  { label: '{{hotel_acumulo_valor}}',    desc: 'Valor total gasto no hotel — acúmulo (R$)' },
-  { label: '{{hotel_acumulo_fator}}',    desc: 'Fator multiplicador do hotel (pts/R$)' },
   { label: '{{loc_milhas}}',             desc: 'Quantidade total de milhas gastas (locação de carro)' },
   { label: '{{loc_valor_tarifa}}',       desc: 'Valor da tarifa pagante da locação de carro (R$)' },
   { label: '{{loc_local_retirada}}',     desc: 'Local de retirada do carro' },
@@ -3086,8 +3099,6 @@ var VARS_RESERVA = [
   { label: '{{loc_data_retirada}}',      desc: 'Data de retirada do carro' },
   { label: '{{loc_data_devolucao}}',     desc: 'Data de devolução/entrega do carro' },
   { label: '{{loc_categoria}}',          desc: 'Categoria/modelo do carro' },
-  { label: '{{loc_acumulo_valor}}',      desc: 'Valor total gasto na locação — acúmulo (R$)' },
-  { label: '{{loc_acumulo_fator}}',      desc: 'Fator multiplicador da locação (pts/R$)' },
 ];
 
 function loadModelos() {
@@ -3260,78 +3271,97 @@ function editarModelo(id) {
 }
 
 function excluirModelo(id) {
-  if (!confirm('Excluir este modelo?')) return;
+  var m = modelos.find(function(x){ return x.id===id; });
+  if (!confirm('Excluir o modelo "' + (m ? m.nome : id) + '"?')) return;
   modelos = modelos.filter(function(x){ return x.id!==id; });
   saveModelos();
+  var sel = document.getElementById('modelos-select');
+  if (sel) sel.value = '';
   renderModelosLista();
 }
 
+var GATILHO_LABEL_MOD = {
+  'voo_ida_dt':   'Partida (ida)',
+  'voo_ida_d':    'Data de ida',
+  'voo_volta_dt': 'Partida (volta)',
+  'voo_volta_d':  'Data de volta',
+  'checkin':      'Check-in',
+  'viagem':       'Inicio da viagem',
+  'primeiro_voo_viagem': 'Primeiro voo da viagem',
+};
+
+function modelosOrdenados() {
+  return (modelos || []).slice().sort(function(a,b){
+    return String(a.nome||'').localeCompare(String(b.nome||''), 'pt-BR', {sensitivity:'base'});
+  });
+}
+
 function renderModelosLista() {
-  var el = document.getElementById('modelos-lista');
-  if (!el) return;
+  var sel   = document.getElementById('modelos-select');
+  var vazio = document.getElementById('modelos-lista');
+  if (!sel || !vazio) return;
+
   if (!modelos.length) {
-    el.style.display = '';
-    el.innerHTML = '<div class="empty"><span class="empty-icon">📝</span>Nenhum modelo cadastrado.<br><small style="font-size:12px;margin-top:6px;display:block">Crie um modelo acima para começar.</small></div>';
+    sel.innerHTML = '<option value="">Nenhum modelo cadastrado</option>';
+    sel.disabled = true;
+    vazio.innerHTML = '<div class="empty"><span class="empty-icon">\uD83D\uDCDD</span>Nenhum modelo cadastrado.<br><small style="font-size:12px;margin-top:6px;display:block">Crie um modelo acima para come\u00e7ar.</small></div>';
+    document.getElementById('modelo-preview').style.display = 'none';
+    document.getElementById('modelo-acoes').style.display   = 'none';
     return;
   }
-  el.style.display = 'flex';
-  el.style.flexDirection = 'column';
-  el.style.gap = '12px';
-  el.style.marginTop = '12px';
-  el.innerHTML = modelos.map(function(m){
-    // Preview: show first 120 chars with vars highlighted
-    var prev = m.texto.replace(/\{\{[^}]+\}\}/g, function(v){ return '<span style="color:var(--accent);font-weight:700">'+v+'</span>'; });
-    // Cortar após substituição para não partir tags HTML ao meio
-    if (prev.length > 200) { var ci = prev.lastIndexOf('<', 200); prev = prev.substring(0, ci > 150 ? ci : 200) + '…'; }
-    var GATILHO_LABEL = {
-      'voo_ida_dt':   'Partida (ida)',
-      'voo_ida_d':    'Data de ida',
-      'voo_volta_dt': 'Partida (volta)',
-      'voo_volta_d':  'Data de volta',
-      'checkin':      'Check-in',
-      'viagem':       'Inicio da viagem',
-      'primeiro_voo_viagem': 'Primeiro voo da viagem',
-    };
-    var tipoBadge = '';
-    var modoM = m.modo || (m.gatilho ? 'programado' : 'manual');
-    var GATILHOS_COM_HORA_BADGE = { 'voo_ida_dt': true, 'voo_volta_dt': true, 'primeiro_voo_viagem': true };
-    if (modoM === 'programado' && m.gatilho && m.antecedencia) {
-      var ant = m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes';
-      var ref = GATILHO_LABEL[m.gatilho] || m.gatilho;
-      var horaStr = (!GATILHOS_COM_HORA_BADGE[m.gatilho] && m.horaRef) ? ' às ' + m.horaRef : '';
-      tipoBadge = '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700;margin-left:6px">Programado · '+ant+' de '+ref+horaStr+'</span>';
-    } else {
-      tipoBadge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600;margin-left:6px">Manual</span>';
-    }
-    return '<div class="res-card" style="margin-bottom:0">'+
-      '<div class="res-card-header">'+
-        '<div class="type-icon type-passeio">📝</div>'+
-        '<div class="res-card-info">'+
-          '<div class="res-card-id">'+m.id+'</div>'+
-          '<div class="res-card-title">'+m.nome+tipoBadge+'</div>'+
-        '</div>'+
-      '</div>'+
-      '<div style="padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:100px;overflow:hidden">'+prev+'</div>'+
-      '<div class="res-card-footer">'+
-        '<button class="btn btn-blue btn-sm mod-usar" data-id="'+m.id+'">🚀 Usar</button>'+
-        '<button class="btn btn-ghost btn-sm mod-editar" data-id="'+m.id+'">✏️ Editar</button>'+
-        '<button class="btn btn-danger btn-sm mod-excluir" data-id="'+m.id+'">🗑 Excluir</button>'+
-      '</div>'+
-    '</div>';
-  }).join('');
-  // Bind clicks via delegation
-  var lista = document.getElementById('modelos-lista');
-  if (lista) {
-    lista.onclick = function(e) {
-      var btn = e.target.closest('button[data-id]');
-      if (!btn) return;
-      var id = btn.dataset.id;
-      if (btn.classList.contains('mod-usar'))    usarModelo(id);
-      if (btn.classList.contains('mod-editar'))  editarModelo(id);
-      if (btn.classList.contains('mod-excluir')) excluirModelo(id);
-    };
-  }
+
+  vazio.innerHTML = '';
+  sel.disabled = false;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione um modelo\u2026</option>';
+  modelosOrdenados().forEach(function(m){
+    var opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.nome;
+    sel.appendChild(opt);
+  });
+  if (cur && modelos.some(function(x){ return x.id === cur; })) sel.value = cur;
+  onModeloSelecionado();
 }
+
+function onModeloSelecionado() {
+  var sel   = document.getElementById('modelos-select');
+  var prev  = document.getElementById('modelo-preview');
+  var acoes = document.getElementById('modelo-acoes');
+  if (!sel || !prev || !acoes) return;
+  var m = modelos.find(function(x){ return x.id === sel.value; });
+  if (!m) { prev.style.display = 'none'; acoes.style.display = 'none'; return; }
+
+  var txt = String(m.texto||'').replace(/[&<>]/g, function(ch){
+    return ch === '&' ? '&amp;' : ch === '<' ? '&lt;' : '&gt;';
+  }).replace(/\{\{[^}]+\}\}/g, function(v){
+    return '<span style="color:var(--accent);font-weight:700">'+v+'</span>';
+  });
+
+  var modoM = m.modo || (m.gatilho ? 'programado' : 'manual');
+  var badge;
+  var GATILHOS_COM_HORA_BADGE = { 'voo_ida_dt': true, 'voo_volta_dt': true, 'primeiro_voo_viagem': true };
+  if (modoM === 'programado' && m.gatilho && m.antecedencia) {
+    var ant = m.antecedencia.valor + ' ' + m.antecedencia.unidade + ' antes';
+    var ref = GATILHO_LABEL_MOD[m.gatilho] || m.gatilho;
+    var horaStr = (!GATILHOS_COM_HORA_BADGE[m.gatilho] && m.horaRef) ? ' \u00e0s ' + m.horaRef : '';
+    badge = '<span style="font-size:10px;background:rgba(255,88,94,.15);color:var(--accent);border-radius:4px;padding:2px 7px;font-weight:700">Programado \u00b7 '+ant+' de '+ref+horaStr+'</span>';
+  } else {
+    badge = '<span style="font-size:10px;background:rgba(138,155,191,.12);color:var(--muted);border-radius:4px;padding:2px 7px;font-weight:600">Manual</span>';
+  }
+
+  prev.style.display = 'block';
+  prev.innerHTML =
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">'+badge+
+      '<span style="font-size:10px;color:var(--muted2)">'+m.id+'</span>'+
+    '</div>'+
+    '<div style="padding:12px 14px;border-radius:10px;background:rgba(138,155,191,.06);font-size:12px;color:var(--muted);line-height:1.7;white-space:pre-wrap;max-height:220px;overflow:auto">'+txt+'</div>';
+  acoes.style.display = 'flex';
+}
+
+function usarModeloSelecionado()    { var v = getVal('modelos-select'); if (v) usarModelo(v); }
+function editarModeloSelecionado()  { var v = getVal('modelos-select'); if (v) editarModelo(v); }
+function excluirModeloSelecionado() { var v = getVal('modelos-select'); if (v) excluirModelo(v); }
 
 function usarModelo(id) {
   loadModelos();
@@ -3350,7 +3380,7 @@ function initDisparar() {
   var sel = document.getElementById('d-modelo');
   var cur = sel.value;
   sel.innerHTML = '<option value="">Selecione um modelo…</option>';
-  modelos.forEach(function(m){
+  modelosOrdenados().forEach(function(m){
     var opt = document.createElement('option');
     opt.value = m.id; opt.textContent = m.nome;
     sel.appendChild(opt);
@@ -3459,8 +3489,6 @@ function onDispararChange() {
     txt = rv(txt, 'acumulo_parceiro', res.parceiroAcumulo||'');
     txt = rv(txt, 'hotel_milhas',       res.tipo==='hotel' ? (res.valorMilhas||'') : '');
     txt = rv(txt, 'hotel_valor_tarifa', res.tipo==='hotel' ? (res.valorTarifaPagante||'') : '');
-    txt = rv(txt, 'hotel_acumulo_valor', res.tipo==='hotel' ? (res.valorAcumulo||'') : '');
-    txt = rv(txt, 'hotel_acumulo_fator', res.tipo==='hotel' ? (res.fatorAcumulo||'') : '');
     txt = rv(txt, 'loc_milhas',         (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorMilhas||'') : '');
     txt = rv(txt, 'loc_valor_tarifa',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorTarifaPagante||'') : '');
     txt = rv(txt, 'loc_local_retirada',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retLocal||'') : '');
@@ -3468,8 +3496,6 @@ function onDispararChange() {
     txt = rv(txt, 'loc_data_retirada',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retData?fmtDate(res.retData):'') : '');
     txt = rv(txt, 'loc_data_devolucao',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.devData?fmtDate(res.devData):'') : '');
     txt = rv(txt, 'loc_categoria',       (res.tipo==='carro' && res.subtipo==='locacao') ? (res.categoria||'') : '');
-    txt = rv(txt, 'loc_acumulo_valor',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorAcumulo||'') : '');
-    txt = rv(txt, 'loc_acumulo_fator',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.fatorAcumulo||'') : '');
     // Nome da viagem associada a esta reserva
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
