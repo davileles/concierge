@@ -140,15 +140,33 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 
 
 /* DEMANDAS */
-#demandas-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px;align-items:start;padding:0 1.5rem 1.5rem}
-@media(max-width:640px){#demandas-grid{grid-template-columns:1fr;padding:0 1rem 1.5rem}}
+#demandas-grid{padding:0 1.5rem 1.5rem}
+@media(max-width:640px){#demandas-grid{padding:0 .75rem 1.5rem}}
+.dem-tabela-wrap{border:1px solid var(--border);border-radius:12px;overflow-x:auto;background:var(--surface)}
+.dem-tabela{width:100%;min-width:900px;border-collapse:collapse;font-size:13px}
+.dem-tabela thead th{position:sticky;top:0;z-index:2;background:var(--surface2);color:var(--muted2);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;text-align:left;padding:9px 12px;border-bottom:1px solid var(--border);white-space:nowrap}
+.dem-linha{border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s}
+.dem-linha:last-child{border-bottom:none}
+.dem-linha:hover{background:var(--surface2)}
+.dem-linha.concluida{opacity:.55}
+.dem-linha.prioridade-alta td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
+.dem-tabela td{padding:9px 12px;vertical-align:middle}
+.dem-td-num{font-size:11px;font-weight:700;color:var(--muted2);white-space:nowrap}
+.dem-td-icon{font-size:17px;text-align:center;padding-left:0;padding-right:0}
+.dem-td-titulo{font-size:13.5px;font-weight:700;color:var(--text);line-height:1.35}
+.dem-td-sub{font-size:11.5px;color:var(--muted);line-height:1.4;margin-top:2px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.dem-td-sec{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:0}
+.dem-td-sec.atrasado{color:var(--accent);font-weight:700}
+.dem-sel-status{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:3px 6px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;max-width:100%}
+.dem-td-acoes{white-space:nowrap;text-align:right}
+.dem-acao{background:none;border:none;cursor:pointer;font-size:14px;padding:3px 4px;border-radius:6px;opacity:.55;transition:opacity .15s,background .15s}
+.dem-acao:hover{opacity:1;background:var(--surface)}
+.dem-acao.del:hover{background:rgba(255,88,94,.12)}
 .demanda-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;transition:border-color .2s,transform .2s}
 .demanda-card:hover{transform:translateY(-1px);border-color:rgba(255,88,94,.3)}
 .demanda-card.prioridade-alta{border-left:3px solid var(--accent)}
 .demanda-header{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;cursor:pointer;user-select:none}
-.demanda-titulo{white-space:normal;overflow:visible;text-overflow:clip;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.demanda-resumo{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.demanda-editar-hint{font-size:10px;color:var(--muted2);margin-top:8px;font-style:italic}
+
 .demanda-tipo-icon{font-size:22px;flex-shrink:0;line-height:1;margin-top:2px}
 .demanda-info{flex:1;min-width:0}
 .demanda-titulo{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -5761,46 +5779,53 @@ function renderDemandas() {
   var statusLabels = {pendente:'🔴 Pendente', em_andamento:'🟡 Em andamento', aguardando:'🔵 Aguardando', concluida:'✅ Concluída'};
   var statusClasses = {pendente:'dem-status-pendente', em_andamento:'dem-status-em_andamento', aguardando:'dem-status-aguardando', concluida:'dem-status-concluida'};
 
-  grid.innerHTML = lista.map(function(d) {
-    var prazoHtml = d.prazo ? '<span>📅 ' + d.prazo + '</span>' : '';
-    var respHtml = d.responsavel ? '<span>👤 ' + d.responsavel + '</span>' : '';
-    var numHtml = '<span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>';
-    var vinculoHtml = d.viagemId ? '<div class="demanda-vinculo" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️ ' + (d.viagemNome || 'Viagem vinculada') + ' →</div>' : '';
-    var reservaHtml = d.reservaId ? '<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ Reserva vinculada: ' + d.reservaId + '</div>' : '';
-    var dadosCli = blocoDadosCliente(d.clientes);
-    var dadosCliHtml = dadosCli || '';
+  grid.innerHTML = '<div class="dem-tabela-wrap"><table class="dem-tabela">'
+    + '<thead><tr>'
+    + '<th style="width:56px">Nº</th>'
+    + '<th style="width:34px"></th>'
+    + '<th>Demanda</th>'
+    + '<th style="width:150px">Cliente</th>'
+    + '<th style="width:110px">Prazo</th>'
+    + '<th style="width:120px">Responsável</th>'
+    + '<th style="width:150px">Status</th>'
+    + '<th style="width:110px"></th>'
+    + '</tr></thead><tbody>'
+    + lista.map(function(d) {
+      var icon = (d.tipo || '📌').split(' ')[0];
+      var prazo = d.prazo ? fmtDate(d.prazo) : '—';
+      var atrasado = d.prazo && d.status !== 'concluida' && d.prazo < new Date().toISOString().split('T')[0];
+      var subtitulo = d.descricao
+        ? '<div class="dem-td-sub">' + escHtml(String(d.descricao).replace(/\s*\n\s*/g, ' · ')) + '</div>'
+        : (d.viagemNome ? '<div class="dem-td-sub">🗺️ ' + escHtml(d.viagemNome) + '</div>' : '');
 
-    var icon = (d.tipo || '📌').split(' ')[0];
-    return '<div class="demanda-card' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + '" id="dem-' + d.id + '">'
-      + '<div class="demanda-header" onclick="toggleDemanda(\'' + d.id + '\')" ondblclick="editarDemanda(\'' + d.id + '\')" title="Clique para expandir · duplo clique para editar">' 
-      + '<div class="demanda-tipo-icon">' + icon + '</div>'
-      + '<div class="demanda-info">'
-      + '<div class="demanda-titulo">' + d.titulo + '</div>'
-      + '<div class="demanda-meta">'
-      + numHtml
-      + '<span class="demanda-status-badge ' + (statusClasses[d.status]||'dem-status-pendente') + '">' + (statusLabels[d.status]||d.status) + '</span>'
-      + '<span>👥 ' + (d.clientes || '') + '</span>'
-      + prazoHtml + respHtml
-      + '</div>'
-      + (d.descricao ? '<div class="demanda-resumo">' + escHtml(d.descricao) + '</div>' : '')
-      + '</div>'
-      + '</div>' 
-      + '<div class="demanda-body" id="dem-body-' + d.id + '">'
-      + (d.descricao ? '<div class="demanda-descricao">' + escHtml(d.descricao) + '</div>' : '')
-      + vinculoHtml
-      + reservaHtml
-      + dadosCliHtml
-      + '<div class="demanda-actions">'
-      + '<select style="font-size:12px;padding:4px 8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px" onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
-      + ['pendente','em_andamento','aguardando','concluida'].map(function(s){ return '<option value="' + s + '"' + (d.status===s?' selected':'') + '>' + (statusLabels[s]||s) + '</option>'; }).join('')
-      + '</select>'
-      + (d.viagemId && !d.reservaId ? '<button class="btn btn-accent btn-sm" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋 Criar Reserva</button>' : '')
-      + '<button class="btn btn-ghost btn-sm" onclick="editarDemanda(\'' + d.id + '\')">✏️ Editar</button>'
-      + '<button class="btn btn-ghost btn-sm" style="color:var(--accent)" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>'
-      + '</div>'
-      + '</div>'
-      + '</div>';
-  }).join('');
+      return '<tr class="dem-linha' + (d.prioridade === 'alta' ? ' prioridade-alta' : '')
+        + (d.status === 'concluida' ? ' concluida' : '') + '" id="dem-' + d.id + '"'
+        + ' ondblclick="editarDemanda(\'' + d.id + '\')">'
+        + '<td class="dem-td-num">#' + String(d.numero||'').padStart(3,'0') + '</td>'
+        + '<td class="dem-td-icon">' + icon + '</td>'
+        + '<td><div class="dem-td-titulo">' + escHtml(d.titulo || '') + '</div>' + subtitulo + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(d.clientes || '—') + '</td>'
+        + '<td class="dem-td-sec' + (atrasado ? ' atrasado' : '') + '">' + prazo + '</td>'
+        + '<td class="dem-td-sec">' + escHtml(d.responsavel || '—') + '</td>'
+        + '<td>'
+        + '<select class="dem-sel-status ' + (statusClasses[d.status]||'dem-status-pendente') + '"'
+        + ' onclick="event.stopPropagation()" ondblclick="event.stopPropagation()"'
+        + ' onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
+        + ['pendente','em_andamento','aguardando','concluida'].map(function(st){
+            return '<option value="' + st + '"' + (d.status===st?' selected':'') + '>' + (statusLabels[st]||st) + '</option>';
+          }).join('')
+        + '</select>'
+        + '</td>'
+        + '<td class="dem-td-acoes" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
+        + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
+        + (d.viagemId && !d.reservaId ? '<button class="dem-acao" title="Criar reserva" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
+        + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
+        + '<button class="dem-acao" title="Editar" onclick="editarDemanda(\'' + d.id + '\')">✏️</button>'
+        + '<button class="dem-acao del" title="Excluir" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>'
+        + '</td>'
+        + '</tr>';
+    }).join('')
+    + '</tbody></table></div>';
 }
 
 var _demToggleTimer = null;
