@@ -3343,6 +3343,9 @@ var VARS_RESERVA = [
   { label: '{{acumulo_programa}}',       desc: 'Programa de fidelidade (acúmulo hotel)' },
   { label: '{{acumulo_milhas}}',         desc: 'Milhas/pontos a acumular (hotel)' },
   { label: '{{acumulo_parceiro}}',       desc: 'Parceiro de acúmulo (hotel)' },
+  { label: '{{acumulo_valor}}',          desc: 'Valor pago na emissão com acúmulo (R$)' },
+  { label: '{{hotel_acumulo_valor}}',    desc: 'Valor pago no hotel com acúmulo de pontos (R$)' },
+  { label: '{{loc_acumulo_valor}}',      desc: 'Valor pago na locação com acúmulo de pontos (R$)' },
   { label: '{{hotel_milhas}}',           desc: 'Quantidade total de milhas gastas (hotel)' },
   { label: '{{hotel_valor_tarifa}}',     desc: 'Valor da tarifa pagante do hotel (R$)' },
   { label: '{{loc_milhas}}',             desc: 'Quantidade total de milhas gastas (locação de carro)' },
@@ -3731,7 +3734,7 @@ function onDispararChange() {
     txt = rv(txt, 'programa', res.programa);
     txt = rv(txt, 'milhas', res.milhas);
     txt = rv(txt, 'milhas_total', res.milhasTotal||'');
-    txt = rv(txt, 'valor_tarifa', res.valor||'');
+    txt = rv(txt, 'valor_tarifa', res.valor||res.valorAcumulo||'');
     txt = rv(txt, 'pax', res.pax);
     txt = rv(txt, 'hotel', res.hotelNome);
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
@@ -3740,10 +3743,13 @@ function onDispararChange() {
     txt = rv(txt, 'acumulo_programa', res.programaAcumulo||'');
     txt = rv(txt, 'acumulo_milhas',   res.milhasAcumulo||'');
     txt = rv(txt, 'acumulo_parceiro', res.parceiroAcumulo||'');
+    txt = rv(txt, 'acumulo_valor',       res.valorAcumulo||'');
+    txt = rv(txt, 'hotel_acumulo_valor', res.tipo==='hotel' ? (res.valorAcumulo||'') : '');
+    txt = rv(txt, 'loc_acumulo_valor',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorAcumulo||'') : '');
     txt = rv(txt, 'hotel_milhas',       res.tipo==='hotel' ? (res.valorMilhas||'') : '');
-    txt = rv(txt, 'hotel_valor_tarifa', res.tipo==='hotel' ? (res.valorTarifaPagante||'') : '');
+    txt = rv(txt, 'hotel_valor_tarifa', res.tipo==='hotel' ? (res.valorTarifaPagante||res.valorAcumulo||'') : '');
     txt = rv(txt, 'loc_milhas',         (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorMilhas||'') : '');
-    txt = rv(txt, 'loc_valor_tarifa',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorTarifaPagante||'') : '');
+    txt = rv(txt, 'loc_valor_tarifa',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorTarifaPagante||res.valorAcumulo||'') : '');
     txt = rv(txt, 'loc_local_retirada',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retLocal||'') : '');
     txt = rv(txt, 'loc_local_devolucao', (res.tipo==='carro' && res.subtipo==='locacao') ? (res.devLocal||'') : '');
     txt = rv(txt, 'loc_data_retirada',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retData?fmtDate(res.retData):'') : '');
