@@ -191,10 +191,13 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .dem-cli-linha{padding-top:10px}
 .dem-cli-nome{font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px}
 .dem-cli-chips{display:flex;flex-wrap:wrap;gap:5px}
-.dem-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 9px;cursor:pointer;max-width:100%;transition:border-color .15s}
+.dem-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 9px;cursor:pointer;max-width:100%;min-width:0;flex:0 1 auto;overflow:hidden;transition:border-color .15s}
 .dem-chip:hover{border-color:var(--border2)}
 .dem-chip b{font-size:9px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
-.dem-chip span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dem-chip span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.dem-cli-chips{min-width:0}
+.dem-cliente-box,.dem-cliente-inner,.dem-cli-linha{min-width:0;overflow:hidden}
+.modal{min-width:0}
 .dem-cli-senhas{margin-top:7px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:flex;align-items:flex-start;gap:8px}
 .dem-cli-senhas pre{flex:1;margin:0;font-family:inherit;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.6}
 .demanda-vinculo{font-size:12px;color:var(--accent);background:rgba(255,88,94,.08);padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:12px;cursor:pointer}
@@ -1445,7 +1448,6 @@ header{animation:fadeUp .45s ease both}
       <div id="rg-ia-wrap"></div>
     </div>
   </div>
-</div>
 
 <!-- ═══════════════════════════════════════
      ABA: DEMANDAS
@@ -1554,6 +1556,8 @@ header{animation:fadeUp .45s ease both}
   <!-- LISTA DE DEMANDAS -->
   <div id="demandas-grid"></div>
 </div>
+
+</div><!-- /.wrap -->
 
 
 <!-- TOAST -->
