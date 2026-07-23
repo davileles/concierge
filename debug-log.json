@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-23T04:20:59.740Z",
+  "executadoEm": "2026-07-23T07:38:24.035Z",
   "modelosAtivos": [
     {
       "nome": "Seu voo está chegando! - VOLTA",
@@ -26,10 +26,9 @@
       }
     }
   ],
-  "totalAlteracoes": 2,
+  "totalAlteracoes": 1,
   "resultados": [
-    "✅ [Seu voo está chegando! - VOLTA] → \"Leonardo Rodrigues\" (2026-07-24)",
-    "✅ [Seu voo está chegando! - VOLTA] → \"Rodolpho Junior\" (2026-07-24)"
+    "✅ [Seu voo está chegando! - VOLTA] → \"José De\" (2026-07-25)"
   ],
   "eventos": [
     {
@@ -37,60 +36,29 @@
       "gatilho": "voo_volta_dt",
       "reservaId": "RES-1784285621274",
       "cliente": "José De",
-      "horasRestantes": 49.23,
-      "janela": 48,
-      "temGrupo": true,
-      "disparar": false,
-      "ts": "2026-07-23T04:20:55.957Z"
-    },
-    {
-      "modelo": "Seu voo está chegando! - VOLTA",
-      "gatilho": "voo_volta_dt",
-      "reservaId": "RES-1783539335187",
-      "cliente": "Leonardo Rodrigues",
-      "horasRestantes": 44.98,
+      "horasRestantes": 45.94,
       "janela": 48,
       "temGrupo": true,
       "disparar": true,
-      "ts": "2026-07-23T04:20:55.958Z"
+      "ts": "2026-07-23T07:38:22.308Z"
     },
     {
       "modelo": "Seu voo está chegando! - VOLTA",
       "gatilho": "voo_volta_dt",
-      "reservaId": "RES-1783539335187",
-      "cliente": "Leonardo Rodrigues",
-      "grupo": "120363425444238129@g.us",
+      "reservaId": "RES-1784285621274",
+      "cliente": "José De",
+      "grupo": "120363407463456235@g.us",
       "tentativa": "sucesso",
-      "ts": "2026-07-23T04:20:57.506Z"
-    },
-    {
-      "modelo": "Seu voo está chegando! - VOLTA",
-      "gatilho": "voo_volta_dt",
-      "reservaId": "RES-1783539266181",
-      "cliente": "Rodolpho Junior",
-      "horasRestantes": 44.98,
-      "janela": 48,
-      "temGrupo": true,
-      "disparar": true,
-      "ts": "2026-07-23T04:20:57.506Z"
-    },
-    {
-      "modelo": "Seu voo está chegando! - VOLTA",
-      "gatilho": "voo_volta_dt",
-      "reservaId": "RES-1783539266181",
-      "cliente": "Rodolpho Junior",
-      "grupo": "120363421301140271@g.us",
-      "tentativa": "sucesso",
-      "ts": "2026-07-23T04:20:58.783Z"
+      "ts": "2026-07-23T07:38:22.939Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 1191.98,
+      "horasRestantes": 1188.69,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
@@ -99,97 +67,97 @@
       "horasRestantes": null,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Jamilli - Cuiabá",
-      "horasRestantes": 79.48,
+      "horasRestantes": 76.19,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Rio Quente em família",
-      "horasRestantes": 318.98,
+      "horasRestantes": 315.69,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -146.18,
+      "horasRestantes": -149.47,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip - Miguel e Maria",
-      "horasRestantes": 178.65,
+      "horasRestantes": 175.36,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem teste",
-      "horasRestantes": -293.85,
+      "horasRestantes": -297.14,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -115.27,
+      "horasRestantes": -118.56,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -197.77,
+      "horasRestantes": -201.06,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2923.15,
+      "horasRestantes": 2919.86,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 588.73,
+      "horasRestantes": 585.44,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.941Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -129.85,
+      "horasRestantes": -133.14,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-23T04:20:58.785Z"
+      "ts": "2026-07-23T07:38:22.942Z"
     }
   ]
 }
