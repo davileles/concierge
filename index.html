@@ -466,6 +466,13 @@ header{animation:fadeUp .45s ease both}
       </div>
     </div>
 
+    <div class="field">
+      <label>Atender uma Demanda <span class="tag">opcional</span></label>
+      <select id="f-demanda-assoc" onchange="onDemandaAssocChange()">
+        <option value="">Não vincular a nenhuma demanda</option>
+      </select>
+    </div>
+
     <div class="g2">
       <div class="field">
         <label>Associar a uma Viagem <span class="tag">opcional</span></label>
@@ -710,7 +717,7 @@ header{animation:fadeUp .45s ease both}
           <div class="field"><label>Parceiro <span style="color:var(--accent)">*</span></label>
             <select id="f-hotel-parceiro-acumulo">
               <option value="">Selecione o parceiro…</option>
-              <option>Allianz</option><option>Booking</option>
+              <option>Allianz</option><option>Azul Viagens</option><option>Booking</option>
               <option>Decolar</option><option>Hotéis.com</option>
               <option>Localiza Rent a Car</option><option>Movida</option>
               <option>Rental Cars</option><option>Unidas</option>
@@ -1987,7 +1994,7 @@ function limparForm() {
    'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-tarifa','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-hotel-fator-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
-   'f-obs','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
+   'f-obs','f-demanda-assoc','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
   window._reservaEditandoId = null;
@@ -2011,6 +2018,49 @@ function limparForm() {
   var fa = document.getElementById('field-atividade-assoc');
   if (fa) fa.style.display = 'none';
   document.getElementById('form-ok').textContent = '';
+}
+
+// Demandas em aberto disponíveis para vincular a uma nova reserva
+function populateDemandaAssocSelect(preSelecionada) {
+  var sel = document.getElementById('f-demanda-assoc');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Não vincular a nenhuma demanda</option>';
+  var abertas = (typeof demandas !== 'undefined' ? demandas : [])
+    .filter(function(d){ return !d.reservaId && d.status !== 'concluida'; })
+    .sort(function(a,b){ return (a.titulo||'').localeCompare((b.titulo||''),'pt-BR'); });
+  abertas.forEach(function(d){
+    var opt = document.createElement('option');
+    opt.value = d.id;
+    opt.textContent = '#' + String(d.numero||'').padStart(3,'0') + ' · ' + (d.titulo||'')
+      + (d.clientes ? ' — ' + d.clientes : '');
+    sel.appendChild(opt);
+  });
+  if (preSelecionada) sel.value = preSelecionada;
+}
+
+// Ao escolher a demanda, herda cliente, viagem e atividade dela
+function onDemandaAssocChange() {
+  var id = getVal('f-demanda-assoc');
+  if (!id) return;
+  var d = (typeof demandas !== 'undefined' ? demandas : []).find(function(x){ return x.id === id; });
+  if (!d) return;
+
+  if (d.clientes && !getVal('f-cliente')) setVal('f-cliente', d.clientes);
+
+  if (d.viagemId) {
+    populateViagemAssocSelect(d.viagemId);
+    setVal('f-viagem-assoc', d.viagemId);
+    onViagemAssocChange();
+    // Selecionar a atividade que originou a demanda
+    if (d.atividadeRef) {
+      var v = viagens.find(function(x){ return x.id === d.viagemId; });
+      if (v && v.atividades) {
+        var idx = sortAtividades(v.atividades).findIndex(function(a){ return a.id === d.atividadeRef; });
+        if (idx !== -1) setVal('f-atividade-assoc', String(idx));
+      }
+    }
+  }
+  showToast('🔗 Reserva será vinculada à demanda #' + String(d.numero||'').padStart(3,'0'), 'ok');
 }
 
 function onViagemAssocChange() {
@@ -2449,6 +2499,24 @@ function salvarReserva() {
   if (cliGrupo && cliGrupo.grupo) res.grupo = cliGrupo.grupo;
   reservas.unshift(res);
   saveReservas();
+
+  // Vincular à demanda selecionada (se houver)
+  var demandaSelId = getVal('f-demanda-assoc');
+  if (demandaSelId && typeof demandas !== 'undefined') {
+    var dSel = demandas.find(function(x){ return x.id === demandaSelId; });
+    if (dSel) {
+      dSel.reservaId = res.id;
+      dSel.status = 'concluida';
+      if (dSel.viagemId && dSel.atividadeRef) {
+        var vD = viagens.find(function(x){ return x.id === dSel.viagemId; });
+        if (vD) {
+          var aD = (vD.atividades || []).find(function(x){ return x.id === dSel.atividadeRef; });
+          if (aD) { aD.reservaId = res.id; aD.status = 'concluida'; }
+        }
+      }
+      showToast('✅ Demanda #' + String(dSel.numero||'').padStart(3,'0') + ' concluída', 'ok');
+    }
+  }
 
   // Vincular à viagem selecionada (se houver)
   var viagemId = getVal('f-viagem-assoc');
@@ -3184,7 +3252,7 @@ function switchTab(name) {
   document.querySelectorAll('.main-tab').forEach(function(t){ t.classList.remove('active'); });
   document.getElementById('panel-'+name).classList.add('active');
   if (name === 'viagens') renderViagens();
-  if (name === 'nova' && !window._editandoReserva) populateViagemAssocSelect();
+  if (name === 'nova' && !window._editandoReserva) { populateViagemAssocSelect(); populateDemandaAssocSelect(); }
   var tabs = document.querySelectorAll('.main-tab');
   if (name==='mensagens') { loadModelos(); initMensagens(); }
   var activeTab = document.querySelector('.main-tab[onclick*="switchTab(\'' + name + '\')"]');
@@ -5741,15 +5809,10 @@ function criarReservaParaDemanda(demandaId) {
   if (!d) return;
   switchTab('nova');
   setTimeout(function() {
-    // Pré-preencher cliente
     if (d.clientes) setVal('f-cliente', d.clientes);
-    // Pré-selecionar viagem
-    if (d.viagemId) {
-      populateViagemSelect();
-      setVal('f-viagem-assoc', d.viagemId);
-      onViagemAssocChange();
-    }
-    showToast('ℹ️ Preencha os dados da reserva. Ao salvar, vincule à viagem para concluir a demanda.', 'ok');
+    populateDemandaAssocSelect(d.id);
+    onDemandaAssocChange();
+    showToast('ℹ️ Preencha os dados da reserva — ao salvar, a demanda #' + String(d.numero||'').padStart(3,'0') + ' será concluída.', 'ok');
   }, 300);
 }
 
@@ -5867,7 +5930,7 @@ function renderDemandas() {
         + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
         + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
-        + (d.viagemId && !d.reservaId ? '<button class="dem-acao" title="Criar reserva" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
+        + (!d.reservaId ? '<button class="dem-acao" title="Criar reserva para esta demanda" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
         + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
         + '<button class="dem-acao" title="Editar" onclick="editarDemanda(\'' + d.id + '\')">✏️</button>'
         + '<button class="dem-acao del" title="Excluir" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>'
