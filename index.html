@@ -2823,10 +2823,15 @@ function renderReservas() {
   var list = reservas.filter(function(r){
     var matchTipo = activeFilter === 'todos' || activeFilter === 'passadas' || r.tipo === activeFilter;
     var matchQ = !q || r.cliente.toLowerCase().includes(q) || resTitle(r).toLowerCase().includes(q);
-    // Data principal da reserva
+    // Data principal (inicio) da reserva
     var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
-    var futura = !dataRef || dataRef >= hoje;
-    var matchData = activeFilter === 'passadas' ? (!futura && dataRef)
+    // Data final: volta do voo / checkout do hotel / devolucao do carro.
+    // Uma reserva so e "passada" quando a data FINAL ja passou.
+    var dataFim = (r.tipo === 'voo'   ? r.dataVolta :
+                   r.tipo === 'hotel' ? r.checkout  :
+                   r.tipo === 'carro' ? r.devData   : '') || dataRef;
+    var futura = !dataFim || dataFim >= hoje;
+    var matchData = activeFilter === 'passadas' ? (!futura && dataFim)
                   : futura;
     return matchTipo && matchQ && matchData;
   });
