@@ -155,7 +155,24 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .dem-status-concluida{background:rgba(50,200,120,.15);color:#32c878}
 .demanda-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:rgba(255,255,255,.01)}
 .demanda-body.open{display:block}
-.demanda-descricao{font-size:13px;color:var(--muted2);line-height:1.6;margin-bottom:12px}
+.demanda-descricao{font-size:14.5px;color:var(--text);line-height:1.75;margin-bottom:14px;white-space:pre-wrap;word-break:break-word;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:14px 16px}
+/* Dados do cliente — compactos, secundários */
+.dem-cliente-box{background:var(--bg);border:1px solid var(--border);border-radius:10px;margin-bottom:10px}
+.dem-cliente-box>summary{list-style:none;cursor:pointer;font-size:11px;font-weight:700;color:var(--muted);padding:8px 12px;display:flex;align-items:center;gap:6px;user-select:none}
+.dem-cliente-box>summary::-webkit-details-marker{display:none}
+.dem-cliente-box>summary::after{content:'▼';margin-left:auto;font-size:9px;color:var(--muted2);transition:transform .2s}
+.dem-cliente-box[open]>summary::after{transform:rotate(180deg)}
+.dem-cliente-box>summary:hover{color:var(--text)}
+.dem-cliente-inner{padding:2px 12px 12px;border-top:1px solid var(--border)}
+.dem-cli-linha{padding-top:10px}
+.dem-cli-nome{font-size:11px;font-weight:800;color:var(--text);margin-bottom:6px}
+.dem-cli-chips{display:flex;flex-wrap:wrap;gap:5px}
+.dem-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 9px;cursor:pointer;max-width:100%;transition:border-color .15s}
+.dem-chip:hover{border-color:var(--border2)}
+.dem-chip b{font-size:9px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.dem-chip span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dem-cli-senhas{margin-top:7px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:flex;align-items:flex-start;gap:8px}
+.dem-cli-senhas pre{flex:1;margin:0;font-family:inherit;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.6}
 .demanda-vinculo{font-size:12px;color:var(--accent);background:rgba(255,88,94,.08);padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:12px;cursor:pointer}
 .demanda-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .demanda-numero{font-size:10px;font-weight:700;color:var(--muted);background:var(--surface2);padding:2px 6px;border-radius:6px}
@@ -1473,7 +1490,10 @@ header{animation:fadeUp .45s ease both}
       <datalist id="df-clientes-list"></datalist>
     </div>
     <div id="df-cliente-dados" style="display:none;margin-bottom:14px"></div>
-    <div class="field"><label>Descrição / Instruções</label><textarea id="df-descricao" rows="3" placeholder="Detalhes para o funcionário: datas, preferências, orçamento, programa de milhas, etc." style="min-height:70px"></textarea></div>
+    <div class="field">
+      <label>Descrição / Instruções <span class="tag">quebras de linha são preservadas</span></label>
+      <textarea id="df-descricao" rows="10" placeholder="Detalhes para o funcionário: datas, preferências, orçamento, programa de milhas, etc.&#10;&#10;Use quebras de linha à vontade — elas são mantidas na demanda." style="min-height:200px;font-size:14px;line-height:1.75;resize:vertical"></textarea>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div class="field">
         <label>Prazo</label>
@@ -1842,38 +1862,47 @@ function buscarClientesPorNome(str) {
   }).slice(0,3);
 }
 
-// Bloco visual com os dados de cadastro + senhas do(s) cliente(s)
+// Chip compacto e clicável (copia o valor)
+function chipCli(label, val) {
+  if (!val) return '';
+  var safe = String(val).split("'").join('&#39;').split('"').join('&quot;');
+  return '<span class="dem-chip" onclick="copiarTexto(this)" data-val="' + safe + '" title="Copiar ' + label + '">'
+    + '<b>' + label + '</b><span>' + escHtml(val) + '</span></span>';
+}
+
+// Bloco COMPACTO com dados de cadastro + senhas — recolhido por padrão,
+// para não competir com a descrição da demanda.
 function blocoDadosCliente(nomeStr) {
   var achados = buscarClientesPorNome(nomeStr);
   if (!achados.length) return '';
-  return achados.map(function(c){
-    var endereco = (c.logradouro || c.cep)
-      ? '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px">🏠 Endereço</div><div class="cli-grid">'
-        + cliField('Logradouro', c.logradouro) + cliField('Número', c.numero)
-        + cliField('Complemento', c.complemento) + cliField('CEP', c.cep)
-        + cliField('Bairro', c.bairro) + cliField('Cidade', c.cidade) + cliField('Estado', c.estado)
-        + '</div>'
-      : '';
+
+  var corpo = achados.map(function(c){
+    var endereco = [c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
+      .filter(function(x){ return x; }).join(', ');
+    var chips = chipCli('CPF', c.cpf)
+      + chipCli('Nasc', fmtDate(c.nasc))
+      + chipCli('Tel', c.tel)
+      + chipCli('E-mail', c.email)
+      + chipCli('Endereço', endereco)
+      + chipCli('Acomp', c.acompanhantes ? String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ') : '');
     var senhas = c.senhas
-      ? '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px">🔑 Senhas / Acessos</div>'
-        + '<div style="display:flex;align-items:flex-start;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px">'
-        + '<span style="flex:1;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7;word-break:break-all">' + escHtml(c.senhas) + '</span>'
-        + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="' + String(c.senhas).split("'").join('&#39;').split('"').join('&quot;') + '" title="Copiar senhas">📋</button>'
-        + '</div>'
+      ? '<div class="dem-cli-senhas"><pre>' + escHtml(c.senhas) + '</pre>'
+        + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="'
+        + String(c.senhas).split("'").join('&#39;').split('"').join('&quot;')
+        + '" title="Copiar senhas">📋</button></div>'
       : '';
-    var acomp = c.acompanhantes
-      ? '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px">👨‍👩‍👧 Quem Viaja Junto</div>'
-        + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>'
-      : '';
-    return '<div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:10px">'
-      + '<div style="font-size:12px;font-weight:800;color:var(--text);margin-bottom:10px">👤 ' + escHtml(toTitleCase(c.nome)) + '</div>'
-      + '<div class="cli-grid">'
-      + cliField('CPF', c.cpf) + cliField('Nascimento', fmtDate(c.nasc))
-      + cliField('Telefone', c.tel) + cliField('E-mail', c.email)
-      + '</div>'
-      + endereco + senhas + acomp
+    return '<div class="dem-cli-linha">'
+      + (achados.length > 1 ? '<div class="dem-cli-nome">' + escHtml(toTitleCase(c.nome)) + '</div>' : '')
+      + '<div class="dem-cli-chips">' + chips + '</div>'
+      + senhas
       + '</div>';
   }).join('');
+
+  var nomes = achados.map(function(c){ return toTitleCase(c.nome); }).join(' · ');
+  return '<details class="dem-cliente-box">'
+    + '<summary>👤 ' + escHtml(nomes) + ' — dados e senhas</summary>'
+    + '<div class="dem-cliente-inner">' + corpo + '</div>'
+    + '</details>';
 }
 
 // Atualiza o painel de dados do cliente no formulário de demanda
@@ -5327,7 +5356,6 @@ function loadDemandas() {
   viagens.forEach(function(v) {
     (v.atividades || []).forEach(function(a) {
       // Checa se já existe demanda para esta atividade
-      if (a.demandaOculta) return;
       var existe = demandas.find(function(d) { return d.viagemId === v.id && d.atividadeRef === a.id; });
       if (!existe && a.id) {
         // Importa atividade existente como demanda (somente se tiver id)
@@ -5526,27 +5554,8 @@ function editarDemanda(id) {
 }
 
 function excluirDemanda(id) {
-  var d = demandas.find(function(x){ return x.id === id; });
-  if (!d) return;
-
-  // Demanda espelhada de uma atividade de viagem: precisa marcar a atividade,
-  // senão renderDemandas() reimporta a demanda a cada render.
-  if (d.viagemId && d.atividadeRef) {
-    if (!confirm('Remover a demanda #' + String(d.numero||'').padStart(3,'0') + ' da lista?\n\nA atividade continua existindo na viagem "' + (d.viagemNome || '') + '" — para apagá-la de vez, use a aba Viagens.')) return;
-    var v = viagens.find(function(x){ return x.id === d.viagemId; });
-    if (v) {
-      var a = (v.atividades || []).find(function(x){ return x.id === d.atividadeRef; });
-      if (a) a.demandaOculta = true;
-    }
-    demandas = demandas.filter(function(x){ return x.id !== id; });
-    saveDemandas();
-    renderDemandas();
-    showToast('🗑️ Demanda removida da lista', 'ok');
-    return;
-  }
-
-  if (!confirm('Remover esta demanda?')) return;
-  demandas = demandas.filter(function(x){ return x.id !== id; });
+  if (!confirm('Remover esta demanda? A atividade na viagem não será afetada.')) return;
+  demandas = demandas.filter(function(d){ return d.id !== id; });
   saveDemandas();
   renderDemandas();
   showToast('🗑️ Demanda removida', 'ok');
@@ -5601,10 +5610,6 @@ function renderDemandas() {
   viagens.forEach(function(v) {
     (v.atividades || []).forEach(function(a) {
       if (!a.id) return;
-      if (a.demandaOculta) {
-        demandas = demandas.filter(function(d){ return d.atividadeRef !== a.id; });
-        return;
-      }
       var existe = demandas.find(function(d){ return d.atividadeRef === a.id; });
       if (!existe) {
         demandas.push({
@@ -5669,9 +5674,7 @@ function renderDemandas() {
     var vinculoHtml = d.viagemId ? '<div class="demanda-vinculo" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️ ' + (d.viagemNome || 'Viagem vinculada') + ' →</div>' : '';
     var reservaHtml = d.reservaId ? '<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ Reserva vinculada: ' + d.reservaId + '</div>' : '';
     var dadosCli = blocoDadosCliente(d.clientes);
-    var dadosCliHtml = dadosCli
-      ? '<div style="margin-bottom:12px"><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👤 Dados do Cliente</div>' + dadosCli + '</div>'
-      : '';
+    var dadosCliHtml = dadosCli || '';
 
     var icon = (d.tipo || '📌').split(' ')[0];
     return '<div class="demanda-card' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + '" id="dem-' + d.id + '">'
@@ -5688,10 +5691,10 @@ function renderDemandas() {
       + '</div>'
       + '</div>'
       + '<div class="demanda-body" id="dem-body-' + d.id + '">'
-      + (d.descricao ? '<div class="demanda-descricao">' + d.descricao + '</div>' : '')
-      + dadosCliHtml
+      + (d.descricao ? '<div class="demanda-descricao">' + escHtml(d.descricao) + '</div>' : '')
       + vinculoHtml
       + reservaHtml
+      + dadosCliHtml
       + '<div class="demanda-actions">'
       + '<select style="font-size:12px;padding:4px 8px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px" onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
       + ['pendente','em_andamento','aguardando','concluida'].map(function(s){ return '<option value="' + s + '"' + (d.status===s?' selected':'') + '>' + (statusLabels[s]||s) + '</option>'; }).join('')
