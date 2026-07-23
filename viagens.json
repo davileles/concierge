@@ -79,7 +79,8 @@
         "titulo": "",
         "descricao": "",
         "status": "pendente",
-        "reservaId": null
+        "reservaId": null,
+        "demandaOculta": true
       },
       {
         "id": "atv-1784648399468-gju4",
@@ -91,7 +92,10 @@
         "reservaId": null
       }
     ],
-    "cadastro": "2026-07-21"
+    "cadastro": "2026-07-21",
+    "demandasOcultas": [
+      "atv-1784648398614-xpfq"
+    ]
   },
   {
     "id": "VGM-1784641500729",
