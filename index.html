@@ -1082,10 +1082,6 @@ header{animation:fadeUp .45s ease both}
       <label>URL do Servidor Baileys (Railway)</label>
       <input type="text" id="cfg-baileys" placeholder="https://seu-servidor.railway.app" oninput="saveCfg()"/>
       </div>
-      <div class="field">
-        <label>GitHub Token <span class="tag">para publicar roteiros</span></label>
-        <input type="password" id="cfg-gh-token" placeholder="Cole aqui seu Personal Access Token" oninput="saveCfg()" autocomplete="new-password" style="font-family:monospace;font-size:12px"/>
-    </div>
     <div class="field">
       <label>Nome da aba de clientes na planilha</label>
       <input type="text" id="cfg-aba" placeholder="Ex: Clientes" oninput="saveCfg()"/>
@@ -1683,9 +1679,6 @@ function _applyCfg(c) {
   setVal('cfg-col-grupo',         c.colGrupo        || 'O');
   setVal('cfg-linha',             c.linha           || '2');
   setVal('cfg-baileys',           c.baileys         || '');
-  setVal('cfg-gh-token',          c.ghToken         || '');
-  // Atualizar token para uso imediato
-  window._ghToken = c.ghToken || '';
   document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
   aplicarTema(c.tema || 'dark');
 }
@@ -1745,7 +1738,6 @@ function _saveCfgNow() {
     colGrupo:         getVal('cfg-col-grupo').toUpperCase()         || 'O',
     linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys'),
-    ghToken:          getVal('cfg-gh-token'),
     tema:             _cfg.tema || 'dark'
   };
   _cfg = c;
@@ -1803,23 +1795,20 @@ function saveReservas() {
   .then(function(d){ if(!d.ok) throw new Error(d.erro||'Erro desconhecido'); return true; });
 }
 
-function syncReservasGitHub(callback) {
-  var token = window._ghToken || '';
-  var url = 'https://api.github.com/repos/davileles/concierge/contents/reservas.json';
-  fetch(url, { headers: { 'Authorization': 'token '+token, 'Accept': 'application/vnd.github.raw+json' } })
-    .then(function(r) {
-      if (!r.ok) throw new Error('GitHub API status ' + r.status);
-      // GitHub retorna JSON cru com Accept raw
-      return r.json();
-    })
-    .then(function(d) {
-      if (Array.isArray(d)) {
-        reservas = d;
+// Fallback: nova tentativa via proxy (nunca acessa a API do GitHub direto —
+// nenhum token deve existir no front-end).
+function syncReservasRetry(callback) {
+  setTimeout(function(){
+    fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok) throw new Error(d.erro || 'proxy retornou ok=false');
+        reservas = d.data || [];
         renderReservas();
         if (callback) callback();
-      }
-    })
-    .catch(function(e) { console.error('[syncReservas GitHub fallback]', e); });
+      })
+      .catch(function(e){ console.error('[syncReservas retry]', e.message); });
+  }, 1500);
 }
 
 function syncReservas() {
@@ -1830,13 +1819,13 @@ function syncReservas() {
         reservas = d.data || [];
         renderReservas();
       } else {
-        console.warn('[syncReservas] proxy ok=false ou data vazio — usando fallback GitHub');
-        syncReservasGitHub();
+        console.warn('[syncReservas] proxy ok=false ou data vazio — nova tentativa');
+        syncReservasRetry();
       }
     })
     .catch(function(e){
-      console.error('[syncReservas] proxy falhou — usando fallback GitHub:', e.message);
-      syncReservasGitHub();
+      console.error('[syncReservas] proxy falhou — nova tentativa:', e.message);
+      syncReservasRetry();
     });
 }
 
@@ -4110,21 +4099,18 @@ function saveViagens() {
     .catch(function(e){ console.error('[saveViagens]', e); throw e; });
 }
 
-function syncViagensGitHub() {
-  var token = window._ghToken || '';
-  var url = 'https://api.github.com/repos/davileles/concierge/contents/viagens.json';
-  fetch(url, { headers: { 'Authorization': 'token '+token, 'Accept': 'application/vnd.github.raw+json' } })
-    .then(function(r) {
-      if (!r.ok) throw new Error('GitHub API status ' + r.status);
-      return r.json();
-    })
-    .then(function(d) {
-      if (Array.isArray(d)) {
-        viagens = d;
+// Fallback: nova tentativa via proxy (sem token no front-end).
+function syncViagensRetry() {
+  setTimeout(function(){
+    fetch('https://cdv-proxy-production.up.railway.app/concierge/viagens', { cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok) throw new Error(d.erro || 'proxy retornou ok=false');
+        viagens = d.data || [];
         renderViagens();
-      }
-    })
-    .catch(function(e) { console.error('[syncViagens GitHub fallback]', e); });
+      })
+      .catch(function(e){ console.error('[syncViagens retry]', e.message); });
+  }, 1500);
 }
 
 function syncViagens() {
@@ -4135,13 +4121,13 @@ function syncViagens() {
         viagens = d.data || [];
         renderViagens();
       } else {
-        console.warn('[syncViagens] proxy ok=false — usando fallback GitHub');
-        syncViagensGitHub();
+        console.warn('[syncViagens] proxy ok=false — nova tentativa');
+        syncViagensRetry();
       }
     })
     .catch(function(e){
-      console.error('[syncViagens] proxy falhou — usando fallback GitHub:', e.message);
-      syncViagensGitHub();
+      console.error('[syncViagens] proxy falhou — nova tentativa:', e.message);
+      syncViagensRetry();
     });
 }
 
@@ -5225,7 +5211,7 @@ window.addEventListener('DOMContentLoaded', function(){
 // ════════════════════════════════════════════════════════════════
 var rgDias = [];
 // Token GitHub vem da configuração do usuário (aba Configuração → GitHub Token)
-// window._ghToken é setado por _applyCfg() ao carregar as configurações
+// Publicação de roteiros usa o endpoint /roteiros/publicar do proxy (sem token no front)
 
 function rgPopularSelect() {
   loadViagens();
@@ -5629,24 +5615,14 @@ async function rgPublicar() {
   var htmlGerado = rgGerarHTML(data);
   rgSetStatus('⏳ Publicando roteiro no GitHub…','info');
   try {
-    // Sanitizar token: remover espaços, quebras de linha e caracteres não-ASCII
-    var _tok = (getCfg().ghToken || window._ghToken || '')
-      .replace(/[^\x20-\x7E]/g, '')  // apenas ASCII imprimível
-      .trim();
-    if (!_tok) return rgSetStatus('❌ Configure o GitHub Token na aba Configuração antes de publicar.','err');
-    var caminho = slug+'/index.html';
-    var shaResp = await fetch('https://api.github.com/repos/davileles/roteiros/contents/'+caminho, {
-      headers:{'Authorization':'token '+_tok}
+    // Publicação via proxy Railway — o GITHUB_TOKEN vive só no servidor.
+    var pubResp = await fetch('https://cdv-proxy-production.up.railway.app/roteiros/publicar', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ slug: slug, html: htmlGerado })
     });
-    var shaData = shaResp.ok ? await shaResp.json() : null;
-    var body = {message:'roteiro: '+data.titulo+' ('+slug+')', content:btoa(unescape(encodeURIComponent(htmlGerado)))};
-    if (shaData && shaData.sha) body.sha = shaData.sha;
-    var putResp = await fetch('https://api.github.com/repos/davileles/roteiros/contents/'+caminho, {
-      method:'PUT',
-      headers:{'Authorization':'token '+_tok,'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
-    if (!putResp.ok) throw new Error('PUT falhou: '+(await putResp.text()));
+    var pubData = await pubResp.json().catch(function(){ return {}; });
+    if (!pubResp.ok || !pubData.ok) throw new Error(pubData.erro || ('Publicação falhou (HTTP '+pubResp.status+')'));
     var url = 'https://roteiros.clubedoviajante.com.br/'+slug+'/';
     rgSetStatus('✅ Roteiro publicado! <a href="'+url+'" target="_blank" style="color:var(--accent);font-weight:700">'+url+'</a> (aguarde ~10min para o GitHub Pages atualizar)','ok');
     document.getElementById('rg-link-publicado').href=url;
