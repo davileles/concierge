@@ -2812,14 +2812,41 @@ function resGridCols(r, cols) {
 //  hotel   -> check-in / check-out
 //  carro   -> retirada (ou transfer) / devolucao
 //  passeio -> data do passeio (sem data fim)
+function dataISO(d) { return d ? String(d).trim().slice(0,10) : ''; }
+
 function resDatas(r) {
   var ini = '', fim = '';
-  if (r.tipo === 'voo')          { ini = r.dataIda || '';                   fim = r.dataVolta || ''; }
-  else if (r.tipo === 'hotel')   { ini = r.checkin || '';                   fim = r.checkout  || ''; }
-  else if (r.tipo === 'carro')   { ini = r.retData || r.transferData || ''; fim = r.devData   || ''; }
-  else if (r.tipo === 'passeio') { ini = r.dataPasseio || '';               fim = ''; }
-  if (!ini) ini = r.dataIda || r.checkin || r.retData || r.transferData || r.dataPasseio || '';
+  if (r.tipo === 'voo')          { ini = r.dataIda;                    fim = r.dataVolta; }
+  else if (r.tipo === 'hotel')   { ini = r.checkin;                    fim = r.checkout;  }
+  else if (r.tipo === 'carro')   { ini = r.retData || r.transferData;  fim = r.devData;   }
+  else if (r.tipo === 'passeio') { ini = r.dataPasseio;                fim = '';          }
+  ini = dataISO(ini); fim = dataISO(fim);
+  if (!ini) ini = dataISO(r.dataIda || r.checkin || r.retData || r.transferData || r.dataPasseio);
   return { inicio: ini, fim: fim };
+}
+
+// Rotulo da data final conforme o tipo de reserva
+function resLabelFim(r) {
+  return r.tipo === 'voo'   ? 'Volta'
+       : r.tipo === 'hotel' ? 'Check-out'
+       : r.tipo === 'carro' ? 'Devolucao'
+       : 'Fim';
+}
+
+// Proxima data relevante da reserva:
+// enquanto o inicio nao chegou, e o inicio; depois que ele passa,
+// passa a ser a data fim (volta / check-out / devolucao).
+// E o que define tanto a ordenacao quanto o badge de urgencia.
+function resProxData(r) {
+  var d = resDatas(r);
+  var hoje = new Date();
+  var hojeStr = hoje.getFullYear() + '-'
+              + String(hoje.getMonth()+1).padStart(2,'0') + '-'
+              + String(hoje.getDate()).padStart(2,'0');
+  if (d.inicio && d.inicio >= hojeStr) return { data: d.inicio, qual: 'inicio' };
+  if (d.fim    && d.fim    >= hojeStr) return { data: d.fim,    qual: 'fim' };
+  // Tudo no passado: usa a ultima data conhecida
+  return { data: d.fim || d.inicio, qual: d.fim ? 'fim' : 'inicio' };
 }
 
 function renderReservas() {
@@ -2851,8 +2878,8 @@ function renderReservas() {
 
   // Ordenar por data crescente
   list.sort(function(a, b) {
-    var da = resDatas(a).inicio || a.cadastro || '';
-    var db = resDatas(b).inicio || b.cadastro || '';
+    var da = resProxData(a).data || dataISO(a.cadastro) || '';
+    var db = resProxData(b).data || dataISO(b.cadastro) || '';
     if (da !== db) return da < db ? -1 : 1;
     // Desempate por horário de partida
     var ha = a.horaPartida || a.horaPasseio || '';
@@ -2876,15 +2903,19 @@ function renderReservas() {
       var _dts = resDatas(r);
       var dataRef = _dts.inicio;
       var dataFimCol = _dts.fim;
+      // O alerta olha para a proxima data relevante: se a ida ja passou,
+      // passa a contar os dias ate a volta / check-out / devolucao.
+      var _prox = resProxData(r);
       var urgente = false, diasRestantes = null;
-      if (dataRef) {
+      if (_prox.data) {
         var h0 = new Date(); h0.setHours(0,0,0,0);
-        var dRef = new Date(dataRef + 'T00:00:00');
+        var dRef = new Date(_prox.data + 'T00:00:00');
         var diff = Math.round((dRef - h0) / 86400000);
         if (diff >= 0 && diff <= 7) { urgente = true; diasRestantes = diff; }
       }
+      var _prefixo = (urgente && _prox.qual === 'fim') ? resLabelFim(r) + ' ' : '';
       var urgenteBadge = urgente
-        ? '<span class="urgente-badge">🔴 ' + (diasRestantes === 0 ? 'Hoje!' : diasRestantes === 1 ? 'Amanhã!' : 'Em ' + diasRestantes + ' dias') + '</span>'
+        ? '<span class="urgente-badge">🔴 ' + _prefixo + (diasRestantes === 0 ? (_prefixo ? 'hoje!' : 'Hoje!') : diasRestantes === 1 ? (_prefixo ? 'amanhã!' : 'Amanhã!') : (_prefixo ? 'em ' : 'Em ') + diasRestantes + ' dias') + '</span>'
         : '';
       var icon = ((r.tipo==='carro' && r.subtipo && SUBTIPO_ICON[r.subtipo]) || TIPO_LABEL[r.tipo].split(' ')[0]);
       var loc = r.pnr || r.conf || '—';
