@@ -2807,6 +2807,21 @@ function resGridCols(r, cols) {
   return 'repeat(auto-fit, minmax(130px, 1fr))';
 }
 
+// Datas de inicio e fim de uma reserva, conforme o tipo:
+//  voo     -> ida / volta
+//  hotel   -> check-in / check-out
+//  carro   -> retirada (ou transfer) / devolucao
+//  passeio -> data do passeio (sem data fim)
+function resDatas(r) {
+  var ini = '', fim = '';
+  if (r.tipo === 'voo')          { ini = r.dataIda || '';                   fim = r.dataVolta || ''; }
+  else if (r.tipo === 'hotel')   { ini = r.checkin || '';                   fim = r.checkout  || ''; }
+  else if (r.tipo === 'carro')   { ini = r.retData || r.transferData || ''; fim = r.devData   || ''; }
+  else if (r.tipo === 'passeio') { ini = r.dataPasseio || '';               fim = ''; }
+  if (!ini) ini = r.dataIda || r.checkin || r.retData || r.transferData || r.dataPasseio || '';
+  return { inicio: ini, fim: fim };
+}
+
 function renderReservas() {
   loadReservas();
   var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
@@ -2814,13 +2829,11 @@ function renderReservas() {
   var list = reservas.filter(function(r){
     var matchTipo = activeFilter === 'todos' || activeFilter === 'passadas' || r.tipo === activeFilter;
     var matchQ = !q || r.cliente.toLowerCase().includes(q) || resTitle(r).toLowerCase().includes(q);
-    // Data principal (inicio) da reserva
-    var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
-    // Data final: volta do voo / checkout do hotel / devolucao do carro.
+    // Datas de inicio e fim (helper resDatas).
     // Uma reserva so e "passada" quando a data FINAL ja passou.
-    var dataFim = (r.tipo === 'voo'   ? r.dataVolta :
-                   r.tipo === 'hotel' ? r.checkout  :
-                   r.tipo === 'carro' ? r.devData   : '') || dataRef;
+    var _dt     = resDatas(r);
+    var dataRef = _dt.inicio;
+    var dataFim = _dt.fim || dataRef;
     var futura = !dataFim || dataFim >= hoje;
     var matchData = activeFilter === 'passadas' ? (!futura && dataFim)
                   : futura;
@@ -2838,8 +2851,8 @@ function renderReservas() {
 
   // Ordenar por data crescente
   list.sort(function(a, b) {
-    var da = a.dataIda || a.checkin || a.retData || a.dataPasseio || a.cadastro || '';
-    var db = b.dataIda || b.checkin || b.retData || b.dataPasseio || b.cadastro || '';
+    var da = resDatas(a).inicio || a.cadastro || '';
+    var db = resDatas(b).inicio || b.cadastro || '';
     if (da !== db) return da < db ? -1 : 1;
     // Desempate por horário de partida
     var ha = a.horaPartida || a.horaPasseio || '';
@@ -2852,14 +2865,17 @@ function renderReservas() {
     + '<th style="width:34px"></th>'
     + '<th>Reserva</th>'
     + '<th style="width:160px">Cliente</th>'
-    + '<th style="width:130px">Data</th>'
+    + '<th style="width:115px">🛫 Início</th>'
+    + '<th style="width:115px">🛬 Fim</th>'
     + '<th style="width:120px">Localizador</th>'
     + '<th style="width:120px"></th>'
     + '<th style="width:26px"></th>'
     + '</tr></thead><tbody>'
     + list.map(function(r){
       var cols = resCols(r);
-      var dataRef = r.dataIda || r.checkin || r.retData || r.dataPasseio || '';
+      var _dts = resDatas(r);
+      var dataRef = _dts.inicio;
+      var dataFimCol = _dts.fim;
       var urgente = false, diasRestantes = null;
       if (dataRef) {
         var h0 = new Date(); h0.setHours(0,0,0,0);
@@ -2885,6 +2901,7 @@ function renderReservas() {
         +   '<div class="dem-td-sub">' + r.id + ' · cadastro ' + fmtDate(r.cadastro) + '</div></td>'
         + '<td class="dem-td-sec">' + escHtml(r.cliente || '—') + '</td>'
         + '<td class="dem-td-sec">' + (dataRef ? fmtDate(dataRef) : '—') + '</td>'
+        + '<td class="dem-td-sec">' + (dataFimCol ? fmtDate(dataFimCol) : '—') + '</td>'
         + '<td class="dem-td-sec">' + escHtml(loc) + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()">'
         +   ((r.temArquivo || (r.arquivoAnexo && r.arquivoAnexo.nome)) ? '<button class="dem-acao" title="Ver bilhete" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎</button>' : '')
@@ -2893,7 +2910,7 @@ function renderReservas() {
         + '</td>'
         + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
         + '</tr>'
-        + '<tr class="dem-linha-det"><td colspan="7">' + detalhe + '</td></tr>';
+        + '<tr class="dem-linha-det"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
     + '</tbody></table></div>';
 }
