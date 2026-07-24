@@ -3823,7 +3823,7 @@ function onDispararChange() {
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
     txt = rv(txt, 'checkout', fmtDate(res.checkout));
     txt = rv(txt, 'conf', res.conf||res.hotelConf);
-    txt = rv(txt, 'acumulo_programa', res.programaAcumulo||'');
+    txt = rv(txt, 'acumulo_programa', res.programaAcumulo||res.programaAcumuloVoo||'');
     txt = rv(txt, 'acumulo_milhas',   res.milhasAcumulo||'');
     txt = rv(txt, 'acumulo_parceiro', res.parceiroAcumulo||'');
     txt = rv(txt, 'acumulo_valor',       res.valorAcumulo||'');
