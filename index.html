@@ -503,7 +503,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="field">
         <label>Cliente <span style="color:var(--accent)">*</span></label>
-        <select id="f-cliente" onchange="populateViagemAssocSelect()">
+        <select id="f-cliente" onchange="populateViagemAssocSelect(); atualizarPreviaMsgReserva()">
           <option value="">Selecione o cliente…</option>
         </select>
       </div>
@@ -947,6 +947,32 @@ header{animation:fadeUp .45s ease both}
     <div class="field">
       <label>Observações <span class="tag">opcional</span></label>
       <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
+    </div>
+
+    <!-- ENVIO DE MENSAGEM AO GRUPO (opcional) -->
+    <div class="sep"></div>
+    <div class="field" style="margin-bottom:10px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0">
+        <input type="checkbox" id="f-msg-enviar" onchange="toggleMsgReserva()" style="width:auto;margin:0;cursor:pointer"/>
+        <span>📲 Enviar mensagem ao grupo ao salvar <span class="tag">opcional</span></span>
+      </label>
+    </div>
+    <div id="f-msg-box" style="display:none">
+      <div class="field">
+        <label>Modelo</label>
+        <select id="f-msg-modelo" onchange="atualizarPreviaMsgReserva(true)">
+          <option value="">Selecione um modelo…</option>
+        </select>
+      </div>
+      <div id="f-msg-grupo-info" style="display:none;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px"></div>
+      <div class="field">
+        <label>Prévia <span class="tag">editável antes de enviar</span></label>
+        <textarea id="f-msg-preview" rows="8" style="min-height:170px;font-size:13px;line-height:1.8" placeholder="Selecione um modelo para gerar a prévia…" oninput="window._msgPreviewEditada=true"></textarea>
+      </div>
+      <div class="btn-row" style="margin-bottom:4px">
+        <button class="btn btn-ghost btn-sm" onclick="atualizarPreviaMsgReserva(true)">🔄 Regerar prévia</button>
+        <button class="btn btn-ghost btn-sm" onclick="copiarPreviaMsgReserva()">📋 Copiar</button>
+      </div>
     </div>
 
     <div class="btn-row">
@@ -2041,6 +2067,13 @@ function limparForm() {
   // Esconder select de atividade
   var fa = document.getElementById('field-atividade-assoc');
   if (fa) fa.style.display = 'none';
+  // Reset do bloco de mensagem ao grupo
+  var _cm = document.getElementById('f-msg-enviar');     if (_cm) _cm.checked = false;
+  var _bm = document.getElementById('f-msg-box');        if (_bm) _bm.style.display = 'none';
+  var _sm = document.getElementById('f-msg-modelo');     if (_sm) _sm.value = '';
+  var _pm = document.getElementById('f-msg-preview');    if (_pm) _pm.value = '';
+  var _gm = document.getElementById('f-msg-grupo-info'); if (_gm) _gm.style.display = 'none';
+  window._msgPreviewEditada = false;
   document.getElementById('form-ok').textContent = '';
 }
 
@@ -2350,46 +2383,11 @@ function aplicarDadosAtivo(d) {
   if (d.obs) sv('f-obs', d.obs);
 }
 
-function salvarReserva() {
-  var _btnSalvar = document.getElementById('btn-salvar-reserva');
-  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
-
+// Monta o objeto da reserva a partir dos campos do formulario.
+// Usado tanto no salvamento quanto na previa da mensagem ao grupo.
+function montarReservaDoForm(id) {
   var tipo = getVal('f-tipo');
   var cliente = toTitleCase(getVal('f-cliente'));
-  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
-  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
-
-  // Validações específicas para voo
-  if (tipo === 'voo') {
-    // Ida — obrigatórios
-    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
-    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
-    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
-    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
-    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
-    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
-    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
-    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
-    var _vOrigem    = getVal('f-origem-volta');
-    var _vDestino   = getVal('f-destino-volta');
-    var _vDataPart  = getVal('f-data-volta');
-    var _vHoraPart  = getVal('f-hora-partida-volta');
-    var _vDataCheg  = getVal('f-data-chegada-volta');
-    var _vHoraCheg  = getVal('f-hora-chegada-volta');
-    var _vCia       = getVal('f-cia-volta');
-    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
-    if (_voltaPreenchida) {
-      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
-      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
-      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
-      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
-      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
-      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
-      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
-    }
-  }
-
-  var id = 'RES-' + Date.now();
   var res = {
     id: id,
     tipo: tipo,
@@ -2513,6 +2511,50 @@ function salvarReserva() {
       conf: getVal('f-passeio-conf'), valor: getVal('f-passeio-valor'),
     });
   }
+  return res;
+}
+
+function salvarReserva() {
+  var _btnSalvar = document.getElementById('btn-salvar-reserva');
+  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
+
+  var tipo = getVal('f-tipo');
+  var cliente = toTitleCase(getVal('f-cliente'));
+  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
+  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
+
+  // Validações específicas para voo
+  if (tipo === 'voo') {
+    // Ida — obrigatórios
+    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
+    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
+    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
+    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
+    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
+    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
+    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
+    var _vOrigem    = getVal('f-origem-volta');
+    var _vDestino   = getVal('f-destino-volta');
+    var _vDataPart  = getVal('f-data-volta');
+    var _vHoraPart  = getVal('f-hora-partida-volta');
+    var _vDataCheg  = getVal('f-data-chegada-volta');
+    var _vHoraCheg  = getVal('f-hora-chegada-volta');
+    var _vCia       = getVal('f-cia-volta');
+    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
+    if (_voltaPreenchida) {
+      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
+      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
+      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
+      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
+      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
+      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
+      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
+    }
+  }
+
+  var id = 'RES-' + Date.now();
+  var res = montarReservaDoForm(id);
 
   window._reservaEditandoId = null;
   window._reservaEditandoOriginal = null;
@@ -2667,6 +2709,13 @@ function salvarReserva() {
   // Capturar base64 e meta ANTES de limpar (limparForm zera ativoArquivo*)
   var _base64Upload = ativoArquivoBase64;
   var _metaUpload   = ativoArquivoMeta;
+  // Capturar dados do envio de mensagem ANTES de limpar o formulario
+  var _chkMsg     = document.getElementById('f-msg-enviar');
+  var _msgAtiva   = !!(_chkMsg && _chkMsg.checked);
+  var _msgModelo  = getVal('f-msg-modelo');
+  var _msgTexto   = ((document.getElementById('f-msg-preview') || {}).value || '').trim();
+  var _msgEditada = !!window._msgPreviewEditada;
+  var _msgGrupo   = res.grupo || '';
 
   if (_btnSalvar) { _btnSalvar.disabled = true; _btnSalvar.style.opacity = '0.6'; }
 
@@ -2674,6 +2723,16 @@ function salvarReserva() {
     .then(function(){
       if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
       showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
+      // Disparo opcional da mensagem ao grupo (marcado no formulario)
+      if (_msgAtiva) {
+        var _cliMsg = clientes.find(function(c){ return c.nome === res.cliente; });
+        var _textoMsg = _msgTexto;
+        if (!_msgEditada) {
+          var _modMsg = modelos.find(function(m){ return m.id === _msgModelo; });
+          if (_modMsg) _textoMsg = resolverVarsModelo(_modMsg.texto, _cliMsg, res);
+        }
+        enviarMsgGrupo(_msgGrupo || (_cliMsg && _cliMsg.grupo) || '', _textoMsg);
+      }
       updateStats();
       renderReservas();
       limparForm();
@@ -3482,7 +3541,7 @@ var VARS_RESERVA = [
 ];
 
 function loadModelos() {
-  fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos')
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos')
     .then(function(r){ return r.json(); })
     .then(function(d){ modelos = d.data || []; renderModelosLista(); })
     .catch(function(e){ console.error('[loadModelos]', e); modelos = []; });
@@ -3894,9 +3953,13 @@ function onDispararChange() {
   }
 
   if (!mod) { document.getElementById('d-msg-final').value=''; return; }
+  document.getElementById('d-msg-final').value = resolverVarsModelo(mod.texto, cli, res);
+}
 
-  // Resolve variables
-  var txt = mod.texto;
+// Resolve as variaveis {{...}} de um modelo com base no cliente e na reserva.
+// Reutilizado pela aba Disparar e pela previa da tela de Nova Reserva.
+function resolverVarsModelo(texto, cli, res) {
+  var txt = String(texto || '');
   var ob='{{', cb='}}'; function rv(t, key, val) { return t.split(ob+key+cb).join(val||''); }
   if (cli) {
     txt = rv(txt, 'nome', cli.nome);
@@ -3954,9 +4017,9 @@ function onDispararChange() {
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
     });
-    txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : '');
+    txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : (res._viagemNome||''));
   }
-  document.getElementById('d-msg-final').value = txt;
+  return txt;
 }
 
 // ── IATA AUTOCOMPLETE ──────────────────────────────────────────
@@ -5188,6 +5251,101 @@ function renderViagens() {
   }).join('');
 }
 
+
+
+// ══════════════════════════════════════
+//  MENSAGEM AO GRUPO DIRETO DA TELA DE NOVA RESERVA
+// ══════════════════════════════════════
+function toggleMsgReserva() {
+  var chk = document.getElementById('f-msg-enviar');
+  var box = document.getElementById('f-msg-box');
+  if (!chk || !box) return;
+  box.style.display = chk.checked ? 'block' : 'none';
+  if (!chk.checked) return;
+  window._msgPreviewEditada = false;
+  if (!modelos || !modelos.length) {
+    var pr = loadModelos();
+    if (pr && pr.then) {
+      pr.then(function(){ populateMsgReservaModelos(); atualizarPreviaMsgReserva(true); });
+    }
+  }
+  populateMsgReservaModelos();
+  atualizarPreviaMsgReserva(true);
+}
+
+function populateMsgReservaModelos() {
+  var sel = document.getElementById('f-msg-modelo');
+  if (!sel) return;
+  var cur = sel.value;
+  sel.innerHTML = '<option value="">Selecione um modelo\u2026</option>';
+  modelosOrdenados().forEach(function(m){
+    var opt = document.createElement('option');
+    opt.value = m.id;
+    opt.textContent = m.nome;
+    sel.appendChild(opt);
+  });
+  if (cur) sel.value = cur;
+}
+
+// forcar = true regera a previa mesmo que o texto tenha sido editado a mao
+function atualizarPreviaMsgReserva(forcar) {
+  var chk = document.getElementById('f-msg-enviar');
+  if (!chk || !chk.checked) return;
+  var ta   = document.getElementById('f-msg-preview');
+  var info = document.getElementById('f-msg-grupo-info');
+  var cliNome = toTitleCase(getVal('f-cliente'));
+  var cli = clientes.find(function(c){ return c.nome === cliNome; });
+
+  if (info) {
+    info.style.display = 'block';
+    if (!cliNome) {
+      info.innerHTML = '<span style="color:var(--accent)">\u26a0\ufe0f Selecione o cliente para identificar o grupo</span>';
+    } else if (cli && cli.grupo) {
+      info.innerHTML = '📱 Grupo: <span style="font-family:monospace;font-size:11px;color:var(--accent)">' + cli.grupo + '</span>';
+    } else {
+      info.innerHTML = '<span style="color:var(--accent)">\u26a0\ufe0f Cliente sem grupo cadastrado na planilha \u2014 a mensagem n\u00e3o ser\u00e1 enviada</span>';
+    }
+  }
+
+  if (!ta) return;
+  if (window._msgPreviewEditada && !forcar) return;
+
+  var mod = modelos.find(function(m){ return m.id === getVal('f-msg-modelo'); });
+  if (!mod) { ta.value = ''; window._msgPreviewEditada = false; return; }
+
+  var resPrev = montarReservaDoForm('PREVIEW');
+  var vId = getVal('f-viagem-assoc');
+  if (vId) {
+    var vSel = (viagens || []).find(function(v){ return v.id === vId; });
+    if (vSel) resPrev._viagemNome = vSel.nome || vSel.destino || '';
+  }
+  ta.value = resolverVarsModelo(mod.texto, cli, resPrev);
+  window._msgPreviewEditada = false;
+}
+
+function copiarPreviaMsgReserva() {
+  var el = document.getElementById('f-msg-preview');
+  if (!el || !el.value) return;
+  navigator.clipboard.writeText(el.value).then(function(){ showToast('📋 Copiado!','ok'); });
+}
+
+// Envio direto ao grupo via Baileys (mesmo endpoint usado na aba Mensagens)
+function enviarMsgGrupo(grupo, texto) {
+  var url = getBaileysUrl();
+  if (!grupo) { showToast('\u26a0\ufe0f Reserva salva, mas o cliente n\u00e3o tem grupo cadastrado','err'); return; }
+  if (!texto) { showToast('\u26a0\ufe0f Reserva salva, mas a mensagem estava vazia','err'); return; }
+  if (!url)   { showToast('\u26a0\ufe0f Reserva salva, mas a URL do Baileys n\u00e3o est\u00e1 configurada','err'); return; }
+  fetch(url + '/enviar', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ grupo: grupo, mensagem: texto })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok || d.success || d.status === 'sent') showToast('\u2705 Mensagem enviada ao grupo!','ok');
+    else showToast('\u26a0\ufe0f Reserva salva, mas falha no envio: ' + (d.erro||d.error||d.message||'erro'),'err');
+  })
+  .catch(function(){ showToast('\u26a0\ufe0f Reserva salva, mas sem resposta do Baileys','err'); });
+}
 
 function getGrupoId() {
   return document.getElementById('d-grupo').value.trim();
