@@ -2925,7 +2925,7 @@ function renderReservas() {
     + '<th style="width:115px">Início</th>'
     + '<th style="width:115px">Fim</th>'
     + '<th style="width:120px">Localizador</th>'
-    + '<th style="width:120px"></th>'
+    + '<th style="width:150px"></th>'
     + '<th style="width:26px"></th>'
     + '</tr></thead><tbody>'
     + list.map(function(r){
@@ -2967,6 +2967,7 @@ function renderReservas() {
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()">'
         +   ((r.temArquivo || (r.arquivoAnexo && r.arquivoAnexo.nome)) ? '<button class="dem-acao" title="Ver bilhete" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎</button>' : '')
         +   '<button class="dem-acao" title="Editar" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️</button>'
+        +   '<button class="dem-acao" title="Duplicar" data-vid="'+r.id+'" onclick="duplicarReserva(this.dataset.vid)">📄</button>'
         +   '<button class="dem-acao del" title="Excluir" data-vid="'+r.id+'" onclick="pedirDelete(this.dataset.vid)">🗑️</button>'
         + '</td>'
         + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
@@ -3051,9 +3052,11 @@ function verArquivoAnexo(id) {
     .catch(function(e){ showToast('❌ Erro ao carregar arquivo: ' + e.message, 'err'); });
 }
 
-function editarReserva(id) {
-  var r = reservas.find(function(x){ return x.id===id; });
-  if (!r) return;
+// Preenche o formulario da aba "Nova Reserva" com os dados de uma reserva.
+// modo: 'editar' (padrao) ou 'duplicar'
+function preencherFormReserva(r, modo) {
+  var id = r.id;
+  var _dup = (modo === 'duplicar');
   window._editandoReserva = true;
   switchTab('nova');
   window._editandoReserva = false;
@@ -3063,7 +3066,7 @@ function editarReserva(id) {
   });
   populateViagemAssocSelect(viagemAssoc ? viagemAssoc.id : '');
   // Pré-selecionar a atividade específica vinculada a esta reserva
-  if (viagemAssoc) {
+  if (viagemAssoc && !_dup) {
     var sorted = sortAtividades(viagemAssoc.atividades);
     var ativIdx = sorted.findIndex(function(a){ return a.reservaId === id; });
     if (ativIdx !== -1) {
@@ -3161,7 +3164,7 @@ function editarReserva(id) {
     setVal('f-passeio-conf',r.conf); setVal('f-passeio-valor',r.valor);
   }
   // Se a reserva já tem arquivo salvo no servidor, mostrar indicação
-  if (r.temArquivo && r.arquivoAnexo) {
+  if (!_dup && r.temArquivo && r.arquivoAnexo) {
     var _prevEl = document.getElementById('upload-preview');
     var _okEl   = document.getElementById('upload-ok');
     if (_prevEl) {
@@ -3178,6 +3181,12 @@ function editarReserva(id) {
     ativoArquivoBase64 = null;
     ativoArquivoMeta   = null;
   }
+}
+
+function editarReserva(id) {
+  var r = reservas.find(function(x){ return x.id===id; });
+  if (!r) return;
+  preencherFormReserva(r, 'editar');
   // Guarda a reserva original para restaurar se o usuário cancelar
   window._reservaEditandoId = id;
   window._reservaEditandoOriginal = JSON.parse(JSON.stringify(r));
@@ -3185,8 +3194,46 @@ function editarReserva(id) {
   reservas = reservas.filter(function(x){ return x.id!==id; });
   // Mostrar botão cancelar
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
-  if (btnCancelar) btnCancelar.style.display = '';
+  if (btnCancelar) { btnCancelar.style.display = ''; btnCancelar.textContent = '✕ Cancelar Edição'; }
   showToast('✏️ Editando reserva — salve para confirmar ou cancele', 'ok');
+}
+
+// Duplica uma reserva: replica todos os campos no formulário como uma NOVA reserva.
+// A reserva de origem permanece intacta; ao salvar, um novo ID é gerado.
+function duplicarReserva(id) {
+  var r = reservas.find(function(x){ return x.id===id; });
+  if (!r) return;
+  // Garante formulário limpo (limparForm zera flags de edição pendente)
+  limparForm();
+  // Nunca herdar o anexo da reserva de origem
+  ativoArquivo = null;
+  ativoArquivoBase64 = null;
+  ativoArquivoMeta = null;
+  var _pv = document.getElementById('upload-preview');
+  if (_pv) { _pv.style.display = 'none'; _pv.innerHTML = ''; }
+  var _uok = document.getElementById('upload-ok');
+  if (_uok) { _uok.style.color = 'var(--muted)'; _uok.textContent = ''; }
+
+  preencherFormReserva(r, 'duplicar');
+
+  // Duplicata é sempre uma reserva NOVA — nada de edição pendente
+  window._reservaEditandoId = null;
+  window._reservaEditandoOriginal = null;
+  var btnCancelar = document.getElementById('btn-cancelar-edicao');
+  if (btnCancelar) { btnCancelar.style.display = ''; btnCancelar.textContent = '✕ Cancelar Duplicação'; }
+
+  // Foco no campo de localizador do tipo correspondente (campo que normalmente muda)
+  setTimeout(function(){
+    var campo = r.tipo === 'voo'     ? 'f-pnr'
+              : r.tipo === 'hotel'   ? 'f-hotel-conf'
+              : r.tipo === 'passeio' ? 'f-passeio-conf'
+              : r.tipo === 'carro'   ? (r.subtipo === 'locacao' ? 'f-carro-conf-loc' : 'f-carro-conf')
+              : null;
+    var el = campo ? document.getElementById(campo) : null;
+    if (el) { el.focus(); el.select && el.select(); }
+  }, 120);
+
+  showToast('📄 Reserva duplicada — ajuste o localizador e salve', 'ok');
 }
 
 function cancelarEdicaoReserva() {
