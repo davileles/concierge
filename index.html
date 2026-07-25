@@ -503,7 +503,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="field">
         <label>Cliente <span style="color:var(--accent)">*</span></label>
-        <select id="f-cliente" onchange="populateViagemAssocSelect(); atualizarPreviaMsgReserva()">
+        <select id="f-cliente" onchange="populateViagemAssocSelect()">
           <option value="">Selecione o cliente…</option>
         </select>
       </div>
@@ -949,32 +949,6 @@ header{animation:fadeUp .45s ease both}
       <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
     </div>
 
-    <!-- ENVIO DE MENSAGEM AO GRUPO (opcional) -->
-    <div class="sep"></div>
-    <div class="field" style="margin-bottom:10px">
-      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0">
-        <input type="checkbox" id="f-msg-enviar" onchange="toggleMsgReserva()" style="width:auto;margin:0;cursor:pointer"/>
-        <span>📲 Enviar mensagem ao grupo ao salvar <span class="tag">opcional</span></span>
-      </label>
-    </div>
-    <div id="f-msg-box" style="display:none">
-      <div class="field">
-        <label>Modelo</label>
-        <select id="f-msg-modelo" onchange="atualizarPreviaMsgReserva(true)">
-          <option value="">Selecione um modelo…</option>
-        </select>
-      </div>
-      <div id="f-msg-grupo-info" style="display:none;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:12px"></div>
-      <div class="field">
-        <label>Prévia <span class="tag">editável antes de enviar</span></label>
-        <textarea id="f-msg-preview" rows="8" style="min-height:170px;font-size:13px;line-height:1.8" placeholder="Selecione um modelo para gerar a prévia…" oninput="window._msgPreviewEditada=true"></textarea>
-      </div>
-      <div class="btn-row" style="margin-bottom:4px">
-        <button class="btn btn-ghost btn-sm" onclick="atualizarPreviaMsgReserva(true)">🔄 Regerar prévia</button>
-        <button class="btn btn-ghost btn-sm" onclick="copiarPreviaMsgReserva()">📋 Copiar</button>
-      </div>
-    </div>
-
     <div class="btn-row">
       <button class="btn btn-accent" id="btn-salvar-reserva" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
       <button class="btn btn-ghost" id="btn-cancelar-edicao" style="display:none" onclick="cancelarEdicaoReserva()">✕ Cancelar Edição</button>
@@ -1156,6 +1130,10 @@ header{animation:fadeUp .45s ease both}
     <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">💬 WhatsApp</p>
     <div class="g3">
       <div class="field"><label>ID do Grupo WhatsApp</label><input type="text" id="cfg-col-grupo" placeholder="Ex: O" maxlength="3" oninput="saveCfg()"/></div>
+    </div>
+    <div class="field">
+      <label>Grupo para alertas de oportunidade <span class="tag">recebe os alertas de compra e transferência bonificada das demandas</span></label>
+      <input type="text" id="cfg-grupo-alertas" placeholder="Ex: 120363xxxxxx@g.us ou cdv_emissao" oninput="saveCfg()" style="font-family:monospace;font-size:12px"/>
     </div>
     <div class="field">
       <label>Linha de início dos dados (ex: 2 para pular cabeçalho)</label>
@@ -1394,7 +1372,7 @@ header{animation:fadeUp .45s ease both}
     </div>
     <!-- Alerta de Compra Bonificada -->
     <div id="mad-alerta-section" style="display:none;margin-bottom:20px">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔔 Alerta de Compra Bonificada</div>
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔔 Alerta de Oportunidade</div>
       <div id="mad-alerta-ativo" style="display:none;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.4);border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:10px">
         <div style="display:flex;align-items:center;justify-content:space-between">
           <span id="mad-alerta-info-txt" style="color:#eab308;font-weight:600"></span>
@@ -1402,33 +1380,56 @@ header{animation:fadeUp .45s ease both}
         </div>
       </div>
       <div id="mad-alerta-form" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Parceiro</div>
-            <div style="position:relative">
-              <input type="text" id="mad-alerta-parceiro" placeholder="Digite para buscar…" autocomplete="off"
-                oninput="onAlertaParceiroInput()"
-                style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
-              <div id="mad-alerta-parceiro-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:100;margin-top:2px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Tipo de oportunidade</div>
+          <select id="mad-alerta-alvo" onchange="alertaAlvoChange()" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
+            <option value="compra_bonificada">🛍️ Compra bonificada</option>
+            <option value="transferencia">🔄 Transferência bonificada</option>
+          </select>
+        </div>
+
+        <div id="mad-alerta-campos-compra" style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Parceiro</div>
+              <div style="position:relative">
+                <input type="text" id="mad-alerta-parceiro" placeholder="Digite para buscar…" autocomplete="off"
+                  oninput="onAlertaParceiroInput()"
+                  style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
+                <div id="mad-alerta-parceiro-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:100;margin-top:2px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
+              </div>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Programa de Fidelidade</div>
+              <select id="mad-alerta-programa" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
+                <option value="">Selecione o parceiro primeiro…</option>
+              </select>
             </div>
           </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Programa de Fidelidade</div>
-            <select id="mad-alerta-programa" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
-              <option value="">Selecione o parceiro primeiro…</option>
-            </select>
-          </div>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-          <div>
+          <div style="max-width:50%">
             <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Pontuação Mínima (pts/R$)</div>
             <input type="number" id="mad-alerta-minpts" placeholder="Ex: 3" min="1" step="0.5" style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
           </div>
-          <div>
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Grupo WhatsApp</div>
-            <input type="text" id="mad-alerta-grupo" placeholder="Ex: cdv_emissao" style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
+        </div>
+
+        <div id="mad-alerta-campos-transf" style="display:none;flex-direction:column;gap:10px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Origem</div>
+              <select id="mad-alerta-origem" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"></select>
+            </div>
+            <div>
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Destino (companhia / programa)</div>
+              <select id="mad-alerta-destino" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"></select>
+            </div>
+          </div>
+          <div style="max-width:50%">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Bônus mínimo (%)</div>
+            <input type="number" id="mad-alerta-bonusmin" placeholder="Ex: 80" min="1" step="5" style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
           </div>
         </div>
+
+        <div id="mad-alerta-grupo-info" style="font-size:11px;color:var(--muted);line-height:1.6">📲 O alerta é enviado para o grupo definido em <b>Configuração → WhatsApp</b>.</div>
         <button onclick="salvarAlertaAtiv()" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">🔔 Criar Alerta</button>
       </div>
     </div>
@@ -1706,6 +1707,7 @@ function _applyCfg(c) {
   setVal('cfg-col-senhas',        c.colSenhas       || 'M');
   setVal('cfg-col-acompanhantes', c.colAcompanhantes|| 'N');
   setVal('cfg-col-grupo',         c.colGrupo        || 'O');
+  setVal('cfg-grupo-alertas',     c.grupoAlertas    || '');
   setVal('cfg-linha',             c.linha           || '2');
   setVal('cfg-baileys',           c.baileys         || '');
   document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
@@ -1765,6 +1767,7 @@ function _saveCfgNow() {
     colSenhas:        getVal('cfg-col-senhas').toUpperCase()        || 'M',
     colAcompanhantes: getVal('cfg-col-acompanhantes').toUpperCase() || 'N',
     colGrupo:         getVal('cfg-col-grupo').toUpperCase()         || 'O',
+    grupoAlertas:     getVal('cfg-grupo-alertas').trim(),
     linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys'),
     tema:             _cfg.tema || 'dark'
@@ -2067,13 +2070,6 @@ function limparForm() {
   // Esconder select de atividade
   var fa = document.getElementById('field-atividade-assoc');
   if (fa) fa.style.display = 'none';
-  // Reset do bloco de mensagem ao grupo
-  var _cm = document.getElementById('f-msg-enviar');     if (_cm) _cm.checked = false;
-  var _bm = document.getElementById('f-msg-box');        if (_bm) _bm.style.display = 'none';
-  var _sm = document.getElementById('f-msg-modelo');     if (_sm) _sm.value = '';
-  var _pm = document.getElementById('f-msg-preview');    if (_pm) _pm.value = '';
-  var _gm = document.getElementById('f-msg-grupo-info'); if (_gm) _gm.style.display = 'none';
-  window._msgPreviewEditada = false;
   document.getElementById('form-ok').textContent = '';
 }
 
@@ -2383,11 +2379,46 @@ function aplicarDadosAtivo(d) {
   if (d.obs) sv('f-obs', d.obs);
 }
 
-// Monta o objeto da reserva a partir dos campos do formulario.
-// Usado tanto no salvamento quanto na previa da mensagem ao grupo.
-function montarReservaDoForm(id) {
+function salvarReserva() {
+  var _btnSalvar = document.getElementById('btn-salvar-reserva');
+  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
+
   var tipo = getVal('f-tipo');
   var cliente = toTitleCase(getVal('f-cliente'));
+  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
+  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
+
+  // Validações específicas para voo
+  if (tipo === 'voo') {
+    // Ida — obrigatórios
+    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
+    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
+    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
+    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
+    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
+    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
+    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
+    var _vOrigem    = getVal('f-origem-volta');
+    var _vDestino   = getVal('f-destino-volta');
+    var _vDataPart  = getVal('f-data-volta');
+    var _vHoraPart  = getVal('f-hora-partida-volta');
+    var _vDataCheg  = getVal('f-data-chegada-volta');
+    var _vHoraCheg  = getVal('f-hora-chegada-volta');
+    var _vCia       = getVal('f-cia-volta');
+    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
+    if (_voltaPreenchida) {
+      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
+      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
+      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
+      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
+      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
+      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
+      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
+    }
+  }
+
+  var id = 'RES-' + Date.now();
   var res = {
     id: id,
     tipo: tipo,
@@ -2511,50 +2542,6 @@ function montarReservaDoForm(id) {
       conf: getVal('f-passeio-conf'), valor: getVal('f-passeio-valor'),
     });
   }
-  return res;
-}
-
-function salvarReserva() {
-  var _btnSalvar = document.getElementById('btn-salvar-reserva');
-  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
-
-  var tipo = getVal('f-tipo');
-  var cliente = toTitleCase(getVal('f-cliente'));
-  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
-  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
-
-  // Validações específicas para voo
-  if (tipo === 'voo') {
-    // Ida — obrigatórios
-    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
-    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
-    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
-    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
-    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
-    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
-    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
-    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
-    var _vOrigem    = getVal('f-origem-volta');
-    var _vDestino   = getVal('f-destino-volta');
-    var _vDataPart  = getVal('f-data-volta');
-    var _vHoraPart  = getVal('f-hora-partida-volta');
-    var _vDataCheg  = getVal('f-data-chegada-volta');
-    var _vHoraCheg  = getVal('f-hora-chegada-volta');
-    var _vCia       = getVal('f-cia-volta');
-    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
-    if (_voltaPreenchida) {
-      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
-      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
-      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
-      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
-      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
-      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
-      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
-    }
-  }
-
-  var id = 'RES-' + Date.now();
-  var res = montarReservaDoForm(id);
 
   window._reservaEditandoId = null;
   window._reservaEditandoOriginal = null;
@@ -2709,13 +2696,6 @@ function salvarReserva() {
   // Capturar base64 e meta ANTES de limpar (limparForm zera ativoArquivo*)
   var _base64Upload = ativoArquivoBase64;
   var _metaUpload   = ativoArquivoMeta;
-  // Capturar dados do envio de mensagem ANTES de limpar o formulario
-  var _chkMsg     = document.getElementById('f-msg-enviar');
-  var _msgAtiva   = !!(_chkMsg && _chkMsg.checked);
-  var _msgModelo  = getVal('f-msg-modelo');
-  var _msgTexto   = ((document.getElementById('f-msg-preview') || {}).value || '').trim();
-  var _msgEditada = !!window._msgPreviewEditada;
-  var _msgGrupo   = res.grupo || '';
 
   if (_btnSalvar) { _btnSalvar.disabled = true; _btnSalvar.style.opacity = '0.6'; }
 
@@ -2723,16 +2703,6 @@ function salvarReserva() {
     .then(function(){
       if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
       showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
-      // Disparo opcional da mensagem ao grupo (marcado no formulario)
-      if (_msgAtiva) {
-        var _cliMsg = clientes.find(function(c){ return c.nome === res.cliente; });
-        var _textoMsg = _msgTexto;
-        if (!_msgEditada) {
-          var _modMsg = modelos.find(function(m){ return m.id === _msgModelo; });
-          if (_modMsg) _textoMsg = resolverVarsModelo(_modMsg.texto, _cliMsg, res);
-        }
-        enviarMsgGrupo(_msgGrupo || (_cliMsg && _cliMsg.grupo) || '', _textoMsg);
-      }
       updateStats();
       renderReservas();
       limparForm();
@@ -3541,7 +3511,7 @@ var VARS_RESERVA = [
 ];
 
 function loadModelos() {
-  return fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos')
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos')
     .then(function(r){ return r.json(); })
     .then(function(d){ modelos = d.data || []; renderModelosLista(); })
     .catch(function(e){ console.error('[loadModelos]', e); modelos = []; });
@@ -3953,13 +3923,9 @@ function onDispararChange() {
   }
 
   if (!mod) { document.getElementById('d-msg-final').value=''; return; }
-  document.getElementById('d-msg-final').value = resolverVarsModelo(mod.texto, cli, res);
-}
 
-// Resolve as variaveis {{...}} de um modelo com base no cliente e na reserva.
-// Reutilizado pela aba Disparar e pela previa da tela de Nova Reserva.
-function resolverVarsModelo(texto, cli, res) {
-  var txt = String(texto || '');
+  // Resolve variables
+  var txt = mod.texto;
   var ob='{{', cb='}}'; function rv(t, key, val) { return t.split(ob+key+cb).join(val||''); }
   if (cli) {
     txt = rv(txt, 'nome', cli.nome);
@@ -4017,9 +3983,9 @@ function resolverVarsModelo(texto, cli, res) {
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
     });
-    txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : (res._viagemNome||''));
+    txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : '');
   }
-  return txt;
+  document.getElementById('d-msg-final').value = txt;
 }
 
 // ── IATA AUTOCOMPLETE ──────────────────────────────────────────
@@ -4607,71 +4573,137 @@ function selecionarParceiro(el) {
   };
   sel.innerHTML = progs.length
     ? '<option value="">Selecione…</option>' + progs.map(function(p){
-        var label = PROG_LABEL[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1);
-        return '<option value="'+p+'">'+label+'</option>';
+        return { v: p, label: PROG_LABEL[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1) };
+      }).sort(function(a,b){ return a.label.localeCompare(b.label, 'pt-BR'); }).map(function(o){
+        return '<option value="'+o.v+'">'+o.label+'</option>';
       }).join('')
     : '<option value="">Nenhum programa disponível</option>';
 }
 
-function salvarAlertaAtiv() {
-  if (!detalheAtivCtx || detalheAtivCtx.tipo === 'temp') return;
-  var parceiro = document.getElementById('mad-alerta-parceiro').value.trim();
-  var programa = document.getElementById('mad-alerta-programa').value;
-  var minPts   = document.getElementById('mad-alerta-minpts').value;
-  var grupo    = document.getElementById('mad-alerta-grupo').value.trim();
-  if (!parceiro || !programa || !minPts || !grupo) {
-    showToast('⚠️ Preencha todos os campos do alerta', 'err'); return;
+// ══ ALERTAS DE OPORTUNIDADE ══
+// Cada alerta fica amarrado a uma atividade pelo id (a atividade guarda o mesmo
+// valor em `alertaId`). O grupo de WhatsApp NÃO vai no alerta: o proxy resolve
+// a partir de cfg.grupoAlertas no momento do envio. O alerta é consumido
+// (removido) automaticamente assim que dispara.
+// As listas abaixo espelham ORIGEM/DESTINO_TRANSFERENCIA_OPTIONS do gerador-cdv —
+// mantenha em sincronia, é o que garante o match com as ofertas aprovadas.
+var ALERTA_ORIGEM_OPTIONS = ['Azul Fidelidade','BRB','BTG','C6','Caixa','Esfera','Inter','Itaú','LATAM Pass','Livelo','Nubank','Porto Seguro','Revolut','Sicoob','Sicredi','Smiles','XP'];
+var ALERTA_DESTINO_OPTIONS = ['AAdvantage','ALL Accor','Azul Fidelidade','Connect Miles','Flying Blue','Hilton Honors','Iberia Plus','IHG','LATAM Pass','Livelo','Smiles','TAP Miles&Go'];
+
+function _optsAlfabeticas(lista, placeholder) {
+  return '<option value="">' + placeholder + '</option>' +
+    lista.slice().sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); }).map(function(v){
+      return '<option value="'+v+'">'+v+'</option>';
+    }).join('');
+}
+
+function popularSelectsAlertaTransf() {
+  var so = document.getElementById('mad-alerta-origem');
+  var sd = document.getElementById('mad-alerta-destino');
+  if (so && !so.options.length) so.innerHTML = _optsAlfabeticas(ALERTA_ORIGEM_OPTIONS, 'Qualquer origem');
+  if (sd && !sd.options.length) sd.innerHTML = _optsAlfabeticas(ALERTA_DESTINO_OPTIONS, 'Selecione…');
+}
+
+function alertaAlvoChange() {
+  var alvo = document.getElementById('mad-alerta-alvo').value;
+  var ehTransf = alvo === 'transferencia';
+  document.getElementById('mad-alerta-campos-compra').style.display = ehTransf ? 'none' : 'flex';
+  document.getElementById('mad-alerta-campos-transf').style.display = ehTransf ? 'flex' : 'none';
+}
+
+function resumoAlerta(al) {
+  if ((al.alvo || '') === 'transferencia') {
+    return '🔄 ' + (al.origem || 'Qualquer origem') + ' → ' + al.destino + ' ≥ ' + al.bonusMin + '% de bônus';
   }
+  return '🛍️ ' + al.parceiro + ' · ' + al.programa + ' ≥ ' + al.minPts + ' pts/R$';
+}
+
+// Retorna { v: viagem, a: atividade, realIdx } da atividade aberta no modal
+function _ativDoModal() {
+  if (!detalheAtivCtx || detalheAtivCtx.tipo === 'temp') return null;
   var v = viagens.find(function(x){ return x.id === detalheAtivCtx.viagemId; });
-  var sorted = v ? sortAtividades(v.atividades || []) : [];
-  var a = sorted[detalheAtivCtx.idx];
+  if (!v) return null;
+  var a = sortAtividades(v.atividades || [])[detalheAtivCtx.idx];
+  if (!a) return null;
+  return { v: v, a: a, realIdx: v.atividades.indexOf(a) };
+}
+
+function salvarAlertaAtiv() {
+  var ctx = _ativDoModal();
+  if (!ctx) return;
+  if (!(_cfg && _cfg.grupoAlertas)) {
+    showToast('⚠️ Defina o grupo de alertas em Configuração → WhatsApp', 'err');
+    return;
+  }
+  var alvo = document.getElementById('mad-alerta-alvo').value;
+  var payload = {
+    id: ctx.a.alertaId || ('ALT-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
+    alvo: alvo,
+    viagemId: detalheAtivCtx.viagemId,
+    viagemNome: ctx.v.nome || '',
+    atividadeNome: ctx.a.nome || '',
+    atividadeTitulo: document.getElementById('mad-titulo').value.trim() || ctx.a.titulo || '',
+    atividadeDescricao: document.getElementById('mad-descricao').value.trim() || ctx.a.descricao || ''
+  };
+
+  if (alvo === 'transferencia') {
+    payload.origem   = getVal('mad-alerta-origem');
+    payload.destino  = getVal('mad-alerta-destino');
+    payload.bonusMin = getVal('mad-alerta-bonusmin');
+    if (!payload.destino || !payload.bonusMin) {
+      showToast('⚠️ Preencha destino e bônus mínimo', 'err'); return;
+    }
+  } else {
+    payload.parceiro = document.getElementById('mad-alerta-parceiro').value.trim();
+    payload.programa = document.getElementById('mad-alerta-programa').value;
+    payload.minPts   = document.getElementById('mad-alerta-minpts').value;
+    if (!payload.parceiro || !payload.programa || !payload.minPts) {
+      showToast('⚠️ Preencha parceiro, programa e pontuação mínima', 'err'); return;
+    }
+  }
+
   fetch('https://cdv-proxy-production.up.railway.app/concierge/alerta', {
     method: 'POST',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({
-      parceiro: parceiro,
-      programa: programa,
-      minPts: parseFloat(minPts),
-      grupoWhatsApp: grupo,
-      viagemId: detalheAtivCtx.viagemId,
-      viagemNome: v ? v.nome : '',
-      atividadeNome: a ? a.nome : '',
-      atividadeTitulo: a ? (a.titulo || '') : ''
-    })
+    body: JSON.stringify(payload)
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
-    if (d.ok) {
-      showToast('🔔 Alerta criado com sucesso!', 'ok');
-      // Atualizar UI do alerta
-      var txt = document.getElementById('mad-alerta-info-txt');
-      if (txt) txt.textContent = '🔔 ' + parceiro + ' · ' + programa + ' ≥ ' + minPts + ' pts/R$ → ' + grupo;
-      document.getElementById('mad-alerta-ativo').style.display = '';
-      document.getElementById('mad-alerta-form').style.display = 'none';
-    } else {
-      showToast('❌ Erro ao criar alerta: ' + (d.erro || ''), 'err');
+    if (!d.ok) { showToast('❌ Erro ao criar alerta: ' + (d.erro || ''), 'err'); return; }
+    // Amarra o alerta à atividade
+    if (ctx.realIdx !== -1) {
+      ctx.v.atividades[ctx.realIdx].alertaId = d.id || payload.id;
+      saveViagens();
     }
+    showToast('🔔 Alerta criado com sucesso!', 'ok');
+    var txt = document.getElementById('mad-alerta-info-txt');
+    if (txt) txt.textContent = resumoAlerta(payload);
+    document.getElementById('mad-alerta-ativo').style.display = '';
+    document.getElementById('mad-alerta-form').style.display = 'none';
   })
   .catch(function(e){ showToast('❌ Erro de conexão', 'err'); });
 }
 
 function removerAlertaAtiv() {
-  if (!detalheAtivCtx) return;
-  var parceiro = document.getElementById('mad-alerta-parceiro').value.trim();
-  var programa = document.getElementById('mad-alerta-programa').value;
-  if (!parceiro || !programa) { showToast('⚠️ Sem alerta para remover', 'err'); return; }
+  var ctx = _ativDoModal();
+  if (!ctx) return;
+  var id = ctx.a.alertaId;
+  if (!id) { showToast('⚠️ Sem alerta para remover', 'err'); return; }
   fetch('https://cdv-proxy-production.up.railway.app/concierge/alerta', {
     method: 'DELETE',
     headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({ parceiro: parceiro, programa: programa, viagemId: detalheAtivCtx.viagemId })
+    body: JSON.stringify({ id: id })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
-    if (d.ok) {
-      showToast('🗑 Alerta removido', 'ok');
-      document.getElementById('mad-alerta-ativo').style.display = 'none';
-      document.getElementById('mad-alerta-form').style.display = '';
+    if (!d.ok) { showToast('❌ Erro ao remover alerta', 'err'); return; }
+    if (ctx.realIdx !== -1) {
+      delete ctx.v.atividades[ctx.realIdx].alertaId;
+      saveViagens();
     }
+    showToast('🗑 Alerta removido', 'ok');
+    document.getElementById('mad-alerta-ativo').style.display = 'none';
+    document.getElementById('mad-alerta-form').style.display = '';
   })
   .catch(function(e){ showToast('❌ Erro ao remover alerta', 'err'); });
 }
@@ -4770,32 +4802,43 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
   if (alertaSection) alertaSection.style.display = (tipo !== 'temp' && viagemId) ? '' : 'none';
   if (tipo !== 'temp' && viagemId) {
     // Resetar form
+    popularSelectsAlertaTransf();
     document.getElementById('mad-alerta-ativo').style.display = 'none';
     document.getElementById('mad-alerta-form').style.display = '';
+    document.getElementById('mad-alerta-alvo').value = 'compra_bonificada';
+    alertaAlvoChange();
     document.getElementById('mad-alerta-parceiro').value = '';
-    document.getElementById('mad-alerta-programa').value = '';
+    document.getElementById('mad-alerta-programa').innerHTML = '<option value="">Selecione o parceiro primeiro…</option>';
     document.getElementById('mad-alerta-minpts').value = '';
-    document.getElementById('mad-alerta-grupo').value = '';
-    // Verificar se já existe alerta para esta atividade
-    fetch('https://cdv-proxy-production.up.railway.app/concierge/alertas')
-      .then(function(r){ return r.json(); })
-      .then(function(d){
-        if (!d.ok) return;
-        var alertaExist = d.data.find(function(al){
-          return al.viagemId === viagemId && al.atividadeNome === (a.nome||'') && al.atividadeTitulo === (a.titulo||'');
-        });
-        if (alertaExist) {
-          document.getElementById('mad-alerta-parceiro').value = alertaExist.parceiro || '';
-          document.getElementById('mad-alerta-programa').value = alertaExist.programa || '';
-          document.getElementById('mad-alerta-minpts').value = alertaExist.minPts || '';
-          document.getElementById('mad-alerta-grupo').value = alertaExist.grupoWhatsApp || '';
+    document.getElementById('mad-alerta-origem').value = '';
+    document.getElementById('mad-alerta-destino').value = '';
+    document.getElementById('mad-alerta-bonusmin').value = '';
+    // Alerta existente desta atividade (se já foi disparado, some da lista e o form fica limpo)
+    if (a.alertaId) {
+      fetch('https://cdv-proxy-production.up.railway.app/concierge/alertas')
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (!d.ok) return;
+          var al = (d.data || []).find(function(x){ return x.id === a.alertaId; });
+          if (!al) return;
+          document.getElementById('mad-alerta-alvo').value = al.alvo || 'compra_bonificada';
+          alertaAlvoChange();
+          if ((al.alvo || '') === 'transferencia') {
+            document.getElementById('mad-alerta-origem').value = al.origem || '';
+            document.getElementById('mad-alerta-destino').value = al.destino || '';
+            document.getElementById('mad-alerta-bonusmin').value = al.bonusMin || '';
+          } else {
+            document.getElementById('mad-alerta-parceiro').value = al.parceiro || '';
+            document.getElementById('mad-alerta-programa').innerHTML = '<option value="'+(al.programa||'')+'">'+(al.programa||'')+'</option>';
+            document.getElementById('mad-alerta-minpts').value = al.minPts || '';
+          }
           var txt = document.getElementById('mad-alerta-info-txt');
-          if (txt) txt.textContent = '🔔 ' + alertaExist.parceiro + ' · ' + alertaExist.programa + ' ≥ ' + alertaExist.minPts + ' pts/R$ → ' + alertaExist.grupoWhatsApp;
+          if (txt) txt.textContent = resumoAlerta(al);
           document.getElementById('mad-alerta-ativo').style.display = '';
           document.getElementById('mad-alerta-form').style.display = 'none';
-        }
-      })
-      .catch(function(){});
+        })
+        .catch(function(){});
+    }
   }
 }
 
@@ -5251,101 +5294,6 @@ function renderViagens() {
   }).join('');
 }
 
-
-
-// ══════════════════════════════════════
-//  MENSAGEM AO GRUPO DIRETO DA TELA DE NOVA RESERVA
-// ══════════════════════════════════════
-function toggleMsgReserva() {
-  var chk = document.getElementById('f-msg-enviar');
-  var box = document.getElementById('f-msg-box');
-  if (!chk || !box) return;
-  box.style.display = chk.checked ? 'block' : 'none';
-  if (!chk.checked) return;
-  window._msgPreviewEditada = false;
-  if (!modelos || !modelos.length) {
-    var pr = loadModelos();
-    if (pr && pr.then) {
-      pr.then(function(){ populateMsgReservaModelos(); atualizarPreviaMsgReserva(true); });
-    }
-  }
-  populateMsgReservaModelos();
-  atualizarPreviaMsgReserva(true);
-}
-
-function populateMsgReservaModelos() {
-  var sel = document.getElementById('f-msg-modelo');
-  if (!sel) return;
-  var cur = sel.value;
-  sel.innerHTML = '<option value="">Selecione um modelo\u2026</option>';
-  modelosOrdenados().forEach(function(m){
-    var opt = document.createElement('option');
-    opt.value = m.id;
-    opt.textContent = m.nome;
-    sel.appendChild(opt);
-  });
-  if (cur) sel.value = cur;
-}
-
-// forcar = true regera a previa mesmo que o texto tenha sido editado a mao
-function atualizarPreviaMsgReserva(forcar) {
-  var chk = document.getElementById('f-msg-enviar');
-  if (!chk || !chk.checked) return;
-  var ta   = document.getElementById('f-msg-preview');
-  var info = document.getElementById('f-msg-grupo-info');
-  var cliNome = toTitleCase(getVal('f-cliente'));
-  var cli = clientes.find(function(c){ return c.nome === cliNome; });
-
-  if (info) {
-    info.style.display = 'block';
-    if (!cliNome) {
-      info.innerHTML = '<span style="color:var(--accent)">\u26a0\ufe0f Selecione o cliente para identificar o grupo</span>';
-    } else if (cli && cli.grupo) {
-      info.innerHTML = '📱 Grupo: <span style="font-family:monospace;font-size:11px;color:var(--accent)">' + cli.grupo + '</span>';
-    } else {
-      info.innerHTML = '<span style="color:var(--accent)">\u26a0\ufe0f Cliente sem grupo cadastrado na planilha \u2014 a mensagem n\u00e3o ser\u00e1 enviada</span>';
-    }
-  }
-
-  if (!ta) return;
-  if (window._msgPreviewEditada && !forcar) return;
-
-  var mod = modelos.find(function(m){ return m.id === getVal('f-msg-modelo'); });
-  if (!mod) { ta.value = ''; window._msgPreviewEditada = false; return; }
-
-  var resPrev = montarReservaDoForm('PREVIEW');
-  var vId = getVal('f-viagem-assoc');
-  if (vId) {
-    var vSel = (viagens || []).find(function(v){ return v.id === vId; });
-    if (vSel) resPrev._viagemNome = vSel.nome || vSel.destino || '';
-  }
-  ta.value = resolverVarsModelo(mod.texto, cli, resPrev);
-  window._msgPreviewEditada = false;
-}
-
-function copiarPreviaMsgReserva() {
-  var el = document.getElementById('f-msg-preview');
-  if (!el || !el.value) return;
-  navigator.clipboard.writeText(el.value).then(function(){ showToast('📋 Copiado!','ok'); });
-}
-
-// Envio direto ao grupo via Baileys (mesmo endpoint usado na aba Mensagens)
-function enviarMsgGrupo(grupo, texto) {
-  var url = getBaileysUrl();
-  if (!grupo) { showToast('\u26a0\ufe0f Reserva salva, mas o cliente n\u00e3o tem grupo cadastrado','err'); return; }
-  if (!texto) { showToast('\u26a0\ufe0f Reserva salva, mas a mensagem estava vazia','err'); return; }
-  if (!url)   { showToast('\u26a0\ufe0f Reserva salva, mas a URL do Baileys n\u00e3o est\u00e1 configurada','err'); return; }
-  fetch(url + '/enviar', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ grupo: grupo, mensagem: texto })
-  })
-  .then(function(r){ return r.json(); })
-  .then(function(d){
-    if (d.ok || d.success || d.status === 'sent') showToast('\u2705 Mensagem enviada ao grupo!','ok');
-    else showToast('\u26a0\ufe0f Reserva salva, mas falha no envio: ' + (d.erro||d.error||d.message||'erro'),'err');
-  })
-  .catch(function(){ showToast('\u26a0\ufe0f Reserva salva, mas sem resposta do Baileys','err'); });
-}
 
 function getGrupoId() {
   return document.getElementById('d-grupo').value.trim();
