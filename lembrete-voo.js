@@ -18,6 +18,9 @@
  * Múltiplos modelos podem apontar para o mesmo gatilho com antecedências diferentes.
  */
 
+const fs   = require('fs');
+const path = require('path');
+
 const BAILEYS      = 'https://baileys-server-production-ebfe.up.railway.app';
 const GITHUB_TOKEN = process.env.CDV_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
 const REPO         = 'davileles/concierge';
@@ -102,6 +105,83 @@ function resolverPrimeiroVoo(viagem, reservasMap) {
   return melhor;
 }
 
+// ── base IATA ─────────────────────────────────────────────────────────────────
+// Reaproveita o iata.js já existente no repo (5.700 aeroportos, formato
+// "CODE|Cidade – Aeroporto (País)"). O workflow faz actions/checkout, então o
+// arquivo está disponível no runner — sem dependência externa e sem novo JSON.
+
+// A base bruta traz o município real e nomes em inglês. Overrides corrigem as
+// cidades comerciais e a grafia PT-BR dos destinos mais usados.
+const IATA_OVERRIDE = {
+  // Brasil
+  GIG:'Rio de Janeiro', SDU:'Rio de Janeiro', VCP:'Campinas',
+  // Itália
+  MXP:'Milão', LIN:'Milão', BGY:'Milão', FCO:'Roma', CIA:'Roma',
+  VCE:'Veneza', TSF:'Veneza', NAP:'Nápoles', FLR:'Florença', PSA:'Pisa',
+  TRN:'Turim', BLQ:'Bolonha',
+  // Península Ibérica
+  LIS:'Lisboa', OPO:'Porto', MAD:'Madri', BCN:'Barcelona', AGP:'Málaga',
+  SVQ:'Sevilha', VLC:'Valência', FAO:'Faro',
+  // França / Benelux
+  CDG:'Paris', ORY:'Paris', BVA:'Paris', NCE:'Nice', LYS:'Lyon',
+  MRS:'Marselha', AMS:'Amsterdã', BRU:'Bruxelas',
+  // Reino Unido / Irlanda
+  LHR:'Londres', LGW:'Londres', STN:'Londres', LTN:'Londres', LCY:'Londres',
+  MAN:'Manchester', EDI:'Edimburgo', DUB:'Dublin',
+  // Europa central e norte
+  FRA:'Frankfurt', MUC:'Munique', BER:'Berlim', DUS:'Düsseldorf',
+  ZRH:'Zurique', GVA:'Genebra', VIE:'Viena', PRG:'Praga', BUD:'Budapeste',
+  WAW:'Varsóvia', CPH:'Copenhague', ARN:'Estocolmo', OSL:'Oslo',
+  HEL:'Helsinque', ATH:'Atenas', IST:'Istambul', SAW:'Istambul',
+  // Américas
+  JFK:'Nova York', LGA:'Nova York', EWR:'Nova York',
+  LAX:'Los Angeles', ORD:'Chicago', MDW:'Chicago', MIA:'Miami',
+  MCO:'Orlando', ATL:'Atlanta', IAH:'Houston', DFW:'Dallas',
+  SFO:'São Francisco', LAS:'Las Vegas', BOS:'Boston', SEA:'Seattle',
+  YYZ:'Toronto', YUL:'Montreal', YVR:'Vancouver',
+  MEX:'Cidade do México', CUN:'Cancún', PTY:'Cidade do Panamá',
+  EZE:'Buenos Aires', AEP:'Buenos Aires', SCL:'Santiago',
+  MVD:'Montevidéu', BOG:'Bogotá', LIM:'Lima', UIO:'Quito',
+  // Ásia / Oriente Médio / África / Oceania
+  DXB:'Dubai', AUH:'Abu Dhabi', DOH:'Doha', TLV:'Tel Aviv',
+  NRT:'Tóquio', HND:'Tóquio', ICN:'Seul', PEK:'Pequim', PVG:'Xangai',
+  HKG:'Hong Kong', SIN:'Singapura', BKK:'Bangcoc', DEL:'Nova Délhi',
+  BOM:'Mumbai', JNB:'Joanesburgo', CPT:'Cidade do Cabo', CAI:'Cairo',
+  SYD:'Sydney', MEL:'Melbourne', AKL:'Auckland'
+};
+
+const IATA_CIDADE = (() => {
+  const mapa = {};
+  try {
+    const src = fs.readFileSync(path.join(__dirname, 'iata.js'), 'utf-8');
+    const re  = /"([A-Z]{3})\|([^"]+)"/g;
+    let m;
+    while ((m = re.exec(src)) !== null) {
+      // label: "Cidade – Aeroporto (País)" — corta no primeiro en-dash.
+      // ~286 entradas (aeródromos remotos) não têm cidade: cai no nome do aeroporto.
+      const partes = m[2].split('\u2013');
+      const limpar = s => (s || '').replace(/\(.*?\)/g, '').trim();
+      const nome   = limpar(partes[0]) || limpar(partes.slice(1).join('\u2013'));
+      if (nome) mapa[m[1]] = nome;
+    }
+    console.log(`[iata] ${Object.keys(mapa).length} aeroportos carregados`);
+  } catch (e) {
+    console.warn(`[iata] falha ao carregar iata.js: ${e.message} — mantendo código IATA`);
+  }
+  return Object.assign(mapa, IATA_OVERRIDE);
+})();
+
+// "CNF" → "Belo Horizonte (CNF)".
+// Valores que não são código de 3 letras (ex: cidade de hotel) voltam intactos.
+// Código não encontrado na base volta como o próprio código.
+function localDe(valor) {
+  const v = String(valor || '').trim();
+  if (!/^[A-Za-z]{3}$/.test(v)) return v;
+  const code   = v.toUpperCase();
+  const cidade = IATA_CIDADE[code];
+  return cidade ? `${cidade} (${code})` : code;
+}
+
 // ── interpolação ──────────────────────────────────────────────────────────────
 function interpolar(texto, cli, res, viagem, viagens) {
   const rv = (t, key, val) => t.split(`{{${key}}}`).join(val || '');
@@ -115,8 +195,8 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'cidade',         cli.cidade || '');
   }
   if (res) {
-    t = rv(t, 'origem',              res.origem    || '');
-    t = rv(t, 'destino',             res.destino   || '');
+    t = rv(t, 'origem',              localDe(res.origem));
+    t = rv(t, 'destino',             localDe(res.destino));
     t = rv(t, 'data_ida',            fmtDateBR(res.dataIda));
     t = rv(t, 'data_chegada_ida',    fmtDateBR(res.dataChegadaIda));
     t = rv(t, 'hora_partida',        res.horaPartida       || '');
@@ -129,8 +209,8 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'hora_chegada_volta',  res.horaChegadaVolta  || '');
     t = rv(t, 'nvoo_volta',          res.nvooVolta         || '');
     t = rv(t, 'cia_volta',           res.ciaVolta          || '');
-    t = rv(t, 'origem_volta',        res.origemVolta  || res.destino || '');
-    t = rv(t, 'destino_volta',       res.destinoVolta || res.origem  || '');
+    t = rv(t, 'origem_volta',        localDe(res.origemVolta  || res.destino));
+    t = rv(t, 'destino_volta',       localDe(res.destinoVolta || res.origem));
     t = rv(t, 'classe',              res.classe   || '');
     t = rv(t, 'pnr',                 res.pnr      || '');
     t = rv(t, 'programa',            res.programa || '');
