@@ -231,6 +231,8 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .ativ-status.pendente{background:rgba(138,155,191,.15);color:var(--muted)}
 .ativ-status.andamento{background:rgba(245,158,11,.15);color:var(--yellow)}
 .ativ-status.concluida{background:rgba(34,197,94,.15);color:var(--green)}
+.ativ-alerta{font-size:11px;font-weight:700;padding:3px 8px;border-radius:10px;flex-shrink:0;background:rgba(234,179,8,.15);color:#eab308;cursor:default}
+.ativ-alerta.enviado{background:rgba(138,155,191,.15);color:var(--muted)}
 .ativ-reserva{font-size:11px;color:var(--blue);cursor:pointer;flex-shrink:0;text-decoration:underline;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:middle}
 .ativ-add-btn{background:none;border:1px dashed var(--border2);border-radius:8px;padding:7px 12px;width:100%;text-align:left;color:var(--muted);font-size:12px;cursor:pointer;margin-top:4px}
 .ativ-add-btn:hover{border-color:var(--accent);color:var(--accent)}
@@ -1379,6 +1381,7 @@ header{animation:fadeUp .45s ease both}
           <button onclick="removerAlertaAtiv()" style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:12px">✕ Remover</button>
         </div>
       </div>
+      <div id="mad-alerta-hist" style="display:none;font-size:11px;color:var(--muted);background:rgba(138,155,191,.1);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px">✅ Um alerta desta atividade já foi disparado. Crie outro se ainda precisar acompanhar.</div>
       <div id="mad-alerta-form" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px">
         <div>
           <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Tipo de oportunidade</div>
@@ -4597,6 +4600,35 @@ function _optsAlfabeticas(lista, placeholder) {
     }).join('');
 }
 
+// Cache dos alertas ativos, usado para o selo na lista de atividades.
+// null = ainda não carregado. Alerta que já disparou some da lista (é consumido),
+// então atividade com alertaId fora do cache = alerta já enviado.
+var _alertasAtivos = null;
+
+function carregarAlertasAtivos(force) {
+  if (_alertasAtivos !== null && !force) return;
+  if (_alertasAtivos === null) _alertasAtivos = {}; // evita disparo duplicado
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/alertas')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var mapa = {};
+      (d.data || []).forEach(function(al){ if (al.id) mapa[al.id] = al; });
+      _alertasAtivos = mapa;
+      renderViagens();
+    })
+    .catch(function(){});
+}
+
+function badgeAlertaAtiv(a) {
+  if (!a.alertaId || !_alertasAtivos) return '';
+  var al = _alertasAtivos[a.alertaId];
+  if (al) {
+    var tip = resumoAlerta(al).replace(/"/g, '&quot;');
+    return '<span class="ativ-alerta" title="'+tip+'" onclick="event.stopPropagation()">🔔 alerta</span>';
+  }
+  return '<span class="ativ-alerta enviado" title="Alerta desta atividade já foi disparado" onclick="event.stopPropagation()">🔔 enviado</span>';
+}
+
 function popularSelectsAlertaTransf() {
   var so = document.getElementById('mad-alerta-origem');
   var sd = document.getElementById('mad-alerta-destino');
@@ -4670,10 +4702,19 @@ function salvarAlertaAtiv() {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (!d.ok) { showToast('❌ Erro ao criar alerta: ' + (d.erro || ''), 'err'); return; }
-    // Amarra o alerta à atividade
+    // Amarra o alerta à atividade (mesmo quando já disparou: é o que alimenta o selo)
     if (ctx.realIdx !== -1) {
       ctx.v.atividades[ctx.realIdx].alertaId = d.id || payload.id;
       saveViagens();
+    }
+    carregarAlertasAtivos(true);
+    if (d.disparadoAgora) {
+      // Já havia oferta ativa atendendo — o alerta foi enviado e consumido na hora
+      showToast('🔔 Já havia oferta ativa: alerta enviado ao grupo agora!', 'ok');
+      document.getElementById('mad-alerta-hist').style.display = '';
+      document.getElementById('mad-alerta-ativo').style.display = 'none';
+      document.getElementById('mad-alerta-form').style.display = '';
+      return;
     }
     showToast('🔔 Alerta criado com sucesso!', 'ok');
     var txt = document.getElementById('mad-alerta-info-txt');
@@ -4701,7 +4742,9 @@ function removerAlertaAtiv() {
       delete ctx.v.atividades[ctx.realIdx].alertaId;
       saveViagens();
     }
+    carregarAlertasAtivos(true);
     showToast('🗑 Alerta removido', 'ok');
+    document.getElementById('mad-alerta-hist').style.display = 'none';
     document.getElementById('mad-alerta-ativo').style.display = 'none';
     document.getElementById('mad-alerta-form').style.display = '';
   })
@@ -4803,6 +4846,7 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
   if (tipo !== 'temp' && viagemId) {
     // Resetar form
     popularSelectsAlertaTransf();
+    document.getElementById('mad-alerta-hist').style.display = 'none';
     document.getElementById('mad-alerta-ativo').style.display = 'none';
     document.getElementById('mad-alerta-form').style.display = '';
     document.getElementById('mad-alerta-alvo').value = 'compra_bonificada';
@@ -4820,7 +4864,7 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
         .then(function(d){
           if (!d.ok) return;
           var al = (d.data || []).find(function(x){ return x.id === a.alertaId; });
-          if (!al) return;
+          if (!al) { document.getElementById('mad-alerta-hist').style.display = ''; return; }
           document.getElementById('mad-alerta-alvo').value = al.alvo || 'compra_bonificada';
           alertaAlvoChange();
           if ((al.alvo || '') === 'transferencia') {
@@ -5177,6 +5221,7 @@ function toggleViagensPassadas() {
 }
 
 function renderViagens() {
+  carregarAlertasAtivos();
   loadViagens();
   var q = ((document.getElementById('viagens-search')||{}).value||'').toLowerCase().trim();
   var list = viagens.filter(function(v){
@@ -5242,6 +5287,7 @@ function renderViagens() {
           '<span class="ativ-titulo">',labelPrincipal,'</span>',
           labelSub ? '<span class="ativ-subtipo">'+labelSub+'</span>' : '',
         '</div>',
+        badgeAlertaAtiv(a),
         resLabel
           ? '<span class="ativ-reserva"'+dVid+' onclick="event.stopPropagation();abrirVinculo(this.dataset.vid,+this.dataset.idx)">🔗 '+resLabel+'</span>'
           : '<span class="ativ-reserva"'+dVid+' onclick="event.stopPropagation();abrirVinculo(this.dataset.vid,+this.dataset.idx)">Vincular reserva</span>',
