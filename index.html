@@ -123,6 +123,8 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem}
 .filter-chip{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.3px}
 .filter-chip.active,.filter-chip:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.filter-chip-vg{background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;transition:all .15s;letter-spacing:.3px;white-space:nowrap}
+.filter-chip-vg.active,.filter-chip-vg:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
 
 /* MULTI-SELECT CLIENTES */
 .cli-multiselect{position:relative}
@@ -965,6 +967,7 @@ header{animation:fadeUp .45s ease both}
   <div class="reservas-header" style="margin-bottom:1rem">
     <span class="reservas-count" id="viagens-count-label">0 viagens</span>
     <div style="display:flex;gap:8px;align-items:center">
+      <span class="filter-chip-vg" id="chip-viagens-passadas" onclick="toggleViagensPassadas()" title="Mostrar apenas viagens ja encerradas">📅 Passadas</span>
       <input type="text" id="viagens-search" placeholder="🔍 Buscar viagem ou cliente…" oninput="renderViagens()" style="max-width:280px"/>
       <button class="btn btn-accent btn-sm" onclick="abrirNovaViagem()">＋ Nova Viagem</button>
     </div>
@@ -5042,22 +5045,60 @@ function statusLabel(s) {
   return 'Pendente';
 }
 
+// ── VIAGENS PASSADAS ──────────────────────────────────────────────
+// Viagens cuja data FINAL ja passou ficam ocultas por padrao;
+// o chip "📅 Passadas" alterna para exibir somente elas.
+var viagensPassadas = false;
+
+function vgHojeISO() {
+  var d = new Date();
+  return d.getFullYear() + '-'
+       + String(d.getMonth()+1).padStart(2,'0') + '-'
+       + String(d.getDate()).padStart(2,'0');
+}
+
+// Fallback para v.inicio quando a viagem nao tem data fim cadastrada.
+// Viagem sem nenhuma data nunca e considerada passada.
+function viagemPassada(v) {
+  var fim = String((v && (v.fim || v.inicio)) || '').trim().slice(0,10);
+  if (!fim) return false;
+  return fim < vgHojeISO();
+}
+
+function toggleViagensPassadas() {
+  viagensPassadas = !viagensPassadas;
+  renderViagens();
+}
+
 function renderViagens() {
   loadViagens();
   var q = ((document.getElementById('viagens-search')||{}).value||'').toLowerCase().trim();
   var list = viagens.filter(function(v){
-    return !q || v.nome.toLowerCase().includes(q) || v.clientes.toLowerCase().includes(q);
+    var matchQ = !q || v.nome.toLowerCase().includes(q) || v.clientes.toLowerCase().includes(q);
+    var passada = viagemPassada(v);
+    return matchQ && (viagensPassadas ? passada : !passada);
   }).sort(function(a, b){
     var da = a.inicio || '9999-12-31';
     var db = b.inicio || '9999-12-31';
+    // Passadas: mais recentes primeiro. Ativas/futuras: proximas primeiro.
+    if (viagensPassadas) return da > db ? -1 : da < db ? 1 : 0;
     return da < db ? -1 : da > db ? 1 : 0;
   });
   var lbl = document.getElementById('viagens-count-label');
-  if (lbl) lbl.textContent = list.length + ' viagem' + (list.length!==1?'s':'');
+  if (lbl) lbl.textContent = list.length + (list.length !== 1 ? ' viagens' : ' viagem')
+                           + (viagensPassadas ? ' passadas' : '');
+  var chip = document.getElementById('chip-viagens-passadas');
+  if (chip) {
+    var nPassadas = viagens.filter(function(v){ return viagemPassada(v); }).length;
+    chip.textContent = '📅 Passadas' + (nPassadas ? ' (' + nPassadas + ')' : '');
+    if (viagensPassadas) chip.classList.add('active'); else chip.classList.remove('active');
+  }
   var grid = document.getElementById('viagens-grid');
   if (!grid) return;
   if (!list.length) {
-    grid.innerHTML = '<div class="empty"><span class="empty-icon">🗺️</span>Nenhuma viagem cadastrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em &quot;Nova Viagem&quot; para começar.</small></div>';
+    grid.innerHTML = viagensPassadas
+      ? '<div class="empty"><span class="empty-icon">📅</span>Nenhuma viagem passada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique novamente em &quot;Passadas&quot; para voltar as viagens ativas.</small></div>'
+      : '<div class="empty"><span class="empty-icon">🗺️</span>Nenhuma viagem cadastrada.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em &quot;Nova Viagem&quot; para começar.</small></div>';
     return;
   }
   grid.innerHTML = list.map(function(v, vi) {
