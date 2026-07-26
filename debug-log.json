@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-26T19:21:48.354Z",
+  "executadoEm": "2026-07-26T21:04:41.684Z",
   "modelosAtivos": [
     {
       "nome": "Seu voo está chegando! - VOLTA",
@@ -30,123 +30,112 @@
   "resultados": [],
   "eventos": [
     {
-      "modelo": "Seu voo está chegando! - IDA",
-      "gatilho": "voo_ida_dt",
-      "reservaId": "RES-1783687019084",
-      "cliente": "Debora Lima",
-      "horasRestantes": 0.64,
-      "janela": 48,
-      "temGrupo": true,
-      "disparar": false,
-      "ts": "2026-07-26T19:21:48.179Z"
-    },
-    {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 2444.47,
+      "horasRestantes": 2442.76,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.179Z"
+      "ts": "2026-07-26T21:04:41.576Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Verão europeu em família",
-      "horasRestantes": 44.8,
+      "horasRestantes": 43.09,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 1104.97,
+      "horasRestantes": 1103.26,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Marcelo e Patrícia em Paris 2026",
-      "horasRestantes": 865.05,
+      "horasRestantes": 863.34,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Rio Quente em família",
-      "horasRestantes": 231.97,
+      "horasRestantes": 230.26,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -233.2,
+      "horasRestantes": -234.91,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip - Miguel e Maria",
-      "horasRestantes": 91.64,
+      "horasRestantes": 89.92,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -202.28,
+      "horasRestantes": -203.99,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -284.78,
+      "horasRestantes": -286.49,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.180Z"
+      "ts": "2026-07-26T21:04:41.577Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2836.14,
+      "horasRestantes": 2834.42,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.183Z"
+      "ts": "2026-07-26T21:04:41.578Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 501.72,
+      "horasRestantes": 500.01,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.183Z"
+      "ts": "2026-07-26T21:04:41.578Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -216.86,
+      "horasRestantes": -218.58,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-26T19:21:48.183Z"
+      "ts": "2026-07-26T21:04:41.578Z"
     }
   ]
 }
