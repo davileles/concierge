@@ -505,7 +505,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="field">
         <label>Cliente <span style="color:var(--accent)">*</span></label>
-        <select id="f-cliente" onchange="populateViagemAssocSelect()">
+        <select id="f-cliente" onchange="populateViagemAssocSelect();onMsgCtxChange('nf')">
           <option value="">Selecione o cliente…</option>
         </select>
       </div>
@@ -951,6 +951,9 @@ header{animation:fadeUp .45s ease both}
       <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
     </div>
 
+    <!-- Mensagem ao cliente — HTML gerado por htmlSecaoMensagem('nf') -->
+    <div class="field" id="nf-msg-section" style="display:none"></div>
+
     <div class="btn-row">
       <button class="btn btn-accent" id="btn-salvar-reserva" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
       <button class="btn btn-ghost" id="btn-cancelar-edicao" style="display:none" onclick="cancelarEdicaoReserva()">✕ Cancelar Edição</button>
@@ -1374,6 +1377,8 @@ header{animation:fadeUp .45s ease both}
     </div>
     <!-- Alerta de oportunidade / lembrete — HTML gerado por htmlSecaoAlerta('mad') -->
     <div id="mad-alerta-section" style="display:none;margin-bottom:20px"></div>
+    <!-- Mensagem ao cliente — HTML gerado por htmlSecaoMensagem('mad') -->
+    <div id="mad-msg-section" style="display:none;margin-bottom:20px"></div>
     <div class="btn-row">
       <button class="btn btn-accent" style="flex:1" onclick="salvarDetalheAtiv()">💾 Salvar</button>
       <button class="btn btn-ghost" id="mad-btn-concluir" style="display:none;background:rgba(34,197,94,.15);color:#22c55e;border-color:#22c55e" onclick="concluirAtivModal()">✅ Concluir</button>
@@ -2015,6 +2020,7 @@ function limparForm() {
   var fa = document.getElementById('field-atividade-assoc');
   if (fa) fa.style.display = 'none';
   document.getElementById('form-ok').textContent = '';
+  resetSecaoMensagem('nf');
 }
 
 // Demandas em aberto disponíveis para vincular a uma nova reserva
@@ -2323,46 +2329,12 @@ function aplicarDadosAtivo(d) {
   if (d.obs) sv('f-obs', d.obs);
 }
 
-function salvarReserva() {
-  var _btnSalvar = document.getElementById('btn-salvar-reserva');
-  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
 
+// Monta o objeto da reserva a partir do formulario. Fonte unica usada por
+// salvarReserva() e pela pre-visualizacao da secao de mensagem embutida.
+function coletarReservaDoForm(id) {
   var tipo = getVal('f-tipo');
   var cliente = toTitleCase(getVal('f-cliente'));
-  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
-  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
-
-  // Validações específicas para voo
-  if (tipo === 'voo') {
-    // Ida — obrigatórios
-    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
-    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
-    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
-    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
-    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
-    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
-    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
-    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
-    var _vOrigem    = getVal('f-origem-volta');
-    var _vDestino   = getVal('f-destino-volta');
-    var _vDataPart  = getVal('f-data-volta');
-    var _vHoraPart  = getVal('f-hora-partida-volta');
-    var _vDataCheg  = getVal('f-data-chegada-volta');
-    var _vHoraCheg  = getVal('f-hora-chegada-volta');
-    var _vCia       = getVal('f-cia-volta');
-    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
-    if (_voltaPreenchida) {
-      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
-      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
-      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
-      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
-      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
-      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
-      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
-    }
-  }
-
-  var id = 'RES-' + Date.now();
   var res = {
     id: id,
     tipo: tipo,
@@ -2486,6 +2458,52 @@ function salvarReserva() {
       conf: getVal('f-passeio-conf'), valor: getVal('f-passeio-valor'),
     });
   }
+  var _cliG = clientes.find(function(c){ return c.nome === cliente; });
+  if (_cliG && _cliG.grupo) res.grupo = _cliG.grupo;
+  return res;
+}
+
+function salvarReserva() {
+  var _btnSalvar = document.getElementById('btn-salvar-reserva');
+  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
+
+  var tipo = getVal('f-tipo');
+  var cliente = toTitleCase(getVal('f-cliente'));
+  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
+  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
+
+  // Validações específicas para voo
+  if (tipo === 'voo') {
+    // Ida — obrigatórios
+    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
+    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
+    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
+    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
+    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
+    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
+    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+    // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
+    var _vOrigem    = getVal('f-origem-volta');
+    var _vDestino   = getVal('f-destino-volta');
+    var _vDataPart  = getVal('f-data-volta');
+    var _vHoraPart  = getVal('f-hora-partida-volta');
+    var _vDataCheg  = getVal('f-data-chegada-volta');
+    var _vHoraCheg  = getVal('f-hora-chegada-volta');
+    var _vCia       = getVal('f-cia-volta');
+    var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
+    if (_voltaPreenchida) {
+      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
+      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
+      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
+      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
+      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
+      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
+      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
+    }
+  }
+
+  var id = 'RES-' + Date.now();
+  var res = coletarReservaDoForm(id);
 
   window._reservaEditandoId = null;
   window._reservaEditandoOriginal = null;
@@ -3157,6 +3175,8 @@ function preencherFormReserva(r, modo) {
     ativoArquivoBase64 = null;
     ativoArquivoMeta   = null;
   }
+  // Campos ja preenchidos: regera a previa da mensagem com os dados da reserva
+  onMsgCtxChange('nf');
 }
 
 function editarReserva(id) {
@@ -3350,6 +3370,7 @@ function switchTab(name) {
   document.getElementById('panel-'+name).classList.add('active');
   if (name === 'viagens') renderViagens();
   if (name === 'nova' && !window._editandoReserva) { populateViagemAssocSelect(); populateDemandaAssocSelect(); }
+  if (name === 'nova') abrirSecaoMensagemReserva();
   var tabs = document.querySelectorAll('.main-tab');
   if (name==='mensagens') { loadModelos(); initMensagens(); }
   var activeTab = document.querySelector('.main-tab[onclick*="switchTab(\'' + name + '\')"]');
@@ -3454,11 +3475,11 @@ var VARS_RESERVA = [
   { label: '{{loc_categoria}}',          desc: 'Categoria/modelo do carro' },
 ];
 
-function loadModelos() {
+function loadModelos(cb) {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos')
     .then(function(r){ return r.json(); })
-    .then(function(d){ modelos = d.data || []; renderModelosLista(); })
-    .catch(function(e){ console.error('[loadModelos]', e); modelos = []; });
+    .then(function(d){ modelos = d.data || []; renderModelosLista(); if (cb) cb(); })
+    .catch(function(e){ console.error('[loadModelos]', e); modelos = []; if (cb) cb(); });
 }
 function saveModelos() {
   fetch('https://cdv-proxy-production.up.railway.app/concierge/modelos', {
@@ -3867,10 +3888,16 @@ function onDispararChange() {
   }
 
   if (!mod) { document.getElementById('d-msg-final').value=''; return; }
+  document.getElementById('d-msg-final').value = resolverVariaveis(mod.texto, cli, res);
+}
 
-  // Resolve variables
-  var txt = mod.texto;
-  var ob='{{', cb='}}'; function rv(t, key, val) { return t.split(ob+key+cb).join(val||''); }
+// Fonte unica de resolucao de variaveis {{...}} — usada pela aba Mensagens e
+// pelas secoes de mensagem embutidas (form de reserva / modal de atividade).
+function resolverVariaveis(texto, cli, res, extras) {
+  var txt = String(texto == null ? '' : texto);
+  var ob='{{', cb='}}'; function rv(t, key, val) { return t.split(ob+key+cb).join(val==null?'':val); }
+  // Extras tem precedencia: resolvidos antes, sobrescrevem o calculo padrao.
+  if (extras) { for (var _k in extras) { if (extras[_k]) txt = rv(txt, _k, extras[_k]); } }
   if (cli) {
     txt = rv(txt, 'nome', cli.nome);
     txt = rv(txt, 'primeiro_nome', (cli.nome||'').split(' ')[0]);
@@ -3929,7 +3956,7 @@ function onDispararChange() {
     });
     txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : '');
   }
-  document.getElementById('d-msg-final').value = txt;
+  return txt;
 }
 
 // ── IATA AUTOCOMPLETE ──────────────────────────────────────────
@@ -4998,6 +5025,33 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
       getDescricao: function(){ return document.getElementById('mad-descricao').value.trim() || a.descricao || ''; }
     });
   }
+
+  // Secao de mensagem: so para atividade de viagem salva — item temporario
+  // ainda nao tem viagem/cliente para resolver as variaveis do modelo.
+  if (tipo === 'temp' || !viagemId) {
+    fecharSecaoMensagem('mad');
+  } else {
+    var vMs = viagens.find(function(x){ return x.id === viagemId; });
+    abrirSecaoMensagem('mad', {
+      getClientes: function() {
+        var cs = vMs && vMs.clientes ? (Array.isArray(vMs.clientes) ? vMs.clientes : [vMs.clientes]) : [];
+        return cs.map(function(n){
+          var cc = (clientes || []).find(function(x){ return toTitleCase(x.nome) === toTitleCase(n); });
+          return cc ? cc.nome : n;
+        });
+      },
+      getReserva: function() {
+        return a.reservaId ? ((reservas || []).find(function(r){ return r.id === a.reservaId; }) || null) : null;
+      },
+      extras: function() {
+        return {
+          nome_viagem: vMs ? (vMs.nome || vMs.destino || '') : '',
+          atividade: a.nome || '',
+          titulo_atividade: (document.getElementById('mad-titulo').value || '').trim() || a.titulo || ''
+        };
+      }
+    });
+  }
 }
 
 function concluirAtivModal() {
@@ -5459,15 +5513,17 @@ function getGrupoId() {
   return document.getElementById('d-grupo').value.trim();
 }
 
-function dispararMensagem() {
-  var grupo  = getGrupoId();
-  var texto  = document.getElementById('d-msg-final').value.trim();
-  var url    = getBaileysUrl();
-  var statusEl = document.getElementById('d-send-ok');
+// Envio ao Baileys — fonte unica usada pela aba Mensagens e pelas secoes embutidas.
+function enviarWhatsApp(grupo, texto, statusEl) {
+  var url = getBaileysUrl();
   if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
   if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
   if (!url)   { showToast('⚠️ URL do Baileys não configurada', 'err'); return; }
-  statusEl.style.color='#f59e0b'; statusEl.textContent='⏳ Enviando…';
+  var set = function(cor, txt) {
+    if (!statusEl) return;
+    statusEl.style.color = cor; statusEl.textContent = txt;
+  };
+  set('#f59e0b', '⏳ Enviando…');
   fetch(url + '/enviar', {
     method:'POST', headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ grupo: grupo, mensagem: texto })
@@ -5475,17 +5531,25 @@ function dispararMensagem() {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (d.ok||d.success||d.status==='sent') {
-      statusEl.style.color='#22c55e'; statusEl.textContent='✅ Mensagem enviada!';
+      set('#22c55e', '✅ Mensagem enviada!');
       showToast('✅ Mensagem enviada!','ok');
     } else {
-      statusEl.style.color='#ff585e'; statusEl.textContent='❌ '+(d.erro||d.error||d.message||'falha');
+      set('#ff585e', '❌ '+(d.erro||d.error||d.message||'falha'));
     }
-    setTimeout(function(){ statusEl.textContent=''; }, 5000);
+    setTimeout(function(){ set('', ''); }, 5000);
   })
   .catch(function(){
-    statusEl.style.color='#ff585e'; statusEl.textContent='❌ Sem resposta do servidor';
-    setTimeout(function(){ statusEl.textContent=''; }, 5000);
+    set('#ff585e', '❌ Sem resposta do servidor');
+    setTimeout(function(){ set('', ''); }, 5000);
   });
+}
+
+function dispararMensagem() {
+  enviarWhatsApp(
+    getGrupoId(),
+    document.getElementById('d-msg-final').value.trim(),
+    document.getElementById('d-send-ok')
+  );
 }
 
 function copiarDisparar() {
@@ -5493,6 +5557,172 @@ function copiarDisparar() {
   if (!txt) return;
   navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Copiado!','ok'); });
 }
+
+
+// ════════════════════════════════════════════
+//  SECAO DE MENSAGEM EMBUTIDA (form de reserva + modal de atividade)
+//  Mesmo padrao de htmlSecaoAlerta: markup unico parametrizado por prefixo.
+//  Prefixos em uso: 'nf' (formulario de reserva) e 'mad' (modal de atividade).
+//  A aba Mensagens continua funcionando de forma independente.
+// ════════════════════════════════════════════
+var _msgCtx = {};
+
+function _mel(px, campo) { return document.getElementById(px + '-msg-' + campo); }
+
+function htmlSecaoMensagem(px) {
+  var q = function(s){ return "'" + s + "'"; };
+  return ''
+  + '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">💬 Enviar Mensagem ao Cliente</div>'
+  + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px">'
+  +   '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+  +     '<div>'
+  +       '<div style="' + _LBL + '">Modelo</div>'
+  +       '<select id="' + px + '-msg-modelo" onchange="onMsgCtxChange(' + q(px) + ')" style="' + _INP + '"><option value="">Selecione um modelo…</option></select>'
+  +     '</div>'
+  +     '<div>'
+  +       '<div style="' + _LBL + '">Cliente</div>'
+  +       '<select id="' + px + '-msg-cliente" onchange="onMsgCtxChange(' + q(px) + ')" style="' + _INP + '"></select>'
+  +     '</div>'
+  +   '</div>'
+  +   '<div>'
+  +     '<div style="' + _LBL + '">Pré-visualização — editável antes de enviar</div>'
+  +     '<textarea id="' + px + '-msg-texto" rows="8" placeholder="Selecione um modelo para gerar a mensagem…" style="' + _INP + ';resize:vertical;min-height:150px;line-height:1.7"></textarea>'
+  +   '</div>'
+  +   '<div>'
+  +     '<div style="' + _LBL + '">Grupo WhatsApp (ID)</div>'
+  +     '<input type="text" id="' + px + '-msg-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="' + _INP + ';font-family:monospace"/>'
+  +     '<div id="' + px + '-msg-info" style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6"></div>'
+  +   '</div>'
+  +   '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+  +     '<button onclick="enviarMsgCtx(' + q(px) + ')" style="flex:1;min-width:150px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer">📤 Enviar Agora</button>'
+  +     '<button onclick="onMsgCtxChange(' + q(px) + ')" title="Regerar a partir dos dados atuais" style="background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 Atualizar</button>'
+  +     '<button onclick="copiarMsgCtx(' + q(px) + ')" style="background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">📋 Copiar</button>'
+  +   '</div>'
+  +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">ℹ️ Os modelos vem da aba <b>Mensagens → Modelos</b>. Enviar daqui não salva a reserva — as duas ações são independentes.</div>'
+  +   '<div id="' + px + '-msg-status" style="font-size:12px;font-weight:700;min-height:14px;text-align:center"></div>'
+  + '</div>';
+}
+
+// ctx: { getClientes: fn -> [nome], getReserva: fn -> obj|null, extras: fn -> {chave:valor} }
+function abrirSecaoMensagem(px, ctx) {
+  var sec = document.getElementById(px + '-msg-section');
+  if (!sec) return;
+  if (!sec.dataset.montado) { sec.innerHTML = htmlSecaoMensagem(px); sec.dataset.montado = '1'; }
+  sec.style.display = '';
+  _msgCtx[px] = ctx;
+
+  var selM = _mel(px, 'modelo');
+  var manter = selM.value;
+  var popular = function() {
+    if (_msgCtx[px] !== ctx) return;          // secao ja trocou de contexto
+    selM.innerHTML = '<option value="">Selecione um modelo…</option>'
+      + modelosOrdenados().map(function(m){
+          return '<option value="' + m.id + '">' + escHtml(m.nome || '') + '</option>';
+        }).join('');
+    if (manter) selM.value = manter;
+    onMsgCtxChange(px);
+  };
+  if (!modelos || !modelos.length) loadModelos(popular); else popular();
+}
+
+function fecharSecaoMensagem(px) {
+  var sec = document.getElementById(px + '-msg-section');
+  if (sec) sec.style.display = 'none';
+  _msgCtx[px] = null;
+}
+
+// Zera o conteudo mantendo a secao visivel (usado ao limpar o formulario)
+function resetSecaoMensagem(px) {
+  var sec = document.getElementById(px + '-msg-section');
+  if (!sec || !sec.dataset.montado) return;
+  _mel(px, 'modelo').value = '';
+  _mel(px, 'texto').value  = '';
+  _mel(px, 'grupo').value  = '';
+  _mel(px, 'status').textContent = '';
+}
+
+function _msgPopularClientes(px) {
+  var sel = _mel(px, 'cliente');
+  var ctx = _msgCtx[px] || {};
+  var nomes = (ctx.getClientes ? (ctx.getClientes() || []) : []).filter(Boolean);
+  var atual = sel.value;
+  sel.innerHTML = nomes.length
+    ? nomes.slice().sort(function(a,b){ return String(a).localeCompare(String(b), 'pt-BR'); })
+           .map(function(n){ return '<option value="' + escHtml(n) + '">' + escHtml(n) + '</option>'; }).join('')
+    : '<option value="">— nenhum cliente definido —</option>';
+  if (atual && nomes.indexOf(atual) !== -1) sel.value = atual;
+}
+
+function onMsgCtxChange(px) {
+  var ctx = _msgCtx[px];
+  if (!ctx) return;
+  var sec = document.getElementById(px + '-msg-section');
+  if (!sec || !sec.dataset.montado) return;
+
+  _msgPopularClientes(px);
+
+  var nomeCli = _mel(px, 'cliente').value;
+  var cli = nomeCli ? (clientes || []).find(function(c){
+    return c.nome === nomeCli || toTitleCase(c.nome) === toTitleCase(nomeCli);
+  }) : null;
+
+  var res = null;
+  try { res = ctx.getReserva ? ctx.getReserva() : null; } catch(e) { res = null; }
+
+  // Grupo: do cadastro do cliente; so sobrescreve quando ha valor a colocar.
+  var grupo = (cli && cli.grupo) || (res && res.grupo) || '';
+  var grupoEl = _mel(px, 'grupo');
+  if (grupo) grupoEl.value = grupo;
+
+  _mel(px, 'info').innerHTML = cli
+    ? '📱 ' + escHtml(cli.tel || '—')
+      + (grupo
+          ? ' · <span style="font-family:monospace;color:var(--accent)">' + escHtml(grupo) + '</span>'
+          : ' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado na planilha</span>')
+    : '⚠️ Selecione o cliente para resolver as variáveis do modelo.';
+
+  var mod = (modelos || []).find(function(m){ return m.id === _mel(px, 'modelo').value; });
+  var ta = _mel(px, 'texto');
+  if (!mod) { ta.value = ''; return; }
+
+  var extras = null;
+  try { extras = ctx.extras ? ctx.extras() : null; } catch(e) { extras = null; }
+  ta.value = resolverVariaveis(mod.texto, cli, res, extras);
+}
+
+function enviarMsgCtx(px) {
+  enviarWhatsApp(
+    _mel(px, 'grupo').value.trim(),
+    _mel(px, 'texto').value.trim(),
+    _mel(px, 'status')
+  );
+}
+
+function copiarMsgCtx(px) {
+  var txt = _mel(px, 'texto').value;
+  if (!txt) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+  navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Copiado!','ok'); });
+}
+
+// ── Contexto: formulario de nova reserva / edicao de reserva ──────────────
+function abrirSecaoMensagemReserva() {
+  abrirSecaoMensagem('nf', {
+    getClientes: function() {
+      var n = toTitleCase(getVal('f-cliente'));
+      return n ? [n] : [];
+    },
+    // Reserva montada ao vivo a partir do formulario — funciona mesmo antes
+    // de salvar, e reflete edicoes feitas no formulario sem precisar salvar.
+    getReserva: function() {
+      return coletarReservaDoForm(window._reservaEditandoId || 'RES-PREVIEW');
+    },
+    extras: function() {
+      var v = (viagens || []).find(function(x){ return x.id === getVal('f-viagem-assoc'); });
+      return { nome_viagem: v ? (v.nome || v.destino || '') : '' };
+    }
+  });
+}
+
 
 
 
