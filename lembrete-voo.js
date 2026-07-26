@@ -307,8 +307,86 @@ async function enviarWhatsApp(grupoId, mensagem) {
   if (!d.ok) throw new Error(`${d.erro || 'Falha no envio'} (HTTP ${r.status})`);
 }
 
-// Chave única por modelo para evitar reenvio
+// Chave única por modelo para evitar reenvio (flag legada, dentro de reservas.json)
 function flagKey(modeloId) { return `enviado_${modeloId}`; }
+
+// ── ledger de envios (msgs-enviadas.json) ────────────────────────────────────
+// Fonte primária de deduplicação. Vive em arquivo próprio, que o painel NUNCA
+// escreve — diferente das flags `enviado_*` gravadas dentro de reservas.json,
+// que o painel apagava sem querer ao salvar seu array em memória (padrão
+// read-modify-write), fazendo a mesma mensagem ser reenviada na execução
+// seguinte enquanto a janela de disparo continuava aberta.
+//
+// Formato: { "MOD-xxx|RES-yyy": "2026-07-25T23:01:53.106Z" }
+// O formato legado (array de strings) continua sendo lido sem quebrar.
+const LEDGER_FILE  = 'msgs-enviadas.json';
+const LEDGER_RETER = 180; // dias — depois disso o voo já passou; reenvio é impossível
+
+let ledger    = {};
+let ledgerSha = null;
+
+function ledgerKey(modeloId, alvoId) { return `${modeloId}|${alvoId}`; }
+
+async function carregarLedger() {
+  try {
+    const { data, sha } = await githubGet(LEDGER_FILE);
+    ledgerSha = sha;
+    if (Array.isArray(data))                     for (const k of data) ledger[k] = null;
+    else if (data && typeof data === 'object')   ledger = data;
+  } catch (e) {
+    console.warn(`[ledger] ${LEDGER_FILE} indisponível (${e.message}) — começando vazio`);
+  }
+  console.log(`[ledger] ${Object.keys(ledger).length} envio(s) já registrado(s)`);
+}
+
+// Grava o ledger IMEDIATAMENTE após cada envio bem-sucedido. Se a Action morrer
+// no meio (timeout, erro fatal, falha de rede), tudo que já saiu está
+// registrado — gravar só no fim deixaria janela aberta para reenvio.
+async function registrarEnvio(modeloId, alvoId) {
+  if (!alvoId) return false;
+  const k = ledgerKey(modeloId, alvoId);
+  ledger[k] = new Date().toISOString();
+  for (let tentativa = 0; tentativa < 3; tentativa++) {
+    try {
+      const r = await githubPut(LEDGER_FILE, ledger, ledgerSha, `chore: envio registrado — ${k}`);
+      ledgerSha = (r && r.content && r.content.sha) || null;
+      return true;
+    } catch (e) {
+      // 409 = escrita concorrente venceu a corrida: recarrega, reaplica o que
+      // temos em memória por cima e tenta de novo com SHA fresco.
+      if (/409/.test(e.message) && tentativa < 2) {
+        try {
+          const { data, sha } = await githubGet(LEDGER_FILE);
+          ledgerSha = sha;
+          if (data && !Array.isArray(data)) ledger = Object.assign({}, data, ledger);
+        } catch (_) { /* mantém estado local e tenta assim mesmo */ }
+        continue;
+      }
+      console.error(`⚠️ [ledger] falha ao registrar ${k}: ${e.message}`);
+      return false;
+    }
+  }
+  return false;
+}
+
+// Entradas antigas são descartadas em memória; a limpeza persiste junto do
+// próximo envio registrado — não vale um PUT só para podar.
+function podarLedger() {
+  const corte = Date.now() - LEDGER_RETER * 86400000;
+  let removidos = 0;
+  for (const [k, ts] of Object.entries(ledger)) {
+    if (ts && new Date(ts).getTime() < corte) { delete ledger[k]; removidos++; }
+  }
+  if (removidos) console.log(`[ledger] ${removidos} registro(s) com mais de ${LEDGER_RETER} dias descartados`);
+}
+
+// Já enviado? Ledger é a fonte primária; a flag legada dentro de
+// reservas.json/viagens.json continua valendo para o que foi enviado antes
+// desta mudança.
+function jaEnviado(modeloId, alvo) {
+  if (alvo && alvo.id && ledger[ledgerKey(modeloId, alvo.id)]) return true;
+  return !!(alvo && alvo[flagKey(modeloId)]);
+}
 
 // ── log de diagnóstico ──────────────────────────────────────────────────────
 // Registrado a cada execução em debug-log.json, independente de ter havido
@@ -349,8 +427,10 @@ async function main() {
     githubGet('reservas.json'),
     githubGet('modelos.json'),
     githubGet('viagens.json').catch(() => ({ data: [], sha: null })),
-    carregarClientes().catch(e => { console.warn('[clientes]', e.message); return []; })
+    carregarClientes().catch(e => { console.warn('[clientes]', e.message); return []; }),
+    carregarLedger()
   ]);
+  podarLedger();
 
   const reservas = reservasResp.data;
   const modelos  = modelosResp.data.map(normalizarModelo);
@@ -389,18 +469,16 @@ async function main() {
 
   let totalAlteracoes = 0;
   const resultados = [];
-  let viagensAlteradas = false;
 
   for (const mod of ativos) {
     const janela = antecedenciaEmHoras(mod.antecedencia);
-    const key    = flagKey(mod.id);
 
     console.log(`\n[${mod.nome}] gatilho=${mod.gatilho} janela=${janela}h`);
 
     // ── Gatilho: primeiro voo da viagem ────────────────────────────────────
     if (mod.gatilho === 'primeiro_voo_viagem') {
       for (const viagem of viagens) {
-        if (viagem[key]) continue; // já enviado para esta viagem
+        if (jaEnviado(mod.id, viagem)) continue; // já enviado para esta viagem
 
         const primeiroVoo = resolverPrimeiroVoo(viagem, reservasMap);
         if (!primeiroVoo) {
@@ -441,17 +519,15 @@ async function main() {
           }
         }
         if (algum) {
-          viagem[key] = true;
-          viagem[`${key}Em`] = new Date().toISOString();
+          await registrarEnvio(mod.id, viagem.id);
           totalAlteracoes++;
-          viagensAlteradas = true;
         }
       }
 
     // ── Gatilho: início de viagem ──────────────────────────────────────────
     } else if (mod.gatilho === 'viagem') {
       for (const viagem of viagens) {
-        if (!viagem.dataInicio || viagem[key]) continue;
+        if (!viagem.dataInicio || jaEnviado(mod.id, viagem)) continue;
         const { data, hora } = resolverDataHora('viagem', mod.horaRef, null, viagem);
         const horas = horasAte(data, hora);
         console.log(`  "${viagem.nome}" ${data} → ${horas.toFixed(1)}h`);
@@ -483,17 +559,15 @@ async function main() {
           }
         }
         if (algum) {
-          viagem[key] = true;
-          viagem[`${key}Em`] = new Date().toISOString();
+          await registrarEnvio(mod.id, viagem.id);
           totalAlteracoes++;
-          viagensAlteradas = true;
         }
       }
 
     // ── Gatilhos de reserva (voo / hotel) ─────────────────────────────────
     } else {
       for (const res of reservas) {
-        if (res[key]) continue;
+        if (jaEnviado(mod.id, res)) continue;
         const { data, hora, tipo } = resolverDataHora(mod.gatilho, mod.horaRef, res, null);
         if (!data) continue;
         // Verificar tipo de reserva compatível com gatilho
@@ -522,8 +596,7 @@ async function main() {
           try {
             const nomeCliente = cli?.nome || res.cliente;
             await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome: res.cliente }, res, null, viagens));
-            res[key] = true;
-            res[`${key}Em`] = new Date().toISOString();
+            await registrarEnvio(mod.id, res.id);
             totalAlteracoes++;
             resultados.push(`✅ [${mod.nome}] → "${nomeCliente}" (${data})`);
             logDebug({ modelo: mod.nome, gatilho: mod.gatilho, reservaId: res.id, cliente: res.cliente, grupo, tentativa: 'sucesso' });
@@ -537,20 +610,12 @@ async function main() {
     }
   }
 
-  // ── Salvar alterações ─────────────────────────────────────────────────────
+  // ── Estado de envio ───────────────────────────────────────────────────────
+  // Nada é gravado em reservas.json/viagens.json: o registro já foi persistido
+  // no ledger logo após cada envio. Além de eliminar a corrida com o painel,
+  // corta um GET + um PUT de ~85 KB por execução.
   if (totalAlteracoes > 0) {
-    console.log(`\n[lembrete] Salvando ${totalAlteracoes} alteração(ões)…`);
-    const { sha: shaRes } = await githubGet('reservas.json');
-    await githubPut('reservas.json', reservas, shaRes,
-      `chore: lembretes enviados — ${new Date().toISOString().slice(0,16)}`);
-    console.log('✅ reservas.json salvo');
-
-    if (viagensAlteradas) {
-      const { sha: shaVia } = await githubGet('viagens.json');
-      await githubPut('viagens.json', viagensResp.data, shaVia,
-        `chore: lembretes de viagem enviados — ${new Date().toISOString().slice(0,16)}`);
-      console.log('✅ viagens.json salvo');
-    }
+    console.log(`\n[lembrete] ${totalAlteracoes} envio(s) registrado(s) em ${LEDGER_FILE}.`);
   } else {
     console.log('\n[lembrete] Nenhum lembrete para enviar nesta execução.');
   }
