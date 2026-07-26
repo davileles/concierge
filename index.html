@@ -1372,70 +1372,8 @@ header{animation:fadeUp .45s ease both}
       <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">👤 Dados do Cliente</div>
       <div id="mad-cliente-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;display:flex;flex-direction:column;gap:6px"></div>
     </div>
-    <!-- Alerta de Compra Bonificada -->
-    <div id="mad-alerta-section" style="display:none;margin-bottom:20px">
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔔 Alerta de Oportunidade</div>
-      <div id="mad-alerta-ativo" style="display:none;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.4);border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:10px">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <span id="mad-alerta-info-txt" style="color:#eab308;font-weight:600"></span>
-          <button onclick="removerAlertaAtiv()" style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:12px">✕ Remover</button>
-        </div>
-      </div>
-      <div id="mad-alerta-hist" style="display:none;font-size:11px;color:var(--muted);background:rgba(138,155,191,.1);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px">✅ Um alerta desta atividade já foi disparado. Crie outro se ainda precisar acompanhar.</div>
-      <div id="mad-alerta-form" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px">
-        <div>
-          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Tipo de oportunidade</div>
-          <select id="mad-alerta-alvo" onchange="alertaAlvoChange()" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
-            <option value="compra_bonificada">🛍️ Compra bonificada</option>
-            <option value="transferencia">🔄 Transferência bonificada</option>
-          </select>
-        </div>
-
-        <div id="mad-alerta-campos-compra" style="display:flex;flex-direction:column;gap:10px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Parceiro</div>
-              <div style="position:relative">
-                <input type="text" id="mad-alerta-parceiro" placeholder="Digite para buscar…" autocomplete="off"
-                  oninput="onAlertaParceiroInput()"
-                  style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
-                <div id="mad-alerta-parceiro-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:100;margin-top:2px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>
-              </div>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Programa de Fidelidade</div>
-              <select id="mad-alerta-programa" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px">
-                <option value="">Selecione o parceiro primeiro…</option>
-              </select>
-            </div>
-          </div>
-          <div style="max-width:50%">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Pontuação Mínima (pts/R$)</div>
-            <input type="number" id="mad-alerta-minpts" placeholder="Ex: 3" min="1" step="0.5" style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
-          </div>
-        </div>
-
-        <div id="mad-alerta-campos-transf" style="display:none;flex-direction:column;gap:10px">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Origem</div>
-              <select id="mad-alerta-origem" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"></select>
-            </div>
-            <div>
-              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Destino (companhia / programa)</div>
-              <select id="mad-alerta-destino" style="width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"></select>
-            </div>
-          </div>
-          <div style="max-width:50%">
-            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Bônus mínimo (%)</div>
-            <input type="number" id="mad-alerta-bonusmin" placeholder="Ex: 80" min="1" step="5" style="width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px"/>
-          </div>
-        </div>
-
-        <div id="mad-alerta-grupo-info" style="font-size:11px;color:var(--muted);line-height:1.6">📲 O alerta é enviado para o grupo definido em <b>Configuração → WhatsApp</b>.</div>
-        <button onclick="salvarAlertaAtiv()" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">🔔 Criar Alerta</button>
-      </div>
-    </div>
+    <!-- Alerta de oportunidade / lembrete — HTML gerado por htmlSecaoAlerta('mad') -->
+    <div id="mad-alerta-section" style="display:none;margin-bottom:20px"></div>
     <div class="btn-row">
       <button class="btn btn-accent" style="flex:1" onclick="salvarDetalheAtiv()">💾 Salvar</button>
       <button class="btn btn-ghost" id="mad-btn-concluir" style="display:none;background:rgba(34,197,94,.15);color:#22c55e;border-color:#22c55e" onclick="concluirAtivModal()">✅ Concluir</button>
@@ -1623,6 +1561,9 @@ header{animation:fadeUp .45s ease both}
         <option value="">➕ Criar nova atividade na viagem</option>
       </select>
     </div>
+    <!-- Alerta de oportunidade / lembrete — HTML gerado por htmlSecaoAlerta('dfa').
+         Só aparece ao editar uma demanda já existente (alerta precisa de um vínculo). -->
+    <div id="dfa-alerta-section" style="display:none;margin-top:1.2rem"></div>
     <div style="display:flex;gap:8px;margin-top:1rem">
       <button class="btn btn-accent" onclick="salvarDemanda()" style="flex:1">💾 Salvar Demanda</button>
       <button class="btn btn-ghost" onclick="fecharNovaDemanda()">Cancelar</button>
@@ -4540,64 +4481,114 @@ function carregarParceiros(callback) {
     .catch(function(){ _parceirosCache = []; if (callback) callback([]); });
 }
 
-function onAlertaParceiroInput() {
-  var q = document.getElementById('mad-alerta-parceiro').value.toLowerCase().trim();
-  var drop = document.getElementById('mad-alerta-parceiro-drop');
-  if (!q || q.length < 2) { drop.style.display = 'none'; return; }
-  carregarParceiros(function(lista) {
-    var filtered = lista.filter(function(p){ return p.nome.includes(q); }).slice(0, 10);
-    if (!filtered.length) { drop.style.display = 'none'; return; }
-    drop.innerHTML = filtered.map(function(p){
-      var progs = p.programas.join(', ') || '—';
-      return '<div onclick="selecionarParceiro(this)" data-nome="'+p.nome+'" data-progs="'+p.programas.join(',')+'" '+
-        'style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" '+
-        'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+
-        '<span style="font-weight:600;text-transform:capitalize">'+p.nome+'</span>'+
-        '<span style="font-size:10px;color:var(--muted)">'+progs+'</span>'+
-        '</div>';
-    }).join('');
-    drop.style.display = '';
-  });
-}
-
-function selecionarParceiro(el) {
-  var nome = el.dataset.nome;
-  var progs = el.dataset.progs ? el.dataset.progs.split(',').filter(Boolean) : [];
-  document.getElementById('mad-alerta-parceiro').value = nome;
-  document.getElementById('mad-alerta-parceiro-drop').style.display = 'none';
-  // Popular programas disponíveis para este parceiro
-  var sel = document.getElementById('mad-alerta-programa');
-  var PROG_LABEL = {
-    smiles: 'Smiles', livelo: 'Livelo', esfera: 'Esfera',
-    latampass: 'LATAM Pass', 'latam pass': 'LATAM Pass',
-    aadvantage: 'AAdvantage', azul: 'Azul Fidelidade',
-    iberia: 'Iberia Plus', executive: 'Executive Club',
-    finnair: 'Finnair Plus', privilege: 'Privilege Club'
-  };
-  sel.innerHTML = progs.length
-    ? '<option value="">Selecione…</option>' + progs.map(function(p){
-        return { v: p, label: PROG_LABEL[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1) };
-      }).sort(function(a,b){ return a.label.localeCompare(b.label, 'pt-BR'); }).map(function(o){
-        return '<option value="'+o.v+'">'+o.label+'</option>';
-      }).join('')
-    : '<option value="">Nenhum programa disponível</option>';
-}
-
-// ══ ALERTAS DE OPORTUNIDADE ══
-// Cada alerta fica amarrado a uma atividade pelo id (a atividade guarda o mesmo
-// valor em `alertaId`). O grupo de WhatsApp NÃO vai no alerta: o proxy resolve
-// a partir de cfg.grupoAlertas no momento do envio. O alerta é consumido
-// (removido) automaticamente assim que dispara.
+// ══ ALERTAS DE OPORTUNIDADE E LEMBRETES ══
+// Um único formulário, renderizado em dois lugares a partir de htmlSecaoAlerta(px):
+//   px = 'mad' → modal de detalhe da atividade (aba Viagens)
+//   px = 'dfa' → modal de edição da demanda (aba Demandas)
+// Alvos:
+//   compra_bonificada → avaliado pelo coletar.js contra o snapshot Comparemania
+//   transferencia     → avaliado no proxy, na aprovação da oferta do Radar
+//   lembrete          → data/hora marcada, disparado pelo worker do proxy (10 min)
+// O grupo de WhatsApp NÃO vai no alerta: o proxy resolve a partir de
+// cfg.grupoAlertas no momento do envio. O alerta é consumido (removido) ao disparar.
 // As listas abaixo espelham ORIGEM/DESTINO_TRANSFERENCIA_OPTIONS do gerador-cdv —
 // mantenha em sincronia, é o que garante o match com as ofertas aprovadas.
 var ALERTA_ORIGEM_OPTIONS = ['Azul Fidelidade','BRB','BTG','C6','Caixa','Esfera','Inter','Itaú','LATAM Pass','Livelo','Nubank','Porto Seguro','Revolut','Sicoob','Sicredi','Smiles','XP'];
 var ALERTA_DESTINO_OPTIONS = ['AAdvantage','ALL Accor','Azul Fidelidade','Connect Miles','Flying Blue','Hilton Honors','Iberia Plus','IHG','LATAM Pass','Livelo','Smiles','TAP Miles&Go'];
+
+// Contexto ativo de cada instância do form (o que o alerta está acompanhando)
+var _alertaCtx = {};
+
+function _ael(px, campo) { return document.getElementById(px + '-alerta-' + campo); }
 
 function _optsAlfabeticas(lista, placeholder) {
   return '<option value="">' + placeholder + '</option>' +
     lista.slice().sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); }).map(function(v){
       return '<option value="'+v+'">'+v+'</option>';
     }).join('');
+}
+
+var _LBL = 'font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px';
+var _INP = 'width:100%;box-sizing:border-box;padding:7px 10px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:12px';
+
+// Fonte única do markup do formulário — evita divergência entre os dois modais
+function htmlSecaoAlerta(px) {
+  return ''
+  + '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔔 Alerta de Oportunidade / Lembrete</div>'
+  + '<div id="'+px+'-alerta-ativo" style="display:none;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.4);border-radius:10px;padding:10px 14px;font-size:12px;margin-bottom:10px">'
+  +   '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">'
+  +     '<span id="'+px+'-alerta-info-txt" style="color:#eab308;font-weight:600"></span>'
+  +     '<button onclick="removerAlertaCtx(\'' + px + '\')" style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:12px;flex-shrink:0">✕ Remover</button>'
+  +   '</div>'
+  + '</div>'
+  + '<div id="'+px+'-alerta-hist" style="display:none;font-size:11px;color:var(--muted);background:rgba(138,155,191,.1);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px">✅ Um alerta deste item já foi disparado. Crie outro se ainda precisar acompanhar.</div>'
+  + '<div id="'+px+'-alerta-form" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px">'
+  +   '<div>'
+  +     '<div style="'+_LBL+'">Tipo de alerta</div>'
+  +     '<select id="'+px+'-alerta-alvo" onchange="alertaAlvoChange(\'' + px + '\')" style="'+_INP+'">'
+  +       '<option value="compra_bonificada">🛍️ Compra bonificada</option>'
+  +       '<option value="lembrete">⏰ Lembrete com data</option>'
+  +       '<option value="transferencia">🔄 Transferência bonificada</option>'
+  +     '</select>'
+  +   '</div>'
+  // ── compra bonificada ──
+  +   '<div id="'+px+'-alerta-campos-compra" style="display:flex;flex-direction:column;gap:10px">'
+  +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+  +       '<div>'
+  +         '<div style="'+_LBL+'">Parceiro</div>'
+  +         '<div style="position:relative">'
+  +           '<input type="text" id="'+px+'-alerta-parceiro" placeholder="Digite para buscar…" autocomplete="off" oninput="onAlertaParceiroInput(\'' + px + '\')" style="'+_INP+'"/>'
+  +           '<div id="'+px+'-alerta-parceiro-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:100;margin-top:2px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>'
+  +         '</div>'
+  +       '</div>'
+  +       '<div>'
+  +         '<div style="'+_LBL+'">Programa de Fidelidade</div>'
+  +         '<select id="'+px+'-alerta-programa" style="'+_INP+'"><option value="">Selecione o parceiro primeiro…</option></select>'
+  +       '</div>'
+  +     '</div>'
+  +     '<div style="max-width:50%">'
+  +       '<div style="'+_LBL+'">Pontuação Mínima (pts/R$)</div>'
+  +       '<input type="number" id="'+px+'-alerta-minpts" placeholder="Ex: 3" min="1" step="0.5" style="'+_INP+'"/>'
+  +     '</div>'
+  +   '</div>'
+  // ── transferência bonificada ──
+  +   '<div id="'+px+'-alerta-campos-transf" style="display:none;flex-direction:column;gap:10px">'
+  +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+  +       '<div>'
+  +         '<div style="'+_LBL+'">Origem</div>'
+  +         '<select id="'+px+'-alerta-origem" style="'+_INP+'"></select>'
+  +       '</div>'
+  +       '<div>'
+  +         '<div style="'+_LBL+'">Destino (companhia / programa)</div>'
+  +         '<select id="'+px+'-alerta-destino" style="'+_INP+'"></select>'
+  +       '</div>'
+  +     '</div>'
+  +     '<div style="max-width:50%">'
+  +       '<div style="'+_LBL+'">Bônus mínimo (%)</div>'
+  +       '<input type="number" id="'+px+'-alerta-bonusmin" placeholder="Ex: 80" min="1" step="5" style="'+_INP+'"/>'
+  +     '</div>'
+  +   '</div>'
+  // ── lembrete com data ──
+  +   '<div id="'+px+'-alerta-campos-lembrete" style="display:none;flex-direction:column;gap:10px">'
+  +     '<div>'
+  +       '<div style="'+_LBL+'">O que lembrar</div>'
+  +       '<textarea id="'+px+'-alerta-texto" rows="2" placeholder="Ex: Cancelar o Clube Smiles antes da renovação de agosto" style="'+_INP+';resize:vertical;min-height:56px"></textarea>'
+  +     '</div>'
+  +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
+  +       '<div>'
+  +         '<div style="'+_LBL+'">🗓️ Data do lembrete</div>'
+  +         '<input type="date" id="'+px+'-alerta-data" style="'+_INP+'"/>'
+  +       '</div>'
+  +       '<div>'
+  +         '<div style="'+_LBL+'">Horário</div>'
+  +         '<input type="time" id="'+px+'-alerta-hora" value="09:00" style="'+_INP+'"/>'
+  +       '</div>'
+  +     '</div>'
+  +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">⏰ Disparo único: chega no horário marcado e o lembrete é consumido. Nada a ver com oferta — serve para qualquer tarefa com prazo (cancelar clube, renovar assinatura, cobrar crédito de pontos…).</div>'
+  +   '</div>'
+  +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">📲 Enviado para o grupo definido em <b>Configuração → WhatsApp</b>.</div>'
+  +   '<button onclick="salvarAlertaCtx(\'' + px + '\')" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">🔔 Criar Alerta</button>'
+  + '</div>';
 }
 
 // Cache dos alertas ativos, usado para o selo na lista de atividades.
@@ -4615,8 +4606,24 @@ function carregarAlertasAtivos(force) {
       (d.data || []).forEach(function(al){ if (al.id) mapa[al.id] = al; });
       _alertasAtivos = mapa;
       renderViagens();
+      if (typeof renderDemandas === 'function' && document.getElementById('demandas-grid')) renderDemandas();
     })
     .catch(function(){});
+}
+
+// Alerta ativo amarrado a uma demanda (usado quando a demanda avulsa perde o
+// alertaId no reload — o vínculo sobrevive dentro do próprio alerta)
+function alertaDaDemanda(d) {
+  if (!d || !_alertasAtivos) return null;
+  if (d.alertaId && _alertasAtivos[d.alertaId]) return _alertasAtivos[d.alertaId];
+  var achado = null;
+  Object.keys(_alertasAtivos).forEach(function(k){
+    var al = _alertasAtivos[k];
+    if (achado) return;
+    if (al.demandaId && al.demandaId === d.id) achado = al;
+    else if (d.atividadeRef && al.atividadeId === d.atividadeRef) achado = al;
+  });
+  return achado;
 }
 
 function badgeAlertaAtiv(a) {
@@ -4629,66 +4636,201 @@ function badgeAlertaAtiv(a) {
   return '<span class="ativ-alerta enviado" title="Alerta desta atividade já foi disparado" onclick="event.stopPropagation()">🔔 enviado</span>';
 }
 
-function popularSelectsAlertaTransf() {
-  var so = document.getElementById('mad-alerta-origem');
-  var sd = document.getElementById('mad-alerta-destino');
+function popularSelectsAlertaTransf(px) {
+  var so = _ael(px, 'origem');
+  var sd = _ael(px, 'destino');
   if (so && !so.options.length) so.innerHTML = _optsAlfabeticas(ALERTA_ORIGEM_OPTIONS, 'Qualquer origem');
   if (sd && !sd.options.length) sd.innerHTML = _optsAlfabeticas(ALERTA_DESTINO_OPTIONS, 'Selecione…');
 }
 
-function alertaAlvoChange() {
-  var alvo = document.getElementById('mad-alerta-alvo').value;
-  var ehTransf = alvo === 'transferencia';
-  document.getElementById('mad-alerta-campos-compra').style.display = ehTransf ? 'none' : 'flex';
-  document.getElementById('mad-alerta-campos-transf').style.display = ehTransf ? 'flex' : 'none';
+function alertaAlvoChange(px) {
+  var alvo = _ael(px, 'alvo').value;
+  _ael(px, 'campos-compra').style.display   = (alvo === 'compra_bonificada') ? 'flex' : 'none';
+  _ael(px, 'campos-transf').style.display   = (alvo === 'transferencia')     ? 'flex' : 'none';
+  _ael(px, 'campos-lembrete').style.display = (alvo === 'lembrete')          ? 'flex' : 'none';
+}
+
+function onAlertaParceiroInput(px) {
+  var q = _ael(px, 'parceiro').value.toLowerCase().trim();
+  var drop = _ael(px, 'parceiro-drop');
+  if (!q || q.length < 2) { drop.style.display = 'none'; return; }
+  carregarParceiros(function(lista) {
+    var filtered = lista.filter(function(p){ return p.nome.includes(q); }).slice(0, 10);
+    if (!filtered.length) { drop.style.display = 'none'; return; }
+    drop.innerHTML = filtered.map(function(p){
+      var progs = p.programas.join(', ') || '—';
+      return '<div onclick="selecionarParceiro(this,\'' + px + '\')" data-nome="'+p.nome+'" data-progs="'+p.programas.join(',')+'" '+
+        'style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" '+
+        'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+
+        '<span style="font-weight:600;text-transform:capitalize">'+p.nome+'</span>'+
+        '<span style="font-size:10px;color:var(--muted)">'+progs+'</span>'+
+        '</div>';
+    }).join('');
+    drop.style.display = '';
+  });
+}
+
+function selecionarParceiro(el, px) {
+  px = px || 'mad';
+  var nome = el.dataset.nome;
+  var progs = el.dataset.progs ? el.dataset.progs.split(',').filter(Boolean) : [];
+  _ael(px, 'parceiro').value = nome;
+  _ael(px, 'parceiro-drop').style.display = 'none';
+  var sel = _ael(px, 'programa');
+  var PROG_LABEL = {
+    smiles: 'Smiles', livelo: 'Livelo', esfera: 'Esfera',
+    latampass: 'LATAM Pass', 'latam pass': 'LATAM Pass',
+    aadvantage: 'AAdvantage', azul: 'Azul Fidelidade',
+    iberia: 'Iberia Plus', executive: 'Executive Club',
+    finnair: 'Finnair Plus', privilege: 'Privilege Club'
+  };
+  sel.innerHTML = progs.length
+    ? '<option value="">Selecione…</option>' + progs.map(function(p){
+        return { v: p, label: PROG_LABEL[p.toLowerCase()] || p.charAt(0).toUpperCase() + p.slice(1) };
+      }).sort(function(a,b){ return a.label.localeCompare(b.label, 'pt-BR'); }).map(function(o){
+        return '<option value="'+o.v+'">'+o.label+'</option>';
+      }).join('')
+    : '<option value="">Nenhum programa disponível</option>';
 }
 
 function resumoAlerta(al) {
-  if ((al.alvo || '') === 'transferencia') {
+  var alvo = al.alvo || 'compra_bonificada';
+  if (alvo === 'transferencia') {
     return '🔄 ' + (al.origem || 'Qualquer origem') + ' → ' + al.destino + ' ≥ ' + al.bonusMin + '% de bônus';
+  }
+  if (alvo === 'lembrete') {
+    return '⏰ ' + fmtDate(al.dataLembrete) + (al.horaLembrete ? ' ' + al.horaLembrete : '') + ' · ' + (al.textoLembrete || 'Lembrete');
   }
   return '🛍️ ' + al.parceiro + ' · ' + al.programa + ' ≥ ' + al.minPts + ' pts/R$';
 }
 
-// Retorna { v: viagem, a: atividade, realIdx } da atividade aberta no modal
-function _ativDoModal() {
-  if (!detalheAtivCtx || detalheAtivCtx.tipo === 'temp') return null;
-  var v = viagens.find(function(x){ return x.id === detalheAtivCtx.viagemId; });
-  if (!v) return null;
-  var a = sortAtividades(v.atividades || [])[detalheAtivCtx.idx];
-  if (!a) return null;
-  return { v: v, a: a, realIdx: v.atividades.indexOf(a) };
+// Monta (uma vez), reseta e abre o form de alerta no container de prefixo px.
+// ctx descreve o que o alerta acompanha — ver salvarAlertaCtx().
+function abrirSecaoAlerta(px, ctx) {
+  var sec = document.getElementById(px + '-alerta-section');
+  if (!sec) return;
+  if (!sec.dataset.montado) { sec.innerHTML = htmlSecaoAlerta(px); sec.dataset.montado = '1'; }
+  sec.style.display = '';
+  _alertaCtx[px] = ctx;
+
+  popularSelectsAlertaTransf(px);
+  _ael(px, 'hist').style.display  = 'none';
+  _ael(px, 'ativo').style.display = 'none';
+  _ael(px, 'form').style.display  = '';
+  _ael(px, 'alvo').value = 'compra_bonificada';
+  alertaAlvoChange(px);
+  _ael(px, 'parceiro').value = '';
+  _ael(px, 'programa').innerHTML = '<option value="">Selecione o parceiro primeiro…</option>';
+  _ael(px, 'minpts').value   = '';
+  _ael(px, 'origem').value   = '';
+  _ael(px, 'destino').value  = '';
+  _ael(px, 'bonusmin').value = '';
+  _ael(px, 'texto').value    = '';
+  _ael(px, 'data').value     = '';
+  _ael(px, 'hora').value     = '09:00';
+
+  if (!ctx.alertaId) return;
+  // Alerta existente: se já disparou, some da lista e o form fica limpo
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/alertas')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) return;
+      if (_alertaCtx[px] !== ctx) return; // modal já trocou de item
+      var al = (d.data || []).find(function(x){ return x.id === ctx.alertaId; });
+      if (!al) { _ael(px, 'hist').style.display = ''; return; }
+      preencherFormAlerta(px, al);
+    })
+    .catch(function(){});
 }
 
-function salvarAlertaAtiv() {
-  var ctx = _ativDoModal();
+function preencherFormAlerta(px, al) {
+  var alvo = al.alvo || 'compra_bonificada';
+  _ael(px, 'alvo').value = alvo;
+  alertaAlvoChange(px);
+  if (alvo === 'transferencia') {
+    _ael(px, 'origem').value   = al.origem || '';
+    _ael(px, 'destino').value  = al.destino || '';
+    _ael(px, 'bonusmin').value = al.bonusMin || '';
+  } else if (alvo === 'lembrete') {
+    _ael(px, 'texto').value = al.textoLembrete || '';
+    _ael(px, 'data').value  = al.dataLembrete || '';
+    _ael(px, 'hora').value  = al.horaLembrete || '09:00';
+  } else {
+    _ael(px, 'parceiro').value = al.parceiro || '';
+    _ael(px, 'programa').innerHTML = '<option value="'+(al.programa||'')+'">'+(al.programa||'')+'</option>';
+    _ael(px, 'minpts').value = al.minPts || '';
+  }
+  var txt = _ael(px, 'info-txt');
+  if (txt) txt.textContent = resumoAlerta(al);
+  _ael(px, 'ativo').style.display = '';
+  _ael(px, 'form').style.display  = 'none';
+}
+
+// Grava o vínculo do alerta no lugar que persiste no servidor.
+// Atividade de viagem → viagens.json (sobrevive ao reload).
+// Demanda avulsa (sem viagem) → só memória: o array de demandas não é
+// persistido. O alerta continua valendo (guarda demandaId), mas o selo
+// se perde no reload. Vincule a demanda a uma viagem para persistir.
+function _persistirVinculoAlerta(ctx, alertaId) {
+  var gravou = false;
+  if (ctx.viagemId && ctx.atividadeId) {
+    var v = viagens.find(function(x){ return x.id === ctx.viagemId; });
+    var a = v && (v.atividades || []).find(function(x){ return x.id === ctx.atividadeId; });
+    if (a) {
+      if (alertaId) a.alertaId = alertaId; else delete a.alertaId;
+      saveViagens();
+      gravou = true;
+    }
+  }
+  if (ctx.demandaId) {
+    var d = (typeof demandas !== 'undefined' ? demandas : []).find(function(x){ return x.id === ctx.demandaId; });
+    if (d) { if (alertaId) d.alertaId = alertaId; else delete d.alertaId; }
+  }
+  return gravou;
+}
+
+function salvarAlertaCtx(px) {
+  var ctx = _alertaCtx[px];
   if (!ctx) return;
   if (!(_cfg && _cfg.grupoAlertas)) {
     showToast('⚠️ Defina o grupo de alertas em Configuração → WhatsApp', 'err');
     return;
   }
-  var alvo = document.getElementById('mad-alerta-alvo').value;
+  var alvo = _ael(px, 'alvo').value;
   var payload = {
-    id: ctx.a.alertaId || ('ALT-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
+    id: ctx.alertaId || ('ALT-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
     alvo: alvo,
-    viagemId: detalheAtivCtx.viagemId,
-    viagemNome: ctx.v.nome || '',
-    atividadeNome: ctx.a.nome || '',
-    atividadeTitulo: document.getElementById('mad-titulo').value.trim() || ctx.a.titulo || '',
-    atividadeDescricao: document.getElementById('mad-descricao').value.trim() || ctx.a.descricao || ''
+    vinculo: ctx.escopo || 'atividade',
+    viagemId: ctx.viagemId || '',
+    viagemNome: ctx.viagemNome || '',
+    atividadeId: ctx.atividadeId || '',
+    atividadeNome: ctx.atividadeNome || '',
+    atividadeTitulo: ctx.getTitulo ? ctx.getTitulo() : (ctx.atividadeTitulo || ''),
+    atividadeDescricao: ctx.getDescricao ? ctx.getDescricao() : (ctx.atividadeDescricao || ''),
+    demandaId: ctx.demandaId || '',
+    demandaNumero: ctx.demandaNumero || '',
+    demandaTitulo: ctx.demandaTitulo || '',
+    clientes: ctx.clientes || ''
   };
 
   if (alvo === 'transferencia') {
-    payload.origem   = getVal('mad-alerta-origem');
-    payload.destino  = getVal('mad-alerta-destino');
-    payload.bonusMin = getVal('mad-alerta-bonusmin');
+    payload.origem   = getVal(px + '-alerta-origem');
+    payload.destino  = getVal(px + '-alerta-destino');
+    payload.bonusMin = getVal(px + '-alerta-bonusmin');
     if (!payload.destino || !payload.bonusMin) {
       showToast('⚠️ Preencha destino e bônus mínimo', 'err'); return;
     }
+  } else if (alvo === 'lembrete') {
+    payload.textoLembrete = _ael(px, 'texto').value.trim();
+    payload.dataLembrete  = _ael(px, 'data').value;
+    payload.horaLembrete  = _ael(px, 'hora').value || '09:00';
+    if (!payload.textoLembrete || !payload.dataLembrete) {
+      showToast('⚠️ Preencha o que lembrar e a data', 'err'); return;
+    }
   } else {
-    payload.parceiro = document.getElementById('mad-alerta-parceiro').value.trim();
-    payload.programa = document.getElementById('mad-alerta-programa').value;
-    payload.minPts   = document.getElementById('mad-alerta-minpts').value;
+    payload.parceiro = _ael(px, 'parceiro').value.trim();
+    payload.programa = _ael(px, 'programa').value;
+    payload.minPts   = _ael(px, 'minpts').value;
     if (!payload.parceiro || !payload.programa || !payload.minPts) {
       showToast('⚠️ Preencha parceiro, programa e pontuação mínima', 'err'); return;
     }
@@ -4702,34 +4844,34 @@ function salvarAlertaAtiv() {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (!d.ok) { showToast('❌ Erro ao criar alerta: ' + (d.erro || ''), 'err'); return; }
-    // Amarra o alerta à atividade (mesmo quando já disparou: é o que alimenta o selo)
-    if (ctx.realIdx !== -1) {
-      ctx.v.atividades[ctx.realIdx].alertaId = d.id || payload.id;
-      saveViagens();
-    }
+    var id = d.id || payload.id;
+    ctx.alertaId = id;
+    // Amarra o alerta ao item (mesmo quando já disparou: é o que alimenta o selo)
+    _persistirVinculoAlerta(ctx, id);
     carregarAlertasAtivos(true);
     if (d.disparadoAgora) {
-      // Já havia oferta ativa atendendo — o alerta foi enviado e consumido na hora
-      showToast('🔔 Já havia oferta ativa: alerta enviado ao grupo agora!', 'ok');
-      document.getElementById('mad-alerta-hist').style.display = '';
-      document.getElementById('mad-alerta-ativo').style.display = 'none';
-      document.getElementById('mad-alerta-form').style.display = '';
+      // Já havia oferta ativa atendendo (ou o lembrete já venceu) — enviado na hora
+      showToast(payload.alvo === 'lembrete'
+        ? '⏰ Data já passou: lembrete enviado ao grupo agora!'
+        : '🔔 Já havia oferta ativa: alerta enviado ao grupo agora!', 'ok');
+      _ael(px, 'hist').style.display  = '';
+      _ael(px, 'ativo').style.display = 'none';
+      _ael(px, 'form').style.display  = '';
       return;
     }
-    showToast('🔔 Alerta criado com sucesso!', 'ok');
-    var txt = document.getElementById('mad-alerta-info-txt');
+    showToast(payload.alvo === 'lembrete' ? '⏰ Lembrete agendado!' : '🔔 Alerta criado com sucesso!', 'ok');
+    var txt = _ael(px, 'info-txt');
     if (txt) txt.textContent = resumoAlerta(payload);
-    document.getElementById('mad-alerta-ativo').style.display = '';
-    document.getElementById('mad-alerta-form').style.display = 'none';
+    _ael(px, 'ativo').style.display = '';
+    _ael(px, 'form').style.display  = 'none';
   })
   .catch(function(e){ showToast('❌ Erro de conexão', 'err'); });
 }
 
-function removerAlertaAtiv() {
-  var ctx = _ativDoModal();
-  if (!ctx) return;
-  var id = ctx.a.alertaId;
-  if (!id) { showToast('⚠️ Sem alerta para remover', 'err'); return; }
+function removerAlertaCtx(px) {
+  var ctx = _alertaCtx[px];
+  if (!ctx || !ctx.alertaId) { showToast('⚠️ Sem alerta para remover', 'err'); return; }
+  var id = ctx.alertaId;
   fetch('https://cdv-proxy-production.up.railway.app/concierge/alerta', {
     method: 'DELETE',
     headers: {'Content-Type': 'application/json'},
@@ -4738,15 +4880,13 @@ function removerAlertaAtiv() {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (!d.ok) { showToast('❌ Erro ao remover alerta', 'err'); return; }
-    if (ctx.realIdx !== -1) {
-      delete ctx.v.atividades[ctx.realIdx].alertaId;
-      saveViagens();
-    }
+    ctx.alertaId = null;
+    _persistirVinculoAlerta(ctx, null);
     carregarAlertasAtivos(true);
     showToast('🗑 Alerta removido', 'ok');
-    document.getElementById('mad-alerta-hist').style.display = 'none';
-    document.getElementById('mad-alerta-ativo').style.display = 'none';
-    document.getElementById('mad-alerta-form').style.display = '';
+    _ael(px, 'hist').style.display  = 'none';
+    _ael(px, 'ativo').style.display = 'none';
+    _ael(px, 'form').style.display  = '';
   })
   .catch(function(e){ showToast('❌ Erro ao remover alerta', 'err'); });
 }
@@ -4840,49 +4980,23 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
   // Mostrar botão Concluir apenas se não estiver concluída
   var btnConcluir = document.getElementById('mad-btn-concluir');
   if (btnConcluir) btnConcluir.style.display = (a.status !== 'concluida') ? '' : 'none';
-  // Seção de alerta: só para atividades de viagem
+  // Seção de alerta: só para atividades de viagem (item temporário não tem vínculo)
   var alertaSection = document.getElementById('mad-alerta-section');
-  if (alertaSection) alertaSection.style.display = (tipo !== 'temp' && viagemId) ? '' : 'none';
-  if (tipo !== 'temp' && viagemId) {
-    // Resetar form
-    popularSelectsAlertaTransf();
-    document.getElementById('mad-alerta-hist').style.display = 'none';
-    document.getElementById('mad-alerta-ativo').style.display = 'none';
-    document.getElementById('mad-alerta-form').style.display = '';
-    document.getElementById('mad-alerta-alvo').value = 'compra_bonificada';
-    alertaAlvoChange();
-    document.getElementById('mad-alerta-parceiro').value = '';
-    document.getElementById('mad-alerta-programa').innerHTML = '<option value="">Selecione o parceiro primeiro…</option>';
-    document.getElementById('mad-alerta-minpts').value = '';
-    document.getElementById('mad-alerta-origem').value = '';
-    document.getElementById('mad-alerta-destino').value = '';
-    document.getElementById('mad-alerta-bonusmin').value = '';
-    // Alerta existente desta atividade (se já foi disparado, some da lista e o form fica limpo)
-    if (a.alertaId) {
-      fetch('https://cdv-proxy-production.up.railway.app/concierge/alertas')
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if (!d.ok) return;
-          var al = (d.data || []).find(function(x){ return x.id === a.alertaId; });
-          if (!al) { document.getElementById('mad-alerta-hist').style.display = ''; return; }
-          document.getElementById('mad-alerta-alvo').value = al.alvo || 'compra_bonificada';
-          alertaAlvoChange();
-          if ((al.alvo || '') === 'transferencia') {
-            document.getElementById('mad-alerta-origem').value = al.origem || '';
-            document.getElementById('mad-alerta-destino').value = al.destino || '';
-            document.getElementById('mad-alerta-bonusmin').value = al.bonusMin || '';
-          } else {
-            document.getElementById('mad-alerta-parceiro').value = al.parceiro || '';
-            document.getElementById('mad-alerta-programa').innerHTML = '<option value="'+(al.programa||'')+'">'+(al.programa||'')+'</option>';
-            document.getElementById('mad-alerta-minpts').value = al.minPts || '';
-          }
-          var txt = document.getElementById('mad-alerta-info-txt');
-          if (txt) txt.textContent = resumoAlerta(al);
-          document.getElementById('mad-alerta-ativo').style.display = '';
-          document.getElementById('mad-alerta-form').style.display = 'none';
-        })
-        .catch(function(){});
-    }
+  if (tipo === 'temp' || !viagemId) {
+    if (alertaSection) alertaSection.style.display = 'none';
+  } else {
+    var vAl = viagens.find(function(x){ return x.id === viagemId; });
+    abrirSecaoAlerta('mad', {
+      escopo: 'atividade',
+      viagemId: viagemId,
+      viagemNome: vAl ? (vAl.nome || '') : '',
+      atividadeId: a.id || '',
+      atividadeNome: a.nome || '',
+      alertaId: a.alertaId || null,
+      // Título/descrição saem do que está na tela (pode ter sido editado sem salvar)
+      getTitulo: function(){ return document.getElementById('mad-titulo').value.trim() || a.titulo || ''; },
+      getDescricao: function(){ return document.getElementById('mad-descricao').value.trim() || a.descricao || ''; }
+    });
   }
 }
 
@@ -6047,6 +6161,10 @@ function abrirNovaDemanda() {
     sel.appendChild(opt);
   });
   document.getElementById('df-field-atividade').style.display = 'none';
+  // Alerta só depois que a demanda existe (precisa de um vínculo para acompanhar)
+  var secAl = document.getElementById('dfa-alerta-section');
+  if (secAl) secAl.style.display = 'none';
+  _alertaCtx['dfa'] = null;
   popularDatalistClientes();
   demandaClienteChange();
   document.getElementById('modal-demanda').classList.add('open');
@@ -6056,6 +6174,9 @@ function fecharNovaDemanda() {
   closeModal('modal-demanda');
   var box = document.getElementById('df-cliente-dados');
   if (box) { box.style.display = 'none'; box.innerHTML = ''; }
+  var secAl = document.getElementById('dfa-alerta-section');
+  if (secAl) secAl.style.display = 'none';
+  _alertaCtx['dfa'] = null;
   demandaEditandoId = null;
 }
 
@@ -6204,6 +6325,26 @@ function editarDemanda(id) {
   });
   sel.value = d.viagemId || '';
   document.getElementById('df-field-atividade').style.display = 'none';
+
+  // Seção de alerta/lembrete da demanda. Demanda espelhada de atividade grava o
+  // vínculo na atividade (persiste em viagens.json); demanda avulsa guarda só o
+  // demandaId dentro do próprio alerta.
+  var alExistente = alertaDaDemanda(d);
+  abrirSecaoAlerta('dfa', {
+    escopo: 'demanda',
+    demandaId: d.id,
+    demandaNumero: d.numero || '',
+    demandaTitulo: d.titulo || '',
+    clientes: d.clientes || '',
+    viagemId: d.viagemId || '',
+    viagemNome: d.viagemNome || '',
+    atividadeId: d.atividadeRef || '',
+    atividadeNome: (d.tipo || '').split(' ').slice(1).join(' '),
+    alertaId: d.alertaId || (alExistente ? alExistente.id : null),
+    getTitulo: function(){ return document.getElementById('df-titulo').value.trim() || d.titulo || ''; },
+    getDescricao: function(){ return document.getElementById('df-descricao').value.trim() || d.descricao || ''; }
+  });
+
   popularDatalistClientes();
   demandaClienteChange();
   document.getElementById('modal-demanda').classList.add('open');
@@ -6371,6 +6512,7 @@ function renderDemandas() {
     + '</tr></thead><tbody>'
     + lista.map(function(d) {
       var icon = (d.tipo || '📌').split(' ')[0];
+      var alAtivo = alertaDaDemanda(d);
       var prazo = d.prazo ? fmtDate(d.prazo) : '—';
       var atrasado = d.prazo && d.status !== 'concluida' && d.prazo < new Date().toISOString().split('T')[0];
       var subtitulo = d.descricao
@@ -6396,6 +6538,7 @@ function renderDemandas() {
         + '</select>'
         + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
+        + (alAtivo ? '<span class="dem-acao" title="' + rgEsc(resumoAlerta(alAtivo)) + '" style="cursor:default">🔔</span>' : '')
         + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
         + (!d.reservaId ? '<button class="dem-acao" title="Criar reserva para esta demanda" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
         + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
