@@ -2362,9 +2362,11 @@ function populateViagemAssocSelect(reservadoParaId) {
   if (reservadoParaId) sel.value = reservadoParaId;
   onViagemAssocChange();
 }
+// Exibe até 3 palavras do nome (2 espaços) — 2 palavras cortava nomes como
+// "Rodolpho Junior Sanz" em "Rodolpho Junior"
 function toTitleCase(str) {
   if (!str) return '';
-  return str.trim().split(/\s+/).slice(0, 2).map(function(w) {
+  return str.trim().split(/\s+/).slice(0, 3).map(function(w) {
     return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   }).join(' ');
 }
@@ -4493,8 +4495,8 @@ function normalizarNome(nome) {
   var partes = nome.trim().split(/\s+/).map(function(p){
     return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
   });
-  // Exibir apenas primeiro nome + primeiro sobrenome
-  return partes.slice(0, 2).join(' ');
+  // Exibir até 3 palavras do nome (primeiro nome + 2 sobrenomes)
+  return partes.slice(0, 3).join(' ');
 }
 
 // ── MULTI-SELECT CLIENTES ──────────────────────────────────────
