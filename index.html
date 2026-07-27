@@ -4739,7 +4739,12 @@ function reordenarAtiv(viagemId, ativIdx, direcao) {
 var detalheAtivCtx = null; // { tipo: 'temp'|'viagem', idx, viagemId }
 
 // Cache de parceiros do snapshot
-var _parceirosCache = null;
+// O proxy filtra /parceiros por uma whitelist de categoria viagem (PARCEIROS_VIAGEM
+// em painel-cdv/index.js). Com ?viagem=false vem o catálogo completo do snapshot —
+// usado como segunda seção do autocomplete para nada ficar inacessível
+// (ex.: Sam's Club, que é clube de compras e não está na whitelist).
+var _parceirosCache = null;     // categoria viagem
+var _parceirosCacheAll = null;  // catálogo completo
 
 function carregarParceiros(callback) {
   if (_parceirosCache) { if (callback) callback(_parceirosCache); return; }
@@ -4750,6 +4755,17 @@ function carregarParceiros(callback) {
       if (callback) callback(_parceirosCache);
     })
     .catch(function(){ _parceirosCache = []; if (callback) callback([]); });
+}
+
+function carregarParceirosTodos(callback) {
+  if (_parceirosCacheAll) { if (callback) callback(_parceirosCacheAll); return; }
+  fetch('https://cdv-proxy-production.up.railway.app/parceiros?viagem=false')
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      _parceirosCacheAll = d.data || [];
+      if (callback) callback(_parceirosCacheAll);
+    })
+    .catch(function(){ _parceirosCacheAll = []; if (callback) callback([]); });
 }
 
 // ══ ALERTAS DE OPORTUNIDADE E LEMBRETES ══
