@@ -210,6 +210,21 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .demanda-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .demanda-numero{font-size:10px;font-weight:700;color:var(--muted);background:var(--surface2);padding:2px 6px;border-radius:6px}
 
+/* SELETOR MULTIPLO DE CLIENTES (Demandas) */
+.cli-multi-wrap{position:relative}
+.cli-multi-box{display:flex;flex-wrap:wrap;align-items:center;gap:6px;min-height:40px;padding:6px 8px;border:1px solid var(--border);border-radius:8px;background:var(--surface);cursor:text}
+.cli-multi-box:focus-within{border-color:var(--accent)}
+.cli-multi-box input{flex:1;min-width:150px;border:none;outline:none;background:transparent;color:var(--text);font-size:13px;padding:4px 2px}
+.cli-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,88,94,.12);border:1px solid rgba(255,88,94,.35);color:var(--text);border-radius:999px;padding:3px 8px 3px 10px;font-size:12px;font-weight:600;max-width:100%}
+.cli-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cli-chip button{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0 2px;flex-shrink:0}
+.cli-chip button:hover{color:var(--accent)}
+.cli-multi-drop{position:absolute;top:100%;left:0;right:0;z-index:120;margin-top:3px;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:210px;overflow-y:auto;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+.cli-multi-opt{padding:8px 12px;font-size:13px;color:var(--text);cursor:pointer}
+.cli-multi-opt:hover,.cli-multi-opt.ativa{background:var(--surface2)}
+.cli-multi-opt.novo{color:var(--muted);font-style:italic}
+.cli-multi-vazio{padding:8px 12px;font-size:12px;color:var(--muted)}
+
 /* VIAGENS */
 .viagem-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:12px;transition:border-color .2s}
 .viagem-card.urgente{border-color:var(--accent)}
@@ -1584,8 +1599,16 @@ header{animation:fadeUp .45s ease both}
     <div class="field"><label>Título <span class="tag required">*</span></label><input type="text" id="df-titulo" placeholder="Ex: Reservar passagem GRU→MIA em junho" /></div>
     <div class="field">
       <label>Cliente(s) <span class="tag required">*</span></label>
-      <input type="text" id="df-clientes" list="df-clientes-list" autocomplete="off" placeholder="🔍 Digite para buscar ou selecione o cliente…" oninput="demandaClienteChange()" onchange="demandaClienteChange()" />
-      <datalist id="df-clientes-list"></datalist>
+      <div class="cli-multi-wrap">
+        <div class="cli-multi-box" id="df-clientes-box" onclick="focarBuscaClientes(event)">
+          <span id="df-clientes-chips"></span>
+          <input type="text" id="df-clientes-busca" autocomplete="off" placeholder="🔍 Digite para buscar e clique para adicionar…"
+                 oninput="onBuscaClientesInput()" onfocus="onBuscaClientesInput()"
+                 onkeydown="onBuscaClientesKey(event)" onblur="fecharDropClientesLento()" />
+        </div>
+        <div class="cli-multi-drop" id="df-clientes-drop" style="display:none"></div>
+      </div>
+      <input type="hidden" id="df-clientes" />
     </div>
     <div id="df-cliente-dados" style="display:none;margin-bottom:14px"></div>
     <div class="field">
@@ -1942,6 +1965,158 @@ function popularDatalistClientes() {
   dl.innerHTML = sorted.map(function(c){
     return '<option value="' + toTitleCase(c.nome).split('"').join('&quot;') + '"></option>';
   }).join('');
+}
+
+// ══ SELETOR MÚLTIPLO DE CLIENTES (Demandas) ══
+// Fonte da verdade continua sendo o input oculto #df-clientes, com os nomes
+// separados por ", " — mesmo formato de viagens.json/reservas.json. Os chips
+// são apenas a camada visual em cima dessa string.
+var _cliDropIdx = -1;
+var _cliDropTimer = null;
+
+function parseClientesStr(str) {
+  return String(str || '')
+    .split(/\s*(?:,|\u00b7|;|\|)\s*/)
+    .map(function(s){ return s.trim(); })
+    .filter(function(s){ return !!s; });
+}
+
+function getClientesDemanda() {
+  var el = document.getElementById('df-clientes');
+  return el ? parseClientesStr(el.value) : [];
+}
+
+function setClientesDemanda(lista) {
+  var el = document.getElementById('df-clientes');
+  if (!el) return;
+  el.value = lista.join(', ');
+  renderChipsClientes();
+  demandaClienteChange();
+}
+
+function renderChipsClientes() {
+  var box = document.getElementById('df-clientes-chips');
+  if (!box) return;
+  box.innerHTML = getClientesDemanda().map(function(n, i) {
+    return '<span class="cli-chip"><span>' + escHtml(n) + '</span>'
+      + '<button type="button" title="Remover" onclick="removerClienteDemanda(event,' + i + ')">&times;</button></span>';
+  }).join('');
+}
+
+function removerClienteDemanda(ev, i) {
+  if (ev) { ev.stopPropagation(); ev.preventDefault(); }
+  var lista = getClientesDemanda();
+  lista.splice(i, 1);
+  setClientesDemanda(lista);
+}
+
+function adicionarClienteDemanda(nome) {
+  nome = String(nome || '').trim();
+  if (!nome) return;
+  var lista = getClientesDemanda();
+  var repetido = lista.some(function(x){ return x.toLowerCase() === nome.toLowerCase(); });
+  if (!repetido) lista.push(nome);
+  setClientesDemanda(lista);
+  var b = document.getElementById('df-clientes-busca');
+  if (b) { b.value = ''; b.focus(); }
+  onBuscaClientesInput();
+}
+
+function resetBuscaClientes() {
+  var b = document.getElementById('df-clientes-busca');
+  if (b) b.value = '';
+  fecharDropClientes();
+}
+
+function focarBuscaClientes(ev) {
+  if (ev && ev.target && ev.target.tagName === 'BUTTON') return;
+  var b = document.getElementById('df-clientes-busca');
+  if (b) b.focus();
+}
+
+function fecharDropClientes() {
+  var drop = document.getElementById('df-clientes-drop');
+  if (drop) { drop.style.display = 'none'; drop.innerHTML = ''; }
+  _cliDropIdx = -1;
+}
+
+function fecharDropClientesLento() {
+  clearTimeout(_cliDropTimer);
+  _cliDropTimer = setTimeout(fecharDropClientes, 180);
+}
+
+// Candidatos do cadastro que ainda não foram selecionados
+function candidatosClientesDemanda(termo) {
+  var jaSel = getClientesDemanda().map(function(x){ return x.toLowerCase(); });
+  var vistos = {};
+  var t = String(termo || '').trim().toLowerCase();
+  return clientes
+    .map(function(c){ return toTitleCase(c.nome || ''); })
+    .filter(function(n){
+      if (!n) return false;
+      var k = n.toLowerCase();
+      if (vistos[k]) return false;
+      vistos[k] = 1;
+      if (jaSel.indexOf(k) !== -1) return false;
+      return !t || k.indexOf(t) !== -1;
+    })
+    .sort(function(a, b){ return a.localeCompare(b, 'pt-BR'); });
+}
+
+function onBuscaClientesInput() {
+  clearTimeout(_cliDropTimer);
+  var b = document.getElementById('df-clientes-busca');
+  var drop = document.getElementById('df-clientes-drop');
+  if (!b || !drop) return;
+  var termo = b.value.trim();
+  var lista = candidatosClientesDemanda(termo);
+  var html = lista.map(function(n, i) {
+    var safe = n.split('\\').join('\\\\').split("'").join("\\'");
+    return '<div class="cli-multi-opt" data-i="' + i + '" onmousedown="event.preventDefault()" '
+      + 'onclick="adicionarClienteDemanda(\'' + safe + '\')">' + escHtml(n) + '</div>';
+  }).join('');
+  // Permite anotar um nome que ainda não está no cadastro
+  var exato = lista.some(function(n){ return n.toLowerCase() === termo.toLowerCase(); });
+  if (termo && !exato) {
+    var safeT = termo.split('\\').join('\\\\').split("'").join("\\'");
+    html += '<div class="cli-multi-opt novo" onmousedown="event.preventDefault()" '
+      + 'onclick="adicionarClienteDemanda(\'' + safeT + '\')">\u2795 Adicionar "' + escHtml(termo) + '" (fora do cadastro)</div>';
+  }
+  if (!html) html = '<div class="cli-multi-vazio">Nenhum cliente disponível</div>';
+  drop.innerHTML = html;
+  drop.style.display = 'block';
+  _cliDropIdx = -1;
+}
+
+function onBuscaClientesKey(ev) {
+  var b = document.getElementById('df-clientes-busca');
+  var drop = document.getElementById('df-clientes-drop');
+  if (!b || !drop) return;
+  var opts = drop.querySelectorAll('.cli-multi-opt');
+
+  if (ev.key === 'Backspace' && !b.value) {
+    var lista = getClientesDemanda();
+    if (lista.length) { lista.pop(); setClientesDemanda(lista); onBuscaClientesInput(); }
+    return;
+  }
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    if (!opts.length) return;
+    ev.preventDefault();
+    _cliDropIdx += (ev.key === 'ArrowDown' ? 1 : -1);
+    if (_cliDropIdx < 0) _cliDropIdx = opts.length - 1;
+    if (_cliDropIdx >= opts.length) _cliDropIdx = 0;
+    for (var i = 0; i < opts.length; i++) opts[i].classList.toggle('ativa', i === _cliDropIdx);
+    opts[_cliDropIdx].scrollIntoView({ block: 'nearest' });
+    return;
+  }
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    if (_cliDropIdx >= 0 && opts[_cliDropIdx]) { opts[_cliDropIdx].click(); return; }
+    if (opts.length === 1) { opts[0].click(); return; }
+    if (b.value.trim()) adicionarClienteDemanda(b.value.trim());
+    return;
+  }
+  if (ev.key === 'Escape') { fecharDropClientes(); return; }
 }
 
 // Localiza no cadastro os clientes referenciados por um texto livre
@@ -6681,7 +6856,8 @@ function abrirNovaDemanda() {
   var secAl = document.getElementById('dfa-alerta-section');
   if (secAl) secAl.style.display = 'none';
   _alertaCtx['dfa'] = null;
-  popularDatalistClientes();
+  resetBuscaClientes();
+  renderChipsClientes();
   demandaClienteChange();
   document.getElementById('modal-demanda').classList.add('open');
 }
@@ -6881,7 +7057,8 @@ function editarDemanda(id) {
     getDescricao: function(){ return document.getElementById('df-descricao').value.trim() || d.descricao || ''; }
   });
 
-  popularDatalistClientes();
+  resetBuscaClientes();
+  renderChipsClientes();
   demandaClienteChange();
   document.getElementById('modal-demanda').classList.add('open');
 }
