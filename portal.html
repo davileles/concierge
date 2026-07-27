@@ -734,7 +734,7 @@ function fmtDate(d) {
 
 function toTitleCase(str) {
   if (!str) return '';
-  return str.trim().split(/\s+/).slice(0,2).map(function(w){
+  return str.trim().split(/\s+/).slice(0,3).map(function(w){
     return w.charAt(0).toUpperCase()+w.slice(1).toLowerCase();
   }).join(' ');
 }
