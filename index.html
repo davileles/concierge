@@ -6733,6 +6733,9 @@ function salvarDemanda() {
   var icon = tipo.split(' ')[0];
   var nomeAtiv = tipo.split(' ').slice(1).join(' ');
 
+  var eraNova = !demandaEditandoId;
+  var novoIdCriado = null;
+
   if (demandaEditandoId) {
     var idx = demandas.findIndex(function(d){ return d.id === demandaEditandoId; });
     if (idx !== -1) {
@@ -6810,9 +6813,26 @@ function salvarDemanda() {
     }
 
     demandas.unshift(novaDem);
+    novoIdCriado = novaDem.id;
   }
 
   saveDemandas();
+
+  // Demanda recém-criada: em vez de fechar, reabre o modal em modo edição para
+  // liberar a seção de alerta (ela depende do demandaId, que só existe após salvar).
+  if (eraNova && novoIdCriado) {
+    renderDemandas();
+    editarDemanda(novoIdCriado);
+    showToast('✅ Demanda criada! Agora você pode configurar um alerta.', 'ok');
+    setTimeout(function() {
+      var sec = document.getElementById('dfa-alerta-section');
+      if (!sec) return;
+      try { sec.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+      catch (e) { sec.scrollIntoView(); }
+    }, 250);
+    return;
+  }
+
   fecharNovaDemanda();
   renderDemandas();
   showToast('✅ Demanda salva!', 'ok');
