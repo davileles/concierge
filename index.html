@@ -2463,25 +2463,28 @@ function coletarReservaDoForm(id) {
   return res;
 }
 
-function salvarReserva() {
+function salvarReserva(cb) {
+  // cb(ok) — opcional. Usado pelo botao "Salvar e Enviar" da secao de mensagem
+  // embutida no formulario, que so dispara o WhatsApp apos a reserva ser salva.
+  var _cb = (typeof cb === 'function') ? cb : function(){};
   var _btnSalvar = document.getElementById('btn-salvar-reserva');
-  if (_btnSalvar && _btnSalvar.disabled) return; // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
+  if (_btnSalvar && _btnSalvar.disabled) { _cb(false); return; } // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
 
   var tipo = getVal('f-tipo');
   var cliente = toTitleCase(getVal('f-cliente'));
-  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); return; }
-  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); return; }
+  if (!tipo) { showToast('⚠️ Selecione o tipo de reserva', 'err'); _cb(false); return; }
+  if (!cliente) { showToast('⚠️ Selecione o cliente', 'err'); _cb(false); return; }
 
   // Validações específicas para voo
   if (tipo === 'voo') {
     // Ida — obrigatórios
-    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); return; }
-    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); return; }
-    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); return; }
-    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); return; }
-    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); return; }
-    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); return; }
-    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); return; }
+    if (!getVal('f-origem'))         { showToast('⚠️ Informe a Origem do voo de ida', 'err'); _cb(false); return; }
+    if (!getVal('f-destino'))        { showToast('⚠️ Informe o Destino do voo de ida', 'err'); _cb(false); return; }
+    if (!getVal('f-data-ida'))       { showToast('⚠️ Informe a Data de Partida da ida', 'err'); _cb(false); return; }
+    if (!getVal('f-hora-partida'))   { showToast('⚠️ Informe o Horário de Partida da ida', 'err'); _cb(false); return; }
+    if (!getVal('f-data-chegada-ida')) { showToast('⚠️ Informe a Data de Chegada da ida', 'err'); _cb(false); return; }
+    if (!getVal('f-hora-chegada'))   { showToast('⚠️ Informe o Horário de Chegada da ida', 'err'); _cb(false); return; }
+    if (!getVal('f-tipo-emissao'))   { showToast('⚠️ Informe o Tipo de Emissão', 'err'); _cb(false); return; }
     // Volta — se qualquer campo preenchido, todos os essenciais tornam-se obrigatórios
     var _vOrigem    = getVal('f-origem-volta');
     var _vDestino   = getVal('f-destino-volta');
@@ -2492,13 +2495,13 @@ function salvarReserva() {
     var _vCia       = getVal('f-cia-volta');
     var _voltaPreenchida = _vOrigem || _vDestino || _vDataPart || _vHoraPart || _vDataCheg || _vHoraCheg || _vCia;
     if (_voltaPreenchida) {
-      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); return; }
-      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); return; }
-      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); return; }
-      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); return; }
-      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); return; }
-      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); return; }
-      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); return; }
+      if (!_vOrigem)   { showToast('⚠️ Informe a Origem do voo de volta', 'err'); _cb(false); return; }
+      if (!_vDestino)  { showToast('⚠️ Informe o Destino do voo de volta', 'err'); _cb(false); return; }
+      if (!_vDataPart) { showToast('⚠️ Informe a Data de Partida da volta', 'err'); _cb(false); return; }
+      if (!_vHoraPart) { showToast('⚠️ Informe o Horário de Partida da volta', 'err'); _cb(false); return; }
+      if (!_vDataCheg) { showToast('⚠️ Informe a Data de Chegada da volta', 'err'); _cb(false); return; }
+      if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); _cb(false); return; }
+      if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); _cb(false); return; }
     }
   }
 
@@ -2665,6 +2668,7 @@ function salvarReserva() {
     .then(function(){
       if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
       showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
+      _cb(true);
       updateStats();
       renderReservas();
       limparForm();
@@ -2701,6 +2705,7 @@ function salvarReserva() {
     .catch(function(e){
       reservas.shift();
       if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
+      _cb(false);
       showToast('❌ Erro ao salvar reserva: ' + e.message, 'err');
       console.error('[salvarReserva]', e);
     });
@@ -5594,11 +5599,13 @@ function htmlSecaoMensagem(px) {
   +     '<div id="' + px + '-msg-info" style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6"></div>'
   +   '</div>'
   +   '<div style="display:flex;gap:8px;flex-wrap:wrap">'
-  +     '<button onclick="enviarMsgCtx(' + q(px) + ')" style="flex:1;min-width:150px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer">📤 Enviar Agora</button>'
+  +     '<button onclick="enviarMsgCtx(' + q(px) + ')" style="flex:1;min-width:150px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer">' + (px === 'nf' ? '💾 Salvar Reserva e Enviar' : '📤 Enviar Agora') + '</button>'
   +     '<button onclick="onMsgCtxChange(' + q(px) + ')" title="Regerar a partir dos dados atuais" style="background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 Atualizar</button>'
   +     '<button onclick="copiarMsgCtx(' + q(px) + ')" style="background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">📋 Copiar</button>'
   +   '</div>'
-  +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">ℹ️ Os modelos vem da aba <b>Mensagens → Modelos</b>. Enviar daqui não salva a reserva — as duas ações são independentes.</div>'
+  +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">ℹ️ Os modelos vem da aba <b>Mensagens → Modelos</b>. '
+  +     (px === 'nf' ? 'Ao enviar, a reserva é salva automaticamente antes do disparo.' : 'Enviar daqui não salva a reserva — as duas ações são independentes.')
+  +   '</div>'
   +   '<div id="' + px + '-msg-status" style="font-size:12px;font-weight:700;min-height:14px;text-align:center"></div>'
   + '</div>';
 }
@@ -5691,11 +5698,24 @@ function onMsgCtxChange(px) {
 }
 
 function enviarMsgCtx(px) {
-  enviarWhatsApp(
-    _mel(px, 'grupo').value.trim(),
-    _mel(px, 'texto').value.trim(),
-    _mel(px, 'status')
-  );
+  var grupo = _mel(px, 'grupo').value.trim();
+  var texto = _mel(px, 'texto').value.trim();
+
+  // No formulario de reserva o envio implica salvar: valida primeiro, salva a
+  // reserva e so dispara o WhatsApp se o salvamento concluir com sucesso.
+  // O texto/grupo sao capturados antes porque salvarReserva() chama
+  // limparForm() -> resetSecaoMensagem('nf'), que zera os campos.
+  if (px === 'nf') {
+    if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+    if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
+    salvarReserva(function(ok){
+      if (!ok) return;                       // validacao ou falha no salvamento
+      enviarWhatsApp(grupo, texto, null);    // status elemento ja foi resetado
+    });
+    return;
+  }
+
+  enviarWhatsApp(grupo, texto, _mel(px, 'status'));
 }
 
 function copiarMsgCtx(px) {
