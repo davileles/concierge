@@ -4919,23 +4919,39 @@ function alertaAlvoChange(px) {
   _ael(px, 'campos-lembrete').style.display = (alvo === 'lembrete')          ? 'flex' : 'none';
 }
 
-function onAlertaParceiroInput(px) {
-  var q = _ael(px, 'parceiro').value.toLowerCase().trim();
-  var drop = _ael(px, 'parceiro-drop');
-  if (!q || q.length < 2) { drop.style.display = 'none'; return; }
-  carregarParceiros(function(lista) {
-    var filtered = lista.filter(function(p){ return p.nome.includes(q); }).slice(0, 10);
-    if (!filtered.length) { drop.style.display = 'none'; return; }
-    drop.innerHTML = filtered.map(function(p){
-      var progs = p.programas.join(', ') || '—';
-      return '<div onclick="selecionarParceiro(this,\'' + px + '\')" data-nome="'+p.nome+'" data-progs="'+p.programas.join(',')+'" '+
+function _linhaParceiro(p, px) {
+  var progs = p.programas.join(', ') || '—';
+  return '<div onclick="selecionarParceiro(this,\'' + px + '\')" data-nome="'+p.nome+'" data-progs="'+p.programas.join(',')+'" '+
         'style="padding:8px 12px;cursor:pointer;font-size:12px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center" '+
         'onmouseover="this.style.background=\'var(--surface2)\'" onmouseout="this.style.background=\'\'">'+
         '<span style="font-weight:600;text-transform:capitalize">'+p.nome+'</span>'+
         '<span style="font-size:10px;color:var(--muted)">'+progs+'</span>'+
         '</div>';
-    }).join('');
-    drop.style.display = '';
+}
+
+function onAlertaParceiroInput(px) {
+  var q = _ael(px, 'parceiro').value.toLowerCase().trim();
+  var drop = _ael(px, 'parceiro-drop');
+  if (!q || q.length < 2) { drop.style.display = 'none'; return; }
+  carregarParceiros(function(viagem) {
+    carregarParceirosTodos(function(todos) {
+      var ehViagem = {};
+      viagem.forEach(function(p){ ehViagem[p.nome] = 1; });
+      var bate = function(p){ return p.nome.indexOf(q) !== -1; };
+      var listaViagem = viagem.filter(bate).slice(0, 10);
+      var listaOutros = todos.filter(function(p){ return !ehViagem[p.nome] && bate(p); }).slice(0, 10);
+      if (!listaViagem.length && !listaOutros.length) { drop.style.display = 'none'; return; }
+
+      var html = listaViagem.map(function(p){ return _linhaParceiro(p, px); }).join('');
+      if (listaOutros.length) {
+        html += '<div style="padding:6px 12px;font-size:9px;font-weight:700;letter-spacing:.5px;'
+             +  'text-transform:uppercase;color:var(--muted);background:var(--surface2);'
+             +  'border-bottom:1px solid var(--border)">Fora da categoria viagem</div>'
+             +  listaOutros.map(function(p){ return _linhaParceiro(p, px); }).join('');
+      }
+      drop.innerHTML = html;
+      drop.style.display = '';
+    });
   });
 }
 
@@ -6249,6 +6265,7 @@ function iniciarApp(){
   });
   syncReservas();
   syncViagens();
+  syncDemandasAvulsas();
   setVal('f-cadastro', new Date().toISOString().split('T')[0]);
   renderReservas();
 }
@@ -6829,9 +6846,39 @@ function loadDemandas() {
 }
 
 function saveDemandas() {
-  // Demandas são espelho das viagens — persistência via saveViagens()
-  // Demandas avulsas (sem viagemId) ficam em memória (sem localStorage — regra CDV)
+  // Demandas espelhadas de atividades vivem em viagens.json
   saveViagens();
+  // Demandas avulsas (sem viagemId) vão para demandas.json via proxy
+  salvarDemandasAvulsas();
+}
+
+// Persiste no servidor apenas as demandas sem viagem vinculada
+function salvarDemandasAvulsas() {
+  var avulsas = demandas.filter(function(d){ return !d.viagemId; });
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/demandas', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: avulsas })
+  })
+  .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r; })
+  .catch(function(e){ console.error('[salvarDemandasAvulsas]', e.message); });
+}
+
+// Carrega do servidor as demandas avulsas e mescla na lista em memória
+function syncDemandasAvulsas() {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/demandas', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'proxy retornou ok=false');
+      (d.data || []).forEach(function(dem) {
+        if (!dem || !dem.id) return;
+        if (demandas.some(function(x){ return x.id === dem.id; })) return;
+        demandas.push(dem);
+        if (dem.numero && dem.numero > _demandaCounter) _demandaCounter = dem.numero;
+      });
+      renderDemandas();
+    })
+    .catch(function(e){ console.error('[syncDemandasAvulsas]', e.message); });
 }
 
 function abrirNovaDemanda() {
