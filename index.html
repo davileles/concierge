@@ -1132,6 +1132,13 @@ header{animation:fadeUp .45s ease both}
     </div>
 
     <div class="sep"></div>
+    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✅ Status do Cliente</p>
+    <div class="g3">
+      <div class="field"><label>Cliente ativo <span class="tag">sim / x / 1 = ativo</span></label><input type="text" id="cfg-col-ativo" placeholder="Ex: P" maxlength="3" oninput="saveCfg()"/></div>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-top:-6px;line-height:1.6">Somente clientes marcados como ativos aparecem no disparo em massa. Célula vazia = inativo.</p>
+
+    <div class="sep"></div>
     <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">💬 WhatsApp</p>
     <div class="g3">
       <div class="field"><label>ID do Grupo WhatsApp</label><input type="text" id="cfg-col-grupo" placeholder="Ex: O" maxlength="3" oninput="saveCfg()"/></div>
@@ -1183,6 +1190,7 @@ header{animation:fadeUp .45s ease both}
   <div class="mode-tabs" style="margin-bottom:1.2rem">
     <button class="mode-tab active" id="msub-modelos"  onclick="setMsgSubTab('modelos')">📝 Modelos</button>
     <button class="mode-tab"        id="msub-disparar" onclick="setMsgSubTab('disparar')">🚀 Disparar</button>
+    <button class="mode-tab"        id="msub-massa"    onclick="setMsgSubTab('massa')">📢 Em Massa</button>
   </div>
 
   <!-- ── SUB: MODELOS ─────────────────────────────────── -->
@@ -1327,6 +1335,39 @@ header{animation:fadeUp .45s ease both}
       </div>
 
     </div><!-- /grid 2 colunas -->
+
+  </div>
+
+  <!-- SUB: EM MASSA -->
+  <div id="msg-sub-massa" style="display:none">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start">
+
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">👥 Destinatários</div>
+        <div id="massa-resumo" style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:10px;line-height:1.7"></div>
+        <div class="btn-row" style="margin-bottom:10px">
+          <button class="btn btn-ghost btn-sm" onclick="massaMarcarTodos(true)">✓ Marcar todos</button>
+          <button class="btn btn-ghost btn-sm" onclick="massaMarcarTodos(false)">✕ Desmarcar todos</button>
+        </div>
+        <div id="massa-lista" style="max-height:420px;overflow-y:auto;border:1px solid var(--border);border-radius:10px;padding:8px"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:0">
+        <div class="card-title">📢 Mensagem em Massa</div>
+        <div class="field">
+          <label>Texto livre <span class="tag">use {nome} ou {primeiro_nome} para personalizar</span></label>
+          <textarea id="massa-texto" rows="14" style="min-height:300px;font-size:13px;line-height:1.8" placeholder="Digite aqui a mensagem que será enviada para todos os clientes ativos selecionados…"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-accent" style="flex:1" id="massa-btn" onclick="dispararEmMassa()">🚀 Disparar para selecionados</button>
+          <button class="btn btn-ghost btn-sm" id="massa-parar" style="display:none" onclick="pararMassa()">⏹ Parar</button>
+        </div>
+        <div id="massa-progresso" style="font-size:12px;font-weight:700;text-align:center;margin-top:10px;min-height:16px;color:var(--muted)"></div>
+        <div id="massa-log" style="margin-top:10px;max-height:220px;overflow-y:auto;font-size:12px;line-height:1.8"></div>
+      </div>
+
+    </div>
 
   </div>
 
@@ -1656,6 +1697,7 @@ function _applyCfg(c) {
   setVal('cfg-col-senhas',        c.colSenhas       || 'M');
   setVal('cfg-col-acompanhantes', c.colAcompanhantes|| 'N');
   setVal('cfg-col-grupo',         c.colGrupo        || 'O');
+  setVal('cfg-col-ativo',         c.colAtivo        || 'P');
   setVal('cfg-grupo-alertas',     c.grupoAlertas    || '');
   setVal('cfg-linha',             c.linha           || '2');
   setVal('cfg-baileys',           c.baileys         || '');
@@ -1716,6 +1758,7 @@ function _saveCfgNow() {
     colSenhas:        getVal('cfg-col-senhas').toUpperCase()        || 'M',
     colAcompanhantes: getVal('cfg-col-acompanhantes').toUpperCase() || 'N',
     colGrupo:         getVal('cfg-col-grupo').toUpperCase()         || 'O',
+    colAtivo:         getVal('cfg-col-ativo').toUpperCase()         || 'P',
     grupoAlertas:     getVal('cfg-grupo-alertas').trim(),
     linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys'),
@@ -1849,12 +1892,14 @@ function syncClientes() {
           senhas:        String(row[colIndex(c.colSenhas)]        || '').trim(),
           acompanhantes: String(row[colIndex(c.colAcompanhantes)] || '').trim(),
           grupo:         String(row[colIndex(c.colGrupo)]         || '').trim(),
+          ativo:         ehClienteAtivo(row[colIndex(c.colAtivo || 'P')]),
         };
       }).filter(function(c){ return c.nome; });
       dot.className = 'sync-dot ok';
       lbl.textContent = clientes.length + ' clientes carregados · ' + new Date().toLocaleTimeString('pt-BR');
       populateClienteSelect();
       renderClientes();
+      if (document.getElementById('massa-lista')) renderMassaLista();
       showToast('✅ ' + clientes.length + ' clientes sincronizados', 'ok');
       document.getElementById('cfg-ok').textContent = '✅ Conexão estabelecida com sucesso!';
       setTimeout(function(){ document.getElementById('cfg-ok').textContent=''; }, 4000);
@@ -3258,7 +3303,8 @@ function renderClientes() {
   });
   list.sort(function(a,b){ return a.nome.localeCompare(b.nome, 'pt-BR'); });
 
-  document.getElementById('cli-count-label').textContent = list.length + ' cliente' + (list.length!==1?'s':'');
+  var nAtivos = list.filter(function(c){ return c.ativo; }).length;
+  document.getElementById('cli-count-label').textContent = list.length + ' cliente' + (list.length!==1?'s':'') + ' · ' + nAtivos + ' ativo' + (nAtivos!==1?'s':'');
   var grid = document.getElementById('cli-grid');
 
   if (!list.length) {
@@ -3276,6 +3322,7 @@ function renderClientes() {
     + '<th style="width:200px">E-mail</th>'
     + '<th style="width:130px">Cidade</th>'
     + '<th style="width:90px">Reservas</th>'
+    + '<th style="width:80px">Status</th>'
     + '<th style="width:26px"></th>'
     + '</tr></thead><tbody>'
     + list.map(function(c){
@@ -3311,9 +3358,14 @@ function renderClientes() {
               ? '<span class="cli-reservas-link" style="cursor:pointer;color:var(--accent);font-weight:700" onclick="verReservasCliente(\'' + String(c.nome).split("'").join("\\'") + '\')">' + resCount + '</span>'
               : '—')
         + '</td>'
+        + '<td class="dem-td-sec">'
+        +   (c.ativo
+              ? '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35)">ATIVO</span>'
+              : '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:var(--surface2);color:var(--muted2);border:1px solid var(--border)">INATIVO</span>')
+        + '</td>'
         + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
         + '</tr>'
-        + '<tr class="dem-linha-det"><td colspan="7">' + detalhe + '</td></tr>';
+        + '<tr class="dem-linha-det"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
     + '</tbody></table></div>';
 }
@@ -3521,9 +3573,12 @@ function verificarBaileys() {
 function setMsgSubTab(tab) {
   document.getElementById('msg-sub-modelos').style.display  = tab==='modelos'  ? 'block' : 'none';
   document.getElementById('msg-sub-disparar').style.display = tab==='disparar' ? 'block' : 'none';
+  document.getElementById('msg-sub-massa').style.display    = tab==='massa'    ? 'block' : 'none';
   document.getElementById('msub-modelos').classList.toggle('active',  tab==='modelos');
   document.getElementById('msub-disparar').classList.toggle('active', tab==='disparar');
+  document.getElementById('msub-massa').classList.toggle('active',    tab==='massa');
   if (tab==='disparar') initDisparar();
+  if (tab==='massa')    initMassa();
 }
 
 // ── INIT MENSAGENS ────────────────────────────────────────────────────────────
@@ -5561,6 +5616,193 @@ function copiarDisparar() {
   var txt = document.getElementById('d-msg-final').value;
   if (!txt) return;
   navigator.clipboard.writeText(txt).then(function(){ showToast('📋 Copiado!','ok'); });
+}
+
+// ══════════════════════════════════════════
+//  DISPARO EM MASSA (clientes ativos)
+// ══════════════════════════════════════════
+var MASSA_DELAY_MIN = 7000;   // 7s
+var MASSA_DELAY_MAX = 18000;  // 18s
+var _massaRodando = false;
+var _massaAbortar = false;
+var _massaTimer   = null;
+
+// Valores aceitos na coluna "Cliente ativo" da planilha
+function ehClienteAtivo(v) {
+  var t = String(v === undefined || v === null ? '' : v).trim().toLowerCase();
+  if (!t) return false;
+  return ['sim','s','x','1','true','ativo','ativa','ok','yes','y','verdadeiro'].indexOf(t) !== -1;
+}
+
+function _massaDelay() {
+  return MASSA_DELAY_MIN + Math.floor(Math.random() * (MASSA_DELAY_MAX - MASSA_DELAY_MIN + 1));
+}
+
+function initMassa() {
+  renderMassaLista();
+}
+
+function renderMassaLista() {
+  var el = document.getElementById('massa-lista');
+  var res = document.getElementById('massa-resumo');
+  if (!el) return;
+
+  var ativos = clientes.filter(function(c){ return c.ativo; })
+    .sort(function(a,b){ return toTitleCase(a.nome).localeCompare(toTitleCase(b.nome),'pt-BR'); });
+  var comGrupo = ativos.filter(function(c){ return c.grupo; });
+  var semGrupo = ativos.length - comGrupo.length;
+
+  if (res) {
+    res.innerHTML = '<b style="color:var(--text)">' + ativos.length + '</b> cliente' + (ativos.length!==1?'s':'') + ' ativo' + (ativos.length!==1?'s':'') +
+      ' de ' + clientes.length + ' no cadastro' +
+      (semGrupo ? '<br><span style="color:var(--yellow)">⚠️ ' + semGrupo + ' sem grupo WhatsApp — não recebem</span>' : '');
+  }
+
+  if (!ativos.length) {
+    el.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">Nenhum cliente ativo.<br><small>Marque a coluna de status na planilha e clique em Sincronizar.</small></div>';
+    return;
+  }
+
+  el.innerHTML = ativos.map(function(c){
+    var nome = toTitleCase(c.nome);
+    var ok = !!c.grupo;
+    return '<label style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-radius:8px;cursor:' + (ok?'pointer':'not-allowed') + ';opacity:' + (ok?'1':'.45') + '">'
+      + '<input type="checkbox" class="massa-chk" value="' + escHtml(c.id) + '" ' + (ok?'checked':'disabled') + ' style="width:15px;height:15px;accent-color:var(--accent);cursor:inherit"/>'
+      + '<span style="flex:1;font-size:12px;font-weight:600;color:var(--text)">' + escHtml(nome) + '</span>'
+      + '<span id="massa-st-' + escHtml(c.id) + '" style="font-size:11px;font-weight:700;color:var(--muted2)">' + (ok ? '' : 'sem grupo') + '</span>'
+      + '</label>';
+  }).join('');
+}
+
+function massaMarcarTodos(marcar) {
+  Array.prototype.forEach.call(document.querySelectorAll('.massa-chk:not(:disabled)'), function(chk){
+    chk.checked = !!marcar;
+  });
+}
+
+function _massaTextoPara(c, base) {
+  var nome = toTitleCase(c.nome || '');
+  return String(base)
+    .split('{primeiro_nome}').join(nome.split(' ')[0] || nome)
+    .split('{nome}').join(nome);
+}
+
+function _massaLog(msg, cor) {
+  var el = document.getElementById('massa-log');
+  if (!el) return;
+  var d = document.createElement('div');
+  d.style.color = cor || 'var(--muted)';
+  d.style.fontWeight = '600';
+  d.textContent = msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+}
+
+function dispararEmMassa() {
+  if (_massaRodando) return;
+
+  var url = getBaileysUrl();
+  if (!url) { showToast('⚠️ URL do Baileys não configurada', 'err'); return; }
+
+  var base = document.getElementById('massa-texto').value.trim();
+  if (!base) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+
+  var alvos = [];
+  Array.prototype.forEach.call(document.querySelectorAll('.massa-chk:checked'), function(chk){
+    var c = clientes.filter(function(x){ return x.id === chk.value; })[0];
+    if (c && c.grupo) alvos.push(c);
+  });
+
+  if (!alvos.length) { showToast('⚠️ Nenhum destinatário selecionado', 'err'); return; }
+
+  var minEst = Math.ceil(alvos.length * ((MASSA_DELAY_MIN + MASSA_DELAY_MAX) / 2) / 60000);
+  if (!confirm('📢 Enviar esta mensagem para ' + alvos.length + ' cliente(s) ativo(s)?\n\n' +
+               'O envio é sequencial, com intervalo aleatório de ' + (MASSA_DELAY_MIN/1000) + ' a ' + (MASSA_DELAY_MAX/1000) + ' segundos entre cada mensagem (≈ ' + minEst + ' min no total).\n\n' +
+               'Mantenha esta aba aberta até o fim.')) return;
+
+  _massaRodando = true;
+  _massaAbortar = false;
+  document.getElementById('massa-btn').disabled = true;
+  document.getElementById('massa-btn').textContent = '⏳ Enviando…';
+  document.getElementById('massa-parar').style.display = '';
+  document.getElementById('massa-log').innerHTML = '';
+
+  var contador = { ok: 0, erro: 0 };
+  _massaEnviarProximo(alvos, 0, base, url, contador);
+}
+
+function _massaEnviarProximo(alvos, i, base, url, contador) {
+  var prog = document.getElementById('massa-progresso');
+
+  if (_massaAbortar || i >= alvos.length) {
+    _massaFinalizar(alvos.length, i, contador);
+    return;
+  }
+
+  var c = alvos[i];
+  var nome = toTitleCase(c.nome);
+  var stEl = document.getElementById('massa-st-' + c.id);
+  if (prog) prog.textContent = 'Enviando ' + (i+1) + ' de ' + alvos.length + ' — ' + nome;
+  if (stEl) { stEl.textContent = '⏳'; stEl.style.color = 'var(--yellow)'; }
+
+  fetch(url + '/enviar', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ grupo: c.grupo, mensagem: _massaTextoPara(c, base) })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (d.ok || d.success || d.status === 'sent') {
+      contador.ok++;
+      if (stEl) { stEl.textContent = '✅'; stEl.style.color = '#22c55e'; }
+      _massaLog('✅ ' + nome, '#22c55e');
+    } else {
+      contador.erro++;
+      if (stEl) { stEl.textContent = '❌'; stEl.style.color = '#ff585e'; }
+      _massaLog('❌ ' + nome + ' — ' + (d.erro || d.error || d.message || 'falha'), '#ff585e');
+    }
+  })
+  .catch(function(){
+    contador.erro++;
+    if (stEl) { stEl.textContent = '❌'; stEl.style.color = '#ff585e'; }
+    _massaLog('❌ ' + nome + ' — sem resposta do servidor', '#ff585e');
+  })
+  .then(function(){
+    if (_massaAbortar || i + 1 >= alvos.length) {
+      _massaFinalizar(alvos.length, i + 1, contador);
+      return;
+    }
+    var espera = _massaDelay();
+    if (prog) prog.textContent = 'Aguardando ' + Math.round(espera/1000) + 's antes do próximo (' + (i+2) + ' de ' + alvos.length + ')…';
+    _massaTimer = setTimeout(function(){
+      _massaEnviarProximo(alvos, i + 1, base, url, contador);
+    }, espera);
+  });
+}
+
+function _massaFinalizar(total, processados, contador) {
+  clearTimeout(_massaTimer);
+  _massaRodando = false;
+  var btn = document.getElementById('massa-btn');
+  if (btn) { btn.disabled = false; btn.textContent = '🚀 Disparar para selecionados'; }
+  var parar = document.getElementById('massa-parar');
+  if (parar) parar.style.display = 'none';
+  var prog = document.getElementById('massa-progresso');
+  var txt = (_massaAbortar ? '⏹ Interrompido — ' : '🏁 Concluído — ') +
+            contador.ok + ' enviada(s), ' + contador.erro + ' com erro' +
+            (processados < total ? ', ' + (total - processados) + ' não enviada(s)' : '');
+  if (prog) { prog.textContent = txt; prog.style.color = _massaAbortar ? 'var(--yellow)' : '#22c55e'; }
+  _massaLog('──────────', 'var(--muted2)');
+  _massaLog(txt, _massaAbortar ? 'var(--yellow)' : '#22c55e');
+  showToast(_massaAbortar ? '⏹ Disparo interrompido' : '✅ Disparo concluído', _massaAbortar ? 'err' : 'ok');
+}
+
+function pararMassa() {
+  if (!_massaRodando) return;
+  _massaAbortar = true;
+  clearTimeout(_massaTimer);
+  var prog = document.getElementById('massa-progresso');
+  if (prog) prog.textContent = '⏹ Interrompendo após a mensagem atual…';
 }
 
 
