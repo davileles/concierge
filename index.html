@@ -1348,6 +1348,7 @@ header{animation:fadeUp .45s ease both}
           <label>Pré-visualização <span class="tag">editável antes de enviar</span></label>
           <textarea id="d-msg-final" rows="14" style="min-height:320px;font-size:13px;line-height:1.8" placeholder="Selecione modelo e cliente para gerar a mensagem…"></textarea>
         </div>
+        <div class="field" id="d-msg-img-wrap"></div>
         <div class="btn-row">
           <button class="btn btn-accent" style="flex:1" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
           <button class="btn btn-ghost btn-sm" onclick="copiarDisparar()">📋 Copiar</button>
@@ -4125,6 +4126,12 @@ function usarModelo(id) {
 
 // ── DISPARAR ──────────────────────────────────────────────────────────────────
 function initDisparar() {
+  var wrapImg = document.getElementById('d-msg-img-wrap');
+  if (wrapImg && !wrapImg.dataset.montado) {
+    wrapImg.innerHTML = htmlAnexoImagem('d');
+    wrapImg.dataset.montado = '1';
+    renderMsgImgPreview('d');
+  }
   loadModelos();
   // populate modelos select
   var sel = document.getElementById('d-modelo');
@@ -5861,20 +5868,101 @@ function getGrupoId() {
   return document.getElementById('d-grupo').value.trim();
 }
 
+// ══════════════════════════════════════════
+//  ANEXO DE IMAGEM NO DISPARO
+//  Estado por prefixo ('nf', 'mad', 'd') — { base64, mime, nome, tamanho }
+// ══════════════════════════════════════════
+var _msgImagens = {};
+var MSG_IMG_MAX = 5 * 1024 * 1024; // 5MB
+
+function htmlAnexoImagem(px) {
+  return ''
+  + '<div>'
+  +   '<div style="' + _LBL + '">Imagem <span style="font-weight:600;text-transform:none;letter-spacing:0">— opcional, enviada com a mensagem como legenda</span></div>'
+  +   '<input type="file" id="' + px + '-msg-img-input" accept="image/*" style="display:none" onchange="onMsgImgChange(\'' + px + '\', this)"/>'
+  +   '<div id="' + px + '-msg-img-preview"></div>'
+  +   '<button type="button" id="' + px + '-msg-img-btn" onclick="document.getElementById(\'' + px + '-msg-img-input\').click()" style="background:none;color:var(--muted);border:1px dashed var(--border2);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;width:100%">🖼️ Anexar imagem (print, comprovante, economia…)</button>'
+  + '</div>';
+}
+
+function _msgImgEl(px, suf) { return document.getElementById(px + '-msg-img-' + suf); }
+
+function onMsgImgChange(px, input) {
+  var file = input && input.files && input.files[0];
+  if (!file) return;
+  if (file.type.indexOf('image/') !== 0) {
+    showToast('⚠️ Selecione um arquivo de imagem', 'err'); input.value = ''; return;
+  }
+  if (file.size > MSG_IMG_MAX) {
+    showToast('⚠️ Imagem muito grande (máx. 5MB)', 'err'); input.value = ''; return;
+  }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    _msgImagens[px] = {
+      base64: e.target.result.split(',')[1],
+      dataUrl: e.target.result,
+      mime: file.type,
+      nome: file.name,
+      tamanho: file.size
+    };
+    renderMsgImgPreview(px);
+  };
+  reader.onerror = function(){ showToast('❌ Não foi possível ler a imagem', 'err'); };
+  reader.readAsDataURL(file);
+}
+
+function renderMsgImgPreview(px) {
+  var box = _msgImgEl(px, 'preview');
+  var btn = _msgImgEl(px, 'btn');
+  if (!box) return;
+  var img = _msgImagens[px];
+  if (!img) {
+    box.innerHTML = '';
+    if (btn) btn.style.display = '';
+    return;
+  }
+  if (btn) btn.style.display = 'none';
+  var kb = Math.round(img.tamanho / 1024);
+  box.innerHTML =
+    '<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'
+  +   '<img src="' + img.dataUrl + '" alt="preview" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0"/>'
+  +   '<div style="flex:1;min-width:0">'
+  +     '<div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(img.nome) + '</div>'
+  +     '<div style="font-size:11px;color:var(--muted)">' + kb + ' KB · será enviada com a mensagem</div>'
+  +   '</div>'
+  +   '<span onclick="removerMsgImg(\'' + px + '\')" title="Remover imagem" style="cursor:pointer;color:var(--muted2);font-size:14px;font-weight:700;padding:0 4px">✕</span>'
+  + '</div>';
+}
+
+function removerMsgImg(px) {
+  delete _msgImagens[px];
+  var inp = _msgImgEl(px, 'input');
+  if (inp) inp.value = '';
+  renderMsgImgPreview(px);
+}
+
 // Envio ao Baileys — fonte unica usada pela aba Mensagens e pelas secoes embutidas.
-function enviarWhatsApp(grupo, texto, statusEl) {
+// imagem (opcional): { base64, mime, nome } — quando presente vai por /enviar-imagem
+// com o texto como legenda (caption), em um unico disparo.
+function enviarWhatsApp(grupo, texto, statusEl, imagem) {
   var url = getBaileysUrl();
   if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
-  if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+  if (!texto && !imagem) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
   if (!url)   { showToast('⚠️ URL do Baileys não configurada', 'err'); return; }
   var set = function(cor, txt) {
     if (!statusEl) return;
     statusEl.style.color = cor; statusEl.textContent = txt;
   };
-  set('#f59e0b', '⏳ Enviando…');
-  fetch(url + '/enviar', {
+  set('#f59e0b', imagem ? '⏳ Enviando imagem…' : '⏳ Enviando…');
+
+  var rota = imagem ? '/enviar-imagem' : '/enviar';
+  var corpo = imagem
+    ? { grupo: grupo, legenda: texto, base64: imagem.base64, mimetype: imagem.mime }
+    : { grupo: grupo, mensagem: texto };
+
+  fetch(url + rota, {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ grupo: grupo, mensagem: texto })
+    body: JSON.stringify(corpo)
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
@@ -5896,7 +5984,8 @@ function dispararMensagem() {
   enviarWhatsApp(
     getGrupoId(),
     document.getElementById('d-msg-final').value.trim(),
-    document.getElementById('d-send-ok')
+    document.getElementById('d-send-ok'),
+    _msgImagens['d'] || null
   );
 }
 
@@ -6145,6 +6234,7 @@ function htmlSecaoMensagem(px) {
   +     '<input type="text" id="' + px + '-msg-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="' + _INP + ';font-family:monospace"/>'
   +     '<div id="' + px + '-msg-info" style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6"></div>'
   +   '</div>'
+  +   htmlAnexoImagem(px)
   +   '<div style="display:flex;gap:8px;flex-wrap:wrap">'
   +     '<button onclick="enviarMsgCtx(' + q(px) + ')" style="flex:1;min-width:150px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer">' + (px === 'nf' ? '💾 Salvar Reserva e Enviar' : '📤 Enviar Agora') + '</button>'
   +     '<button onclick="onMsgCtxChange(' + q(px) + ')" title="Regerar a partir dos dados atuais" style="background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 Atualizar</button>'
@@ -6193,6 +6283,7 @@ function resetSecaoMensagem(px) {
   _mel(px, 'texto').value  = '';
   _mel(px, 'grupo').value  = '';
   _mel(px, 'status').textContent = '';
+  removerMsgImg(px);
 }
 
 function _msgPopularClientes(px) {
@@ -6247,22 +6338,23 @@ function onMsgCtxChange(px) {
 function enviarMsgCtx(px) {
   var grupo = _mel(px, 'grupo').value.trim();
   var texto = _mel(px, 'texto').value.trim();
+  var img   = _msgImagens[px] || null;
 
   // No formulario de reserva o envio implica salvar: valida primeiro, salva a
   // reserva e so dispara o WhatsApp se o salvamento concluir com sucesso.
   // O texto/grupo sao capturados antes porque salvarReserva() chama
   // limparForm() -> resetSecaoMensagem('nf'), que zera os campos.
   if (px === 'nf') {
-    if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+    if (!texto && !img) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
     if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
     salvarReserva(function(ok){
-      if (!ok) return;                       // validacao ou falha no salvamento
-      enviarWhatsApp(grupo, texto, null);    // status elemento ja foi resetado
+      if (!ok) return;                            // validacao ou falha no salvamento
+      enviarWhatsApp(grupo, texto, null, img);    // status elemento ja foi resetado
     });
     return;
   }
 
-  enviarWhatsApp(grupo, texto, _mel(px, 'status'));
+  enviarWhatsApp(grupo, texto, _mel(px, 'status'), img);
 }
 
 function copiarMsgCtx(px) {
