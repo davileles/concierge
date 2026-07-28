@@ -2556,6 +2556,8 @@ function aplicarDadosAtivo(d) {
 
   // Obs
   if (d.obs) sv('f-obs', d.obs);
+
+  reformatarCamposMilhar();
 }
 
 
@@ -3409,6 +3411,7 @@ function preencherFormReserva(r, modo) {
     ativoArquivoBase64 = null;
     ativoArquivoMeta   = null;
   }
+  reformatarCamposMilhar();
   // Campos ja preenchidos: regera a previa da mensagem com os dados da reserva
   onMsgCtxChange('nf');
 }
@@ -4380,6 +4383,17 @@ function formatMilhar(el) {
     resultado += ',' + partes[1].replace(/\D/g, '');
   }
   el.value = resultado;
+}
+
+// Reaplica o separador de milhar em campos preenchidos programaticamente
+// (extracao por IA e edicao/duplicacao de reserva), onde o evento oninput
+// nao dispara. Atua somente sobre valores inteiros "crus" (apenas digitos),
+// preservando valores ja formatados ou com casas decimais.
+function reformatarCamposMilhar() {
+  var els = document.querySelectorAll('input[oninput*="formatMilhar"]');
+  for (var i = 0; i < els.length; i++) {
+    if (/^\d+$/.test(els[i].value)) formatMilhar(els[i]);
+  }
 }
 
 function onMilhasChange() {
