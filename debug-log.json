@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-28T21:14:25.527Z",
+  "executadoEm": "2026-07-28T23:07:45.052Z",
   "modelosAtivos": [
     {
       "nome": "Seu voo está chegando! - VOLTA",
@@ -27,144 +27,157 @@
     }
   ],
   "totalAlteracoes": 0,
-  "resultados": [],
+  "resultados": [
+    "❌ [Seu voo está chegando! - IDA] \"Maria Alice\": WhatsApp nao conectado. Acesse /qr para reconectar. (HTTP 503)"
+  ],
   "eventos": [
     {
       "modelo": "Seu voo está chegando! - IDA",
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1784313328588",
       "cliente": "Maria Alice",
-      "horasRestantes": 49.34,
+      "horasRestantes": 47.46,
       "janela": 48,
       "temGrupo": true,
-      "disparar": false,
-      "ts": "2026-07-28T21:14:25.399Z"
+      "disparar": true,
+      "ts": "2026-07-28T23:07:29.724Z"
+    },
+    {
+      "modelo": "Seu voo está chegando! - IDA",
+      "gatilho": "voo_ida_dt",
+      "reservaId": "RES-1784313328588",
+      "cliente": "Maria Alice",
+      "grupo": "120363401712706212@g.us",
+      "tentativa": "erro",
+      "erro": "WhatsApp nao conectado. Acesse /qr para reconectar. (HTTP 503)",
+      "erroStack": "Error: WhatsApp nao conectado. Acesse /qr para reconectar. (HTTP 503)\n    at enviarWhatsApp (/home/runner/work/concierge/concierge/lembrete-voo.js:307:20)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async main (/home/runner/work/concierge/concierge/lembrete-voo.js:598:13)",
+      "ts": "2026-07-28T23:07:44.883Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 1895.09,
+      "horasRestantes": 1893.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.400Z"
+      "ts": "2026-07-28T23:07:44.885Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 2942.18,
+      "horasRestantes": 2940.29,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.400Z"
+      "ts": "2026-07-28T23:07:44.885Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 3888.01,
+      "horasRestantes": 3886.12,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.400Z"
+      "ts": "2026-07-28T23:07:44.885Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 2394.59,
+      "horasRestantes": 2392.7,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.400Z"
+      "ts": "2026-07-28T23:07:44.885Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 1055.09,
+      "horasRestantes": 1053.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.400Z"
+      "ts": "2026-07-28T23:07:44.885Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Marcelo e Patrícia em Paris 2026",
-      "horasRestantes": 815.18,
+      "horasRestantes": 813.29,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.400Z"
+      "ts": "2026-07-28T23:07:44.885Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Rio Quente em família",
-      "horasRestantes": 182.09,
+      "horasRestantes": 180.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -283.07,
+      "horasRestantes": -284.96,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip - Miguel e Maria",
-      "horasRestantes": 41.76,
+      "horasRestantes": 39.87,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -252.16,
+      "horasRestantes": -254.05,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -334.66,
+      "horasRestantes": -336.55,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2786.26,
+      "horasRestantes": 2784.37,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 451.84,
+      "horasRestantes": 449.95,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     },
     {
       "modelo": "Instruções pré voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -266.74,
+      "horasRestantes": -268.63,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-28T21:14:25.401Z"
+      "ts": "2026-07-28T23:07:44.886Z"
     }
   ]
 }
