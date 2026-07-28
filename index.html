@@ -1929,6 +1929,7 @@ function syncClientes() {
       dot.className = 'sync-dot ok';
       lbl.textContent = clientes.length + ' clientes carregados · ' + new Date().toLocaleTimeString('pt-BR');
       populateClienteSelect();
+      populateDispararClientes();
       renderClientes();
       if (document.getElementById('massa-lista')) renderMassaLista();
       showToast('✅ ' + clientes.length + ' clientes sincronizados', 'ok');
@@ -1938,6 +1939,8 @@ function syncClientes() {
     .catch(function(e){
       dot.className = 'sync-dot err';
       lbl.textContent = 'Erro ao conectar. Verifique a URL e as permissões do script.';
+      var csel = document.getElementById('d-cliente');
+      if (csel && !clientes.length) csel.innerHTML = '<option value="">— falha ao sincronizar clientes —</option>';
       showToast('❌ Falha na sincronização', 'err');
     });
 }
@@ -4144,18 +4147,31 @@ function initDisparar() {
   });
   if (cur) sel.value = cur;
 
-  // populate clientes select
-  var csel = document.getElementById('d-cliente');
-  var ccur = csel.value;
-  csel.innerHTML = '<option value="">Selecione o cliente…</option>';
-  var sorted = clientes.slice().sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); });
-  sorted.forEach(function(c){
-    var opt = document.createElement('option');
-    opt.value = c.nome; opt.textContent = c.nome;
-    csel.appendChild(opt);
-  });
-  if (ccur) { csel.value = ccur; populateDispararReservas(ccur); }
+  populateDispararClientes();
   onDispararChange();
+}
+
+// Popula o select de clientes da aba Mensagens -> Disparar.
+// Chamada tanto por initDisparar() quanto pelo callback de syncClientes(),
+// porque o sync e assincrono e pode terminar depois de a aba ja estar aberta.
+function populateDispararClientes() {
+  var csel = document.getElementById('d-cliente');
+  if (!csel) return;
+  var ccur = csel.value;
+  if (!clientes.length) {
+    csel.innerHTML = '<option value="">— sincronizando clientes… —</option>';
+    return;
+  }
+  csel.innerHTML = '<option value="">Selecione o cliente…</option>';
+  clientes.slice()
+    .sort(function(a,b){ return toTitleCase(a.nome).localeCompare(toTitleCase(b.nome),'pt-BR'); })
+    .forEach(function(c){
+      var opt = document.createElement('option');
+      var nome = toTitleCase(c.nome);
+      opt.value = nome; opt.textContent = nome;
+      csel.appendChild(opt);
+    });
+  if (ccur) { csel.value = ccur; populateDispararReservas(ccur); }
 }
 
 function populateDispararReservas(nome) {
