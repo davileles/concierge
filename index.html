@@ -949,15 +949,15 @@ header{animation:fadeUp .45s ease both}
 
     <!-- UPLOAD DE ATIVO -->
     <div class="field">
-      <label>📎 Ativo da Reserva <span class="tag">imagem ou PDF — leitura automática com IA</span></label>
+      <label>📎 Ativo da Reserva <span class="tag">imagem, PDF ou HTML — leitura automática com IA</span></label>
       <div class="upload-ativo" id="upload-ativo-drop"
            ondragover="event.preventDefault();this.classList.add('drag')"
            ondragleave="this.classList.remove('drag')"
            ondrop="onAtivoDrop(event)">
-        <input type="file" id="upload-ativo-input" accept="image/*,.pdf" onchange="onAtivoChange(event)"/>
+        <input type="file" id="upload-ativo-input" accept="image/*,.pdf,.html,.htm,.mhtml,text/html" onchange="onAtivoChange(event)"/>
         <div class="upload-ativo-icon">📄</div>
         <div class="upload-ativo-label">Clique para selecionar ou arraste aqui</div>
-        <div class="upload-ativo-sub">Imagem (PNG, JPG, WEBP) ou PDF • a IA lê e preenche os campos automaticamente</div>
+        <div class="upload-ativo-sub">Imagem (PNG, JPG, WEBP), PDF ou HTML (página salva / e-mail) • a IA lê e preenche os campos automaticamente</div>
       </div>
       <div id="upload-preview" style="display:none"></div>
       <div id="upload-lendo" style="display:none" class="upload-lendo">
@@ -2388,9 +2388,41 @@ function onAtivoChange(e) {
   if (file) processarAtivo(file);
 }
 
+function isArquivoHtml(file) {
+  if (!file) return false;
+  var t = (file.type || '').toLowerCase();
+  var n = (file.name || '').toLowerCase();
+  return t.indexOf('text/html') === 0 || t === 'application/xhtml+xml' ||
+         /\.(html?|xhtml|mhtml|mht)$/.test(n);
+}
+
+// Converte o conteúdo de um arquivo HTML em texto legível preservando quebras
+function htmlParaTexto(html) {
+  var pre = String(html || '')
+    .replace(/<!--[\s\S]*?-->/g, ' ')
+    .replace(/<\s*(script|style|noscript|svg|head)[^>]*>[\s\S]*?<\/\s*\1\s*>/gi, ' ')
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\/\s*(td|th)\s*>/gi, ' | ')
+    .replace(/<\/\s*(p|div|tr|li|h[1-6]|table|section|article|header|footer)\s*>/gi, '\n');
+  var txt = '';
+  try {
+    var doc = new DOMParser().parseFromString(pre, 'text/html');
+    txt = (doc && doc.body) ? (doc.body.textContent || '') : '';
+    if (doc && doc.title) txt = doc.title + '\n' + txt;
+  } catch (e) {
+    txt = pre.replace(/<[^>]+>/g, ' ');
+  }
+  return txt
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/[ \t\u00a0]+/g, ' ')
+    .replace(/ *\n */g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function processarAtivo(file) {
   ativoArquivo = file;
-  var icon = file.type === 'application/pdf' ? '📄' : '🖼️';
+  var icon = file.type === 'application/pdf' ? '📄' : (isArquivoHtml(file) ? '🌐' : '🖼️');
   document.getElementById('upload-preview').style.display = 'flex';
   document.getElementById('upload-preview').innerHTML =
     '<div class="upload-preview">' +
@@ -2413,61 +2445,87 @@ function removerAtivo() {
 }
 
 function lerAtivoComIA(file) {
+  var isPdf  = file.type === 'application/pdf';
+  var isHtml = isArquivoHtml(file);
+
+  // Sempre guardamos o base64 do arquivo original (anexo da reserva)
   var reader = new FileReader();
   reader.onload = function(e) {
     var base64 = e.target.result.split(',')[1];
-    var mediaType = file.type || 'image/jpeg';
-    var isPdf = file.type === 'application/pdf';
-    // Salvar metadados e base64 para anexar à reserva
-    ativoArquivoMeta = { nome: file.name, tipo: file.type, tamanho: file.size };
+    var mediaType = file.type || (isHtml ? 'text/html' : 'image/jpeg');
+    ativoArquivoMeta = { nome: file.name, tipo: file.type || (isHtml ? 'text/html' : ''), tamanho: file.size };
     ativoArquivoBase64 = (file.size <= 512000) ? base64 : null; // só salva se < 500KB
 
-    document.getElementById('upload-lendo').style.display = 'flex';
-    document.getElementById('upload-ok').textContent = '';
+    if (!isHtml) {
+      enviarAtivoParaIA({ base64: base64, mediaType: mediaType, isPdf: isPdf });
+      return;
+    }
 
-    var tipoCampos = '';
-    var tipoSel = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
-    if (tipoSel === 'voo') tipoCampos = 'passagem aérea';
-    else if (tipoSel === 'hotel') tipoCampos = 'hospedagem';
-    else if (tipoSel === 'carro') tipoCampos = 'transporte (transfer/traslado ou locação de carro)';
-    else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
-    else tipoCampos = 'reserva de viagem';
-
-    fetch('https://cdv-proxy-production.up.railway.app/ia/extrair-reserva', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        base64: base64,
-        mediaType: mediaType,
-        isPdf: isPdf,
-        tipoCampos: tipoCampos
-      })
-    })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      document.getElementById('upload-lendo').style.display = 'none';
-      if (!data.ok) throw new Error(data.erro || 'Erro desconhecido');
-      var texto = data.texto || '';
-      try {
-        var d = JSON.parse(texto);
-        aplicarDadosAtivo(d);
-        document.getElementById('upload-ok').style.color = '#22c55e';
-        document.getElementById('upload-ok').textContent = '✅ Dados extraídos e preenchidos automaticamente!';
-      } catch(err) {
+    // HTML: extrair o texto legível e enviar como texto puro
+    var readerTxt = new FileReader();
+    readerTxt.onload = function(ev) {
+      var texto = htmlParaTexto(ev.target.result);
+      if (!texto) {
+        document.getElementById('upload-lendo').style.display = 'none';
         document.getElementById('upload-ok').style.color = 'var(--accent)';
-        document.getElementById('upload-ok').textContent = '⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.';
-        console.error('Parse erro:', texto);
+        document.getElementById('upload-ok').textContent = '⚠️ Não encontrei texto legível neste HTML. Preencha manualmente.';
+        return;
       }
-    })
-    .catch(function(err) {
+      enviarAtivoParaIA({ isHtml: true, texto: texto.slice(0, 60000), mediaType: 'text/html' });
+    };
+    readerTxt.onerror = function() {
       document.getElementById('upload-lendo').style.display = 'none';
       document.getElementById('upload-ok').style.color = 'var(--accent)';
-      document.getElementById('upload-ok').textContent = '❌ Erro ao conectar com a IA: ' + err.message;
-      console.error(err);
-    });
+      document.getElementById('upload-ok').textContent = '❌ Não foi possível ler o arquivo HTML.';
+    };
+    readerTxt.readAsText(file, 'utf-8');
   };
   reader.readAsDataURL(file);
 }
+
+function enviarAtivoParaIA(payload) {
+  document.getElementById('upload-lendo').style.display = 'flex';
+  document.getElementById('upload-ok').textContent = '';
+
+  var tipoCampos = '';
+  var tipoSel = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
+  if (tipoSel === 'voo') tipoCampos = 'passagem aérea';
+  else if (tipoSel === 'hotel') tipoCampos = 'hospedagem';
+  else if (tipoSel === 'carro') tipoCampos = 'transporte (transfer/traslado ou locação de carro)';
+  else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
+  else tipoCampos = 'reserva de viagem';
+
+  payload.tipoCampos = tipoCampos;
+
+  fetch('https://cdv-proxy-production.up.railway.app/ia/extrair-reserva', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    document.getElementById('upload-lendo').style.display = 'none';
+    if (!data.ok) throw new Error(data.erro || 'Erro desconhecido');
+    var texto = data.texto || '';
+    try {
+      var d = JSON.parse(texto);
+      aplicarDadosAtivo(d);
+      document.getElementById('upload-ok').style.color = '#22c55e';
+      document.getElementById('upload-ok').textContent = '✅ Dados extraídos e preenchidos automaticamente!';
+    } catch(err) {
+      document.getElementById('upload-ok').style.color = 'var(--accent)';
+      document.getElementById('upload-ok').textContent = '⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.';
+      console.error('Parse erro:', texto);
+    }
+  })
+  .catch(function(err) {
+    document.getElementById('upload-lendo').style.display = 'none';
+    document.getElementById('upload-ok').style.color = 'var(--accent)';
+    document.getElementById('upload-ok').textContent = '❌ Erro ao conectar com a IA: ' + err.message;
+    console.error(err);
+  });
+}
+
 
 function aplicarDadosAtivo(d) {
   function sv(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; }
