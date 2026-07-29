@@ -1,5 +1,23 @@
 [
   {
+    "id": "MOD-1785322063107",
+    "nome": "Voo · Check-in realizado (ida)",
+    "texto": "✅ *Check-in realizado!*\n\nO check-in do voo de ida já está feito — não é preciso se preocupar com isso.\n\n🛫 *Detalhes do voo*\nTrecho: *{{origem}} ➔ {{destino}}*\nPartida: *{{data_ida}}* às *{{hora_partida}}*\nChegada: *{{data_chegada_ida}}* às *{{hora_chegada}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\nO cartão de embarque será enviado por aqui. Se planeje para chegar ao aeroporto com antecedência, especialmente se for despachar bagagem.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
+    "id": "MOD-1785322063108",
+    "nome": "Voo · Check-in realizado (volta)",
+    "texto": "✅ *Check-in realizado!*\n\nO check-in do voo de volta já está feito — não é preciso se preocupar com isso.\n\n🛬 *Detalhes do voo*\nTrecho: *{{origem_volta}} ➔ {{destino_volta}}*\nPartida: *{{data_volta}}* às *{{hora_partida_volta}}*\nChegada: *{{data_chegada_volta}}* às *{{hora_chegada_volta}}*\nCia aérea: *{{cia_volta}}* · Voo *{{nvoo_volta}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\nO cartão de embarque será enviado por aqui. Se planeje para chegar ao aeroporto com antecedência, especialmente se for despachar bagagem.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
     "id": "MOD-1784919040266",
     "nome": "Carro · Locação (com acúmulo)",
     "texto": "✅ *Locação de carro reservada com sucesso!*\n\n🚘 *Detalhes da reserva*\nModelo: *{{loc_categoria}}*\nRetirada: *{{loc_data_retirada}}* · *{{loc_local_retirada}}*\nDevolução: *{{loc_data_devolucao}}* · *{{loc_local_devolucao}}*\n\n💰 *Investimento*\nValor da reserva: *R$ {{loc_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
