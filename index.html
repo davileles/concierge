@@ -5892,15 +5892,27 @@ function getGrupoId() {
 //  Estado por prefixo ('nf', 'mad', 'd') — { base64, mime, nome, tamanho }
 // ══════════════════════════════════════════
 var _msgImagens = {};
-var MSG_IMG_MAX = 5 * 1024 * 1024; // 5MB
+var MSG_IMG_MAX = 5 * 1024 * 1024;   // 5MB  — imagens
+var MSG_DOC_MAX = 20 * 1024 * 1024;  // 20MB — documentos (proxy aceita ate 50MB de JSON)
+
+// Tipos aceitos como documento (o resto e tratado como imagem via mime image/*)
+var MSG_DOC_EXT = ['pdf','doc','docx','xls','xlsx','ppt','pptx','csv','txt','zip'];
+var MSG_DOC_ICONE = {
+  pdf:'📕', doc:'📘', docx:'📘', xls:'📗', xlsx:'📗',
+  ppt:'📙', pptx:'📙', csv:'📗', txt:'📄', zip:'🗜️'
+};
+function _extArquivo(nome) {
+  var m = String(nome||'').toLowerCase().match(/\.([a-z0-9]+)$/);
+  return m ? m[1] : '';
+}
 
 function htmlAnexoImagem(px) {
   return ''
   + '<div>'
-  +   '<div style="' + _LBL + '">Imagem <span style="font-weight:600;text-transform:none;letter-spacing:0">— opcional, enviada com a mensagem como legenda</span></div>'
-  +   '<input type="file" id="' + px + '-msg-img-input" accept="image/*" style="display:none" onchange="onMsgImgChange(\'' + px + '\', this)"/>'
+  +   '<div style="' + _LBL + '">Anexo <span style="font-weight:600;text-transform:none;letter-spacing:0">— opcional: imagem, PDF ou documento, enviado junto com a mensagem</span></div>'
+  +   '<input type="file" id="' + px + '-msg-img-input" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.zip" style="display:none" onchange="onMsgImgChange(\'' + px + '\', this)"/>'
   +   '<div id="' + px + '-msg-img-preview"></div>'
-  +   '<button type="button" id="' + px + '-msg-img-btn" onclick="document.getElementById(\'' + px + '-msg-img-input\').click()" style="background:none;color:var(--muted);border:1px dashed var(--border2);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;width:100%">🖼️ Anexar imagem (print, comprovante, economia…)</button>'
+  +   '<button type="button" id="' + px + '-msg-img-btn" onclick="document.getElementById(\'' + px + '-msg-img-input\').click()" style="background:none;color:var(--muted);border:1px dashed var(--border2);border-radius:8px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;width:100%">📎 Anexar arquivo (print, PDF de comprovante, voucher…)</button>'
   + '</div>';
 }
 
@@ -5909,24 +5921,31 @@ function _msgImgEl(px, suf) { return document.getElementById(px + '-msg-img-' + 
 function onMsgImgChange(px, input) {
   var file = input && input.files && input.files[0];
   if (!file) return;
-  if (file.type.indexOf('image/') !== 0) {
-    showToast('⚠️ Selecione um arquivo de imagem', 'err'); input.value = ''; return;
+  var ehImagem = file.type.indexOf('image/') === 0;
+  var ext = _extArquivo(file.name);
+  if (!ehImagem && MSG_DOC_EXT.indexOf(ext) === -1) {
+    showToast('⚠️ Tipo não suportado. Use imagem, PDF, Word, Excel, CSV, TXT ou ZIP', 'err');
+    input.value = ''; return;
   }
-  if (file.size > MSG_IMG_MAX) {
-    showToast('⚠️ Imagem muito grande (máx. 5MB)', 'err'); input.value = ''; return;
+  var limite = ehImagem ? MSG_IMG_MAX : MSG_DOC_MAX;
+  if (file.size > limite) {
+    showToast('⚠️ Arquivo muito grande (máx. ' + (limite/1024/1024) + 'MB)', 'err');
+    input.value = ''; return;
   }
   var reader = new FileReader();
   reader.onload = function(e) {
     _msgImagens[px] = {
       base64: e.target.result.split(',')[1],
       dataUrl: e.target.result,
-      mime: file.type,
+      mime: file.type || 'application/octet-stream',
       nome: file.name,
-      tamanho: file.size
+      tamanho: file.size,
+      ehImagem: ehImagem,
+      ext: ext
     };
     renderMsgImgPreview(px);
   };
-  reader.onerror = function(){ showToast('❌ Não foi possível ler a imagem', 'err'); };
+  reader.onerror = function(){ showToast('❌ Não foi possível ler o arquivo', 'err'); };
   reader.readAsDataURL(file);
 }
 
@@ -5942,14 +5961,20 @@ function renderMsgImgPreview(px) {
   }
   if (btn) btn.style.display = 'none';
   var kb = Math.round(img.tamanho / 1024);
+  var tamanhoTxt = kb >= 1024 ? (kb/1024).toFixed(1) + ' MB' : kb + ' KB';
+  var ehImagem = img.ehImagem !== undefined ? img.ehImagem : String(img.mime||'').indexOf('image/') === 0;
+  var thumb = ehImagem
+    ? '<img src="' + img.dataUrl + '" alt="preview" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0"/>'
+    : '<div style="width:52px;height:52px;border-radius:6px;flex-shrink:0;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px">'
+      + (MSG_DOC_ICONE[img.ext || _extArquivo(img.nome)] || '📄') + '</div>';
   box.innerHTML =
     '<div style="display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'
-  +   '<img src="' + img.dataUrl + '" alt="preview" style="width:52px;height:52px;object-fit:cover;border-radius:6px;flex-shrink:0"/>'
+  +   thumb
   +   '<div style="flex:1;min-width:0">'
   +     '<div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + escHtml(img.nome) + '</div>'
-  +     '<div style="font-size:11px;color:var(--muted)">' + kb + ' KB · será enviada com a mensagem</div>'
+  +     '<div style="font-size:11px;color:var(--muted)">' + tamanhoTxt + ' · ' + (ehImagem ? 'imagem enviada com legenda' : 'documento enviado com a mensagem') + '</div>'
   +   '</div>'
-  +   '<span onclick="removerMsgImg(\'' + px + '\')" title="Remover imagem" style="cursor:pointer;color:var(--muted2);font-size:14px;font-weight:700;padding:0 4px">✕</span>'
+  +   '<span onclick="removerMsgImg(\'' + px + '\')" title="Remover anexo" style="cursor:pointer;color:var(--muted2);font-size:14px;font-weight:700;padding:0 4px">✕</span>'
   + '</div>';
 }
 
@@ -5961,8 +5986,9 @@ function removerMsgImg(px) {
 }
 
 // Envio ao Baileys — fonte unica usada pela aba Mensagens e pelas secoes embutidas.
-// imagem (opcional): { base64, mime, nome } — quando presente vai por /enviar-imagem
-// com o texto como legenda (caption), em um unico disparo.
+// anexo (opcional): { base64, mime, nome, ehImagem } — quando presente vai por
+// /enviar-imagem (image/*) ou /enviar-arquivo (PDF, DOCX, XLSX...), sempre com o
+// texto como legenda (caption), em um unico disparo.
 function enviarWhatsApp(grupo, texto, statusEl, imagem) {
   var url = getBaileysUrl();
   if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
@@ -5972,11 +5998,14 @@ function enviarWhatsApp(grupo, texto, statusEl, imagem) {
     if (!statusEl) return;
     statusEl.style.color = cor; statusEl.textContent = txt;
   };
-  set('#f59e0b', imagem ? '⏳ Enviando imagem…' : '⏳ Enviando…');
+  var anexoEhImagem = imagem
+    ? (imagem.ehImagem !== undefined ? imagem.ehImagem : String(imagem.mime||'').indexOf('image/') === 0)
+    : false;
+  set('#f59e0b', imagem ? (anexoEhImagem ? '⏳ Enviando imagem…' : '⏳ Enviando arquivo…') : '⏳ Enviando…');
 
-  var rota = imagem ? '/enviar-imagem' : '/enviar';
+  var rota = imagem ? (anexoEhImagem ? '/enviar-imagem' : '/enviar-arquivo') : '/enviar';
   var corpo = imagem
-    ? { grupo: grupo, legenda: texto, base64: imagem.base64, mimetype: imagem.mime }
+    ? { grupo: grupo, legenda: texto, base64: imagem.base64, mimetype: imagem.mime, nomeArquivo: imagem.nome }
     : { grupo: grupo, mensagem: texto };
 
   fetch(url + rota, {
