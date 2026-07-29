@@ -439,15 +439,15 @@ function trechoCheckin(res, perna) {
 
 function msgCheckinVoo(res, t, horas) {
   const l = ['🛫 *Check-in liberado — ação necessária*', ''];
-  l.push(`👤 *Cliente:* ${res.cliente || '—'}`);
+  l.push(`*Cliente:* ${res.cliente || '—'}`);
   const voo = [t.nvoo, t.cia].filter(Boolean).join(' · ');
-  if (voo) l.push(`✈️ *Voo:* ${voo} (${t.rotulo})`);
-  l.push(`📍 ${localDe(t.origem)} → ${localDe(t.destino)}`);
-  l.push(`🗓️ ${fmtDateBR(t.data)}${(t.hora && t.hora !== '00:00') ? ' às ' + t.hora : ''} (em ${Math.round(horas)}h)`);
-  if (res.pnr)   l.push(`🎫 *Localizador:* ${res.pnr}`);
-  if (res.classe) l.push(`💺 *Classe:* ${res.classe}`);
-  if (res.pax)   l.push(`👥 *Pax:* ${res.pax}`);
-  l.push('', '✅ Fazer o check-in online desta reserva.');
+  if (voo) l.push(`*Voo:* ${voo} (${t.rotulo})`);
+  l.push(`*Trecho:* ${localDe(t.origem)} → ${localDe(t.destino)}`);
+  l.push(`*Partida:* ${fmtDateBR(t.data)}${(t.hora && t.hora !== '00:00') ? ' às ' + t.hora : ''} (em ${Math.round(horas)}h)`);
+  if (res.pnr)    l.push(`*Localizador:* ${res.pnr}`);
+  if (res.classe) l.push(`*Classe:* ${res.classe}`);
+  if (res.pax)    l.push(`*Pax:* ${res.pax}`);
+  l.push('', 'Fazer o check-in online desta reserva.');
   return l.join('\n');
 }
 
