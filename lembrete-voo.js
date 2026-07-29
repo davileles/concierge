@@ -16,6 +16,11 @@
  *
  * Modelos com modo 'manual' (ou sem modo) são ignorados.
  * Múltiplos modelos podem apontar para o mesmo gatilho com antecedências diferentes.
+ *
+ * Além dos modelos, o script dispara um alerta INTERNO de check-in online:
+ * 26h antes de cada perna (ida e volta) de toda reserva tipo 'voo', avisando
+ * no grupo de alertas (cfg.grupoAlertas) que aquela reserva precisa de
+ * check-in. Não depende de modelo cadastrado e não vai para o cliente.
  */
 
 const fs   = require('fs');
@@ -397,6 +402,97 @@ function logDebug(entry) {
   debugLog.push({ ...entry, ts: new Date().toISOString() });
 }
 
+// ── alerta interno: check-in online do voo ───────────────────────────────────
+// Independe de modelos.json: vale para toda reserva tipo 'voo'. Vai para o grupo
+// interno de alertas (cfg.grupoAlertas), NÃO para o grupo do cliente.
+// Janela de 26h: com a margem de 6h de deveDisparar(), o alerta sai entre 26h e
+// 20h antes da partida — ou seja, pouco antes de o check-in abrir (24h).
+// Atenção: o gatilho 'checkin' dos modelos é check-in de HOTEL. Este é outro.
+const CHECKIN_JANELA_H = 26;
+
+// Resolve a perna do voo. Campos de volta caem para os da ida quando vazios
+// (reserva antiga preenchia só origem/destino).
+function trechoCheckin(res, perna) {
+  if (perna === 'ida') {
+    if (!res.dataIda) return null;
+    return {
+      rotulo: 'Ida',
+      data:   res.dataIda,
+      hora:   res.horaPartida || '00:00',
+      origem: res.origem,
+      destino: res.destino,
+      cia:    res.ciaIda,
+      nvoo:   res.nvooIda
+    };
+  }
+  if (!res.dataVolta) return null;
+  return {
+    rotulo: 'Volta',
+    data:   res.dataVolta,
+    hora:   res.horaPartidaVolta || '00:00',
+    origem: res.origemVolta  || res.destino,
+    destino: res.destinoVolta || res.origem,
+    cia:    res.ciaVolta || res.ciaIda,
+    nvoo:   res.nvooVolta
+  };
+}
+
+function msgCheckinVoo(res, t, horas) {
+  const l = ['🛫 *Check-in liberado — ação necessária*', ''];
+  l.push(`👤 *Cliente:* ${res.cliente || '—'}`);
+  const voo = [t.nvoo, t.cia].filter(Boolean).join(' · ');
+  if (voo) l.push(`✈️ *Voo:* ${voo} (${t.rotulo})`);
+  l.push(`📍 ${localDe(t.origem)} → ${localDe(t.destino)}`);
+  l.push(`🗓️ ${fmtDateBR(t.data)}${(t.hora && t.hora !== '00:00') ? ' às ' + t.hora : ''} (em ${Math.round(horas)}h)`);
+  if (res.pnr)   l.push(`🎫 *Localizador:* ${res.pnr}`);
+  if (res.classe) l.push(`💺 *Classe:* ${res.classe}`);
+  if (res.pax)   l.push(`👥 *Pax:* ${res.pax}`);
+  l.push('', '✅ Fazer o check-in online desta reserva.');
+  return l.join('\n');
+}
+
+// Dedup pelo mesmo ledger dos modelos, com IDs sintéticos que não colidem com
+// os MOD-xxx: CHECKIN24-IDA|RES-xxx e CHECKIN24-VOLTA|RES-xxx.
+async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
+  if (!grupoAlertas) {
+    console.log('\n[check-in voo] grupoAlertas não configurado em cfg.json — bloco ignorado.');
+    logDebug({ bloco: 'checkin_voo', erro: 'grupoAlertas não configurado em cfg.json' });
+    return 0;
+  }
+  console.log(`\n[check-in voo] janela=${CHECKIN_JANELA_H}h → grupo ${grupoAlertas}`);
+  let enviados = 0;
+  for (const res of reservas) {
+    if (res.tipo !== 'voo') continue;
+    for (const perna of ['ida', 'volta']) {
+      const modId = `CHECKIN24-${perna.toUpperCase()}`;
+      if (jaEnviado(modId, res)) continue;
+      const t = trechoCheckin(res, perna);
+      if (!t) continue;
+
+      const horas = horasAte(t.data, t.hora);
+      const disparar = deveDisparar(horas, CHECKIN_JANELA_H);
+      if (horas >= 0 && horas <= CHECKIN_JANELA_H + 6) {
+        console.log(`  "${res.cliente}" ${perna} ${t.data} ${t.hora} → ${horas.toFixed(1)}h`);
+        logDebug({ bloco: 'checkin_voo', perna, reservaId: res.id, cliente: res.cliente, horasRestantes: Number(horas.toFixed(2)), janela: CHECKIN_JANELA_H, disparar });
+      }
+      if (!disparar) continue;
+
+      try {
+        await enviarWhatsApp(grupoAlertas, msgCheckinVoo(res, t, horas));
+        await registrarEnvio(modId, res.id);
+        enviados++;
+        resultados.push(`✅ [check-in ${perna}] "${res.cliente}" — ${t.origem}→${t.destino} ${t.data}`);
+        logDebug({ bloco: 'checkin_voo', perna, reservaId: res.id, cliente: res.cliente, grupo: grupoAlertas, tentativa: 'sucesso' });
+      } catch (e) {
+        resultados.push(`❌ [check-in ${perna}] "${res.cliente}": ${e.message}`);
+        console.error('  ❌', e.message);
+        logDebug({ bloco: 'checkin_voo', perna, reservaId: res.id, cliente: res.cliente, grupo: grupoAlertas, tentativa: 'erro', erro: e.message });
+      }
+    }
+  }
+  return enviados;
+}
+
 // ── migração de modelos antigos ───────────────────────────────────────────────
 const MIGRAR_GATILHO = {
   lembrete_ida:     'voo_ida_dt',
@@ -423,12 +519,13 @@ async function main() {
 
   if (!GITHUB_TOKEN) { console.error('❌ CDV_GITHUB_TOKEN não definido'); process.exit(1); }
 
-  const [reservasResp, modelosResp, viagensResp, clientes] = await Promise.all([
+  const [reservasResp, modelosResp, viagensResp, clientes, , cfgResp] = await Promise.all([
     githubGet('reservas.json'),
     githubGet('modelos.json'),
     githubGet('viagens.json').catch(() => ({ data: [], sha: null })),
     carregarClientes().catch(e => { console.warn('[clientes]', e.message); return []; }),
-    carregarLedger()
+    carregarLedger(),
+    githubGet('cfg.json').catch(() => ({ data: {}, sha: null }))
   ]);
   podarLedger();
 
@@ -437,6 +534,8 @@ async function main() {
   const viagens  = Array.isArray(viagensResp.data)
     ? viagensResp.data
     : (viagensResp.data?.items || []);
+  // Grupo interno de alertas — mesma fonte usada pelo proxy (cfg.grupoAlertas).
+  const grupoAlertas = (cfgResp.data && cfgResp.data.grupoAlertas) || '';
 
   // Mapa de reservas por ID (para lookup eficiente no gatilho primeiro_voo_viagem)
   const reservasMap = {};
@@ -456,16 +555,17 @@ async function main() {
 
   const ativos = modelos.filter(m => m.modo === 'programado' && m.gatilho && m.antecedencia);
 
+  // Sem modelo programado o loop abaixo simplesmente não roda — mas o alerta de
+  // check-in não depende de modelos, então a execução continua.
   if (!ativos.length) {
     console.log('[lembrete] Nenhum modelo programado cadastrado.');
-    return;
+  } else {
+    console.log(`[lembrete] ${ativos.length} modelo(s) programado(s) | ${reservas.length} reservas | ${clientes.length} clientes`);
+    ativos.forEach(m => {
+      const ant = `${m.antecedencia.valor} ${m.antecedencia.unidade}`;
+      console.log(`  • "${m.nome}" → ${m.gatilho} · ${ant} antes`);
+    });
   }
-
-  console.log(`[lembrete] ${ativos.length} modelo(s) programado(s) | ${reservas.length} reservas | ${clientes.length} clientes`);
-  ativos.forEach(m => {
-    const ant = `${m.antecedencia.valor} ${m.antecedencia.unidade}`;
-    console.log(`  • "${m.nome}" → ${m.gatilho} · ${ant} antes`);
-  });
 
   let totalAlteracoes = 0;
   const resultados = [];
@@ -610,6 +710,9 @@ async function main() {
     }
   }
 
+  // ── Alerta interno de check-in online (independe de modelos) ─────────────
+  totalAlteracoes += await alertarCheckinVoo(reservas, grupoAlertas, resultados);
+
   // ── Estado de envio ───────────────────────────────────────────────────────
   // Nada é gravado em reservas.json/viagens.json: o registro já foi persistido
   // no ledger logo após cada envio. Além de eliminar a corrida com o painel,
@@ -631,6 +734,7 @@ async function main() {
     const payload = {
       executadoEm: new Date().toISOString(),
       modelosAtivos: ativos.map(m => ({ nome: m.nome, gatilho: m.gatilho, antecedencia: m.antecedencia })),
+      checkinVoo: { janelaHoras: CHECKIN_JANELA_H, grupo: grupoAlertas || null },
       totalAlteracoes,
       resultados,
       eventos: debugLog
