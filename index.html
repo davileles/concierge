@@ -2344,7 +2344,7 @@ function populateViagemAssocSelect(reservadoParaId) {
     var lista = v.clientes
       ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(function(c){ return toTitleCase(c).toLowerCase(); })
       : [];
-    return lista.some(function(c){ return c.includes(clienteSel.toLowerCase()); });
+    return lista.some(function(c){ return mesmoCliente(c, clienteSel); });
   });
   if (viagensFiltradas.length === 0 && clienteSel) {
     var opt0 = document.createElement('option');
@@ -2373,6 +2373,27 @@ function toTitleCase(str) {
   return str.trim().split(/\s+/).slice(0, 3).map(function(w) {
     return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
   }).join(' ');
+}
+
+// Reservas antigas foram gravadas com o nome cortado em 2 palavras (toTitleCase
+// usava slice(0,2)); as novas usam 3. Comparar com === faz a reserva "Maria Alice"
+// nao casar com o cliente "Maria Alice Mendonca" da planilha. mesmoCliente()
+// compara sem acento/caixa e aceita que um nome seja prefixo do outro, exigindo
+// no minimo 2 palavras iguais para nao casar clientes que so dividem o 1o nome.
+function _normNome(s) {
+  return String(s == null ? '' : s)
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase().trim().replace(/\s+/g, ' ');
+}
+function mesmoCliente(a, b) {
+  var na = _normNome(a), nb = _normNome(b);
+  if (!na || !nb) return false;
+  if (na === nb) return true;
+  var pa = na.split(' '), pb = nb.split(' ');
+  var n = Math.min(pa.length, pb.length);
+  if (n < 2) return false;
+  for (var i = 0; i < n; i++) { if (pa[i] !== pb[i]) return false; }
+  return true;
 }
 
 // ── UPLOAD DE ATIVO ────────────────────────────────────────
@@ -3575,7 +3596,7 @@ function renderClientes() {
     + '<th style="width:26px"></th>'
     + '</tr></thead><tbody>'
     + list.map(function(c){
-      var resCount = reservas.filter(function(r){ return r.cliente === c.nome; }).length;
+      var resCount = reservas.filter(function(r){ return mesmoCliente(r.cliente, c.nome); }).length;
 
       var detalhe = '<div class="cli-grid">'
         + cliFieldCopy('CPF', c.cpf) + cliField('Data de Nascimento', fmtDate(c.nasc))
@@ -4179,7 +4200,7 @@ function populateDispararReservas(nome) {
   var sel = document.getElementById('d-reserva');
   var cur = sel.value;
   sel.innerHTML = '<option value="">Nenhuma</option>';
-  var list = reservas.filter(function(r){ return !nome || r.cliente===nome; });
+  var list = reservas.filter(function(r){ return !nome || mesmoCliente(r.cliente, nome); });
   list.forEach(function(r){
     var opt = document.createElement('option');
     opt.value = r.id;
