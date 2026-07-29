@@ -3764,6 +3764,7 @@ var VARS_RESERVA = [
   { label: '{{checkout}}',              desc: 'Check-out' },
   { label: '{{conf}}',                  desc: 'Confirmação' },
   { label: '{{nome_viagem}}',           desc: 'Nome da viagem associada' },
+  { label: '{{link_roteiro}}',          desc: 'Link publico do roteiro da viagem' },
   { label: '{{acumulo_programa}}',       desc: 'Programa de fidelidade (acúmulo hotel)' },
   { label: '{{acumulo_milhas}}',         desc: 'Milhas/pontos a acumular (hotel)' },
   { label: '{{acumulo_parceiro}}',       desc: 'Parceiro de acúmulo (hotel)' },
@@ -4283,6 +4284,7 @@ function resolverVariaveis(texto, cli, res, extras) {
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
     });
     txt = rv(txt, 'nome_viagem', viagemAssoc ? (viagemAssoc.nome||viagemAssoc.destino||'') : '');
+    txt = rv(txt, 'link_roteiro', (viagemAssoc && viagemAssoc.slugRoteiro) ? ('https://roteiros.clubedoviajante.com.br/'+viagemAssoc.slugRoteiro+'/') : '');
   }
   return txt;
 }
@@ -5417,6 +5419,7 @@ function abrirDetalheAtiv(tipo, idx, viagemId) {
       extras: function() {
         return {
           nome_viagem: vMs ? (vMs.nome || vMs.destino || '') : '',
+          link_roteiro: (vMs && vMs.slugRoteiro) ? ('https://roteiros.clubedoviajante.com.br/'+vMs.slugRoteiro+'/') : '',
           atividade: a.nome || '',
           titulo_atividade: (document.getElementById('mad-titulo').value || '').trim() || a.titulo || ''
         };
@@ -6393,7 +6396,10 @@ function abrirSecaoMensagemReserva() {
     },
     extras: function() {
       var v = (viagens || []).find(function(x){ return x.id === getVal('f-viagem-assoc'); });
-      return { nome_viagem: v ? (v.nome || v.destino || '') : '' };
+      return {
+        nome_viagem: v ? (v.nome || v.destino || '') : '',
+        link_roteiro: (v && v.slugRoteiro) ? ('https://roteiros.clubedoviajante.com.br/'+v.slugRoteiro+'/') : ''
+      };
     }
   });
 }
