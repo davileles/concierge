@@ -2,7 +2,7 @@
   {
     "id": "MOD-1785322063107",
     "nome": "Voo · Check-in realizado (ida)",
-    "texto": "✅ *Check-in realizado!*\n\nO check-in do voo de ida já está feito — não é preciso se preocupar com isso.\n\n🛫 *Detalhes do voo*\nTrecho: *{{origem}} ➔ {{destino}}*\nPartida: *{{data_ida}}* às *{{hora_partida}}*\nChegada: *{{data_chegada_ida}}* às *{{hora_chegada}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\nO cartão de embarque será enviado por aqui. Se planeje para chegar ao aeroporto com antecedência, especialmente se for despachar bagagem.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Check-in realizado!*\n\nO check-in do voo do seu voo já está feito — não é preciso se preocupar com isso.\n\n🛫 *Detalhes do voo*\nTrecho: *{{origem}} ➔ {{destino}}*\nPartida: *{{data_ida}}* às *{{hora_partida}}*\nChegada: *{{data_chegada_ida}}* às *{{hora_chegada}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\nO cartão de embarque será enviado por aqui. Se planeje para chegar ao aeroporto com antecedência, especialmente se for despachar bagagem.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
