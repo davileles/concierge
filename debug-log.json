@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-29T15:12:25.590Z",
+  "executadoEm": "2026-07-29T17:22:09.945Z",
   "modelosAtivos": [
     {
       "nome": "Voo · Lembrete de embarque (volta)",
@@ -30,175 +30,135 @@
     "janelaHoras": 26,
     "grupo": "120363428533434849@g.us"
   },
-  "totalAlteracoes": 2,
-  "resultados": [
-    "✅ [Voo · Instruções pré-voo] → \"Maria Alice\" (viagem \"Eurotrip - Miguel e Maria\", primeiro voo 2026-07-30)",
-    "✅ [check-in ida] \"Maria Alice\" — CNF→GRU 2026-07-30"
-  ],
+  "totalAlteracoes": 0,
+  "resultados": [],
   "eventos": [
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 1877.13,
+      "horasRestantes": 1874.96,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.502Z"
+      "ts": "2026-07-29T17:22:09.784Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 2924.21,
+      "horasRestantes": 2922.05,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.502Z"
+      "ts": "2026-07-29T17:22:09.784Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 3870.04,
+      "horasRestantes": 3867.88,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.503Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 2376.63,
+      "horasRestantes": 2374.46,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.503Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 1037.13,
+      "horasRestantes": 1034.96,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.503Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Marcelo e Patrícia em Paris 2026",
-      "horasRestantes": 797.21,
+      "horasRestantes": 795.05,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.503Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Rio Quente em família",
-      "horasRestantes": 164.13,
+      "horasRestantes": 161.96,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.503Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -301.04,
+      "horasRestantes": -303.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:23.503Z"
-    },
-    {
-      "modelo": "Voo · Instruções pré-voo",
-      "gatilho": "primeiro_voo_viagem",
-      "viagem": "Eurotrip - Miguel e Maria",
-      "horasRestantes": 23.79,
-      "janela": 24,
-      "disparar": true,
-      "ts": "2026-07-29T15:12:23.503Z"
-    },
-    {
-      "modelo": "Voo · Instruções pré-voo",
-      "gatilho": "primeiro_voo_viagem",
-      "viagem": "Eurotrip - Miguel e Maria",
-      "cliente": "Maria Alice",
-      "grupo": "120363401712706212@g.us",
-      "tentativa": "sucesso",
-      "ts": "2026-07-29T15:12:23.775Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -270.12,
+      "horasRestantes": -272.29,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:24.469Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -352.62,
+      "horasRestantes": -354.79,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:24.469Z"
+      "ts": "2026-07-29T17:22:09.785Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2768.29,
+      "horasRestantes": 2766.13,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:24.469Z"
+      "ts": "2026-07-29T17:22:09.786Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 433.88,
+      "horasRestantes": 431.71,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:24.469Z"
+      "ts": "2026-07-29T17:22:09.786Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -284.71,
+      "horasRestantes": -286.87,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-29T15:12:24.469Z"
+      "ts": "2026-07-29T17:22:09.786Z"
     },
     {
       "bloco": "checkin_voo",
       "perna": "ida",
       "reservaId": "RES-1784313328588",
-      "cliente": "Maria Alice",
-      "horasRestantes": 31.38,
+      "cliente": "Maria Alice Mendonça",
+      "horasRestantes": 29.21,
       "janela": 26,
       "disparar": false,
-      "ts": "2026-07-29T15:12:24.470Z"
-    },
-    {
-      "bloco": "checkin_voo",
-      "perna": "ida",
-      "reservaId": "RES-1783804484479",
-      "cliente": "Maria Alice",
-      "horasRestantes": 23.79,
-      "janela": 26,
-      "disparar": true,
-      "ts": "2026-07-29T15:12:24.470Z"
-    },
-    {
-      "bloco": "checkin_voo",
-      "perna": "ida",
-      "reservaId": "RES-1783804484479",
-      "cliente": "Maria Alice",
-      "grupo": "120363428533434849@g.us",
-      "tentativa": "sucesso",
-      "ts": "2026-07-29T15:12:25.376Z"
+      "ts": "2026-07-29T17:22:09.787Z"
     }
   ]
 }
