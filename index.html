@@ -1334,7 +1334,14 @@ header{animation:fadeUp .45s ease both}
         <div class="card" style="margin-bottom:0">
           <div class="card-title">📱 Grupo WhatsApp</div>
           <div class="field">
-            <label>ID do Grupo <span class="tag">preenchido automaticamente ao selecionar o cliente</span></label>
+            <label>Destino</label>
+            <div class="btn-row" style="gap:6px">
+              <button type="button" id="d-dest-cliente" class="btn btn-sm btn-accent" style="flex:1" onclick="setDestinoDisparo('cliente')">👤 Grupo do cliente</button>
+              <button type="button" id="d-dest-equipe" class="btn btn-sm btn-ghost" style="flex:1" onclick="setDestinoDisparo('equipe')">🔔 Grupo da equipe</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>ID do Grupo <span class="tag">preenchido automaticamente conforme o destino</span></label>
             <input type="text" id="d-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px"/>
           </div>
         </div>
@@ -1350,7 +1357,7 @@ header{animation:fadeUp .45s ease both}
         </div>
         <div class="field" id="d-msg-img-wrap"></div>
         <div class="btn-row">
-          <button class="btn btn-accent" style="flex:1" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
+          <button class="btn btn-accent" style="flex:1" id="d-send-btn" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
           <button class="btn btn-ghost btn-sm" onclick="copiarDisparar()">📋 Copiar</button>
         </div>
         <p id="d-send-ok" style="text-align:center;font-size:12px;font-weight:700;margin-top:10px;min-height:16px"></p>
@@ -4214,6 +4221,53 @@ function populateDispararReservas(nome) {
   if (cur) sel.value = cur;
 }
 
+// ══════════════════════════════════════
+//  DESTINO DO DISPARO: grupo do cliente ou grupo interno da equipe
+//  O grupo da equipe e o mesmo cfg.grupoAlertas usado pelo lembrete-voo.js
+//  (alertas automaticos de check-in) — fonte unica, sem duplicar ID.
+// ══════════════════════════════════════
+var _destinoDisparo = 'cliente';
+
+function setDestinoDisparo(dest) {
+  _destinoDisparo = (dest === 'equipe') ? 'equipe' : 'cliente';
+  var bc = document.getElementById('d-dest-cliente');
+  var be = document.getElementById('d-dest-equipe');
+  if (bc) bc.className = 'btn btn-sm ' + (_destinoDisparo === 'cliente' ? 'btn-accent' : 'btn-ghost');
+  if (be) be.className = 'btn btn-sm ' + (_destinoDisparo === 'equipe'  ? 'btn-accent' : 'btn-ghost');
+  aplicarDestinoDisparo();
+}
+
+function aplicarDestinoDisparo() {
+  var info = document.getElementById('d-grupo-info');
+  var btn  = document.getElementById('d-send-btn');
+
+  if (_destinoDisparo === 'equipe') {
+    var g = (_cfg && _cfg.grupoAlertas) || '';
+    setVal('d-grupo', g);
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = g
+        ? '🔔 Grupo da equipe · <span style="font-family:monospace;font-size:11px;color:var(--accent)">' + g + '</span>'
+        : '<span style="color:var(--accent)">⚠️ Grupo da equipe nao configurado — defina em Configuração → WhatsApp</span>';
+    }
+    if (btn) btn.textContent = '📤 Enviar para a Equipe';
+    return;
+  }
+
+  var cli = clientes.find(function(c){ return c.nome === getVal('d-cliente'); });
+  if (cli) {
+    setVal('d-grupo', cli.grupo || '');
+    if (info) {
+      info.style.display = 'block';
+      info.innerHTML = '📱 '+cli.tel+(cli.grupo?' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>':' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado na planilha</span>');
+    }
+  } else {
+    setVal('d-grupo', '');
+    if (info) info.style.display = 'none';
+  }
+  if (btn) btn.textContent = '📤 Enviar para o Grupo';
+}
+
 function onDispararChange() {
   var clienteNome = getVal('d-cliente');
   var reservaId   = getVal('d-reserva');
@@ -4226,16 +4280,8 @@ function onDispararChange() {
   var res = reservas.find(function(r){ return r.id===reservaId; });
   var mod = modelos.find(function(m){ return m.id===modeloId; });
 
-  // Set grupo (vem da planilha via cli.grupo)
-  if (cli) {
-    setVal('d-grupo', cli.grupo || '');
-    var info = document.getElementById('d-grupo-info');
-    info.style.display = 'block';
-    info.innerHTML = '📱 '+cli.tel+(cli.grupo?' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>':' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado na planilha</span>');
-  } else {
-    setVal('d-grupo', '');
-    document.getElementById('d-grupo-info').style.display='none';
-  }
+  // Set grupo conforme o destino escolhido (cliente ou equipe)
+  aplicarDestinoDisparo();
 
   if (!mod) { document.getElementById('d-msg-final').value=''; return; }
   document.getElementById('d-msg-final').value = resolverVariaveis(mod.texto, cli, res);
@@ -6050,6 +6096,10 @@ function enviarWhatsApp(grupo, texto, statusEl, imagem) {
 }
 
 function dispararMensagem() {
+  if (_destinoDisparo === 'equipe' && !getGrupoId()) {
+    showToast('⚠️ Defina o grupo da equipe em Configuração → WhatsApp', 'err');
+    return;
+  }
   enviarWhatsApp(
     getGrupoId(),
     document.getElementById('d-msg-final').value.trim(),
