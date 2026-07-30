@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-30T14:22:30.972Z",
+  "executadoEm": "2026-07-30T16:41:22.699Z",
   "modelosAtivos": [
     {
       "nome": "Voo · Lembrete de embarque (volta)",
@@ -38,157 +38,157 @@
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
-      "reservaId": "RES-1785406824738",
+      "reservaId": "RES-1785421398356",
       "cliente": "Diego Leoni Sandim",
-      "horasRestantes": 47.96,
+      "horasRestantes": 45.64,
       "janela": 48,
       "temGrupo": true,
       "disparar": true,
-      "ts": "2026-07-30T14:22:29.547Z"
+      "ts": "2026-07-30T16:41:21.453Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
-      "reservaId": "RES-1785406824738",
+      "reservaId": "RES-1785421398356",
       "cliente": "Diego Leoni Sandim",
       "grupo": "120363424713170391@g.us",
       "tentativa": "sucesso",
-      "ts": "2026-07-30T14:22:30.756Z"
+      "ts": "2026-07-30T16:41:22.469Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski em Bariloche",
-      "horasRestantes": 47.96,
+      "horasRestantes": 45.64,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem para Madrid #1",
-      "horasRestantes": 5043.71,
+      "horasRestantes": 5041.39,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 1853.96,
+      "horasRestantes": 1851.64,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 2901.04,
+      "horasRestantes": 2898.73,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 3846.87,
+      "horasRestantes": 3844.56,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 2353.46,
+      "horasRestantes": 2351.14,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 1013.96,
+      "horasRestantes": 1011.64,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Marcelo e Patrícia em Paris 2026",
-      "horasRestantes": 774.04,
+      "horasRestantes": 771.73,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Rio Quente em família",
-      "horasRestantes": 140.96,
+      "horasRestantes": 138.64,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -324.21,
+      "horasRestantes": -326.52,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -293.29,
+      "horasRestantes": -295.61,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -375.79,
+      "horasRestantes": -378.11,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.759Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2745.12,
+      "horasRestantes": 2742.81,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.760Z"
+      "ts": "2026-07-30T16:41:22.471Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 410.71,
+      "horasRestantes": 408.39,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.760Z"
+      "ts": "2026-07-30T16:41:22.472Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -307.88,
+      "horasRestantes": -310.19,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-30T14:22:30.760Z"
+      "ts": "2026-07-30T16:41:22.472Z"
     }
   ]
 }
