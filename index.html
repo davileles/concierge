@@ -1373,12 +1373,14 @@ header{animation:fadeUp .45s ease both}
             <label>Comparar com</label>
             <select id="m-gatilho" onchange="onGatilhoChange()">
               <option value="voo_ida_dt">Data + hora de partida (ida)</option>
-              <option value="voo_ida_d">Somente data de ida</option>
               <option value="voo_volta_dt">Data + hora de partida (volta)</option>
-              <option value="voo_volta_d">Somente data de volta</option>
               <option value="checkin">Data de check-in (hotel)</option>
               <option value="viagem">Data de inicio da viagem</option>
+              <option value="seguro_fim">🛡️ Fim da vigencia do seguro</option>
+              <option value="seguro_inicio">🛡️ Inicio da vigencia do seguro</option>
               <option value="primeiro_voo_viagem">✈️ Primeiro voo da viagem</option>
+              <option value="voo_ida_d">Somente data de ida</option>
+              <option value="voo_volta_d">Somente data de volta</option>
             </select>
           </div>
         </div>
@@ -4071,6 +4073,22 @@ var VARS_RESERVA = [
   { label: '{{loc_data_retirada}}',      desc: 'Data de retirada do carro' },
   { label: '{{loc_data_devolucao}}',     desc: 'Data de devolução/entrega do carro' },
   { label: '{{loc_categoria}}',          desc: 'Categoria/modelo do carro' },
+  { label: '{{seguradora}}',             desc: 'Seguradora / assistencia do seguro viagem' },
+  { label: '{{seguro_plano}}',           desc: 'Plano / produto do seguro' },
+  { label: '{{seguro_apolice}}',         desc: 'Numero do bilhete / apolice do seguro' },
+  { label: '{{seguro_cartao}}',          desc: 'Numero do cartao de assistencia' },
+  { label: '{{seguro_inicio}}',          desc: 'Inicio da vigencia do seguro' },
+  { label: '{{seguro_fim}}',             desc: 'Fim da vigencia do seguro' },
+  { label: '{{seguro_modalidade}}',      desc: 'Modalidade do seguro (anual / multiviagem / viagem unica)' },
+  { label: '{{seguro_dias}}',            desc: 'Dias por viagem (seguro multiviagem)' },
+  { label: '{{seguro_territorio}}',      desc: 'Validade territorial do seguro' },
+  { label: '{{seguro_cobertura}}',       desc: 'Cobertura de despesas medicas (DMH)' },
+  { label: '{{seguro_pax}}',             desc: 'Numero de segurados' },
+  { label: '{{seguro_emergencia}}',      desc: 'Telefone de emergencia da assistencia' },
+  { label: '{{seguro_valor}}',           desc: 'Valor pago no seguro em dinheiro (R$)' },
+  { label: '{{seguro_acumulo_valor}}',   desc: 'Valor pago no seguro com acumulo de pontos (R$)' },
+  { label: '{{seguro_milhas}}',          desc: 'Quantidade total de milhas gastas (seguro)' },
+  { label: '{{seguro_valor_tarifa}}',    desc: 'Valor da tarifa pagante do seguro (R$)' },
 ];
 
 function loadModelos(cb) {
@@ -4261,6 +4279,8 @@ var GATILHO_LABEL_MOD = {
   'checkin':      'Check-in',
   'viagem':       'Inicio da viagem',
   'primeiro_voo_viagem': 'Primeiro voo da viagem',
+  'seguro_inicio': 'Inicio da vigencia do seguro',
+  'seguro_fim':    'Fim da vigencia do seguro',
 };
 
 function modelosOrdenados() {
@@ -4610,6 +4630,25 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'loc_data_retirada',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retData?fmtDate(res.retData):'') : '');
     txt = rv(txt, 'loc_data_devolucao',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.devData?fmtDate(res.devData):'') : '');
     txt = rv(txt, 'loc_categoria',       (res.tipo==='carro' && res.subtipo==='locacao') ? (res.categoria||'') : '');
+    // ── Seguro viagem ──
+    var _seg = res.tipo === 'seguro';
+    var _modLbl = { anual:'Anual', multiviagem:'Multiviagem', unica:'Viagem unica' }[res.seguroModalidade] || (res.seguroModalidade||'');
+    txt = rv(txt, 'seguradora',           _seg ? (res.seguradora||'') : '');
+    txt = rv(txt, 'seguro_plano',         _seg ? (res.seguroPlano||'') : '');
+    txt = rv(txt, 'seguro_apolice',       _seg ? (res.conf||'') : '');
+    txt = rv(txt, 'seguro_cartao',        _seg ? (res.seguroCartao||'') : '');
+    txt = rv(txt, 'seguro_inicio',        _seg && res.seguroInicio ? fmtDate(res.seguroInicio) : '');
+    txt = rv(txt, 'seguro_fim',           _seg && res.seguroFim ? fmtDate(res.seguroFim) : '');
+    txt = rv(txt, 'seguro_modalidade',    _seg ? _modLbl : '');
+    txt = rv(txt, 'seguro_dias',          _seg ? (res.seguroDias||'') : '');
+    txt = rv(txt, 'seguro_territorio',    _seg ? (res.seguroTerritorio||'') : '');
+    txt = rv(txt, 'seguro_cobertura',     _seg ? (res.seguroCobertura||'') : '');
+    txt = rv(txt, 'seguro_pax',           _seg ? (res.pax||'') : '');
+    txt = rv(txt, 'seguro_emergencia',    _seg ? (res.seguroEmergencia||'') : '');
+    txt = rv(txt, 'seguro_valor',         _seg ? (res.valorDinheiro||'') : '');
+    txt = rv(txt, 'seguro_acumulo_valor', _seg ? (res.valorAcumulo||'') : '');
+    txt = rv(txt, 'seguro_milhas',        _seg ? (res.valorMilhas||'') : '');
+    txt = rv(txt, 'seguro_valor_tarifa',  _seg ? (res.valorTarifaPagante||res.valorAcumulo||'') : '');
     // Nome da viagem associada a esta reserva
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
