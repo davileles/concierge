@@ -114,6 +114,7 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .type-hotel{background:rgba(245,158,11,.15)}
 .type-carro{background:rgba(34,197,94,.15)}
 .type-passeio{background:rgba(192,132,252,.15)}
+.type-seguro{background:rgba(20,184,166,.15)}
 
 /* GRID DE RESERVAS */
 .reservas-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px}
@@ -500,6 +501,7 @@ header{animation:fadeUp .45s ease both}
     <span class="filter-chip" data-filter="hotel" onclick="setFilter(this)">🏨 Hotel</span>
     <span class="filter-chip" data-filter="carro" onclick="setFilter(this)">🚐 Transporte</span>
     <span class="filter-chip" data-filter="passeio" onclick="setFilter(this)">🎯 Passeio</span>
+    <span class="filter-chip" data-filter="seguro" onclick="setFilter(this)">🛡️ Seguro</span>
     <span class="filter-chip" data-filter="passadas" onclick="setFilter(this)">📅 Passadas</span>
   </div>
 
@@ -521,6 +523,7 @@ header{animation:fadeUp .45s ease both}
           <option value="hotel">🏨 Hospedagem</option>
           <option value="voo">✈️ Passagem Aérea</option>
           <option value="passeio">🎯 Passeio / Atividade</option>
+          <option value="seguro">🛡️ Seguro Viagem</option>
           <option value="carro">🚐 Transporte</option>
         </select>
       </div>
@@ -935,6 +938,125 @@ header{animation:fadeUp .45s ease both}
       <div class="g2">
         <div class="field"><label>Voucher / Confirmação</label><input type="text" id="f-passeio-conf" placeholder="Ex: GYG-ABCDEF"/></div>
         <div class="field"><label>Valor Total <span class="tag">R$</span></label><input type="text" id="f-passeio-valor" oninput="formatMilhar(this)" placeholder="Ex: 980,00"/></div>
+      </div>
+    </div>
+
+    <!-- CAMPOS SEGURO VIAGEM -->
+    <div id="fields-seguro" style="display:none">
+      <div class="sep"></div>
+      <div class="g2">
+        <div class="field"><label>Seguradora / Assistencia <span style="color:var(--accent)">*</span></label>
+          <select id="f-seguradora">
+            <option value="">Selecione&hellip;</option>
+            <option>AIG</option><option>Affinity</option><option>Allianz Travel</option>
+            <option>April</option><option>Assist Card</option><option>Assist Trip</option>
+            <option>AXA Assistance</option><option>Coris</option><option>GTA</option>
+            <option>Intermac</option><option>ITA Seguro Viagem</option><option>MAPFRE</option>
+            <option>Porto Seguro</option><option>SulAmerica</option><option>Travel Ace</option>
+            <option>Universal Assistance</option><option>Vital Card</option>
+            <option>World Assistance</option><option>Outra</option>
+          </select>
+        </div>
+        <div class="field"><label>Plano / Produto</label><input type="text" id="f-seguro-plano" placeholder="Ex: Plano 250"/></div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>N&ordm; do Bilhete / Apolice <span style="color:var(--accent)">*</span></label><input type="text" id="f-seguro-apolice" placeholder="Ex: 2013.94318.26.0012623"/></div>
+        <div class="field"><label>N&ordm; do Cartao de Assistencia <span class="tag">opcional</span></label><input type="text" id="f-seguro-cartao" placeholder="Ex: 550 33378809 0B59"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>&#128747; Inicio da Vigencia <span style="color:var(--accent)">*</span></label><input type="date" id="f-seguro-inicio"/></div>
+        <div class="field"><label>Fim da Vigencia <span style="color:var(--accent)">*</span></label><input type="date" id="f-seguro-fim"/></div>
+        <div class="field"><label>N&ordm; de Segurados</label><input type="number" id="f-seguro-pax" min="1" placeholder="Ex: 2"/></div>
+      </div>
+      <div class="g3">
+        <div class="field"><label>Modalidade <span style="color:var(--accent)">*</span></label>
+          <select id="f-seguro-modalidade" onchange="onSeguroModalidadeChange()">
+            <option value="">Selecione&hellip;</option>
+            <option value="anual">Anual</option>
+            <option value="multiviagem">Multiviagem</option>
+            <option value="unica">Viagem unica</option>
+          </select>
+        </div>
+        <div class="field" id="field-seguro-dias" style="display:none"><label>Dias por Viagem <span class="tag">multiviagem</span></label><input type="number" id="f-seguro-dias" min="1" placeholder="Ex: 30"/></div>
+        <div class="field"><label>Validade Territorial</label>
+          <select id="f-seguro-territorio">
+            <option value="">Selecione&hellip;</option>
+            <option>America do Norte</option><option>America do Sul</option>
+            <option>Asia</option><option>Brasil</option><option>Europa (Schengen)</option>
+            <option>Internacional</option><option>Mercosul</option><option>Outro</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Cobertura DMH <span class="tag">despesas medicas</span></label><input type="text" id="f-seguro-cobertura" placeholder="Ex: EUR/USD 250.000"/></div>
+        <div class="field"><label>Telefone de Emergencia</label><input type="text" id="f-seguro-emergencia" placeholder="Ex: +55 11 3191 8699"/></div>
+      </div>
+
+      <div class="sep" style="margin:12px 0 14px"></div>
+      <div class="field"><label>Tipo de Emissao <span style="color:var(--accent)">*</span></label>
+        <select id="f-seguro-tipo-emissao" onchange="onSeguroTipoEmissaoChange()">
+          <option value="">Selecione&hellip;</option>
+          <option value="dinheiro">Dinheiro</option>
+          <option value="dinheiro_acumulo">Dinheiro c/ acumulo de milhas</option>
+          <option value="milhas">Milhas</option>
+        </select>
+      </div>
+
+      <!-- SEGURO: MILHAS -->
+      <div id="seguro-campos-milhas" style="display:none">
+        <div class="g2">
+          <div class="field"><label>Valor Total de Milhas <span style="color:var(--accent)">*</span></label><input type="text" id="f-seguro-valor-milhas" oninput="formatMilhar(this)" placeholder="Ex: 30.000"/></div>
+          <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+            <select id="f-seguro-programa-milhas">
+              <option value="">Selecione&hellip;</option>
+              <option>AAdvantage</option><option>Azul Fidelidade</option>
+              <option>Esfera</option><option>Executive Club</option>
+              <option>Finnair Plus</option><option>Iberia Plus</option>
+              <option>LATAM Pass</option><option>Livelo</option>
+              <option>Privilege Club</option><option>Smiles</option>
+              <option>SUMA</option>
+            </select>
+          </div>
+        </div>
+        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-seguro-valor-tarifa" oninput="formatMilhar(this)" placeholder="Ex: 190,00"/></div>
+      </div>
+
+      <!-- SEGURO: DINHEIRO -->
+      <div id="seguro-campos-dinheiro" style="display:none">
+        <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-seguro-valor-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 1.690,65"/></div>
+      </div>
+
+      <!-- SEGURO: DINHEIRO C/ ACUMULO -->
+      <div id="seguro-campos-acumulo" style="display:none">
+        <div class="g2">
+          <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-seguro-valor-acumulo" placeholder="Ex: 1.690,65" oninput="formatMilhar(this);calcMilhasAcumuloSeguro()"/></div>
+          <div class="field"><label>Programa de Fidelidade <span style="color:var(--accent)">*</span></label>
+            <select id="f-seguro-programa-acumulo">
+              <option value="">Selecione&hellip;</option>
+              <option>AAdvantage</option><option>Azul Fidelidade</option>
+              <option>Esfera</option><option>Executive Club</option>
+              <option>Finnair Plus</option><option>Iberia Plus</option>
+              <option>LATAM Pass</option><option>Livelo</option>
+              <option>Privilege Club</option><option>Smiles</option>
+              <option>SUMA</option>
+            </select>
+          </div>
+        </div>
+        <div class="g3">
+          <div class="field"><label>Fator Multiplicador <span class="tag">pts/R$</span></label><input type="number" id="f-seguro-fator-acumulo" min="0" step="0.1" placeholder="Ex: 5" oninput="calcMilhasAcumuloSeguro()"/></div>
+          <div class="field"><label>Milhas a Receber <span class="tag">automatico</span></label><input type="text" id="f-seguro-milhas-acumulo" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
+          <div class="field"><label>Parceiro <span style="color:var(--accent)">*</span></label>
+            <select id="f-seguro-parceiro-acumulo">
+              <option value="">Selecione o parceiro&hellip;</option>
+              <option>Affinity</option><option>Assist Card</option><option>Allianz Travel</option>
+              <option>April</option><option>Coris</option><option>GTA</option>
+              <option>Intermac</option><option>ITA Seguro Viagem</option>
+              <option>Porto Seguro</option><option>Real Seguro Viagem</option>
+              <option>Seguros Promo</option><option>Universal Assistance</option>
+              <option>Vital Card</option><option>Outro</option>
+            </select>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -2231,7 +2353,7 @@ function demandaClienteChange() {
 //  FORMULÁRIO
 // ══════════════════════════════════════════
 function onTipoChange(reprocessar) {
-  ['voo','hotel','carro','passeio'].forEach(function(t){
+  ['voo','hotel','carro','passeio','seguro'].forEach(function(t){
     document.getElementById('fields-'+t).style.display = 'none';
   });
   var tipo = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
@@ -2259,6 +2381,8 @@ function limparForm() {
    'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-tarifa','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-hotel-fator-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
+   'f-seguradora','f-seguro-plano','f-seguro-apolice','f-seguro-cartao','f-seguro-inicio','f-seguro-fim','f-seguro-pax','f-seguro-modalidade','f-seguro-dias','f-seguro-territorio','f-seguro-cobertura','f-seguro-emergencia',
+   'f-seguro-tipo-emissao','f-seguro-valor-dinheiro','f-seguro-valor-milhas','f-seguro-programa-milhas','f-seguro-valor-tarifa','f-seguro-valor-acumulo','f-seguro-programa-acumulo','f-seguro-fator-acumulo','f-seguro-milhas-acumulo','f-seguro-parceiro-acumulo',
    'f-obs','f-demanda-assoc','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
@@ -2277,6 +2401,9 @@ function limparForm() {
   if (hm) hm.style.display = 'none';
   var hd = document.getElementById('hotel-campos-dinheiro');
   if (hd) hd.style.display = 'none';
+  ['seguro-campos-milhas','seguro-campos-dinheiro','seguro-campos-acumulo','field-seguro-dias'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.style.display = 'none';
+  });
   var lbl = document.getElementById('f-hotel-valor-label');
   if (lbl) lbl.innerHTML = 'Valor Total <span class="tag">R$</span>';
   // Esconder select de atividade
@@ -2550,6 +2677,7 @@ function enviarAtivoParaIA(payload) {
   else if (tipoSel === 'hotel') tipoCampos = 'hospedagem';
   else if (tipoSel === 'carro') tipoCampos = 'transporte (transfer/traslado ou locação de carro)';
   else if (tipoSel === 'passeio') tipoCampos = 'passeio/atividade';
+  else if (tipoSel === 'seguro') tipoCampos = 'seguro viagem / assistencia internacional';
   else tipoCampos = 'reserva de viagem';
 
   payload.tipoCampos = tipoCampos;
@@ -2668,6 +2796,23 @@ function aplicarDadosAtivo(d) {
   sv('f-passeio-nome', d.passeioNome); sv('f-passeio-dest', d.passeioDest); sv('f-passeio-op', d.passeioOp);
   sv('f-passeio-data', d.passeioData); sv('f-passeio-hora', d.passeioHora);
   sv('f-passeio-pax', d.passeioPax); sv('f-passeio-conf', d.passeioConf); sv('f-passeio-valor', d.passeioValor);
+
+  // Seguro Viagem
+  ssv('f-seguradora', d.seguradora);
+  sv('f-seguro-plano', d.seguroPlano); sv('f-seguro-apolice', d.seguroApolice);
+  sv('f-seguro-cartao', d.seguroCartao);
+  sv('f-seguro-inicio', d.seguroInicio); sv('f-seguro-fim', d.seguroFim);
+  sv('f-seguro-pax', d.seguroPax);
+  if (d.seguroModalidade) { ssv('f-seguro-modalidade', d.seguroModalidade); onSeguroModalidadeChange(); }
+  sv('f-seguro-dias', d.seguroDias);
+  ssv('f-seguro-territorio', d.seguroTerritorio);
+  sv('f-seguro-cobertura', d.seguroCobertura);
+  sv('f-seguro-emergencia', d.seguroEmergencia);
+  if (d.tipo === 'seguro') {
+    ssv('f-seguro-tipo-emissao', d.tipoEmissao || 'dinheiro');
+    onSeguroTipoEmissaoChange();
+    if ((d.tipoEmissao || 'dinheiro') === 'dinheiro') sv('f-seguro-valor-dinheiro', d.seguroValor);
+  }
 
   // Obs
   if (d.obs) sv('f-obs', d.obs);
@@ -2803,6 +2948,34 @@ function coletarReservaDoForm(id) {
       hora: getVal('f-passeio-hora'), pax: getVal('f-passeio-pax'),
       conf: getVal('f-passeio-conf'), valor: getVal('f-passeio-valor'),
     });
+  } else if (tipo === 'seguro') {
+    Object.assign(res, {
+      seguradora: getVal('f-seguradora'),
+      seguroPlano: getVal('f-seguro-plano'),
+      conf: getVal('f-seguro-apolice'),
+      seguroCartao: getVal('f-seguro-cartao'),
+      seguroInicio: getVal('f-seguro-inicio'),
+      seguroFim: getVal('f-seguro-fim'),
+      pax: getVal('f-seguro-pax'),
+      seguroModalidade: getVal('f-seguro-modalidade'),
+      seguroDias: getVal('f-seguro-dias'),
+      seguroTerritorio: getVal('f-seguro-territorio'),
+      seguroCobertura: getVal('f-seguro-cobertura'),
+      seguroEmergencia: getVal('f-seguro-emergencia'),
+      tipoEmissao: getVal('f-seguro-tipo-emissao'),
+      // Dinheiro
+      valorDinheiro: getVal('f-seguro-valor-dinheiro'),
+      // Milhas
+      valorMilhas: getVal('f-seguro-valor-milhas'),
+      programaMilhas: getVal('f-seguro-programa-milhas'),
+      valorTarifaPagante: getVal('f-seguro-valor-tarifa'),
+      // Dinheiro c/ acumulo
+      valorAcumulo: getVal('f-seguro-valor-acumulo'),
+      programaAcumulo: getVal('f-seguro-programa-acumulo'),
+      fatorAcumulo: getVal('f-seguro-fator-acumulo'),
+      milhasAcumulo: getVal('f-seguro-milhas-acumulo'),
+      parceiroAcumulo: getVal('f-seguro-parceiro-acumulo'),
+    });
   }
   var _cliG = clientes.find(function(c){ return c.nome === cliente; });
   if (_cliG && _cliG.grupo) res.grupo = _cliG.grupo;
@@ -2849,6 +3022,15 @@ function salvarReserva(cb) {
       if (!_vHoraCheg) { showToast('⚠️ Informe o Horário de Chegada da volta', 'err'); _cb(false); return; }
       if (!_vCia)      { showToast('⚠️ Informe a Cia Aérea da volta', 'err'); _cb(false); return; }
     }
+  }
+
+  if (tipo === 'seguro') {
+    if (!getVal('f-seguradora'))          { showToast('\u26a0\ufe0f Informe a Seguradora / Assistencia', 'err'); _cb(false); return; }
+    if (!getVal('f-seguro-apolice'))      { showToast('\u26a0\ufe0f Informe o N\u00ba do Bilhete / Apolice', 'err'); _cb(false); return; }
+    if (!getVal('f-seguro-inicio'))       { showToast('\u26a0\ufe0f Informe o Inicio da Vigencia', 'err'); _cb(false); return; }
+    if (!getVal('f-seguro-fim'))          { showToast('\u26a0\ufe0f Informe o Fim da Vigencia', 'err'); _cb(false); return; }
+    if (!getVal('f-seguro-modalidade'))   { showToast('\u26a0\ufe0f Informe a Modalidade', 'err'); _cb(false); return; }
+    if (!getVal('f-seguro-tipo-emissao')) { showToast('\u26a0\ufe0f Informe o Tipo de Emissao', 'err'); _cb(false); return; }
   }
 
   var id = 'RES-' + Date.now();
@@ -2937,9 +3119,11 @@ function salvarReserva(cb) {
           nomeAtiv = 'Transporte'; iconAtiv = '🚌';
         } else if (res.tipo === 'passeio') {
           nomeAtiv = 'Passeio/Atividade'; iconAtiv = '🎯';
+        } else if (res.tipo === 'seguro') {
+          nomeAtiv = 'Seguro Viagem'; iconAtiv = '🛡️';
         }
         // Calcular pos cronológico para inserir na posição correta
-        var _dataRes = res.dataIda || res.checkin || res.retData || res.dataTransfer || res.dataPasseio || '';
+        var _dataRes = res.dataIda || res.checkin || res.retData || res.dataTransfer || res.dataPasseio || res.seguroInicio || '';
         var _posNova = (function(ativs, dataRes) {
           // Mapear atividades com data (via reserva vinculada) e pos
           var comPos = ativs.filter(function(a){ return a.pos !== undefined && a.pos !== null; });
@@ -2951,7 +3135,7 @@ function salvarReserva(cb) {
             if (!a.reservaId) return null;
             var r = reservas.find(function(x){ return x.id === a.reservaId; });
             if (!r) return null;
-            return r.dataIda || r.checkin || r.retData || r.dataTransfer || r.dataPasseio || null;
+            return r.dataIda || r.checkin || r.retData || r.dataTransfer || r.dataPasseio || r.seguroInicio || null;
           };
           // Inserir antes da primeira atividade com data >= dataRes
           for (var si = 0; si < sorted.length; si++) {
@@ -2988,6 +3172,13 @@ function salvarReserva(cb) {
               var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
               return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
+            }
+            if (r.tipo === 'seguro') {
+              var seg = r.seguradora || 'Seguro Viagem';
+              var vi = r.seguroInicio ? fmtDate(r.seguroInicio) : null;
+              var vf = r.seguroFim ? fmtDate(r.seguroFim) : null;
+              if (vi && vf) return seg + ' · ' + vi + ' a ' + vf;
+              return seg;
             }
             return r.passeioNome || r.locadora || '';
           })(res),
@@ -3060,9 +3251,9 @@ function salvarReserva(cb) {
 // ══════════════════════════════════════════
 //  RENDER RESERVAS
 // ══════════════════════════════════════════
-var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚐 Transporte', passeio:'🎯 Passeio' };
+var TIPO_LABEL = { voo:'✈️ Voo', hotel:'🏨 Hotel', carro:'🚐 Transporte', passeio:'🎯 Passeio', seguro:'🛡️ Seguro' };
 var SUBTIPO_ICON = { transfer:'🚐', trem:'🚆', onibus:'🚌', ferry:'⛴️', locacao:'🚗' };
-var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio' };
+var TIPO_CLASS = { voo:'type-voo', hotel:'type-hotel', carro:'type-carro', passeio:'type-passeio', seguro:'type-seguro' };
 
 function abreviarLocal(s) {
   if (!s) return '?';
@@ -3087,6 +3278,10 @@ function resTitle(r) {
     return ic + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal);
   }
   if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
+  if (r.tipo==='seguro') {
+    var seg = r.seguradora || 'Seguro Viagem';
+    return seg + (r.seguroPlano ? ' – ' + r.seguroPlano : '');
+  }
   return 'Reserva';
 }
 
@@ -3134,6 +3329,17 @@ function resCols(r) {
     ['Hora', r.hora||'—'],
     ['Voucher', r.conf||'—'],
   ];
+  if (r.tipo==='seguro') {
+    var modLbl = { anual:'Anual', multiviagem:'Multiviagem', unica:'Viagem única' }[r.seguroModalidade] || (r.seguroModalidade||'—');
+    if (r.seguroModalidade === 'multiviagem' && r.seguroDias) modLbl += ' · ' + r.seguroDias + ' dias/viagem';
+    return [
+      ['Cliente', toTitleCase(r.cliente)],
+      ['Seguradora', r.seguradora||'—'],
+      ['Vigência', fmtDate(r.seguroInicio) + ' a ' + fmtDate(r.seguroFim)],
+      ['Modalidade', modLbl],
+      ['Bilhete / Apólice', r.conf||'—'],
+    ];
+  }
   return [];
 }
 
@@ -3179,6 +3385,10 @@ function resGridCols(r, cols) {
     // Cliente | Hotel | Check-in | Check-out | Confirmação
     return '140px 2fr 110px 110px 160px';
   }
+  if (r.tipo === 'seguro') {
+    // Cliente | Seguradora | Vigência | Modalidade | Bilhete
+    return '140px 150px 1fr 150px 180px';
+  }
   return 'repeat(auto-fit, minmax(130px, 1fr))';
 }
 
@@ -3195,16 +3405,18 @@ function resDatas(r) {
   else if (r.tipo === 'hotel')   { ini = r.checkin;                    fim = r.checkout;  }
   else if (r.tipo === 'carro')   { ini = r.retData || r.transferData;  fim = r.devData;   }
   else if (r.tipo === 'passeio') { ini = r.dataPasseio;                fim = '';          }
+  else if (r.tipo === 'seguro')  { ini = r.seguroInicio;               fim = r.seguroFim; }
   ini = dataISO(ini); fim = dataISO(fim);
-  if (!ini) ini = dataISO(r.dataIda || r.checkin || r.retData || r.transferData || r.dataPasseio);
+  if (!ini) ini = dataISO(r.dataIda || r.checkin || r.retData || r.transferData || r.dataPasseio || r.seguroInicio);
   return { inicio: ini, fim: fim };
 }
 
 // Rotulo da data final conforme o tipo de reserva
 function resLabelFim(r) {
-  return r.tipo === 'voo'   ? 'Volta'
-       : r.tipo === 'hotel' ? 'Check-out'
-       : r.tipo === 'carro' ? 'Devolucao'
+  return r.tipo === 'voo'    ? 'Volta'
+       : r.tipo === 'hotel'  ? 'Check-out'
+       : r.tipo === 'carro'  ? 'Devolucao'
+       : r.tipo === 'seguro' ? 'Fim da vigencia'
        : 'Fim';
 }
 
@@ -3335,7 +3547,7 @@ function updateStats(lista) {
   document.getElementById('stat-total').textContent  = src.length;
   document.getElementById('stat-voo').textContent    = src.filter(function(r){ return r.tipo==='voo';     }).length;
   document.getElementById('stat-hotel').textContent  = src.filter(function(r){ return r.tipo==='hotel';   }).length;
-  document.getElementById('stat-outros').textContent = src.filter(function(r){ return r.tipo==='carro'||r.tipo==='passeio'; }).length;
+  document.getElementById('stat-outros').textContent = src.filter(function(r){ return r.tipo==='carro'||r.tipo==='passeio'||r.tipo==='seguro'; }).length;
 }
 
 function toggleRes(id) {
@@ -3507,6 +3719,31 @@ function preencherFormReserva(r, modo) {
     setVal('f-passeio-op',r.operadora); setVal('f-passeio-data',r.dataPasseio);
     setVal('f-passeio-hora',r.hora); setVal('f-passeio-pax',r.pax);
     setVal('f-passeio-conf',r.conf); setVal('f-passeio-valor',r.valor);
+  } else if (r.tipo==='seguro'){
+    setVal('f-seguradora',r.seguradora||'');
+    setVal('f-seguro-plano',r.seguroPlano||'');
+    setVal('f-seguro-apolice',r.conf||'');
+    setVal('f-seguro-cartao',r.seguroCartao||'');
+    setVal('f-seguro-inicio',r.seguroInicio||'');
+    setVal('f-seguro-fim',r.seguroFim||'');
+    setVal('f-seguro-pax',r.pax||'');
+    setVal('f-seguro-modalidade',r.seguroModalidade||'');
+    onSeguroModalidadeChange();
+    setVal('f-seguro-dias',r.seguroDias||'');
+    setVal('f-seguro-territorio',r.seguroTerritorio||'');
+    setVal('f-seguro-cobertura',r.seguroCobertura||'');
+    setVal('f-seguro-emergencia',r.seguroEmergencia||'');
+    setVal('f-seguro-tipo-emissao',r.tipoEmissao||'');
+    onSeguroTipoEmissaoChange();
+    setVal('f-seguro-valor-dinheiro',r.valorDinheiro||'');
+    setVal('f-seguro-valor-milhas',r.valorMilhas||'');
+    setVal('f-seguro-programa-milhas',r.programaMilhas||'');
+    setVal('f-seguro-valor-tarifa',r.valorTarifaPagante||'');
+    setVal('f-seguro-valor-acumulo',r.valorAcumulo||'');
+    setVal('f-seguro-programa-acumulo',r.programaAcumulo||'');
+    setVal('f-seguro-fator-acumulo',r.fatorAcumulo||'');
+    setVal('f-seguro-milhas-acumulo',r.milhasAcumulo||'');
+    setVal('f-seguro-parceiro-acumulo',r.parceiroAcumulo||'');
   }
   // Se a reserva já tem arquivo salvo no servidor, mostrar indicação
   if (!_dup && r.temArquivo && r.arquivoAnexo) {
@@ -3575,6 +3812,7 @@ function duplicarReserva(id) {
     var campo = r.tipo === 'voo'     ? 'f-pnr'
               : r.tipo === 'hotel'   ? 'f-hotel-conf'
               : r.tipo === 'passeio' ? 'f-passeio-conf'
+              : r.tipo === 'seguro'  ? 'f-seguro-apolice'
               : r.tipo === 'carro'   ? (r.subtipo === 'locacao' ? 'f-carro-conf-loc' : 'f-carro-conf')
               : null;
     var el = campo ? document.getElementById(campo) : null;
@@ -4239,6 +4477,7 @@ function populateDispararReservas(nome) {
     var label = r.tipo==='voo' ? (r.origem||'?')+'→'+(r.destino||'?')+' '+fmtDate(r.dataIda)
               : r.tipo==='hotel' ? (r.hotelNome||r.destino||'Hotel')+' '+fmtDate(r.checkin)
               : r.tipo==='carro' ? (r.subtipo==='transfer'?(r.retLocal||'?')+'→'+(r.devLocal||'?'):(r.locadora||'Carro'))+' '+fmtDate(r.retData)
+              : r.tipo==='seguro' ? (r.seguradora||'Seguro')+' '+fmtDate(r.seguroInicio)
               : (r.passeioNome||'Passeio')+' '+fmtDate(r.dataPasseio);
     opt.textContent = '['+r.tipo.toUpperCase()+'] ' + label;
     sel.appendChild(opt);
@@ -4541,6 +4780,38 @@ function onHotelTipoEmissaoChange() {
   if (tipo !== 'milhas')           { setVal('f-hotel-valor',''); setVal('f-hotel-programa-milhas',''); setVal('f-hotel-valor-tarifa',''); }
   if (tipo !== 'dinheiro')         setVal('f-hotel-valor-dinheiro','');
   if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-valor-acumulo',''); setVal('f-hotel-fator-acumulo',''); setVal('f-hotel-milhas-acumulo',''); setVal('f-hotel-programa-acumulo',''); setVal('f-hotel-parceiro-acumulo',''); }
+}
+
+function onSeguroModalidadeChange() {
+  var mod = getVal('f-seguro-modalidade');
+  var f = document.getElementById('field-seguro-dias');
+  if (f) f.style.display = (mod === 'multiviagem') ? '' : 'none';
+  if (mod !== 'multiviagem') setVal('f-seguro-dias','');
+}
+
+function onSeguroTipoEmissaoChange() {
+  var tipo = getVal('f-seguro-tipo-emissao');
+  ['seguro-campos-milhas','seguro-campos-dinheiro','seguro-campos-acumulo'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  if (tipo === 'milhas')           document.getElementById('seguro-campos-milhas').style.display = '';
+  if (tipo === 'dinheiro')         document.getElementById('seguro-campos-dinheiro').style.display = '';
+  if (tipo === 'dinheiro_acumulo') document.getElementById('seguro-campos-acumulo').style.display = '';
+  // Limpar ao trocar
+  if (tipo !== 'milhas')           { setVal('f-seguro-valor-milhas',''); setVal('f-seguro-programa-milhas',''); setVal('f-seguro-valor-tarifa',''); }
+  if (tipo !== 'dinheiro')         setVal('f-seguro-valor-dinheiro','');
+  if (tipo !== 'dinheiro_acumulo') { setVal('f-seguro-valor-acumulo',''); setVal('f-seguro-fator-acumulo',''); setVal('f-seguro-milhas-acumulo',''); setVal('f-seguro-programa-acumulo',''); setVal('f-seguro-parceiro-acumulo',''); }
+}
+
+function calcMilhasAcumuloSeguro() {
+  var valor = parseValorBR(getVal('f-seguro-valor-acumulo'));
+  var fator = parseValorBR(getVal('f-seguro-fator-acumulo'));
+  if (valor > 0 && fator > 0) {
+    setVal('f-seguro-milhas-acumulo', Math.round(valor * fator).toLocaleString('pt-BR'));
+  } else {
+    setVal('f-seguro-milhas-acumulo', '');
+  }
 }
 
 function onHospedesChange() { /* reservado para cálculos futuros */ }
@@ -5809,6 +6080,13 @@ function confirmarVinculo() {
               var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
               return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
             }
+            if (r.tipo === 'seguro') {
+              var seg = r.seguradora || 'Seguro Viagem';
+              var vi = r.seguroInicio ? fmtDate(r.seguroInicio) : null;
+              var vf = r.seguroFim ? fmtDate(r.seguroFim) : null;
+              if (vi && vf) return seg + ' · ' + vi + ' a ' + vf;
+              return seg;
+            }
             return r.passeioNome || r.locadora || '';
           })(res);
       }
@@ -6769,6 +7047,18 @@ function rgGerarPrevia(v) {
     });
   });
 
+  // Seguros
+  resViagem.filter(function(r){ return r.tipo==='seguro'; }).forEach(function(r){
+    var modS = { anual:'Anual', multiviagem:'Multiviagem', unica:'Viagem única' }[r.seguroModalidade] || '';
+    if (r.seguroModalidade === 'multiviagem' && r.seguroDias) modS += ' · ' + r.seguroDias + ' dias/viagem';
+    eventos.push({
+      data: r.seguroInicio || '', hora: '', tipo: 'seguro', icon: '🛡️',
+      titulo: (r.seguradora || 'Seguro Viagem') + (r.seguroPlano ? ' – ' + r.seguroPlano : ''),
+      meta: [r.seguroInicio ? 'Vigência ' + fmtDate(r.seguroInicio) : '', r.seguroFim ? 'a ' + fmtDate(r.seguroFim) : '', modS, r.seguroCobertura ? 'DMH ' + r.seguroCobertura : ''].filter(Boolean).join(' · '),
+      badge: r.conf ? 'Apólice: ' + r.conf : ''
+    });
+  });
+
   // Ordenar por data
   eventos.sort(function(a,b){
     if (!a.data && !b.data) return 0;
@@ -6875,6 +7165,7 @@ function rgMontarDias(v) {
         else if (res.tipo==='hotel') data = res.checkin || '';
         else if (res.tipo==='carro') data = res.retData || '';
         else if (res.tipo==='passeio') data = res.dataPasseio || '';
+        else if (res.tipo==='seguro') data = res.seguroInicio || '';
       }
     }
     if (data) { if (!diasMap[data]) diasMap[data]=[]; diasMap[data].push(a); }
@@ -6905,6 +7196,7 @@ function rgResNome(res) {
   if (res.tipo==='hotel') return '🏨 '+(res.hotelNome||res.destino);
   if (res.tipo==='carro') { var ic4={transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️',locacao:'🚗'}[res.subtipo]||'🚐'; return res.subtipo==='locacao'?ic4+' '+res.locadora:ic4+' '+abreviarLocal(res.retLocal)+' → '+abreviarLocal(res.devLocal); }
   if (res.tipo==='passeio') return '🎯 '+res.passeioNome;
+  if (res.tipo==='seguro') return '🛡️ '+(res.seguradora||'Seguro Viagem')+(res.seguroPlano?' – '+res.seguroPlano:'');
   return 'Reserva';
 }
 
@@ -7008,6 +7300,7 @@ function rgMontarDataObj() {
   var hoteis = resViagem.filter(function(r){ return r.tipo==='hotel'; });
   var carros = resViagem.filter(function(r){ return r.tipo==='carro'; });
   var passeios = resViagem.filter(function(r){ return r.tipo==='passeio'; });
+  var seguros = resViagem.filter(function(r){ return r.tipo==='seguro'; });
   var visaoGeral = [];
   var destinoPub = v.destinoManual || rgExtrairDestino(v) || (voos.length ? voos[0].destino : '');
   if (destinoPub) visaoGeral.push({label:'Destino',value:destinoPub,variant:'coral'});
@@ -7031,10 +7324,12 @@ function rgMontarDataObj() {
   var servicosData = [];
   carros.forEach(function(r){ var isT=r.subtipo==='transfer'; servicosData.push({tipo:'carro',icon:isT?'🚐':'🚗',nome:isT?(r.retLocal||'?')+' → '+(r.devLocal||'?'):r.locadora+(r.categoria?' — '+r.categoria:''),meta:isT?(r.retData?fmtDate(r.retData)+' ':'')+(r.locadora||''):(r.retData?'Ret: '+fmtDate(r.retData)+' ':'')+(r.devData?'Dev: '+fmtDate(r.devData):''),badge:r.conf?'Conf. '+r.conf:''}); });
   passeios.forEach(function(r){ servicosData.push({tipo:'passeio',icon:'🎯',nome:r.passeioNome,meta:(r.dataPasseio?fmtDate(r.dataPasseio)+' ':'')+r.operadora,badge:r.conf?'Conf. '+r.conf:''}); });
+  seguros.forEach(function(r){ servicosData.push({tipo:'seguro',icon:'🛡️',nome:(r.seguradora||'Seguro Viagem')+(r.seguroPlano?' — '+r.seguroPlano:''),meta:[r.seguroInicio?fmtDate(r.seguroInicio):'',r.seguroFim?'a '+fmtDate(r.seguroFim):'',r.seguroCobertura?'DMH '+r.seguroCobertura:''].filter(Boolean).join(' '),badge:r.conf?'Apolice '+r.conf:''}); });
   var documentos = [];
   if (voos.length) documentos.push({icon:'✈️',titulo:'Passagens Aéreas',meta:voos.map(function(r){return r.origem+'→'+r.destino;}).join(' · '),badge:'Confirmado'});
   if (hoteis.length) documentos.push({icon:'🏨',titulo:'Vouchers de Hotel',meta:hoteis.map(function(h){return h.hotelNome;}).join(' · '),badge:'Confirmado'});
   if (carros.length) documentos.push({icon:'🚌',titulo:'Locação de Veículo',meta:carros.map(function(r){return r.locadora;}).join(', '),badge:'Confirmado'});
+  if (seguros.length) documentos.push({icon:'🛡️',titulo:'Seguro Viagem',meta:seguros.map(function(r){return (r.seguradora||'Seguro')+(r.conf?' · '+r.conf:'');}).join(' · '),badge:'Confirmado'});
   documentos.push({icon:'🛂',titulo:'Passaportes',meta:v.clientes||'',badge:'Verificar validade',badgeClass:'pending'});
   return {titulo:v.nome||'Roteiro',subtitulo:subtitulo,eyebrow:eyebrow,heroImage:heroImage,pills:pills,visaoGeral:visaoGeral,obs:v.obs||'',voos:voosData,hospedagem:hospedagemData,servicos:servicosData,dias:rgDias,documentos:documentos,_slug:slug,footerNote:v.nome+(v.clientes?' · '+v.clientes:'')};
 }
