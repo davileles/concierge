@@ -10,6 +10,8 @@
  *     'voo_volta_dt'       → dataVolta + horaPartidaVolta (por reserva)
  *     'voo_volta_d'        → dataVolta (00:00) (por reserva)
  *     'checkin'            → checkin do hotel (14:00)
+ *     'seguro_inicio'      → seguroInicio da reserva de seguro (por reserva)
+ *     'seguro_fim'         → seguroFim da reserva de seguro (por reserva)
  *     'viagem'             → dataInicio da viagem (00:00)
  *     'primeiro_voo_viagem'→ data+hora do primeiro voo da viagem (por viagem)
  *   antecedencia: { valor: N, unidade: 'dias' | 'horas' }
@@ -74,6 +76,8 @@ function resolverDataHora(gatilho, horaRef, res, viagem) {
     case 'voo_volta_dt': return { data: res?.dataVolta,     hora: res?.horaPartidaVolta || '00:00', tipo: 'voo'    };
     case 'voo_volta_d':  return { data: res?.dataVolta,     hora: ref,                              tipo: 'voo'    };
     case 'checkin':      return { data: res?.checkin,       hora: ref,                              tipo: 'hotel'  };
+    case 'seguro_inicio':return { data: res?.seguroInicio,  hora: ref,                              tipo: 'seguro' };
+    case 'seguro_fim':   return { data: res?.seguroFim,     hora: ref,                              tipo: 'seguro' };
     case 'viagem':       return { data: viagem?.dataInicio, hora: ref,                              tipo: 'viagem' };
     default:             return { data: null, hora: '00:00', tipo: null };
   }
@@ -226,6 +230,28 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'checkout',            fmtDateBR(res.checkout));
     t = rv(t, 'noites',              res.noites   || '');
     t = rv(t, 'conf',                res.conf     || '');
+    // ── Seguro viagem ──
+    const _seg = res.tipo === 'seguro';
+    const _modLbl = { anual: 'Anual', multiviagem: 'Multiviagem', unica: 'Viagem unica' }[res.seguroModalidade] || (res.seguroModalidade || '');
+    t = rv(t, 'seguradora',           _seg ? (res.seguradora || '') : '');
+    t = rv(t, 'seguro_plano',         _seg ? (res.seguroPlano || '') : '');
+    t = rv(t, 'seguro_apolice',       _seg ? (res.conf || '') : '');
+    t = rv(t, 'seguro_cartao',        _seg ? (res.seguroCartao || '') : '');
+    t = rv(t, 'seguro_inicio',        _seg ? fmtDateBR(res.seguroInicio) : '');
+    t = rv(t, 'seguro_fim',           _seg ? fmtDateBR(res.seguroFim) : '');
+    t = rv(t, 'seguro_modalidade',    _seg ? _modLbl : '');
+    t = rv(t, 'seguro_dias',          _seg ? (res.seguroDias || '') : '');
+    t = rv(t, 'seguro_territorio',    _seg ? (res.seguroTerritorio || '') : '');
+    t = rv(t, 'seguro_cobertura',     _seg ? (res.seguroCobertura || '') : '');
+    t = rv(t, 'seguro_pax',           _seg ? (res.pax || '') : '');
+    t = rv(t, 'seguro_emergencia',    _seg ? (res.seguroEmergencia || '') : '');
+    t = rv(t, 'seguro_valor',         _seg ? (res.valorDinheiro || '') : '');
+    t = rv(t, 'seguro_acumulo_valor', _seg ? (res.valorAcumulo || '') : '');
+    t = rv(t, 'seguro_milhas',        _seg ? (res.valorMilhas || '') : '');
+    t = rv(t, 'seguro_valor_tarifa',  _seg ? (res.valorTarifaPagante || res.valorAcumulo || '') : '');
+    t = rv(t, 'acumulo_programa',     res.programaAcumulo || res.programaAcumuloVoo || '');
+    t = rv(t, 'acumulo_milhas',       res.milhasAcumulo || '');
+    t = rv(t, 'acumulo_parceiro',     res.parceiroAcumulo || '');
   }
   // nome_viagem: viagem do contexto do gatilho ou, para gatilhos de reserva,
   // a viagem que contém a reserva entre suas atividades
@@ -673,6 +699,7 @@ async function main() {
         // Verificar tipo de reserva compatível com gatilho
         if ((mod.gatilho === 'checkin') && res.tipo !== 'hotel') continue;
         if ((mod.gatilho.startsWith('voo_')) && res.tipo !== 'voo') continue;
+        if ((mod.gatilho.startsWith('seguro_')) && res.tipo !== 'seguro') continue;
 
         const cli   = clientes.find(c => c.nome === res.cliente);
         // Fallback: a reserva já guarda o grupo (coluna BN) no momento do cadastro.
