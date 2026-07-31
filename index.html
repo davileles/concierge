@@ -1650,6 +1650,7 @@ header{animation:fadeUp .45s ease both}
     <div id="dfa-alerta-section" style="display:none;margin-top:1.2rem"></div>
     <div style="display:flex;gap:8px;margin-top:1rem">
       <button class="btn btn-accent" onclick="salvarDemanda()" style="flex:1">💾 Salvar Demanda</button>
+      <button class="btn btn-blue" onclick="salvarDemanda(true)" title="Salva a demanda e já abre a prévia da mensagem para o grupo da equipe">📢 Salvar e Avisar Grupo</button>
       <button class="btn btn-ghost" onclick="fecharNovaDemanda()">Cancelar</button>
     </div>
   </div>
@@ -7266,7 +7267,7 @@ function demandaViagemChange() {
   });
 }
 
-function salvarDemanda() {
+function salvarDemanda(avisarGrupo) {
   var titulo = document.getElementById('df-titulo').value.trim();
   var clientes = document.getElementById('df-clientes').value.trim();
   if (!titulo) { showToast('⚠️ Informe o título da demanda', 'err'); return; }
@@ -7371,6 +7372,14 @@ function salvarDemanda() {
 
   // Demanda recém-criada: em vez de fechar, reabre o modal em modo edição para
   // liberar a seção de alerta (ela depende do demandaId, que só existe após salvar).
+  if (eraNova && novoIdCriado && avisarGrupo) {
+    fecharNovaDemanda();
+    renderDemandas();
+    showToast('✅ Demanda criada!', 'ok');
+    abrirEnvioDemanda(novoIdCriado);
+    return;
+  }
+
   if (eraNova && novoIdCriado) {
     renderDemandas();
     editarDemanda(novoIdCriado);
@@ -7384,9 +7393,11 @@ function salvarDemanda() {
     return;
   }
 
+  var idSalvo = demandaEditandoId;
   fecharNovaDemanda();
   renderDemandas();
   showToast('✅ Demanda salva!', 'ok');
+  if (avisarGrupo && idSalvo) abrirEnvioDemanda(idSalvo);
 }
 
 function editarDemanda(id) {
