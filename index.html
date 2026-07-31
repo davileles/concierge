@@ -1655,6 +1655,30 @@ header{animation:fadeUp .45s ease both}
   </div>
   </div>
 
+  <!-- MODAL DISPARAR DEMANDA NO GRUPO DA EQUIPE -->
+  <div class="modal-overlay" id="modal-dem-envio" onclick="if(event.target===this) fecharEnvioDemanda()">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header">
+      <span class="modal-title">📢 Disparar Demanda no Grupo</span>
+      <button class="modal-close" onclick="fecharEnvioDemanda()">&times;</button>
+    </div>
+    <div class="field">
+      <label>Grupo destino <span class="tag">grupo da equipe (mesmo dos alertas de check-in)</span></label>
+      <input type="text" id="dem-envio-grupo" placeholder="Ex: 120363xxxxxx@g.us" style="font-family:monospace;font-size:12px"/>
+      <div id="dem-envio-grupo-info" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+    </div>
+    <div class="field">
+      <label>Mensagem <span class="tag">edite antes de enviar se precisar</span></label>
+      <textarea id="dem-envio-msg" rows="14" style="min-height:260px;font-size:13.5px;line-height:1.7;resize:vertical"></textarea>
+    </div>
+    <div id="dem-envio-status" style="font-size:12px;font-weight:700;min-height:16px;margin-bottom:6px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-accent" onclick="enviarDemandaGrupo()" style="flex:1">📤 Enviar para o Grupo</button>
+      <button class="btn btn-ghost" onclick="fecharEnvioDemanda()">Cancelar</button>
+    </div>
+  </div>
+  </div>
+
   <!-- LISTA DE DEMANDAS -->
   <div id="demandas-grid"></div>
 </div>
@@ -7606,12 +7630,85 @@ function renderDemandas() {
         + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
         + (!d.reservaId ? '<button class="dem-acao" title="Criar reserva para esta demanda" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
         + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
+        + '<button class="dem-acao" title="Disparar no grupo da equipe" onclick="abrirEnvioDemanda(\'' + d.id + '\')">📢</button>'
         + '<button class="dem-acao" title="Editar" onclick="editarDemanda(\'' + d.id + '\')">✏️</button>'
         + '<button class="dem-acao del" title="Excluir" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>'
         + '</td>'
         + '</tr>';
     }).join('')
     + '</tbody></table></div>';
+}
+
+// ══════════════════════════════════════════
+//  DISPARO DE DEMANDA NO GRUPO DA EQUIPE
+//  Usa o mesmo cfg.grupoAlertas dos alertas automaticos de check-in
+//  (lembrete-voo.js) — fonte unica, sem duplicar ID de grupo.
+// ══════════════════════════════════════════
+var _demEnvioId = null;
+
+var DEM_STATUS_TXT = {
+  pendente: '🔴 Pendente', em_andamento: '🟡 Em andamento',
+  aguardando: '🔵 Aguardando', concluida: '✅ Concluída'
+};
+
+function montarMensagemDemanda(d) {
+  if (!d) return '';
+  var L = [];
+  var num = '#' + String(d.numero || '').padStart(3, '0');
+  L.push('📋 *NOVA DEMANDA ' + num + '*');
+  L.push('');
+  L.push('*' + (d.titulo || 'Sem título') + '*');
+  L.push('');
+  if (d.tipo)        L.push('🏷️ Tipo: ' + d.tipo);
+  if (d.clientes)    L.push('👤 Cliente: ' + d.clientes);
+  if (d.viagemNome)  L.push('🗺️ Viagem: ' + d.viagemNome);
+  if (d.prazo)       L.push('📅 Prazo: ' + fmtDate(d.prazo));
+  if (d.responsavel) L.push('👔 Responsável: ' + d.responsavel);
+  if (d.prioridade === 'alta') L.push('⚠️ Prioridade: ALTA');
+  L.push('📌 Status: ' + (DEM_STATUS_TXT[d.status] || d.status || 'pendente'));
+
+  if (d.descricao && String(d.descricao).trim()) {
+    L.push('');
+    L.push('📝 *Descrição*');
+    L.push(String(d.descricao).trim());
+  }
+  L.push('');
+  L.push('_Enviado pelo Painel Travel Concierge_');
+  return L.join('\n');
+}
+
+function abrirEnvioDemanda(id) {
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d) { showToast('⚠️ Demanda não encontrada', 'err'); return; }
+  _demEnvioId = id;
+
+  var g = (_cfg && _cfg.grupoAlertas) || '';
+  setVal('dem-envio-grupo', g);
+  var info = document.getElementById('dem-envio-grupo-info');
+  if (info) {
+    info.innerHTML = g
+      ? '🔔 Grupo da equipe configurado em Configuração → WhatsApp'
+      : '<span style="color:var(--accent)">⚠️ Grupo da equipe não configurado — defina em Configuração → WhatsApp ou cole o ID acima</span>';
+  }
+
+  setVal('dem-envio-msg', montarMensagemDemanda(d));
+  var st = document.getElementById('dem-envio-status');
+  if (st) { st.textContent = ''; st.style.color = ''; }
+  document.getElementById('modal-dem-envio').classList.add('open');
+}
+
+function fecharEnvioDemanda() {
+  _demEnvioId = null;
+  closeModal('modal-dem-envio');
+}
+
+function enviarDemandaGrupo() {
+  var grupo = getVal('dem-envio-grupo').trim();
+  var texto = document.getElementById('dem-envio-msg').value.trim();
+  if (!grupo) { showToast('⚠️ Informe o grupo destino', 'err'); return; }
+  if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+  enviarWhatsApp(grupo, texto, document.getElementById('dem-envio-status'));
+  setTimeout(function(){ fecharEnvioDemanda(); }, 1400);
 }
 
 var _demToggleTimer = null;
