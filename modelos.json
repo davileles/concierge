@@ -1,5 +1,65 @@
 [
   {
+    "id": "MOD-1785900000001",
+    "nome": "Seguro · Contratação (dinheiro)",
+    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor total: *R$ {{seguro_valor}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
+    "id": "MOD-1785900000002",
+    "nome": "Seguro · Contratação (com pontos)",
+    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{seguro_valor_tarifa}}*\nPontos utilizados: *{{seguro_milhas}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
+    "id": "MOD-1785900000003",
+    "nome": "Seguro · Contratação (com acúmulo)",
+    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor da contratação: *R$ {{seguro_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
+    "id": "MOD-1785900000004",
+    "nome": "Seguro · Início da vigência",
+    "texto": "🛡️ *Seu seguro viagem entra em vigência em breve!*\n\nA partir de *{{seguro_inicio}}* você já está coberto pela *{{seguradora}}* — plano *{{seguro_plano}}*.\n\n📋 *Dados para ter à mão*\nBilhete: *{{seguro_apolice}}*\nCartão de assistência: *{{seguro_cartao}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n📞 *Emergência no exterior*\n*{{seguro_emergencia}}*\n\n⚠️ *Importante:* sempre acione a assistência *antes* de ir a uma clínica ou hospital. Atendimento feito por conta própria costuma virar reembolso parcial — ou nenhum.\n\nSe a assistência tiver aplicativo, aproveite para instalar e iniciar a sessão agora, enquanto está com internet tranquila.\n\n*Qualquer coisa, é só chamar!* ✈️",
+    "modo": "programado",
+    "gatilho": "seguro_inicio",
+    "antecedencia": {
+      "valor": 2,
+      "unidade": "dias"
+    },
+    "horaRef": "10:00"
+  },
+  {
+    "id": "MOD-1785900000005",
+    "nome": "Seguro · Vencimento da vigência",
+    "texto": "⏳ *Seu seguro viagem está perto de vencer*\n\nA cobertura da *{{seguradora}}* (plano *{{seguro_plano}}*, bilhete *{{seguro_apolice}}*) vai até *{{seguro_fim}}*.\n\nSe você ainda tiver viagem marcada depois dessa data — ou estiver planejando alguma — vale renovar antes do vencimento para não ficar descoberto.\n\nPodemos avaliar a renovação e, dependendo do momento, contratar com acúmulo de pontos ou usar milhas para reduzir o custo.\n\n*Quer que a gente cuide disso?* É só responder aqui. 🛡️",
+    "modo": "programado",
+    "gatilho": "seguro_fim",
+    "antecedencia": {
+      "valor": 15,
+      "unidade": "dias"
+    },
+    "horaRef": "10:00"
+  },
+  {
+    "id": "MOD-1785900000006",
+    "nome": "Seguro · Multiviagem (limite de dias)",
+    "texto": "🛡️ *Lembrete do seu seguro multiviagem*\n\nSua apólice da *{{seguradora}}* é *{{seguro_modalidade}}*: cobre quantas viagens você quiser dentro da vigência de *{{seguro_inicio}}* a *{{seguro_fim}}*, com o limite de *{{seguro_dias}} dias consecutivos por viagem*.\n\nOu seja: se alguma viagem passar desse período, o trecho excedente fica sem cobertura — nesses casos a gente contrata um complemento.\n\n📋 Bilhete: *{{seguro_apolice}}*\n📞 Emergência: *{{seguro_emergencia}}*\n\n*Qualquer dúvida, estamos por aqui!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
     "id": "MOD-1785380000001",
     "nome": "Equipe · Alerta de check-in (ida)",
     "texto": "🛫 *Check-in liberado — ação necessária*\n\n*Cliente:* {{nome}}\n*Voo:* {{nvoo_ida}} · {{cia}} (ida)\n*Trecho:* {{origem}} → {{destino}}\n*Partida:* {{data_ida}} às {{hora_partida}}\n*Localizador:* {{pnr}}\n*Classe:* {{classe}}\n*Pax:* {{pax}}\n\nFazer o check-in online desta reserva.",
