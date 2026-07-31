@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-07-31T13:01:39.286Z",
+  "executadoEm": "2026-07-31T16:04:36.344Z",
   "modelosAtivos": [
     {
       "nome": "Voo · Lembrete de embarque (volta)",
@@ -32,162 +32,152 @@
   },
   "totalAlteracoes": 1,
   "resultados": [
-    "✅ [check-in ida] \"Diego Leoni Sandim\" — GRU→BRC 2026-08-01"
+    "✅ [Voo · Instruções pré-voo] → \"Diego Leoni Sandim\" (viagem \"Ski em Bariloche\", primeiro voo 2026-08-01)"
   ],
   "eventos": [
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski em Bariloche",
-      "horasRestantes": 25.31,
+      "horasRestantes": 22.26,
       "janela": 24,
-      "disparar": false,
-      "ts": "2026-07-31T13:01:37.914Z"
+      "disparar": true,
+      "ts": "2026-07-31T16:04:34.255Z"
+    },
+    {
+      "modelo": "Voo · Instruções pré-voo",
+      "gatilho": "primeiro_voo_viagem",
+      "viagem": "Ski em Bariloche",
+      "cliente": "Diego Leoni Sandim",
+      "grupo": "120363424713170391@g.us",
+      "tentativa": "sucesso",
+      "ts": "2026-07-31T16:04:35.656Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem para Madrid #1",
-      "horasRestantes": 5021.06,
+      "horasRestantes": 5018.01,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.914Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 1831.31,
+      "horasRestantes": 1828.26,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.914Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 2878.39,
+      "horasRestantes": 2875.34,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 3824.22,
+      "horasRestantes": 3821.17,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 2330.81,
+      "horasRestantes": 2327.76,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 991.31,
+      "horasRestantes": 988.26,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Marcelo e Patrícia em Paris 2026",
-      "horasRestantes": 751.39,
+      "horasRestantes": 748.34,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Rio Quente em família",
-      "horasRestantes": 118.31,
+      "horasRestantes": 115.26,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -346.86,
+      "horasRestantes": -349.91,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -315.94,
+      "horasRestantes": -318.99,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -398.44,
+      "horasRestantes": -401.49,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.218Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2722.47,
+      "horasRestantes": 2719.42,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.219Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Entre ciprestes e Alpes",
-      "horasRestantes": 388.06,
+      "horasRestantes": 385.01,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
+      "ts": "2026-07-31T16:04:36.219Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -330.53,
+      "horasRestantes": -333.58,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-07-31T13:01:37.915Z"
-    },
-    {
-      "bloco": "checkin_voo",
-      "perna": "ida",
-      "reservaId": "RES-1785421398356",
-      "cliente": "Diego Leoni Sandim",
-      "horasRestantes": 25.31,
-      "janela": 26,
-      "disparar": true,
-      "ts": "2026-07-31T13:01:37.916Z"
-    },
-    {
-      "bloco": "checkin_voo",
-      "perna": "ida",
-      "reservaId": "RES-1785421398356",
-      "cliente": "Diego Leoni Sandim",
-      "grupo": "120363428533434849@g.us",
-      "tentativa": "sucesso",
-      "ts": "2026-07-31T13:01:39.088Z"
+      "ts": "2026-07-31T16:04:36.219Z"
     }
   ]
 }
