@@ -1470,6 +1470,69 @@ header{animation:fadeUp .45s ease both}
           </div>
         </div>
 
+        <!-- STATUS DO VOO (aparece so quando o modelo usa variaveis status_) -->
+        <div class="card" id="d-status-card" style="margin-bottom:0;display:none">
+          <div class="card-title">🛫 Status do voo</div>
+          <div class="g2">
+            <div class="field">
+              <label>Trecho</label>
+              <select id="sv-trecho" onchange="onStatusVooChange(true)">
+                <option value="ida">Ida</option>
+                <option value="volta">Volta</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Situação</label>
+              <select id="sv-situacao" onchange="onStatusVooChange()">
+                <option value="adiantado">Adiantado</option>
+                <option value="atrasado">Atrasado</option>
+                <option value="cancelado">Cancelado</option>
+                <option value="decolou">Decolou</option>
+                <option value="emb_encerrado">Embarque encerrado</option>
+                <option value="emb_iniciado">Embarque iniciado</option>
+                <option value="no_horario" selected>No horário</option>
+                <option value="portao_alterado">Portão alterado</option>
+                <option value="pousou">Pousou</option>
+              </select>
+            </div>
+          </div>
+          <div class="g2">
+            <div class="field">
+              <label>Diferença <span class="tag">minutos</span></label>
+              <input type="number" id="sv-min" min="0" placeholder="0" oninput="onStatusVooChange()"/>
+            </div>
+            <div class="field">
+              <label>Partida estimada</label>
+              <input type="time" id="sv-partida-est" oninput="onStatusVooChange()"/>
+            </div>
+          </div>
+          <div class="g2">
+            <div class="field">
+              <label>Portão</label>
+              <input type="text" id="sv-portao" placeholder="a confirmar" oninput="onStatusVooChange()"/>
+            </div>
+            <div class="field">
+              <label>Terminal</label>
+              <input type="text" id="sv-terminal" placeholder="a confirmar" oninput="onStatusVooChange()"/>
+            </div>
+          </div>
+          <div class="g2">
+            <div class="field">
+              <label>Chegada estimada</label>
+              <input type="time" id="sv-chegada-est" oninput="onStatusVooChange()"/>
+            </div>
+            <div class="field">
+              <label>Esteira de bagagem</label>
+              <input type="text" id="sv-esteira" placeholder="a confirmar" oninput="onStatusVooChange()"/>
+            </div>
+          </div>
+          <div class="field">
+            <label>Observação <span class="tag">opcional</span></label>
+            <textarea id="sv-obs" rows="2" style="min-height:52px" placeholder="Ex: A companhia liberou reacomodação sem custo." oninput="onStatusVooChange()"></textarea>
+          </div>
+          <p style="font-size:11px;color:var(--muted2);margin:2px 0 0">Campos em branco viram "a confirmar" na mensagem.</p>
+        </div>
+
       </div>
 
       <!-- COLUNA DIREITA: Mensagem + Enviar -->
@@ -4089,6 +4152,19 @@ var VARS_RESERVA = [
   { label: '{{seguro_acumulo_valor}}',   desc: 'Valor pago no seguro com acumulo de pontos (R$)' },
   { label: '{{seguro_milhas}}',          desc: 'Quantidade total de milhas gastas (seguro)' },
   { label: '{{seguro_valor_tarifa}}',    desc: 'Valor da tarifa pagante do seguro (R$)' },
+  { label: '{{status_cia}}',             desc: 'Status do voo: cia aerea do trecho' },
+  { label: '{{status_voo_num}}',         desc: 'Status do voo: numero do voo do trecho' },
+  { label: '{{status_origem}}',          desc: 'Status do voo: origem do trecho' },
+  { label: '{{status_destino}}',         desc: 'Status do voo: destino do trecho' },
+  { label: '{{status_data}}',            desc: 'Status do voo: data do trecho' },
+  { label: '{{status_linha}}',           desc: 'Status do voo: frase da situacao (No horario / Atrasado em X min)' },
+  { label: '{{status_partida_prog}}',    desc: 'Status do voo: partida programada' },
+  { label: '{{status_partida_est}}',     desc: 'Status do voo: partida estimada' },
+  { label: '{{status_portao}}',          desc: 'Status do voo: portao de embarque' },
+  { label: '{{status_terminal}}',        desc: 'Status do voo: terminal' },
+  { label: '{{status_chegada_est}}',     desc: 'Status do voo: chegada estimada' },
+  { label: '{{status_esteira}}',         desc: 'Status do voo: esteira de bagagem' },
+  { label: '{{status_obs}}',             desc: 'Status do voo: observacao livre' },
 ];
 
 function loadModelos(cb) {
@@ -4567,8 +4643,98 @@ function onDispararChange() {
   // Set grupo conforme o destino escolhido (cliente ou equipe)
   aplicarDestinoDisparo();
 
-  if (!mod) { document.getElementById('d-msg-final').value=''; return; }
-  document.getElementById('d-msg-final').value = resolverVariaveis(mod.texto, cli, res);
+  if (!mod) {
+    document.getElementById('d-msg-final').value='';
+    var _sc0 = document.getElementById('d-status-card');
+    if (_sc0) _sc0.style.display = 'none';
+    return;
+  }
+
+  // Card de status do voo: so aparece se o modelo usar variaveis {{status_...}}
+  var usaStatus = /\{\{status_/.test(mod.texto || '');
+  var scard = document.getElementById('d-status-card');
+  if (scard) scard.style.display = usaStatus ? 'block' : 'none';
+
+  var extras = null;
+  if (usaStatus) {
+    preencherDefaultsStatus(res, false);
+    extras = montarExtrasStatus(res);
+  }
+
+  document.getElementById('d-msg-final').value = resolverVariaveis(mod.texto, cli, res, extras);
+}
+
+// ── STATUS DO VOO (preenchimento manual no disparo) ──────────────────────────
+// Nao consulta nenhuma API: o operador informa a situacao e os campos abaixo
+// sao convertidos em frases prontas, evitando condicionais no template.
+function montarStatusLinha(sit, min) {
+  var m = parseInt(min, 10);
+  var suf = (m > 0) ? ' em ' + m + ' min' : '';
+  switch (sit) {
+    case 'adiantado':       return '🟢 *Adiantado*' + suf;
+    case 'atrasado':        return '🟡 *Atrasado*' + suf;
+    case 'cancelado':       return '🔴 *Cancelado*';
+    case 'decolou':         return '🛫 *Decolou*';
+    case 'emb_encerrado':   return '🚪 *Embarque encerrado*';
+    case 'emb_iniciado':    return '🚪 *Embarque iniciado*';
+    case 'portao_alterado': return '🔁 *Portão alterado*';
+    case 'pousou':          return '🛬 *Pousou*';
+    default:                return '🟢 *No horário*';
+  }
+}
+
+function dadosTrechoStatus(res, volta) {
+  if (!res) return {};
+  return {
+    cia:      (volta ? (res.ciaVolta || res.ciaIda) : (res.ciaIda || res.cia)) || '',
+    numero:   (volta ? res.nvooVolta : res.nvooIda) || '',
+    origem:   localDe(volta ? (res.origemVolta  || res.destino) : res.origem),
+    destino:  localDe(volta ? (res.destinoVolta || res.origem)  : res.destino),
+    data:     (volta ? res.dataVolta : res.dataIda) || '',
+    partida:  (volta ? res.horaPartidaVolta : res.horaPartida) || '',
+    chegada:  (volta ? res.horaChegadaVolta : res.horaChegada) || ''
+  };
+}
+
+// forcar=true repreenche os horarios (usado ao trocar de trecho);
+// forcar=false so preenche o que estiver vazio.
+function preencherDefaultsStatus(res, forcar) {
+  var volta = (getVal('sv-trecho') === 'volta');
+  var t = dadosTrechoStatus(res, volta);
+  if (forcar || !getVal('sv-partida-est')) setVal('sv-partida-est', t.partida || '');
+  if (forcar || !getVal('sv-chegada-est')) setVal('sv-chegada-est', t.chegada || '');
+  if (forcar) { setVal('sv-portao',''); setVal('sv-terminal',''); setVal('sv-esteira',''); }
+}
+
+function montarExtrasStatus(res) {
+  var volta = (getVal('sv-trecho') === 'volta');
+  var t = dadosTrechoStatus(res, volta);
+  var pend = 'a confirmar';
+  function ou(v, alt) { v = String(v == null ? '' : v).trim(); return v || alt; }
+  var obs = String(getVal('sv-obs') || '').trim();
+  return {
+    status_cia:          ou(t.cia, '—'),
+    status_voo_num:      ou(t.numero, '—'),
+    status_origem:       ou(t.origem, '—'),
+    status_destino:      ou(t.destino, '—'),
+    status_data:         t.data ? fmtDate(t.data) : '—',
+    status_linha:        montarStatusLinha(getVal('sv-situacao'), getVal('sv-min')),
+    status_partida_prog: ou(t.partida, '—'),
+    status_partida_est:  ou(getVal('sv-partida-est'), ou(t.partida, '—')),
+    status_portao:       ou(getVal('sv-portao'), pend),
+    status_terminal:     ou(getVal('sv-terminal'), pend),
+    status_chegada_est:  ou(getVal('sv-chegada-est'), ou(t.chegada, '—')),
+    status_esteira:      ou(getVal('sv-esteira'), pend),
+    status_obs:          obs ? ('ℹ️ ' + obs) : '—'
+  };
+}
+
+function onStatusVooChange(trocouTrecho) {
+  if (trocouTrecho) {
+    var res = reservas.find(function(r){ return r.id === getVal('d-reserva'); });
+    preencherDefaultsStatus(res, true);
+  }
+  onDispararChange();
 }
 
 // Fonte unica de resolucao de variaveis {{...}} — usada pela aba Mensagens e
