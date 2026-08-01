@@ -1498,12 +1498,12 @@ header{animation:fadeUp .45s ease both}
           </div>
           <div class="g2">
             <div class="field">
-              <label>Diferença <span class="tag">minutos</span></label>
+              <label>Diferença <span class="tag">min · automático</span></label>
               <input type="number" id="sv-min" min="0" placeholder="0" oninput="onStatusVooChange()"/>
             </div>
             <div class="field">
               <label>Partida estimada</label>
-              <input type="time" id="sv-partida-est" oninput="onStatusVooChange()"/>
+              <input type="time" id="sv-partida-est" oninput="onPartidaEstChange()"/>
             </div>
           </div>
           <div class="g2">
@@ -1518,7 +1518,7 @@ header{animation:fadeUp .45s ease both}
           </div>
           <div class="g2">
             <div class="field">
-              <label>Chegada estimada</label>
+              <label>Chegada estimada <span class="tag">projetada</span></label>
               <input type="time" id="sv-chegada-est" oninput="onStatusVooChange()"/>
             </div>
             <div class="field">
@@ -4703,7 +4703,7 @@ function preencherDefaultsStatus(res, forcar) {
   var t = dadosTrechoStatus(res, volta);
   if (forcar || !getVal('sv-partida-est')) setVal('sv-partida-est', t.partida || '');
   if (forcar || !getVal('sv-chegada-est')) setVal('sv-chegada-est', t.chegada || '');
-  if (forcar) { setVal('sv-portao',''); setVal('sv-terminal',''); setVal('sv-esteira',''); }
+  if (forcar) { setVal('sv-min',''); setVal('sv-portao',''); setVal('sv-terminal',''); setVal('sv-esteira',''); }
 }
 
 function montarExtrasStatus(res) {
@@ -4727,6 +4727,53 @@ function montarExtrasStatus(res) {
     status_esteira:      ou(getVal('sv-esteira'), pend),
     status_obs:          obs ? ('ℹ️ ' + obs) : '—'
   };
+}
+
+function padHora(n) { n = String(n); return n.length < 2 ? '0' + n : n; }
+
+function minutosDeHora(hhmm) {
+  var m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm == null ? '' : hhmm).trim());
+  if (!m) return null;
+  return Number(m[1]) * 60 + Number(m[2]);
+}
+
+function horaDeMinutos(min) {
+  min = ((min % 1440) + 1440) % 1440;
+  return padHora(Math.floor(min / 60)) + ':' + padHora(min % 60);
+}
+
+// Diferenca em minutos entre a partida programada e a estimada.
+// Positivo = atraso, negativo = adiantamento. Trata virada de meia-noite.
+function diffMinutos(prog, est) {
+  var a = minutosDeHora(prog), b = minutosDeHora(est);
+  if (a === null || b === null) return null;
+  var d = b - a;
+  if (d >  720) d -= 1440;
+  if (d < -720) d += 1440;
+  return d;
+}
+
+// Ao informar a partida estimada: calcula a diferenca, ajusta a situacao
+// (apenas entre no horario / atrasado / adiantado — nao sobrescreve estados
+// como Cancelado ou Pousou) e projeta a chegada aplicando a mesma diferenca.
+function onPartidaEstChange() {
+  var res   = reservas.find(function(r){ return r.id === getVal('d-reserva'); });
+  var volta = (getVal('sv-trecho') === 'volta');
+  var t     = dadosTrechoStatus(res, volta);
+  var d     = diffMinutos(t.partida, getVal('sv-partida-est'));
+
+  if (d !== null) {
+    setVal('sv-min', d === 0 ? '' : String(Math.abs(d)));
+
+    var sit = getVal('sv-situacao');
+    if (sit === 'atrasado' || sit === 'adiantado' || sit === 'no_horario') {
+      setVal('sv-situacao', d > 0 ? 'atrasado' : (d < 0 ? 'adiantado' : 'no_horario'));
+    }
+
+    var cheg = minutosDeHora(t.chegada);
+    if (cheg !== null) setVal('sv-chegada-est', horaDeMinutos(cheg + d));
+  }
+  onDispararChange();
 }
 
 function onStatusVooChange(trocouTrecho) {
