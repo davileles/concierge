@@ -1,5 +1,14 @@
 [
   {
+    "id": "MOD-1785576641855",
+    "nome": "Voo · Status do voo",
+    "texto": "✈️ *Status do seu voo*\n\n*{{status_cia}} {{status_voo_num}}*\n{{status_origem}} → {{status_destino}}\n🛫 {{status_data}}\n\n{{status_linha}}\n\n*Partida*\nProgramada: *{{status_partida_prog}}*\nEstimada: *{{status_partida_est}}*\nPortão: *{{status_portao}}*\nTerminal: *{{status_terminal}}*\n\n*Chegada*\nEstimada: *{{status_chegada_est}}*\nEsteira: *{{status_esteira}}*\n\n{{status_obs}}\n\nSeguimos acompanhando e avisamos você a cada mudança. Qualquer dúvida, é só chamar. 🤝",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
     "id": "MOD-1785900000001",
     "nome": "Seguro · Contratação (dinheiro)",
     "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor total: *R$ {{seguro_valor}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
