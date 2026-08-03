@@ -4243,6 +4243,24 @@ var VARS_RESERVA = [
   { label: '{{loc_data_retirada}}',      desc: 'Data de retirada do carro' },
   { label: '{{loc_data_devolucao}}',     desc: 'Data de devolução/entrega do carro' },
   { label: '{{loc_categoria}}',          desc: 'Categoria/modelo do carro' },
+  { label: '{{ferry_companhia}}',             desc: 'Companhia de ferry (ida)' },
+  { label: '{{ferry_porto_embarque}}',        desc: 'Porto de embarque (ida)' },
+  { label: '{{ferry_porto_desembarque}}',     desc: 'Porto de desembarque (ida)' },
+  { label: '{{ferry_data}}',                  desc: 'Data de partida do ferry (ida)' },
+  { label: '{{ferry_hora_partida}}',          desc: 'Hora de partida do ferry (ida)' },
+  { label: '{{ferry_hora_chegada}}',          desc: 'Hora de chegada do ferry (ida)' },
+  { label: '{{ferry_cabine}}',                desc: 'Tipo de cabine / acomodacao (ida)' },
+  { label: '{{ferry_pax}}',                   desc: 'Total de passageiros no ferry' },
+  { label: '{{ferry_conf}}',                  desc: 'Localizador / confirmacao do ferry' },
+  { label: '{{ferry_valor}}',                 desc: 'Valor pago no ferry (R$)' },
+  { label: '{{ferry_volta_companhia}}',       desc: 'Companhia de ferry (volta)' },
+  { label: '{{ferry_volta_porto_embarque}}',  desc: 'Porto de embarque (volta)' },
+  { label: '{{ferry_volta_porto_desembarque}}',desc: 'Porto de desembarque (volta)' },
+  { label: '{{ferry_volta_data}}',            desc: 'Data de partida do ferry (volta)' },
+  { label: '{{ferry_volta_hora_partida}}',    desc: 'Hora de partida do ferry (volta)' },
+  { label: '{{ferry_volta_hora_chegada}}',    desc: 'Hora de chegada do ferry (volta)' },
+  { label: '{{ferry_volta_cabine}}',          desc: 'Tipo de cabine / acomodacao (volta)' },
+  { label: '{{ferry_volta_conf}}',            desc: 'Localizador / confirmacao (volta)' },
   { label: '{{seguradora}}',             desc: 'Seguradora / assistencia do seguro viagem' },
   { label: '{{seguro_plano}}',           desc: 'Plano / produto do seguro' },
   { label: '{{seguro_apolice}}',         desc: 'Numero do bilhete / apolice do seguro' },
@@ -4950,6 +4968,26 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'loc_data_retirada',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retData?fmtDate(res.retData):'') : '');
     txt = rv(txt, 'loc_data_devolucao',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.devData?fmtDate(res.devData):'') : '');
     txt = rv(txt, 'loc_categoria',       (res.tipo==='carro' && res.subtipo==='locacao') ? (res.categoria||'') : '');
+    // ── Ferry (transporte ponto-a-ponto, subtipo ferry) ──
+    var _fry = (res.tipo === 'carro' && res.subtipo === 'ferry');
+    txt = rv(txt, 'ferry_companhia',              _fry ? (res.locadora||'') : '');
+    txt = rv(txt, 'ferry_porto_embarque',         _fry ? (res.retLocal||'') : '');
+    txt = rv(txt, 'ferry_porto_desembarque',      _fry ? (res.devLocal||'') : '');
+    txt = rv(txt, 'ferry_data',                   _fry && res.retData ? fmtDate(res.retData) : '');
+    txt = rv(txt, 'ferry_hora_partida',           _fry ? (res.horaTransfer||'') : '');
+    txt = rv(txt, 'ferry_hora_chegada',           _fry ? (res.horaChegadaTransp||'') : '');
+    txt = rv(txt, 'ferry_cabine',                 _fry ? (res.categoria||'') : '');
+    txt = rv(txt, 'ferry_pax',                    _fry ? (res.pax||'') : '');
+    txt = rv(txt, 'ferry_conf',                   _fry ? (res.conf||'') : '');
+    txt = rv(txt, 'ferry_valor',                  _fry ? (res.valor||'') : '');
+    txt = rv(txt, 'ferry_volta_companhia',        _fry ? (res.voltaOperadora||res.locadora||'') : '');
+    txt = rv(txt, 'ferry_volta_porto_embarque',   _fry ? (res.voltaOrigem||res.devLocal||'') : '');
+    txt = rv(txt, 'ferry_volta_porto_desembarque',_fry ? (res.voltaDestino||res.retLocal||'') : '');
+    txt = rv(txt, 'ferry_volta_data',             _fry && res.voltaData ? fmtDate(res.voltaData) : '');
+    txt = rv(txt, 'ferry_volta_hora_partida',     _fry ? (res.voltaHora||'') : '');
+    txt = rv(txt, 'ferry_volta_hora_chegada',     _fry ? (res.voltaHoraChegada||'') : '');
+    txt = rv(txt, 'ferry_volta_cabine',           _fry ? (res.voltaCategoria||res.categoria||'') : '');
+    txt = rv(txt, 'ferry_volta_conf',             _fry ? (res.voltaConf||res.conf||'') : '');
     // ── Seguro viagem ──
     var _seg = res.tipo === 'seguro';
     var _modLbl = { anual:'Anual', multiviagem:'Multiviagem', unica:'Viagem unica' }[res.seguroModalidade] || (res.seguroModalidade||'');
