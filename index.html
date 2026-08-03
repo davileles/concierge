@@ -8250,7 +8250,7 @@ function montarMensagemDemanda(d) {
   if (!d) return '';
   var L = [];
   var num = '#' + String(d.numero || '').padStart(3, '0');
-  L.push('📋 *Nova demanda ' + num + '*');
+  L.push('*Nova demanda ' + num + '*');
   L.push('');
   L.push('*' + (d.titulo || 'Sem título') + '*');
   L.push('');
@@ -8267,8 +8267,6 @@ function montarMensagemDemanda(d) {
     L.push('*Descrição*');
     L.push(String(d.descricao).trim());
   }
-  L.push('');
-  L.push('_Painel Travel Concierge_');
   return L.join('\n');
 }
 
