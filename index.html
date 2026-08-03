@@ -8242,33 +8242,33 @@ function renderDemandas() {
 var _demEnvioId = null;
 
 var DEM_STATUS_TXT = {
-  pendente: '🔴 Pendente', em_andamento: '🟡 Em andamento',
-  aguardando: '🔵 Aguardando', concluida: '✅ Concluída'
+  pendente: 'Pendente', em_andamento: 'Em andamento',
+  aguardando: 'Aguardando', concluida: 'Concluída'
 };
 
 function montarMensagemDemanda(d) {
   if (!d) return '';
   var L = [];
   var num = '#' + String(d.numero || '').padStart(3, '0');
-  L.push('📋 *NOVA DEMANDA ' + num + '*');
+  L.push('📋 *Nova demanda ' + num + '*');
   L.push('');
   L.push('*' + (d.titulo || 'Sem título') + '*');
   L.push('');
-  if (d.tipo)        L.push('🏷️ Tipo: ' + d.tipo);
-  if (d.clientes)    L.push('👤 Cliente: ' + d.clientes);
-  if (d.viagemNome)  L.push('🗺️ Viagem: ' + d.viagemNome);
-  if (d.prazo)       L.push('📅 Prazo: ' + fmtDate(d.prazo));
-  if (d.responsavel) L.push('👔 Responsável: ' + d.responsavel);
-  if (d.prioridade === 'alta') L.push('⚠️ Prioridade: ALTA');
-  L.push('📌 Status: ' + (DEM_STATUS_TXT[d.status] || d.status || 'pendente'));
+  if (d.tipo)        L.push('*Tipo:* ' + d.tipo);
+  if (d.clientes)    L.push('*Cliente:* ' + d.clientes);
+  if (d.viagemNome)  L.push('*Viagem:* ' + d.viagemNome);
+  if (d.prazo)       L.push('*Prazo:* ' + fmtDate(d.prazo));
+  if (d.responsavel) L.push('*Responsável:* ' + d.responsavel);
+  if (d.prioridade === 'alta') L.push('*Prioridade:* Alta');
+  L.push('*Status:* ' + (DEM_STATUS_TXT[d.status] || d.status || 'Pendente'));
 
   if (d.descricao && String(d.descricao).trim()) {
     L.push('');
-    L.push('📝 *Descrição*');
+    L.push('*Descrição*');
     L.push(String(d.descricao).trim());
   }
   L.push('');
-  L.push('_Enviado pelo Painel Travel Concierge_');
+  L.push('_Painel Travel Concierge_');
   return L.join('\n');
 }
 
