@@ -2121,9 +2121,23 @@ function syncClientes() {
 
   var url = c.url + '?aba=' + encodeURIComponent(c.aba || 'Clientes') + '&linha=' + encodeURIComponent(c.linha || 2);
   fetch(url)
-    .then(function(r){ return r.json(); })
+    .then(function(r){
+      return r.text().then(function(t){
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' no Apps Script');
+        var d;
+        try { d = JSON.parse(t); }
+        catch (eJson) {
+          var m = t.match(/errorMessage[^>]*>([\s\S]{0,300}?)</);
+          throw new Error('Apps Script devolveu HTML em vez de JSON — aba "' + (c.aba || 'Clientes') +
+            '" inexistente/renomeada, deploy antigo ou sem permissao' +
+            (m ? ' · ' + m[1].replace(/\s+/g, ' ').trim() : ''));
+        }
+        if (!d.ok) throw new Error('Apps Script respondeu ok=false' + ((d.erro || d.error) ? ': ' + (d.erro || d.error) : ''));
+        if (!Array.isArray(d.rows)) throw new Error('Apps Script nao retornou o campo "rows"');
+        return d;
+      });
+    })
     .then(function(d){
-      if (!d.ok) throw new Error('Resposta inválida');
       clientes = d.rows.map(function(row, i){
         return {
           id: 'cli-' + i,
@@ -2147,17 +2161,40 @@ function syncClientes() {
       }).filter(function(c){ return c.nome; });
       dot.className = 'sync-dot ok';
       lbl.textContent = clientes.length + ' clientes carregados · ' + new Date().toLocaleTimeString('pt-BR');
-      populateClienteSelect();
-      populateDispararClientes();
-      renderClientes();
-      if (document.getElementById('massa-lista')) renderMassaLista();
+      // Render isolado: erro aqui e de renderizacao, nao de conexao — nao pode
+      // cair no catch da rede e virar "Erro ao conectar".
+      try {
+        populateClienteSelect();
+        populateDispararClientes();
+        renderClientes();
+        if (document.getElementById('massa-lista')) renderMassaLista();
+      } catch (eRender) {
+        console.error('[syncClientes/render]', eRender);
+        dot.className = 'sync-dot err';
+        lbl.textContent = clientes.length + ' clientes carregados · falha ao renderizar: ' + eRender.message;
+      }
       showToast('✅ ' + clientes.length + ' clientes sincronizados', 'ok');
-      document.getElementById('cfg-ok').textContent = '✅ Conexão estabelecida com sucesso!';
-      setTimeout(function(){ document.getElementById('cfg-ok').textContent=''; }, 4000);
+      var okEl = document.getElementById('cfg-ok');
+      if (okEl) {
+        okEl.style.color = '#22c55e';
+        okEl.textContent = '✅ Conexão estabelecida com sucesso!';
+        setTimeout(function(){ okEl.textContent = ''; }, 4000);
+      }
     })
     .catch(function(e){
+      console.error('[syncClientes]', e);
       dot.className = 'sync-dot err';
-      lbl.textContent = 'Erro ao conectar. Verifique a URL e as permissões do script.';
+      var motivo = (e && e.message) ? e.message : 'erro desconhecido';
+      if (e && (e.name === 'TypeError' || /Failed to fetch|NetworkError|Load failed/i.test(motivo))) {
+        // O Apps Script NAO envia Access-Control-Allow-Origin nas suas paginas de
+        // erro — entao aba inexistente/deploy removido chegam aqui como CORS block,
+        // indistinguiveis de queda de rede. Listar as causas provaveis.
+        motivo = 'sem resposta do Apps Script — verifique se a aba "' + (c.aba || 'Clientes') +
+                 '" existe na planilha, se o deploy continua ativo e o acesso esta como "Qualquer pessoa"';
+      }
+      lbl.textContent = 'Falha ao sincronizar: ' + motivo;
+      var okErrEl = document.getElementById('cfg-ok');
+      if (okErrEl) { okErrEl.style.color = '#ff585e'; okErrEl.textContent = '❌ ' + motivo; }
       var csel = document.getElementById('d-cliente');
       if (csel && !clientes.length) csel.innerHTML = '<option value="">— falha ao sincronizar clientes —</option>';
       showToast('❌ Falha na sincronização', 'err');
