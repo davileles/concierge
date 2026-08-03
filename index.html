@@ -833,6 +833,29 @@ header{animation:fadeUp .45s ease both}
           <div class="field"><label>Nº de Passageiros</label><input type="number" id="f-transfer-pax" min="1" placeholder="Ex: 2"/></div>
           <div class="field"><label id="lbl-classe-transp">Tipo de Veículo <span class="tag">opcional</span></label><input type="text" id="f-carro-cat" placeholder="Ex: Van, Sedan"/></div>
         </div>
+        <div class="field" style="margin-top:4px">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+            <input type="checkbox" id="f-transp-idavolta" onchange="onTranspIdaVoltaChange()" style="accent-color:var(--accent);width:16px;height:16px;cursor:pointer"/>
+            <span>Ida e volta <span class="tag">trecho de retorno</span></span>
+          </label>
+        </div>
+        <div id="campos-transp-volta" style="display:none">
+          <div class="sep" style="margin:10px 0 14px"></div>
+          <div class="g2">
+            <div class="field"><label id="lbl-volta-origem">Origem (volta)</label><input type="text" id="f-volta-origem" placeholder="Vazio = destino da ida" autocomplete="off"/></div>
+            <div class="field"><label id="lbl-volta-destino">Destino (volta)</label><input type="text" id="f-volta-destino" placeholder="Vazio = origem da ida" autocomplete="off"/></div>
+          </div>
+          <div class="g3">
+            <div class="field"><label id="lbl-volta-data">Data (volta)</label><input type="date" id="f-volta-data"/></div>
+            <div class="field"><label id="lbl-volta-hora">Horário de Partida (volta)</label><input type="time" id="f-volta-hora"/></div>
+            <div class="field"><label>Horário de Chegada (volta)</label><input type="time" id="f-volta-hora-chegada"/></div>
+          </div>
+          <div class="g3">
+            <div class="field"><label id="lbl-volta-op">Fornecedor / Operadora (volta) <span class="tag">opcional</span></label><input type="text" id="f-volta-op" placeholder="Vazio = mesmo da ida"/></div>
+            <div class="field"><label>Confirmação / Voucher (volta)</label><input type="text" id="f-volta-conf" placeholder="Ex: TRF-002"/></div>
+            <div class="field"><label id="lbl-volta-cat">Tipo de Veículo (volta) <span class="tag">opcional</span></label><input type="text" id="f-volta-cat" placeholder="Ex: Deck, Poltrona"/></div>
+          </div>
+        </div>
       </div>
       <!-- Extra Locação -->
       <div id="campos-locacao-extra" style="display:none">
@@ -2480,6 +2503,7 @@ function limparForm() {
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-transfer-hora','f-transfer-hora-chegada','f-transfer-pax',
+   'f-volta-origem','f-volta-destino','f-volta-data','f-volta-hora','f-volta-hora-chegada','f-volta-op','f-volta-conf','f-volta-cat',
    'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-tarifa','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-hotel-fator-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
@@ -2494,6 +2518,10 @@ function limparForm() {
   if (btnCancelar) btnCancelar.style.display = 'none';
   onTipoChange(false);
   selectSubtipo('transfer');
+  var _chkIV = document.getElementById('f-transp-idavolta');
+  if (_chkIV) _chkIV.checked = false;
+  var _boxIV = document.getElementById('campos-transp-volta');
+  if (_boxIV) _boxIV.style.display = 'none';
   ['loc-campos-dinheiro','loc-campos-milhas','loc-campos-acumulo'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
@@ -2893,6 +2921,16 @@ function aplicarDadosAtivo(d) {
     devEl.value = d.devLocal || d.transferDestino;
     devEl.dataset.iataCode = '';
   }
+  // Volta ponto-a-ponto (transfer, trem, ônibus, ferry)
+  if (d.transferVoltaData || d.transferVoltaOrigem || d.transferVoltaConf) {
+    var chkIVa = document.getElementById('f-transp-idavolta');
+    if (chkIVa) { chkIVa.checked = true; onTranspIdaVoltaChange(); }
+    sv('f-volta-origem', d.transferVoltaOrigem); sv('f-volta-destino', d.transferVoltaDestino);
+    sv('f-volta-data', d.transferVoltaData); sv('f-volta-hora', d.transferVoltaHora);
+    sv('f-volta-hora-chegada', d.transferVoltaHoraChegada);
+    sv('f-volta-op', d.transferVoltaOp); sv('f-volta-conf', d.transferVoltaConf);
+    sv('f-volta-cat', d.transferVoltaCategoria);
+  }
 
   // Passeio
   sv('f-passeio-nome', d.passeioNome); sv('f-passeio-dest', d.passeioDest); sv('f-passeio-op', d.passeioOp);
@@ -3027,6 +3065,20 @@ function coletarReservaDoForm(id) {
         valor: getVal('f-carro-valor'), conf: getVal('f-carro-conf'),
         seguro: getVal('f-seguro'),
       });
+      if (subtipo !== 'locacao') {
+        var chkIV = document.getElementById('f-transp-idavolta');
+        var temVolta = !!(chkIV && chkIV.checked);
+        Object.assign(res, {
+          voltaOrigem:      temVolta ? getVal('f-volta-origem') : '',
+          voltaDestino:     temVolta ? getVal('f-volta-destino') : '',
+          voltaData:        temVolta ? getVal('f-volta-data') : '',
+          voltaHora:        temVolta ? getVal('f-volta-hora') : '',
+          voltaHoraChegada: temVolta ? getVal('f-volta-hora-chegada') : '',
+          voltaOperadora:   temVolta ? getVal('f-volta-op') : '',
+          voltaConf:        temVolta ? getVal('f-volta-conf') : '',
+          voltaCategoria:   temVolta ? getVal('f-volta-cat') : '',
+        });
+      }
       if (subtipo === 'locacao') {
         Object.assign(res, {
           horaRetirada: getVal('f-loc-hora-ret'),
@@ -3201,7 +3253,8 @@ function salvarReserva(cb) {
               if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
               var ic3 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt2 = r.retData ? ' · ' + fmtDate(r.retData) : '';
-              return ic3 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt2;
+              if (r.voltaData) dt2 += ' a ' + fmtDate(r.voltaData);
+              return ic3 + ' ' + abreviarLocal(r.retLocal) + (r.voltaData ? ' ⇄ ' : ' → ') + abreviarLocal(r.devLocal) + dt2;
             }
           })(res);
           if (tituloGerado) v.atividades[realIdx].titulo = tituloGerado;
@@ -3273,7 +3326,8 @@ function salvarReserva(cb) {
               if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
               var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
-              return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
+              if (r.voltaData) dt += ' a ' + fmtDate(r.voltaData);
+              return ic2 + ' ' + abreviarLocal(r.retLocal) + (r.voltaData ? ' ⇄ ' : ' → ') + abreviarLocal(r.devLocal) + dt;
             }
             if (r.tipo === 'seguro') {
               var seg = r.seguradora || 'Seguro Viagem';
@@ -3377,7 +3431,7 @@ function resTitle(r) {
   if (r.tipo==='carro') {
     if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
     var ic = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
-    return ic + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal);
+    return ic + ' ' + abreviarLocal(r.retLocal) + (r.voltaData ? ' ⇄ ' : ' → ') + abreviarLocal(r.devLocal);
   }
   if (r.tipo==='passeio') return r.passeioNome || 'Passeio';
   if (r.tipo==='seguro') {
@@ -3417,13 +3471,21 @@ function resCols(r) {
       ['Devolução', (r.devLocal||'—')+' · '+fmtDate(r.devData)+(r.horaDevolucao?' '+r.horaDevolucao:'')],
       ['Confirmação', r.conf||'—'],
     ];
-    return [
+    var temVoltaPP = !!(r.voltaData || r.voltaOrigem);
+    var colsPP = [
       ['Cliente', toTitleCase(r.cliente)],
-      ['Origem → Destino', (r.retLocal||'?')+' → '+(r.devLocal||'?')],
-      ['Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')+(r.horaChegadaTransp?' → '+r.horaChegadaTransp:'')],
-      ['Fornecedor', r.locadora||'—'],
-      ['Confirmação', r.conf||'—'],
+      [temVoltaPP ? 'Ida' : 'Origem → Destino', (r.retLocal||'?')+' → '+(r.devLocal||'?')],
+      [temVoltaPP ? 'Data / Hora Ida' : 'Data / Hora', fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')+(r.horaChegadaTransp?' → '+r.horaChegadaTransp:'')],
     ];
+    if (temVoltaPP) {
+      colsPP.push(['Volta', (r.voltaOrigem||r.devLocal||'?')+' → '+(r.voltaDestino||r.retLocal||'?')]);
+      colsPP.push(['Data / Hora Volta', fmtDate(r.voltaData)+(r.voltaHora?' · '+r.voltaHora:'')+(r.voltaHoraChegada?' → '+r.voltaHoraChegada:'')]);
+    }
+    colsPP.push(['Fornecedor', r.locadora||'—']);
+    if (r.voltaOperadora && r.voltaOperadora !== r.locadora) colsPP.push(['Fornecedor (volta)', r.voltaOperadora]);
+    colsPP.push(['Confirmação', r.conf||'—']);
+    if (r.voltaConf && r.voltaConf !== r.conf) colsPP.push(['Confirmação (volta)', r.voltaConf]);
+    return colsPP;
   }
   if (r.tipo==='passeio') return [
     ['Cliente', toTitleCase(r.cliente)],
@@ -3798,6 +3860,14 @@ function preencherFormReserva(r, modo) {
     setVal('f-carro-valor',r.valor); setVal('f-carro-conf',r.conf);
     setVal('f-seguro',r.seguro);
     setVal('f-transfer-hora',r.horaTransfer); setVal('f-transfer-hora-chegada',r.horaChegadaTransp||''); setVal('f-transfer-pax',r.pax);
+    var chkIVe = document.getElementById('f-transp-idavolta');
+    if (chkIVe) chkIVe.checked = !!(r.voltaData || r.voltaOrigem || r.voltaConf);
+    setVal('f-volta-origem',r.voltaOrigem||''); setVal('f-volta-destino',r.voltaDestino||'');
+    setVal('f-volta-data',r.voltaData||''); setVal('f-volta-hora',r.voltaHora||'');
+    setVal('f-volta-hora-chegada',r.voltaHoraChegada||'');
+    setVal('f-volta-op',r.voltaOperadora||''); setVal('f-volta-conf',r.voltaConf||'');
+    setVal('f-volta-cat',r.voltaCategoria||'');
+    onTranspIdaVoltaChange();
     if (r.subtipo === 'locacao') {
       setVal('f-carro-cat-loc',r.categoria);
       setVal('f-ret-data-loc',r.retData||'');
@@ -5018,10 +5088,34 @@ function selectSubtipo(subtipo) {
   if (el('lbl-ret-data'))     el('lbl-ret-data').innerHTML     = m.data + ' ' + acc;
   if (el('f-ret-local'))      el('f-ret-local').placeholder    = isLocacao ? 'Ex: Aeroporto GRU' : 'Ex: Aeroporto, Terminal, Porto';
   if (el('f-dev-local'))      el('f-dev-local').placeholder    = isLocacao ? 'Ex: Hotel ou outra cidade' : 'Ex: Hotel, Terminal, Porto de chegada';
+  // Labels do bloco de volta (ponto-a-ponto)
+  if (el('lbl-volta-origem'))  el('lbl-volta-origem').textContent  = m.orig + ' (volta)';
+  if (el('lbl-volta-destino')) el('lbl-volta-destino').textContent = m.dest + ' (volta)';
+  if (el('lbl-volta-data'))    el('lbl-volta-data').textContent    = m.data + ' (volta)';
+  if (el('lbl-volta-hora'))    el('lbl-volta-hora').textContent    = m.hora + ' (volta)';
+  if (el('lbl-volta-op'))      el('lbl-volta-op').innerHTML        = m.forn + ' (volta) <span class="tag">opcional</span>';
+  if (el('lbl-volta-cat'))     el('lbl-volta-cat').innerHTML       = m.classe + ' (volta) <span class="tag">opcional</span>';
+  if (el('f-volta-cat'))       el('f-volta-cat').placeholder       = m.classePh;
 }
 function onSubtipoTranspChange() {
   var hid = document.getElementById('f-subtipo-transp-val');
   selectSubtipo(hid ? (hid.value||'transfer') : 'transfer');
+}
+
+// Ida e volta em transporte ponto-a-ponto (transfer, trem, ônibus, ferry)
+function onTranspIdaVoltaChange() {
+  var chk = document.getElementById('f-transp-idavolta');
+  var box = document.getElementById('campos-transp-volta');
+  var on  = !!(chk && chk.checked);
+  if (box) box.style.display = on ? '' : 'none';
+  if (!on) return;
+  // Pré-preencher origem/destino invertidos da ida (apenas se ainda vazios)
+  var vo = document.getElementById('f-volta-origem');
+  var vd = document.getElementById('f-volta-destino');
+  var ro = document.getElementById('f-ret-local');
+  var rd = document.getElementById('f-dev-local');
+  if (vo && !vo.value && rd && rd.value) vo.value = rd.value;
+  if (vd && !vd.value && ro && ro.value) vd.value = ro.value;
 }
 
 function onTipoEmissaoChange() {
@@ -6367,7 +6461,8 @@ function confirmarVinculo() {
               if (r.subtipo === 'locacao') return 'Locação de Carro · ' + fmtDate(r.retData) + (r.devData ? ' a ' + fmtDate(r.devData) : '');
               var ic2 = {transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️'}[r.subtipo]||'🚐';
               var dt = r.retData ? ' · ' + fmtDate(r.retData) : '';
-              return ic2 + ' ' + abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal) + dt;
+              if (r.voltaData) dt += ' a ' + fmtDate(r.voltaData);
+              return ic2 + ' ' + abreviarLocal(r.retLocal) + (r.voltaData ? ' ⇄ ' : ' → ') + abreviarLocal(r.devLocal) + dt;
             }
             if (r.tipo === 'seguro') {
               var seg = r.seguradora || 'Seguro Viagem';
@@ -7320,7 +7415,7 @@ function rgGerarPrevia(v) {
     var isLoc = r.subtipo === 'locacao';
     eventos.push({
       data: r.retData || '', hora: r.horaTransfer||'', tipo: 'transporte', icon: ic,
-      titulo: isLoc ? (r.locadora||'Locação') + ' – ' + (r.categoria||'') : abreviarLocal(r.retLocal) + ' → ' + abreviarLocal(r.devLocal),
+      titulo: isLoc ? (r.locadora||'Locação') + ' – ' + (r.categoria||'') : abreviarLocal(r.retLocal) + (r.voltaData ? ' ⇄ ' : ' → ') + abreviarLocal(r.devLocal),
       meta: [r.retData ? fmtDate(r.retData) : '', r.horaTransfer||'', isLoc ? (r.devData?'Dev: '+fmtDate(r.devData):'') : '', r.locadora||'', r.pax ? r.pax+' pax' : ''].filter(Boolean).join(' · '),
       badge: r.conf ? 'Conf: '+r.conf : ''
     });
@@ -7483,7 +7578,7 @@ function rgMontarDias(v) {
 function rgResNome(res) {
   if (res.tipo==='voo') return '✈️ '+res.origem+' → '+res.destino;
   if (res.tipo==='hotel') return '🏨 '+(res.hotelNome||res.destino);
-  if (res.tipo==='carro') { var ic4={transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️',locacao:'🚗'}[res.subtipo]||'🚐'; return res.subtipo==='locacao'?ic4+' '+res.locadora:ic4+' '+abreviarLocal(res.retLocal)+' → '+abreviarLocal(res.devLocal); }
+  if (res.tipo==='carro') { var ic4={transfer:'🚐',trem:'🚆',onibus:'🚌',ferry:'⛴️',locacao:'🚗'}[res.subtipo]||'🚐'; return res.subtipo==='locacao'?ic4+' '+res.locadora:ic4+' '+abreviarLocal(res.retLocal)+(res.voltaData?' ⇄ ':' → ')+abreviarLocal(res.devLocal); }
   if (res.tipo==='passeio') return '🎯 '+res.passeioNome;
   if (res.tipo==='seguro') return '🛡️ '+(res.seguradora||'Seguro Viagem')+(res.seguroPlano?' – '+res.seguroPlano:'');
   return 'Reserva';
