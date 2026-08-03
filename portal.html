@@ -769,8 +769,25 @@ function resCols(r) {
     cols=[{label:'Hotel',val:r.hotelNome||null},{label:'Check-in',val:fmtDate(r.checkin)},{label:'Check-out',val:fmtDate(r.checkout)}];
     if(r.conf) cols.push({label:'Confirmação',val:r.conf});
   } else if(r.tipo==='carro'){
-    cols=[{label:'Locadora',val:r.locadora||null},{label:'Retirada',val:fmtDate(r.retData)},{label:'Devolução',val:fmtDate(r.devData)}];
-    if(r.conf) cols.push({label:'Confirmação',val:r.conf});
+    if(r.subtipo==='locacao'){
+      cols=[{label:'Locadora',val:r.locadora||null},
+            {label:'Retirada',val:(r.retLocal?r.retLocal+' · ':'')+fmtDate(r.retData)},
+            {label:'Devolução',val:(r.devLocal?r.devLocal+' · ':'')+fmtDate(r.devData)}];
+      if(r.conf) cols.push({label:'Confirmação',val:r.conf});
+    } else {
+      var lblForn={transfer:'Fornecedor',trem:'Companhia ferroviária',onibus:'Empresa de ônibus',ferry:'Companhia de ferry'}[r.subtipo]||'Fornecedor';
+      var temVoltaPP=!!(r.voltaData||r.voltaOrigem);
+      cols=[{label:temVoltaPP?'Trecho ida':'Trecho',val:(r.retLocal||'?')+' → '+(r.devLocal||'?')},
+            {label:temVoltaPP?'Data ida':'Data',val:fmtDate(r.retData)+(r.horaTransfer?' · '+r.horaTransfer:'')+(r.horaChegadaTransp?' → '+r.horaChegadaTransp:'')}];
+      if(temVoltaPP){
+        cols.push({label:'Trecho volta',val:(r.voltaOrigem||r.devLocal||'?')+' → '+(r.voltaDestino||r.retLocal||'?')});
+        cols.push({label:'Data volta',val:fmtDate(r.voltaData)+(r.voltaHora?' · '+r.voltaHora:'')+(r.voltaHoraChegada?' → '+r.voltaHoraChegada:'')});
+      }
+      if(r.locadora) cols.push({label:lblForn,val:r.locadora});
+      if(r.voltaOperadora&&r.voltaOperadora!==r.locadora) cols.push({label:lblForn+' (volta)',val:r.voltaOperadora});
+      if(r.conf) cols.push({label:'Confirmação',val:r.conf});
+      if(r.voltaConf&&r.voltaConf!==r.conf) cols.push({label:'Confirmação (volta)',val:r.voltaConf});
+    }
   } else if(r.tipo==='passeio'){
     cols=[{label:'Passeio',val:r.passeioNome||null},{label:'Data',val:fmtDate(r.dataPasseio)}];
     if(r.conf) cols.push({label:'Voucher',val:r.conf});
