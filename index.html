@@ -1094,15 +1094,15 @@ header{animation:fadeUp .45s ease both}
 
     <!-- UPLOAD DE ATIVO -->
     <div class="field">
-      <label>📎 Ativo da Reserva <span class="tag">imagem, PDF ou HTML — leitura automática com IA</span></label>
+      <label>📎 Ativos da Reserva <span class="tag">imagem, PDF ou HTML — múltiplos arquivos, leitura automática com IA</span></label>
       <div class="upload-ativo" id="upload-ativo-drop"
            ondragover="event.preventDefault();this.classList.add('drag')"
            ondragleave="this.classList.remove('drag')"
            ondrop="onAtivoDrop(event)">
-        <input type="file" id="upload-ativo-input" accept="image/*,.pdf,.html,.htm,.mhtml,text/html" onchange="onAtivoChange(event)"/>
+        <input type="file" id="upload-ativo-input" multiple accept="image/*,.pdf,.html,.htm,.mhtml,text/html" onchange="onAtivoChange(event)"/>
         <div class="upload-ativo-icon">📄</div>
         <div class="upload-ativo-label">Clique para selecionar ou arraste aqui</div>
-        <div class="upload-ativo-sub">Imagem (PNG, JPG, WEBP), PDF ou HTML (página salva / e-mail) • a IA lê e preenche os campos automaticamente</div>
+        <div class="upload-ativo-sub">Imagem (PNG, JPG, WEBP), PDF ou HTML (página salva / e-mail) • pode enviar vários arquivos da MESMA reserva (ida + volta, um por passageiro…) • a IA lê todos juntos e preenche os campos</div>
       </div>
       <div id="upload-preview" style="display:none"></div>
       <div id="upload-lendo" style="display:none" class="upload-lendo">
@@ -2496,10 +2496,10 @@ function onTipoChange(reprocessar) {
   var tipo = document.getElementById('f-tipo') ? document.getElementById('f-tipo').value : '';
   if (tipo) document.getElementById('fields-'+tipo).style.display = 'block';
   // Se há arquivo carregado e o usuário trocou o tipo manualmente, reanalisar
-  if (reprocessar !== false && ativoArquivo && tipo) {
+  if (reprocessar !== false && ativoArquivos.length && tipo) {
     var okEl = document.getElementById('upload-ok');
     if (okEl) { okEl.style.color = 'var(--muted)'; okEl.textContent = '🔄 Reprocessando com tipo: ' + tipo + '…'; }
-    lerAtivoComIA(ativoArquivo);
+    prepararAtivos();
   }
 }
 
@@ -2551,6 +2551,16 @@ function limparForm() {
   // Esconder select de atividade
   var fa = document.getElementById('field-atividade-assoc');
   if (fa) fa.style.display = 'none';
+  // Anexos: zera lista, preview e input
+  ativoArquivos = [];
+  var _upv = document.getElementById('upload-preview');
+  if (_upv) { _upv.style.display = 'none'; _upv.innerHTML = ''; }
+  var _uinp = document.getElementById('upload-ativo-input');
+  if (_uinp) _uinp.value = '';
+  var _uok = document.getElementById('upload-ok');
+  if (_uok) { _uok.style.color = 'var(--muted)'; _uok.textContent = ''; }
+  var _ulendo = document.getElementById('upload-lendo');
+  if (_ulendo) _ulendo.style.display = 'none';
   document.getElementById('form-ok').textContent = '';
   resetSecaoMensagem('nf');
 }
@@ -2697,21 +2707,22 @@ function mesmoCliente(a, b) {
   return true;
 }
 
-// ── UPLOAD DE ATIVO ────────────────────────────────────────
-var ativoArquivo = null;
-var ativoArquivoBase64 = null;  // base64 do arquivo ativo para salvar na reserva
-var ativoArquivoMeta = null;    // {nome, tipo, tamanho} do arquivo ativo
+// ── UPLOAD DE ATIVOS ───────────────────────────────────────
+// Suporta N arquivos da MESMA reserva (ex: bilhete de ida + bilhete de volta).
+// Cada item: { file, base64|null, meta:{nome,tipo,tamanho}, pronto:bool }
+var ativoArquivos = [];
+var LIMITE_ATIVOS = 6;
+var TAM_MAX_ANEXO = 512000;   // 500KB — acima disso o arquivo é lido pela IA mas não é guardado
 
 function onAtivoDrop(e) {
   e.preventDefault();
   document.getElementById('upload-ativo-drop').classList.remove('drag');
-  var file = e.dataTransfer.files[0];
-  if (file) processarAtivo(file);
+  adicionarAtivos(e.dataTransfer.files);
 }
 
 function onAtivoChange(e) {
-  var file = e.target.files[0];
-  if (file) processarAtivo(file);
+  adicionarAtivos(e.target.files);
+  e.target.value = '';   // permite reenviar o mesmo arquivo depois de remover
 }
 
 function isArquivoHtml(file) {
@@ -2746,67 +2757,133 @@ function htmlParaTexto(html) {
     .trim();
 }
 
-function processarAtivo(file) {
-  ativoArquivo = file;
-  var icon = file.type === 'application/pdf' ? '📄' : (isArquivoHtml(file) ? '🌐' : '🖼️');
-  document.getElementById('upload-preview').style.display = 'flex';
-  document.getElementById('upload-preview').innerHTML =
-    '<div class="upload-preview">' +
-    '<span class="upload-preview-icon">' + icon + '</span>' +
-    '<span class="upload-preview-name">' + file.name + '</span>' +
-    '<span class="upload-preview-remove" onclick="removerAtivo()" title="Remover">✕</span>' +
-    '</div>';
-  document.getElementById('upload-ok').textContent = '';
-  lerAtivoComIA(file);
+function iconeAtivo(file) {
+  return file.type === 'application/pdf' ? '📄' : (isArquivoHtml(file) ? '🌐' : '🖼️');
 }
 
-function removerAtivo() {
-  ativoArquivo = null;
-  ativoArquivoBase64 = null;
-  ativoArquivoMeta = null;
-  document.getElementById('upload-preview').style.display = 'none';
-  document.getElementById('upload-preview').innerHTML = '';
-  document.getElementById('upload-ativo-input').value = '';
-  document.getElementById('upload-ok').textContent = '';
+function renderAtivosPreview() {
+  var el = document.getElementById('upload-preview');
+  if (!el) return;
+  if (!ativoArquivos.length) { el.style.display = 'none'; el.innerHTML = ''; return; }
+  el.style.display = 'block';
+  el.innerHTML = ativoArquivos.map(function(a, i){
+    var aviso = (a.meta && a.meta.tamanho > TAM_MAX_ANEXO)
+      ? '<span style="font-size:10px;color:var(--accent);flex-shrink:0;font-weight:700" title="Acima de 500KB — lido pela IA, mas não guardado como anexo">⚠️ &gt;500KB</span>'
+      : '';
+    return '<div class="upload-preview" style="margin-bottom:6px">'
+      + '<span class="upload-preview-icon">' + iconeAtivo(a.file) + '</span>'
+      + '<span class="upload-preview-name">' + escHtml(a.file.name) + '</span>'
+      + aviso
+      + '<span class="upload-preview-remove" onclick="removerAtivo(' + i + ')" title="Remover">✕</span>'
+      + '</div>';
+  }).join('');
 }
 
-function lerAtivoComIA(file) {
-  var isPdf  = file.type === 'application/pdf';
-  var isHtml = isArquivoHtml(file);
+function adicionarAtivos(fileList) {
+  var files = Array.prototype.slice.call(fileList || []);
+  if (!files.length) return;
+  var okEl = document.getElementById('upload-ok');
+  var ignorados = 0;
 
-  // Sempre guardamos o base64 do arquivo original (anexo da reserva)
-  var reader = new FileReader();
-  reader.onload = function(e) {
-    var base64 = e.target.result.split(',')[1];
-    var mediaType = file.type || (isHtml ? 'text/html' : 'image/jpeg');
-    ativoArquivoMeta = { nome: file.name, tipo: file.type || (isHtml ? 'text/html' : ''), tamanho: file.size };
-    ativoArquivoBase64 = (file.size <= 512000) ? base64 : null; // só salva se < 500KB
+  files.forEach(function(file){
+    if (ativoArquivos.length >= LIMITE_ATIVOS) { ignorados++; return; }
+    // Evita duplicar o mesmo arquivo (nome + tamanho)
+    var jaTem = ativoArquivos.some(function(a){
+      return a.file.name === file.name && a.file.size === file.size;
+    });
+    if (jaTem) { ignorados++; return; }
+    ativoArquivos.push({ file: file, base64: null, meta: null, pronto: false });
+  });
 
-    if (!isHtml) {
-      enviarAtivoParaIA({ base64: base64, mediaType: mediaType, isPdf: isPdf });
-      return;
-    }
+  renderAtivosPreview();
+  if (okEl) {
+    okEl.style.color = 'var(--muted)';
+    okEl.textContent = ignorados
+      ? '⚠️ ' + ignorados + ' arquivo(s) ignorado(s) — duplicado ou acima do limite de ' + LIMITE_ATIVOS + '.'
+      : '';
+  }
+  prepararAtivos();
+}
 
-    // HTML: extrair o texto legível e enviar como texto puro
-    var readerTxt = new FileReader();
-    readerTxt.onload = function(ev) {
-      var texto = htmlParaTexto(ev.target.result);
-      if (!texto) {
-        document.getElementById('upload-lendo').style.display = 'none';
-        document.getElementById('upload-ok').style.color = 'var(--accent)';
-        document.getElementById('upload-ok').textContent = '⚠️ Não encontrei texto legível neste HTML. Preencha manualmente.';
+function removerAtivo(idx) {
+  if (typeof idx !== 'number') { ativoArquivos = []; }
+  else { ativoArquivos.splice(idx, 1); }
+  renderAtivosPreview();
+  var inp = document.getElementById('upload-ativo-input');
+  if (inp) inp.value = '';
+  var okEl = document.getElementById('upload-ok');
+  if (okEl) { okEl.style.color = 'var(--muted)'; okEl.textContent = ''; }
+  if (ativoArquivos.length) prepararAtivos();
+}
+
+// Le um arquivo e devolve { base64, meta, doc } — doc e o bloco enviado a IA
+function lerArquivoAtivo(file) {
+  return new Promise(function(resolve, reject) {
+    var isPdf  = file.type === 'application/pdf';
+    var isHtml = isArquivoHtml(file);
+    var meta   = { nome: file.name, tipo: file.type || (isHtml ? 'text/html' : ''), tamanho: file.size };
+
+    var reader = new FileReader();
+    reader.onerror = function(){ reject(new Error('Falha ao ler "' + file.name + '"')); };
+    reader.onload = function(e) {
+      var base64 = e.target.result.split(',')[1];
+      var mediaType = file.type || (isHtml ? 'text/html' : 'image/jpeg');
+      // base64 do original só é guardado como anexo se couber no limite
+      var base64Anexo = (file.size <= TAM_MAX_ANEXO) ? base64 : null;
+
+      if (!isHtml) {
+        resolve({ base64: base64Anexo, meta: meta,
+                  doc: { base64: base64, mediaType: mediaType, isPdf: isPdf, nome: file.name } });
         return;
       }
-      enviarAtivoParaIA({ isHtml: true, texto: texto.slice(0, 60000), mediaType: 'text/html' });
+
+      // HTML: extrair o texto legível e enviar como texto puro
+      var readerTxt = new FileReader();
+      readerTxt.onerror = function(){ reject(new Error('Não foi possível ler o HTML "' + file.name + '"')); };
+      readerTxt.onload = function(ev) {
+        var texto = htmlParaTexto(ev.target.result);
+        if (!texto) { reject(new Error('Não encontrei texto legível em "' + file.name + '"')); return; }
+        resolve({ base64: base64Anexo, meta: meta,
+                  doc: { isHtml: true, texto: texto.slice(0, 60000), mediaType: 'text/html', nome: file.name } });
+      };
+      readerTxt.readAsText(file, 'utf-8');
     };
-    readerTxt.onerror = function() {
-      document.getElementById('upload-lendo').style.display = 'none';
-      document.getElementById('upload-ok').style.color = 'var(--accent)';
-      document.getElementById('upload-ok').textContent = '❌ Não foi possível ler o arquivo HTML.';
-    };
-    readerTxt.readAsText(file, 'utf-8');
-  };
-  reader.readAsDataURL(file);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Le TODOS os ativos pendentes e dispara uma unica chamada a IA com todos juntos
+function prepararAtivos() {
+  var okEl = document.getElementById('upload-ok');
+  var lendoEl = document.getElementById('upload-lendo');
+  if (lendoEl) {
+    var lbl = lendoEl.querySelector('span');
+    if (lbl) lbl.textContent = ativoArquivos.length > 1
+      ? 'Lendo ' + ativoArquivos.length + ' arquivos com IA…'
+      : 'Lendo arquivo com IA…';
+    lendoEl.style.display = 'flex';
+  }
+  if (okEl) okEl.textContent = '';
+
+  var lote = ativoArquivos.slice();
+  Promise.all(lote.map(function(a){
+    if (a.pronto) return Promise.resolve(a);
+    return lerArquivoAtivo(a.file).then(function(r){
+      a.base64 = r.base64; a.meta = r.meta; a.doc = r.doc; a.pronto = true;
+      return a;
+    });
+  }))
+  .then(function(){
+    renderAtivosPreview();
+    // A lista pode ter mudado enquanto os arquivos eram lidos
+    var docs = ativoArquivos.filter(function(a){ return a.pronto && a.doc; }).map(function(a){ return a.doc; });
+    if (!docs.length) { if (lendoEl) lendoEl.style.display = 'none'; return; }
+    enviarAtivoParaIA({ documentos: docs });
+  })
+  .catch(function(err){
+    if (lendoEl) lendoEl.style.display = 'none';
+    if (okEl) { okEl.style.color = 'var(--accent)'; okEl.textContent = '❌ ' + err.message; }
+  });
 }
 
 function enviarAtivoParaIA(payload) {
@@ -2838,7 +2915,9 @@ function enviarAtivoParaIA(payload) {
       var d = JSON.parse(texto);
       aplicarDadosAtivo(d);
       document.getElementById('upload-ok').style.color = '#22c55e';
-      document.getElementById('upload-ok').textContent = '✅ Dados extraídos e preenchidos automaticamente!';
+      document.getElementById('upload-ok').textContent = ativoArquivos.length > 1
+        ? '✅ ' + ativoArquivos.length + ' arquivos lidos e consolidados em uma reserva!'
+        : '✅ Dados extraídos e preenchidos automaticamente!';
     } catch(err) {
       document.getElementById('upload-ok').style.color = 'var(--accent)';
       document.getElementById('upload-ok').textContent = '⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.';
@@ -2985,15 +3064,15 @@ function coletarReservaDoForm(id) {
     obs: getVal('f-obs'),
     cadastro: new Date().toISOString().split('T')[0],
   };
-  // Registrar metadados do arquivo na reserva (base64 vai para /concierge/arquivo)
-  if (ativoArquivoMeta) {
-    res.arquivoAnexo = {
-      nome: ativoArquivoMeta.nome,
-      tipo: ativoArquivoMeta.tipo,
-      tamanho: ativoArquivoMeta.tamanho,
-      base64: null   // nunca armazenado inline — buscar via /concierge/arquivo/:reservaId
-    };
-    res.temArquivo = !!ativoArquivoBase64;
+  // Registrar metadados dos arquivos na reserva (base64 vai para /concierge/arquivo)
+  var _anexosMeta = ativoArquivos.filter(function(a){ return a.meta; });
+  if (_anexosMeta.length) {
+    res.arquivosAnexos = _anexosMeta.map(function(a){
+      return { nome: a.meta.nome, tipo: a.meta.tipo, tamanho: a.meta.tamanho, base64: null };
+    });
+    // Compatibilidade com reservas antigas / código legado: primeiro anexo
+    res.arquivoAnexo = res.arquivosAnexos[0];
+    res.temArquivo = _anexosMeta.some(function(a){ return !!a.base64; });
   }
 
   if (tipo === 'voo') {
@@ -3363,9 +3442,10 @@ function salvarReserva(cb) {
 
   var _comViagem = !!viagemId;
   var _resId = res.id;
-  // Capturar base64 e meta ANTES de limpar (limparForm zera ativoArquivo*)
-  var _base64Upload = ativoArquivoBase64;
-  var _metaUpload   = ativoArquivoMeta;
+  // Capturar base64 + meta ANTES de limpar (limparForm zera ativoArquivos)
+  var _uploads = ativoArquivos
+    .filter(function(a){ return a.base64 && a.meta; })
+    .map(function(a){ return { base64: a.base64, meta: a.meta }; });
 
   if (_btnSalvar) { _btnSalvar.disabled = true; _btnSalvar.style.opacity = '0.6'; }
 
@@ -3378,32 +3458,41 @@ function salvarReserva(cb) {
       renderReservas();
       limparForm();
       switchTab('reservas');
-      // Upload do arquivo em background — completamente isolado da chain de saveReservas
-      if (_base64Upload && _metaUpload) {
-        fetch('https://cdv-proxy-production.up.railway.app/concierge/arquivo', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ reservaId: _resId, base64: _base64Upload, mediaType: _metaUpload.tipo, nome: _metaUpload.nome })
-        })
-        .then(function(r){
-          if (!r.ok) throw new Error('HTTP ' + r.status);
-          return r.json();
-        })
-        .then(function(d){
-          if (d.ok) {
-            // Atualizar reserva com temArquivo = true
+      // Upload dos arquivos em background — completamente isolado da chain de saveReservas.
+      // Enviados em SEQUÊNCIA: o proxy calcula o próximo índice livre a cada POST.
+      if (_uploads.length) {
+        var _enviados = 0;
+        var _falhas = [];
+        _uploads.reduce(function(chain, u){
+          return chain.then(function(){
+            return fetch('https://cdv-proxy-production.up.railway.app/concierge/arquivo', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reservaId: _resId, base64: u.base64, mediaType: u.meta.tipo, nome: u.meta.nome })
+            })
+            .then(function(r){
+              if (!r.ok) throw new Error('HTTP ' + r.status);
+              return r.json();
+            })
+            .then(function(d){
+              if (d.ok) _enviados++;
+              else _falhas.push(u.meta.nome + ': ' + (d.erro || 'falha'));
+            })
+            .catch(function(e){ _falhas.push(u.meta.nome + ': ' + e.message); });
+          });
+        }, Promise.resolve())
+        .then(function(){
+          if (_enviados) {
             var idx = reservas.findIndex(function(x){ return x.id === _resId; });
             if (idx !== -1) {
               reservas[idx].temArquivo = true;
               saveReservas().then(function(){ renderReservas(); }).catch(function(){});
             }
-            showToast('📎 Bilhete/voucher salvo com sucesso!', 'ok');
-          } else {
-            showToast('⚠️ Reserva salva, mas falha ao guardar arquivo: ' + (d.erro || ''), 'err');
+            showToast('📎 ' + _enviados + (_enviados > 1 ? ' arquivos salvos' : ' arquivo salvo') + ' com sucesso!', 'ok');
           }
-        })
-        .catch(function(e){
-          showToast('⚠️ Reserva salva, mas falha ao guardar arquivo: ' + e.message, 'err');
+          if (_falhas.length) {
+            showToast('⚠️ Falha ao guardar ' + _falhas.length + ' arquivo(s): ' + _falhas.join(' | '), 'err');
+          }
         });
       }
     })
@@ -3753,14 +3842,16 @@ function verArquivoAnexo(id) {
   var r = reservas.find(function(x){ return x.id === id; });
   if (!r) return;
   if (!r.temArquivo) {
-    if (r.arquivoAnexo && r.arquivoAnexo.nome) {
-      showToast('⚠️ "' + r.arquivoAnexo.nome + '" foi lido pela IA mas não pôde ser salvo (proxy offline no momento). Reenvie o arquivo editando a reserva.', 'err');
+    var _n = (r.arquivosAnexos && r.arquivosAnexos.length) ? r.arquivosAnexos[0].nome
+           : (r.arquivoAnexo && r.arquivoAnexo.nome) ? r.arquivoAnexo.nome : '';
+    if (_n) {
+      showToast('⚠️ "' + _n + '" foi lido pela IA mas não pôde ser salvo (proxy offline no momento). Reenvie o arquivo editando a reserva.', 'err');
     } else {
       showToast('⚠️ Nenhum arquivo salvo para esta reserva.', 'err');
     }
     return;
   }
-  showToast('⏳ Carregando arquivo…', 'ok');
+  showToast('⏳ Carregando arquivo(s)…', 'ok');
   fetch('https://cdv-proxy-production.up.railway.app/concierge/arquivo/' + encodeURIComponent(id))
     .then(function(res){
       if (!res.ok) throw new Error('Proxy retornou HTTP ' + res.status + '. Faça o redeploy no Railway.');
@@ -3770,17 +3861,21 @@ function verArquivoAnexo(id) {
       if (!data.ok || !data.arquivos || !data.arquivos.length) {
         showToast('⚠️ Arquivo não encontrado no servidor.', 'err'); return;
       }
-      // Abrir o primeiro arquivo (suporte a múltiplos futuramente via idx)
-      var a = data.arquivos[0];
-      var dataUrl = 'data:' + (a.mediaType || 'application/octet-stream') + ';base64,' + a.base64;
-      var w = window.open('', '_blank');
-      if (!w) { showToast('⚠️ Popup bloqueado. Permita popups para este site.', 'err'); return; }
-      if (a.mediaType === 'application/pdf') {
-        w.document.write('<html><body style="margin:0"><iframe src="' + dataUrl + '" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
-      } else {
-        w.document.write('<html><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + dataUrl + '" style="max-width:100%;max-height:100vh;object-fit:contain"/></body></html>');
-      }
-      w.document.close();
+      // Abre uma aba por arquivo anexado à reserva
+      var bloqueou = false;
+      data.arquivos.forEach(function(a){
+        var dataUrl = 'data:' + (a.mediaType || 'application/octet-stream') + ';base64,' + a.base64;
+        var w = window.open('', '_blank');
+        if (!w) { bloqueou = true; return; }
+        var titulo = escHtml(a.nome || 'anexo');
+        if (a.mediaType === 'application/pdf') {
+          w.document.write('<html><head><title>' + titulo + '</title></head><body style="margin:0"><iframe src="' + dataUrl + '" width="100%" height="100%" style="border:none;position:fixed;inset:0"></iframe></body></html>');
+        } else {
+          w.document.write('<html><head><title>' + titulo + '</title></head><body style="margin:0;background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh"><img src="' + dataUrl + '" style="max-width:100%;max-height:100vh;object-fit:contain"/></body></html>');
+        }
+        w.document.close();
+      });
+      if (bloqueou) showToast('⚠️ Popup bloqueado. Permita popups para este site para ver todos os anexos.', 'err');
     })
     .catch(function(e){ showToast('❌ Erro ao carregar arquivo: ' + e.message, 'err'); });
 }
@@ -3930,22 +4025,31 @@ function preencherFormReserva(r, modo) {
     setVal('f-seguro-parceiro-acumulo',r.parceiroAcumulo||'');
   }
   // Se a reserva já tem arquivo salvo no servidor, mostrar indicação
-  if (!_dup && r.temArquivo && r.arquivoAnexo) {
+  var _anexosSalvos = (r.arquivosAnexos && r.arquivosAnexos.length)
+    ? r.arquivosAnexos
+    : (r.arquivoAnexo ? [r.arquivoAnexo] : []);
+  if (!_dup && r.temArquivo && _anexosSalvos.length) {
     var _prevEl = document.getElementById('upload-preview');
     var _okEl   = document.getElementById('upload-ok');
     if (_prevEl) {
-      var _icon = (r.arquivoAnexo.tipo||'').indexOf('pdf') !== -1 ? '📄' : '🖼️';
-      _prevEl.style.display = 'flex';
-      _prevEl.innerHTML = '<div class="upload-preview">'
-        + '<span class="upload-preview-icon">' + _icon + '</span>'
-        + '<span class="upload-preview-name">' + (r.arquivoAnexo.nome||'arquivo salvo') + '</span>'
-        + '<span style="font-size:11px;color:#22c55e;flex-shrink:0;font-weight:700">✅ Salvo</span>'
-        + '</div>';
+      _prevEl.style.display = 'block';
+      _prevEl.innerHTML = _anexosSalvos.map(function(an){
+        var _icon = (an.tipo||'').indexOf('pdf') !== -1 ? '📄' : ((an.tipo||'').indexOf('html') !== -1 ? '🌐' : '🖼️');
+        return '<div class="upload-preview" style="margin-bottom:6px">'
+          + '<span class="upload-preview-icon">' + _icon + '</span>'
+          + '<span class="upload-preview-name">' + escHtml(an.nome||'arquivo salvo') + '</span>'
+          + '<span style="font-size:11px;color:#22c55e;flex-shrink:0;font-weight:700">✅ Salvo</span>'
+          + '</div>';
+      }).join('');
     }
-    if (_okEl) { _okEl.style.color='#22c55e'; _okEl.textContent='Arquivo salvo no servidor — carregue outro para substituir.'; }
-    // Não há base64 local; se o usuário não carregar um novo, o existente é mantido
-    ativoArquivoBase64 = null;
-    ativoArquivoMeta   = null;
+    if (_okEl) {
+      _okEl.style.color='#22c55e';
+      _okEl.textContent = _anexosSalvos.length > 1
+        ? _anexosSalvos.length + ' arquivos salvos no servidor — os novos que você carregar serão adicionados.'
+        : 'Arquivo salvo no servidor — os novos que você carregar serão adicionados.';
+    }
+    // Não há base64 local; se o usuário não carregar novos, os existentes são mantidos
+    ativoArquivos = [];
   }
   reformatarCamposMilhar();
   // Campos ja preenchidos: regera a previa da mensagem com os dados da reserva
@@ -3974,10 +4078,8 @@ function duplicarReserva(id) {
   if (!r) return;
   // Garante formulário limpo (limparForm zera flags de edição pendente)
   limparForm();
-  // Nunca herdar o anexo da reserva de origem
-  ativoArquivo = null;
-  ativoArquivoBase64 = null;
-  ativoArquivoMeta = null;
+  // Nunca herdar os anexos da reserva de origem
+  ativoArquivos = [];
   var _pv = document.getElementById('upload-preview');
   if (_pv) { _pv.style.display = 'none'; _pv.innerHTML = ''; }
   var _uok = document.getElementById('upload-ok');
