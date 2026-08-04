@@ -96,7 +96,8 @@
         "demResponsavel": "Felipe",
         "demPrioridade": "normal",
         "demClientes": "Diogo Ottoni Da",
-        "pos": 0
+        "pos": 0,
+        "demandaOculta": true
       },
       {
         "icon": "✈️",
@@ -108,7 +109,10 @@
         "reservaId": "RES-1785865867486"
       }
     ],
-    "cadastro": "2026-08-04"
+    "cadastro": "2026-08-04",
+    "demandasOcultas": [
+      "atv-1785856310968"
+    ]
   },
   {
     "id": "VGM-1785782093660",
