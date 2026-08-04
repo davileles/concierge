@@ -1,5 +1,14 @@
 [
   {
+    "id": "MOD-1786400000001",
+    "nome": "Voo · Emissão (ida em DINHEIRO)",
+    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Detalhes do voo*\nIda: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\n💰 *Investimento*\nValor total pago: *R$ {{valor_dinheiro}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
     "id": "MOD-1786100000001",
     "nome": "Ferry · Reserva confirmada (ida)",
     "texto": "✅ *Ferry reservado com sucesso!*\n\n⛴️ *Detalhes da travessia*\nTrecho: *{{ferry_porto_embarque}} ➔ {{ferry_porto_desembarque}}*\nData: *{{ferry_data}}* às *{{ferry_hora_partida}}*\nChegada prevista: *{{ferry_hora_chegada}}*\nCompanhia: *{{ferry_companhia}}*\nAcomodação: *{{ferry_cabine}}*\nPassageiros: *{{ferry_pax}}*\n\n🎫 Localizador: *{{ferry_conf}}*\n\n💰 *Investimento*\nValor total: *R$ {{ferry_valor}}*\n\n📌 *Antes do embarque*\nChegue ao porto com pelo menos *1 hora* de antecedência — o check-in costuma encerrar antes do horário de partida.\nTenha em mãos documento oficial com foto (passaporte, em travessias internacionais) e o localizador acima.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
@@ -20,7 +29,7 @@
   {
     "id": "MOD-1785783355954",
     "nome": "Voo · Emissão (ida e volta em DINHEIRO)",
-    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Ida*\nTrecho: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🛬 *Volta*\nTrecho: *{{origem_volta}} ➔ {{destino_volta}}*\nData: *{{data_volta}}* às *{{hora_partida_volta}}*\nCia aérea: *{{cia_volta}}* · Voo *{{nvoo_volta}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Ida*\nTrecho: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🛬 *Volta*\nTrecho: *{{origem_volta}} ➔ {{destino_volta}}*\nData: *{{data_volta}}* às *{{hora_partida_volta}}*\nCia aérea: *{{cia_volta}}* · Voo *{{nvoo_volta}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\n💰 *Investimento*\nValor total pago: *R$ {{valor_dinheiro}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
