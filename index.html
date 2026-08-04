@@ -4233,6 +4233,7 @@ var VARS_RESERVA = [
   { label: '{{milhas}}',                desc: 'Milhas por pax' },
   { label: '{{milhas_total}}',          desc: 'Quantidade total de milhas gastas' },
   { label: '{{valor_tarifa}}',          desc: 'Valor da tarifa pagante (R$)' },
+  { label: '{{valor_dinheiro}}',        desc: 'Valor pago na emissao em dinheiro (R$)' },
   { label: '{{pax}}',                   desc: 'Total passageiros' },
   { label: '{{hotel}}',                 desc: 'Nome do hotel' },
   { label: '{{checkin}}',               desc: 'Check-in' },
@@ -4960,6 +4961,7 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'milhas', res.milhas);
     txt = rv(txt, 'milhas_total', res.milhasTotal||'');
     txt = rv(txt, 'valor_tarifa', res.valor||res.valorAcumulo||'');
+    txt = rv(txt, 'valor_dinheiro', res.tipo==='voo' ? (res.valorDinheiro||'') : '');
     txt = rv(txt, 'pax', res.pax);
     txt = rv(txt, 'hotel', res.hotelNome);
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
