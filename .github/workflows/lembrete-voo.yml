@@ -3,7 +3,7 @@ name: Lembrete de Voo — 48h antes
 on:
   schedule:
     - cron: '0 * * * *'   # toda hora (UTC) — cobre horários BR de 21h a 20h
-  workflow_dispatch: {}    # execução manual pela aba Actions
+  workflow_dispatch: {}    # execução manual pela aba Actions ou dispatcher do proxy
 
 jobs:
   lembrete:
@@ -17,7 +17,14 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Verificar e enviar lembretes de voo
+      - name: Verificar e enviar lembretes de voo (com retry)
         env:
           CDV_GITHUB_TOKEN: ${{ secrets.CDV_CONCIERGE_TOKEN }}
-        run: node lembrete-voo.js
+        run: |
+          for i in 1 2 3; do
+            node lembrete-voo.js && exit 0
+            echo "Tentativa $i falhou; aguardando 60s..."
+            sleep 60
+          done
+          echo "Todas as tentativas falharam."
+          exit 1
