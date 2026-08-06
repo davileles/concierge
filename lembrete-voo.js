@@ -431,10 +431,14 @@ function logDebug(entry) {
 // ── alerta interno: check-in online do voo ───────────────────────────────────
 // Independe de modelos.json: vale para toda reserva tipo 'voo'. Vai para o grupo
 // interno de alertas (cfg.grupoAlertas), NÃO para o grupo do cliente.
-// Janela de 26h: com a margem de 6h de deveDisparar(), o alerta sai entre 26h e
-// 20h antes da partida — ou seja, pouco antes de o check-in abrir (24h).
+// Janela 24h→20h: o teto coincide com a abertura do check-in (24h antes da
+// partida), para o atendente já poder agir ao receber o alerta e garantir boa
+// escolha de assentos. O piso de 20h é só rede de segurança se as execuções
+// atrasarem. Não usa deveDisparar() (margem fixa de 6h dos modelos) — a margem
+// aqui é própria (CHECKIN_MARGEM_H).
 // Atenção: o gatilho 'checkin' dos modelos é check-in de HOTEL. Este é outro.
-const CHECKIN_JANELA_H = 26;
+const CHECKIN_JANELA_H = 24;
+const CHECKIN_MARGEM_H = 4;
 
 // Resolve a perna do voo. Campos de volta caem para os da ida quando vazios
 // (reserva antiga preenchia só origem/destino).
@@ -496,7 +500,7 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
       if (!t) continue;
 
       const horas = horasAte(t.data, t.hora);
-      const disparar = deveDisparar(horas, CHECKIN_JANELA_H);
+      const disparar = horas >= 0 && horas <= CHECKIN_JANELA_H && horas > (CHECKIN_JANELA_H - CHECKIN_MARGEM_H);
       if (horas >= 0 && horas <= CHECKIN_JANELA_H + 6) {
         console.log(`  "${res.cliente}" ${perna} ${t.data} ${t.hora} → ${horas.toFixed(1)}h`);
         logDebug({ bloco: 'checkin_voo', perna, reservaId: res.id, cliente: res.cliente, horasRestantes: Number(horas.toFixed(2)), janela: CHECKIN_JANELA_H, disparar });
