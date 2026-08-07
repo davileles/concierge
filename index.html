@@ -7447,7 +7447,7 @@ function validarCodigoAcesso(){
   btn.disabled = true; btn.textContent = 'Verificando...';
   fetch(AUTH_PROXY + '/admin/verificar-codigo', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ email: _authEmail, codigo: codigo })
+    body: JSON.stringify({ email: _authEmail, codigo: codigo, app: 'concierge' })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
