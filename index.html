@@ -205,6 +205,15 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-chip span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .dem-cli-chips{min-width:0}
 .dem-cliente-box,.dem-cliente-inner,.dem-cli-linha{min-width:0;overflow:hidden}
+/* VARIAVEIS DE CADASTRO NA DESCRICAO DA DEMANDA */
+.dem-vars{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:9px 11px;margin-bottom:8px;min-width:0;overflow:hidden}
+.dem-vars-titulo{font-size:9px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.7px;margin-bottom:7px}
+.dem-vars-cli{font-size:11px;font-weight:800;color:var(--text);margin:9px 0 5px}
+.dem-vars-chips{display:flex;flex-wrap:wrap;gap:5px;min-width:0}
+.dem-var-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:2px 9px;cursor:pointer;max-width:100%;min-width:0;flex:0 1 auto;overflow:hidden;transition:border-color .15s,background .15s}
+.dem-var-chip:hover{border-color:var(--blue);background:rgba(18,110,255,.08)}
+.dem-var-chip b{font-size:9px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;flex-shrink:0}
+.dem-var-chip span{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .dem-cli-senhas{margin-top:7px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;display:flex;align-items:flex-start;gap:8px}
 .dem-cli-senhas pre{flex:1;margin:0;font-family:inherit;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-word;line-height:1.6}
 .demanda-vinculo{font-size:12px;color:var(--accent);background:rgba(255,88,94,.08);padding:6px 12px;border-radius:8px;display:inline-block;margin-bottom:12px;cursor:pointer}
@@ -1831,6 +1840,7 @@ header{animation:fadeUp .45s ease both}
     <div id="df-cliente-dados" style="display:none;margin-bottom:14px"></div>
     <div class="field">
       <label>Descrição / Instruções <span class="tag">quebras de linha são preservadas</span></label>
+      <div class="dem-vars" id="df-vars" style="display:none"></div>
       <textarea id="df-descricao" rows="10" placeholder="Detalhes para o funcionário: datas, preferências, orçamento, programa de milhas, etc.&#10;&#10;Use quebras de linha à vontade — elas são mantidas na demanda." style="min-height:200px;font-size:14px;line-height:1.75;resize:vertical"></textarea>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -2476,11 +2486,96 @@ function blocoDadosCliente(nomeStr) {
     + '</details>';
 }
 
+// ══ VARIÁVEIS DO CADASTRO NA DESCRIÇÃO DA DEMANDA ══
+// Clicar em um chip insere "Label: valor" na posição do cursor da descrição.
+// Hoje só há variáveis do cadastro do cliente — novas categorias entram aqui.
+
+function escAttrDem(s) {
+  return escHtml(s).split('"').join('&quot;').split("'").join('&#39;');
+}
+
+// Title case do nome completo (toTitleCase corta em 3 palavras)
+function tcNomeCompleto(str) {
+  if (!str) return '';
+  return String(str).trim().split(/\s+/).map(function(w){
+    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  }).join(' ');
+}
+
+// Lista em ordem alfabética por label (convenção CDV). Só entram campos preenchidos.
+function varsDemandaCliente(c) {
+  var endereco = [c.logradouro, c.numero, c.complemento, c.bairro, c.cidade, c.estado, c.cep]
+    .filter(function(x){ return x; }).join(', ');
+  var nasc = fmtDate(c.nasc);
+  if (nasc === '—') nasc = '';
+  var primeiro = String(c.nome || '').trim().split(/\s+/)[0] || '';
+  return [
+    { label: 'Acompanhantes', valor: c.acompanhantes ? String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ') : '' },
+    { label: 'Bairro',        valor: c.bairro },
+    { label: 'CEP',           valor: c.cep },
+    { label: 'Cidade',        valor: c.cidade },
+    { label: 'Complemento',   valor: c.complemento },
+    { label: 'CPF',           valor: c.cpf },
+    { label: 'E-mail',        valor: c.email },
+    { label: 'Endereço',      valor: endereco },
+    { label: 'Estado',        valor: c.estado },
+    { label: 'Logradouro',    valor: c.logradouro },
+    { label: 'Nascimento',    valor: nasc },
+    { label: 'Nome',          valor: tcNomeCompleto(c.nome) },
+    { label: 'Número',        valor: c.numero },
+    { label: 'Primeiro nome', valor: tcNomeCompleto(primeiro) },
+    { label: 'Senhas',        valor: c.senhas },
+    { label: 'Telefone',      valor: c.tel }
+  ].filter(function(v){ return String(v.valor == null ? '' : v.valor).trim(); });
+}
+
+function renderVarsDemanda(nomeStr) {
+  var box = document.getElementById('df-vars');
+  if (!box) return;
+  var achados = buscarClientesPorNome(nomeStr);
+  var blocos = '';
+  achados.forEach(function(c){
+    var vars = varsDemandaCliente(c);
+    if (!vars.length) return;
+    if (achados.length > 1) blocos += '<div class="dem-vars-cli">👤 ' + escHtml(tcNomeCompleto(c.nome)) + '</div>';
+    blocos += '<div class="dem-vars-chips">' + vars.map(function(v){
+      var val = String(v.valor).trim();
+      return '<span class="dem-var-chip" onclick="inserirVarDemanda(this)"'
+        + ' data-label="' + escAttrDem(v.label) + '" data-val="' + escAttrDem(val) + '"'
+        + ' title="Inserir ' + escAttrDem(v.label + ': ' + val.replace(/\n/g, ' ')) + '">'
+        + '<b>' + escHtml(v.label) + '</b><span>' + escHtml(val.replace(/\n/g, ' ')) + '</span></span>';
+    }).join('') + '</div>';
+  });
+  if (!blocos) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="dem-vars-titulo">🔤 Variáveis do cadastro — clique para inserir na descrição</div>' + blocos;
+  box.style.display = 'block';
+}
+
+// Insere "Label: valor" na posição do cursor da descrição da demanda
+function inserirVarDemanda(el) {
+  var ta = document.getElementById('df-descricao');
+  if (!ta) return;
+  var valor = el.getAttribute('data-val') || '';
+  var label = el.getAttribute('data-label') || '';
+  var texto = label + ': ' + (valor.indexOf('\n') >= 0 ? '\n' + valor : valor);
+  var ini = ta.selectionStart, fim = ta.selectionEnd;
+  if (typeof ini !== 'number') { ini = fim = ta.value.length; }
+  var antes  = ta.value.slice(0, ini);
+  var depois = ta.value.slice(fim);
+  var ins = (antes && !/\n$/.test(antes) ? '\n' : '') + texto + '\n';
+  ta.value = antes + ins + depois;
+  var pos = antes.length + ins.length;
+  ta.focus();
+  ta.setSelectionRange(pos, pos);
+}
+
 // Atualiza o painel de dados do cliente no formulário de demanda
 function demandaClienteChange() {
+  var nomeStr = document.getElementById('df-clientes').value;
+  renderVarsDemanda(nomeStr);
   var box = document.getElementById('df-cliente-dados');
   if (!box) return;
-  var html = blocoDadosCliente(document.getElementById('df-clientes').value);
+  var html = blocoDadosCliente(nomeStr);
   if (!html) { box.style.display = 'none'; box.innerHTML = ''; return; }
   box.style.display = 'block';
   box.innerHTML = html;
