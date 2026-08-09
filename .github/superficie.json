@@ -1,0 +1,77 @@
+{
+  "limiarRemocao": 150,
+  "arquivos": {
+    "index.html": {
+      "minLinhas": 8152,
+      "obrigatorio": [
+        "async function rgChamarIA(",
+        "async function rgPublicar(",
+        "function _ael(",
+        "function _applyCfg(",
+        "function _extArquivo(",
+        "function _getAuthCookie(",
+        "function _iataMapa(",
+        "function _linhaParceiro(",
+        "function _lmsg(",
+        "function _massaDelay(",
+        "function _massaEnviarProximo(",
+        "function _massaFinalizar(",
+        "function _massaLog(",
+        "function _massaTextoPara(",
+        "function _mel(",
+        "function _msgImgEl(",
+        "function _msgPopularClientes(",
+        "function _normNome(",
+        "function _optsAlfabeticas(",
+        "function _persistirVinculoAlerta(",
+        "function _saveCfgNow(",
+        "function _setAuthCookie(",
+        "function abreviarLocal(",
+        "function abrirDetalheAtiv(",
+        "function abrirEnvioDemanda("
+      ]
+    },
+    "portal.html": {
+      "minLinhas": 848,
+      "obrigatorio": [
+        "function aplicarTema(",
+        "function colIdx(",
+        "function entrar(",
+        "function fmtDate(",
+        "function renderPortal(",
+        "function resCols(",
+        "function sair(",
+        "function sortAtivs(",
+        "function statusLabel(",
+        "function toTitleCase(",
+        "function toggleTema(",
+        "function toggleViagem("
+      ]
+    },
+    "lembrete-voo.js": {
+      "minLinhas": 688,
+      "obrigatorio": [
+        "async function alertarCheckinVoo",
+        "async function carregarClientes",
+        "async function carregarLedger",
+        "async function enviarWhatsApp",
+        "async function githubGet",
+        "async function githubPut",
+        "async function main",
+        "async function registrarEnvio",
+        "function antecedenciaEmHoras",
+        "function deveDisparar",
+        "function flagKey",
+        "function fmtDateBR",
+        "function horasAte",
+        "function interpolar",
+        "function jaEnviado",
+        "function ledgerKey",
+        "function localDe",
+        "function logDebug",
+        "function msgCheckinVoo",
+        "function normalizarModelo"
+      ]
+    }
+  }
+}
