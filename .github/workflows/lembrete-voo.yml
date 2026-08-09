@@ -5,6 +5,10 @@ on:
     - cron: '0 * * * *'   # toda hora (UTC) — cobre horários BR de 21h a 20h
   workflow_dispatch: {}    # execução manual pela aba Actions ou dispatcher do proxy
 
+concurrency:
+  group: lembrete-voo
+  cancel-in-progress: false
+
 jobs:
   lembrete:
     runs-on: ubuntu-latest
