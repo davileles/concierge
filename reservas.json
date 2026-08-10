@@ -1,5 +1,53 @@
 [
   {
+    "id": "RES-1786358498711",
+    "tipo": "carro",
+    "cliente": "Oswaldo Luiz Chiabi",
+    "obs": "Voucher AUT-26298631. Condutor: Oswaldo l c Queiroz. Valor pago online: € 1.411,36. Valor a pagar no destino: € 91,50. Caução a partir de € 950,00. Retirada 19/08/2026 às 11:00 em Roma Termini. Devolução 25/08/2026 às 11:00 no Aeroporto de Florença. PID obrigatória. Passaporte obrigatório. Quilometragem livre. 9 passageiros, automático, ar condicionado, 4 portas, 1 mala.",
+    "cadastro": "2026-08-10",
+    "arquivosAnexos": [
+      {
+        "nome": "Locação de carro - 19 a 25 de agosto.pdf",
+        "tipo": "application/pdf",
+        "tamanho": 416721,
+        "base64": null
+      }
+    ],
+    "arquivoAnexo": {
+      "nome": "Locação de carro - 19 a 25 de agosto.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 416721,
+      "base64": null
+    },
+    "temArquivo": true,
+    "subtipo": "locacao",
+    "locadora": "Autovia Rent a Car",
+    "retLocal": "Estação Ferroviária Roma Termini, Via Giovanni Giolitti, 34, Roma, Itália",
+    "devLocal": "Aeroporto Peretola (FLR), Via Palagio Degli Spini Snc, Florença, Itália",
+    "retData": "2026-08-19",
+    "devData": "2026-08-25",
+    "categoria": "Ford Tourneo Custom (ou similar) - Van",
+    "horaTransfer": "",
+    "horaChegadaTransp": "",
+    "pax": "1",
+    "valor": "€ 1.502,86",
+    "conf": "64WZ4E6",
+    "seguro": "Cobertura Básica",
+    "horaRetirada": "11:00",
+    "horaDevolucao": "11:00",
+    "tipoEmissao": "dinheiro_acumulo",
+    "valorDinheiro": "",
+    "valorMilhas": "",
+    "programaMilhas": "",
+    "valorTarifaPagante": "",
+    "valorAcumulo": "8.717,39",
+    "fatorAcumulo": "1",
+    "milhasAcumulo": "8.717",
+    "programaAcumulo": "Livelo",
+    "parceiroAcumulo": "Rentcars",
+    "grupo": "120363423899202830@g.us"
+  },
+  {
     "id": "RES-1786314178151",
     "tipo": "hotel",
     "cliente": "Oswaldo Luiz Chiabi",
