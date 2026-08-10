@@ -41,13 +41,163 @@ function fmtDateBR(iso) {
   return `${d}/${m}/${y}`;
 }
 
-function horasAte(dataISO, horario) {
+// ── fuso horário por aeroporto ───────────────────────────────────────────────
+// Os horários gravados na reserva são SEMPRE horário local do aeroporto de
+// partida. Antes o cálculo assumia -03:00 fixo, o que atrasava/adiantava todo
+// disparo de voo que não partia do Brasil (ex: DUS 13:00 CEST era tratado como
+// 13:00 BRT → alerta 5h atrasado). Agora resolvemos o instante real via
+// Intl.DateTimeFormat, que no Node 20 já traz o tzdata completo — sem
+// dependência nova e sem novo arquivo de dados.
+const IATA_TZ = {
+  // ── Brasil (exceções ao fuso de Brasília) ──
+  MAO:'America/Manaus', PVH:'America/Porto_Velho', BVB:'America/Boa_Vista',
+  RBR:'America/Rio_Branco', CZS:'America/Rio_Branco',
+  CGB:'America/Cuiaba', CGR:'America/Campo_Grande',
+  FEN:'America/Noronha',
+  // ── Brasil (Brasília) ──
+  GRU:'America/Sao_Paulo', CGH:'America/Sao_Paulo', VCP:'America/Sao_Paulo',
+  GIG:'America/Sao_Paulo', SDU:'America/Sao_Paulo', CNF:'America/Sao_Paulo',
+  PLU:'America/Sao_Paulo', BSB:'America/Sao_Paulo', CWB:'America/Sao_Paulo',
+  POA:'America/Sao_Paulo', FLN:'America/Sao_Paulo', NVT:'America/Sao_Paulo',
+  IGU:'America/Sao_Paulo', GYN:'America/Sao_Paulo', SSA:'America/Sao_Paulo',
+  REC:'America/Sao_Paulo', FOR:'America/Sao_Paulo', NAT:'America/Sao_Paulo',
+  MCZ:'America/Sao_Paulo', AJU:'America/Sao_Paulo', JPA:'America/Sao_Paulo',
+  THE:'America/Sao_Paulo', SLZ:'America/Sao_Paulo', BEL:'America/Sao_Paulo',
+  MCP:'America/Sao_Paulo', PMW:'America/Sao_Paulo', VIX:'America/Sao_Paulo',
+  IOS:'America/Sao_Paulo', UNA:'America/Sao_Paulo', BPS:'America/Sao_Paulo',
+  JOI:'America/Sao_Paulo', LDB:'America/Sao_Paulo', MGF:'America/Sao_Paulo',
+  RAO:'America/Sao_Paulo', SJP:'America/Sao_Paulo', UDI:'America/Sao_Paulo',
+  // ── Europa ocidental / central (CET/CEST) ──
+  LIS:'Europe/Lisbon', OPO:'Europe/Lisbon', FAO:'Europe/Lisbon',
+  MAD:'Europe/Madrid', BCN:'Europe/Madrid', AGP:'Europe/Madrid',
+  SVQ:'Europe/Madrid', VLC:'Europe/Madrid', PMI:'Europe/Madrid',
+  CDG:'Europe/Paris', ORY:'Europe/Paris', BVA:'Europe/Paris',
+  NCE:'Europe/Paris', LYS:'Europe/Paris', MRS:'Europe/Paris',
+  AMS:'Europe/Amsterdam', BRU:'Europe/Brussels', LUX:'Europe/Luxembourg',
+  FRA:'Europe/Berlin', MUC:'Europe/Berlin', DUS:'Europe/Berlin',
+  BER:'Europe/Berlin', HAM:'Europe/Berlin', STR:'Europe/Berlin',
+  CGN:'Europe/Berlin', HAJ:'Europe/Berlin', NUE:'Europe/Berlin',
+  ZRH:'Europe/Zurich', GVA:'Europe/Zurich', BSL:'Europe/Zurich',
+  VIE:'Europe/Vienna', SZG:'Europe/Vienna', INN:'Europe/Vienna',
+  PRG:'Europe/Prague', BUD:'Europe/Budapest', WAW:'Europe/Warsaw',
+  KRK:'Europe/Warsaw', CPH:'Europe/Copenhagen', ARN:'Europe/Stockholm',
+  OSL:'Europe/Oslo', ZAG:'Europe/Zagreb', SPU:'Europe/Zagreb',
+  DBV:'Europe/Zagreb', LJU:'Europe/Ljubljana', TIA:'Europe/Tirane',
+  // ── Itália ──
+  FCO:'Europe/Rome', CIA:'Europe/Rome', MXP:'Europe/Rome', LIN:'Europe/Rome',
+  BGY:'Europe/Rome', VCE:'Europe/Rome', TSF:'Europe/Rome', NAP:'Europe/Rome',
+  FLR:'Europe/Rome', PSA:'Europe/Rome', TRN:'Europe/Rome', BLQ:'Europe/Rome',
+  BRI:'Europe/Rome', CTA:'Europe/Rome', PMO:'Europe/Rome', AHO:'Europe/Rome',
+  OLB:'Europe/Rome', CAG:'Europe/Rome', VRN:'Europe/Rome', GOA:'Europe/Rome',
+  // ── Reino Unido / Irlanda / Norte ──
+  LHR:'Europe/London', LGW:'Europe/London', STN:'Europe/London',
+  LTN:'Europe/London', LCY:'Europe/London', MAN:'Europe/London',
+  EDI:'Europe/London', BHX:'Europe/London', GLA:'Europe/London',
+  DUB:'Europe/Dublin', KEF:'Atlantic/Reykjavik',
+  // ── Europa oriental / mediterrâneo ──
+  ATH:'Europe/Athens', JTR:'Europe/Athens', JMK:'Europe/Athens',
+  HER:'Europe/Athens', RHO:'Europe/Athens', CFU:'Europe/Athens',
+  HEL:'Europe/Helsinki', RIX:'Europe/Riga', TLL:'Europe/Tallinn',
+  VNO:'Europe/Vilnius', OTP:'Europe/Bucharest', SOF:'Europe/Sofia',
+  BEG:'Europe/Belgrade', IST:'Europe/Istanbul', SAW:'Europe/Istanbul',
+  AYT:'Europe/Istanbul', MLA:'Europe/Malta',
+  // ── Atlântico / África / Oriente Médio ──
+  LPA:'Atlantic/Canary', TFS:'Atlantic/Canary', TFN:'Atlantic/Canary',
+  FNC:'Atlantic/Madeira', PDL:'Atlantic/Azores', SID:'Atlantic/Cape_Verde',
+  CMN:'Africa/Casablanca', RAK:'Africa/Casablanca', CAI:'Africa/Cairo',
+  JNB:'Africa/Johannesburg', CPT:'Africa/Johannesburg', NBO:'Africa/Nairobi',
+  DXB:'Asia/Dubai', AUH:'Asia/Dubai', DOH:'Asia/Qatar', TLV:'Asia/Jerusalem',
+  RUH:'Asia/Riyadh', JED:'Asia/Riyadh', AMM:'Asia/Amman',
+  // ── Ásia / Oceania ──
+  NRT:'Asia/Tokyo', HND:'Asia/Tokyo', KIX:'Asia/Tokyo', ICN:'Asia/Seoul',
+  PEK:'Asia/Shanghai', PKX:'Asia/Shanghai', PVG:'Asia/Shanghai',
+  CAN:'Asia/Shanghai', HKG:'Asia/Hong_Kong', TPE:'Asia/Taipei',
+  SIN:'Asia/Singapore', BKK:'Asia/Bangkok', HKT:'Asia/Bangkok',
+  KUL:'Asia/Kuala_Lumpur', CGK:'Asia/Jakarta', DPS:'Asia/Makassar',
+  DEL:'Asia/Kolkata', BOM:'Asia/Kolkata', MLE:'Indian/Maldives',
+  SYD:'Australia/Sydney', MEL:'Australia/Melbourne', BNE:'Australia/Brisbane',
+  PER:'Australia/Perth', AKL:'Pacific/Auckland',
+  // ── América do Norte ──
+  JFK:'America/New_York', LGA:'America/New_York', EWR:'America/New_York',
+  BOS:'America/New_York', IAD:'America/New_York', DCA:'America/New_York',
+  BWI:'America/New_York', PHL:'America/New_York', ATL:'America/New_York',
+  MIA:'America/New_York', FLL:'America/New_York', MCO:'America/New_York',
+  TPA:'America/New_York', RSW:'America/New_York', CLT:'America/New_York',
+  DTW:'America/New_York', ORD:'America/Chicago', MDW:'America/Chicago',
+  IAH:'America/Chicago', HOU:'America/Chicago', DFW:'America/Chicago',
+  AUS:'America/Chicago', MSY:'America/Chicago', MSP:'America/Chicago',
+  DEN:'America/Denver', PHX:'America/Phoenix', SLC:'America/Denver',
+  LAX:'America/Los_Angeles', SFO:'America/Los_Angeles',
+  SAN:'America/Los_Angeles', SEA:'America/Los_Angeles',
+  LAS:'America/Los_Angeles', PDX:'America/Los_Angeles',
+  HNL:'Pacific/Honolulu', ANC:'America/Anchorage',
+  YYZ:'America/Toronto', YUL:'America/Toronto', YOW:'America/Toronto',
+  YVR:'America/Vancouver', YYC:'America/Edmonton',
+  // ── América Latina / Caribe ──
+  MEX:'America/Mexico_City', CUN:'America/Cancun', GDL:'America/Mexico_City',
+  SJD:'America/Mazatlan', PTY:'America/Panama', SJO:'America/Costa_Rica',
+  HAV:'America/Havana', PUJ:'America/Santo_Domingo',
+  SDQ:'America/Santo_Domingo', SJU:'America/Puerto_Rico',
+  AUA:'America/Aruba', CUR:'America/Curacao', BON:'America/Kralendijk',
+  BGI:'America/Barbados', NAS:'America/Nassau', MBJ:'America/Jamaica',
+  EZE:'America/Argentina/Buenos_Aires', AEP:'America/Argentina/Buenos_Aires',
+  BRC:'America/Argentina/Salta', MDZ:'America/Argentina/Mendoza',
+  USH:'America/Argentina/Ushuaia', COR:'America/Argentina/Cordoba',
+  SCL:'America/Santiago', IPC:'Pacific/Easter',
+  MVD:'America/Montevideo', PDP:'America/Montevideo',
+  ASU:'America/Asuncion', VVI:'America/La_Paz', LPB:'America/La_Paz',
+  BOG:'America/Bogota', CTG:'America/Bogota', MDE:'America/Bogota',
+  LIM:'America/Lima', CUZ:'America/Lima', UIO:'America/Guayaquil',
+  GPS:'Pacific/Galapagos', CCS:'America/Caracas'
+};
+
+// Fuso de um valor de origem/destino. Aceita código IATA; qualquer outra coisa
+// (nome de cidade de hotel, campo vazio) cai no fuso de São Paulo.
+function tzDe(valor) {
+  const v = String(valor || '').trim().toUpperCase();
+  if (!/^[A-Z]{3}$/.test(v)) return TZ_SP;
+  return IATA_TZ[v] || TZ_SP;
+}
+
+// Deslocamento (ms) do fuso em relação ao UTC no instante informado.
+function tzOffsetMs(tz, utcMs) {
+  try {
+    const dtf = new Intl.DateTimeFormat('en-US', {
+      timeZone: tz, hour12: false,
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    const p = {};
+    for (const { type, value } of dtf.formatToParts(new Date(utcMs))) p[type] = value;
+    let h = Number(p.hour);
+    if (h === 24) h = 0;
+    const comoUTC = Date.UTC(Number(p.year), Number(p.month) - 1, Number(p.day),
+                             h, Number(p.minute), Number(p.second));
+    return comoUTC - utcMs;
+  } catch (e) {
+    console.warn(`[tz] fuso inválido "${tz}": ${e.message} — assumindo -03:00`);
+    return -3 * 3_600_000;
+  }
+}
+
+// Converte data+hora LOCAL do aeroporto em timestamp UTC.
+// Duas passadas resolvem a virada de horário de verão (o offset depende do
+// próprio instante que estamos calculando).
+function instanteLocal(dataISO, horario, tz) {
+  const [y, m, d]  = String(dataISO).split('-').map(Number);
+  const [hh, mm]   = String(horario || '00:00').split(':').map(Number);
+  const alvo = Date.UTC(y, (m || 1) - 1, d || 1, hh || 0, mm || 0, 0);
+  let ts = alvo - tzOffsetMs(tz, alvo);
+  ts = alvo - tzOffsetMs(tz, ts);
+  return ts;
+}
+
+// horasAte(data, hora, local) — `local` é o código IATA de PARTIDA do trecho.
+// Omitido, mantém o comportamento antigo (fuso de São Paulo).
+function horasAte(dataISO, horario, local) {
   if (!dataISO) return Infinity;
-  const [h, min] = (horario || '00:00').split(':').map(Number);
-  const dt = new Date(
-    `${dataISO}T${String(h).padStart(2,'0')}:${String(min).padStart(2,'0')}:00-03:00`
-  );
-  return (dt.getTime() - Date.now()) / 3_600_000;
+  const ts = instanteLocal(dataISO, horario, tzDe(local));
+  return (ts - Date.now()) / 3_600_000;
 }
 
 function antecedenciaEmHoras(ant) {
@@ -71,15 +221,17 @@ const GATILHOS_COM_HORA = new Set(['voo_ida_dt', 'voo_volta_dt', 'primeiro_voo_v
 function resolverDataHora(gatilho, horaRef, res, viagem) {
   const ref = horaRef || '10:00';
   switch (gatilho) {
-    case 'voo_ida_dt':   return { data: res?.dataIda,       hora: res?.horaPartida      || '00:00', tipo: 'voo'    };
-    case 'voo_ida_d':    return { data: res?.dataIda,       hora: ref,                              tipo: 'voo'    };
-    case 'voo_volta_dt': return { data: res?.dataVolta,     hora: res?.horaPartidaVolta || '00:00', tipo: 'voo'    };
-    case 'voo_volta_d':  return { data: res?.dataVolta,     hora: ref,                              tipo: 'voo'    };
-    case 'checkin':      return { data: res?.checkin,       hora: ref,                              tipo: 'hotel'  };
-    case 'seguro_inicio':return { data: res?.seguroInicio,  hora: ref,                              tipo: 'seguro' };
-    case 'seguro_fim':   return { data: res?.seguroFim,     hora: ref,                              tipo: 'seguro' };
-    case 'viagem':       return { data: viagem?.dataInicio, hora: ref,                              tipo: 'viagem' };
-    default:             return { data: null, hora: '00:00', tipo: null };
+    // `local`: aeroporto/cidade cujo fuso rege a hora informada. Sem valor,
+    // horasAte() cai em America/Sao_Paulo (comportamento antigo).
+    case 'voo_ida_dt':   return { data: res?.dataIda,       hora: res?.horaPartida      || '00:00', tipo: 'voo',    local: res?.origem };
+    case 'voo_ida_d':    return { data: res?.dataIda,       hora: ref,                              tipo: 'voo',    local: res?.origem };
+    case 'voo_volta_dt': return { data: res?.dataVolta,     hora: res?.horaPartidaVolta || '00:00', tipo: 'voo',    local: res?.origemVolta || res?.destino };
+    case 'voo_volta_d':  return { data: res?.dataVolta,     hora: ref,                              tipo: 'voo',    local: res?.origemVolta || res?.destino };
+    case 'checkin':      return { data: res?.checkin,       hora: ref,                              tipo: 'hotel',  local: res?.destino };
+    case 'seguro_inicio':return { data: res?.seguroInicio,  hora: ref,                              tipo: 'seguro', local: null };
+    case 'seguro_fim':   return { data: res?.seguroFim,     hora: ref,                              tipo: 'seguro', local: null };
+    case 'viagem':       return { data: viagem?.dataInicio, hora: ref,                              tipo: 'viagem', local: null };
+    default:             return { data: null, hora: '00:00', tipo: null, local: null };
   }
 }
 
@@ -100,14 +252,14 @@ function resolverPrimeiroVoo(viagem, reservasMap) {
     if (!res || res.tipo !== 'voo' || !res.dataIda) continue;
     const horaPartida = res.horaPartida || '00:00';
     if (!melhor) {
-      melhor = { data: res.dataIda, hora: horaPartida, reserva: res };
+      melhor = { data: res.dataIda, hora: horaPartida, origem: res.origem, reserva: res };
       continue;
     }
-    // Comparar data + hora
-    const dtAtual  = new Date(`${res.dataIda}T${horaPartida}:00-03:00`);
-    const dtMelhor = new Date(`${melhor.data}T${melhor.hora}:00-03:00`);
+    // Comparar instantes reais (cada voo no fuso do seu aeroporto de partida)
+    const dtAtual  = instanteLocal(res.dataIda, horaPartida, tzDe(res.origem));
+    const dtMelhor = instanteLocal(melhor.data, melhor.hora, tzDe(melhor.origem));
     if (dtAtual < dtMelhor) {
-      melhor = { data: res.dataIda, hora: horaPartida, reserva: res };
+      melhor = { data: res.dataIda, hora: horaPartida, origem: res.origem, reserva: res };
     }
   }
 
@@ -499,7 +651,8 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
       const t = trechoCheckin(res, perna);
       if (!t) continue;
 
-      const horas = horasAte(t.data, t.hora);
+      // t.origem é o aeroporto de partida da perna → define o fuso da hora.
+      const horas = horasAte(t.data, t.hora, t.origem);
       const disparar = horas >= 0 && horas <= CHECKIN_JANELA_H && horas > (CHECKIN_JANELA_H - CHECKIN_MARGEM_H);
       if (horas >= 0 && horas <= CHECKIN_JANELA_H + 6) {
         console.log(`  "${res.cliente}" ${perna} ${t.data} ${t.hora} → ${horas.toFixed(1)}h`);
@@ -616,7 +769,7 @@ async function main() {
           continue;
         }
 
-        const horas = horasAte(primeiroVoo.data, primeiroVoo.hora);
+        const horas = horasAte(primeiroVoo.data, primeiroVoo.hora, primeiroVoo.origem);
         console.log(`  "${viagem.nome}" → primeiro voo ${primeiroVoo.data} ${primeiroVoo.hora} → ${horas.toFixed(1)}h`);
         const disparar = deveDisparar(horas, janela);
         logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, horasRestantes: Number(horas.toFixed(2)), janela, disparar });
@@ -698,7 +851,7 @@ async function main() {
     } else {
       for (const res of reservas) {
         if (jaEnviado(mod.id, res)) continue;
-        const { data, hora, tipo } = resolverDataHora(mod.gatilho, mod.horaRef, res, null);
+        const { data, hora, tipo, local } = resolverDataHora(mod.gatilho, mod.horaRef, res, null);
         if (!data) continue;
         // Verificar tipo de reserva compatível com gatilho
         if ((mod.gatilho === 'checkin') && res.tipo !== 'hotel') continue;
@@ -711,7 +864,7 @@ async function main() {
         // então não dependemos exclusivamente dele.
         const grupo = cli?.grupo || res.grupo;
 
-        const horas = horasAte(data, hora);
+        const horas = horasAte(data, hora, local);
         console.log(`  "${res.cliente}" ${data} ${hora} → ${horas.toFixed(1)}h${grupo ? '' : '  ⚠️ sem grupo WhatsApp (nem via Apps Script, nem na reserva)'}`);
 
         const disparar = deveDisparar(horas, janela);
