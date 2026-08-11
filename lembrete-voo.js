@@ -377,6 +377,7 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'programa',            res.programa || '');
     t = rv(t, 'milhas',              res.milhas   || '');
     t = rv(t, 'pax',                 res.pax      || '');
+    t = rv(t, 'passageiros',         nomesPassageiros(res).join(', '));
     t = rv(t, 'hotel',               res.hotelNome || '');
     t = rv(t, 'checkin',             fmtDateBR(res.checkin));
     t = rv(t, 'checkout',            fmtDateBR(res.checkout));
@@ -619,6 +620,18 @@ function trechoCheckin(res, perna) {
   };
 }
 
+// Nomes dos passageiros exatamente como foram emitidos (extraidos do bilhete
+// anexado na criacao da reserva). Aceita array de strings ou de objetos {nome}.
+// A grafia nunca e normalizada: e ela que o check-in exige.
+function nomesPassageiros(res) {
+  const arr = res && res.passageiros;
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map(p => (typeof p === 'string' ? p : ((p && (p.nome || p.name)) || '')))
+    .map(n => String(n).replace(/\s+/g, ' ').trim())
+    .filter(Boolean);
+}
+
 function msgCheckinVoo(res, t, horas) {
   const l = ['🛫 *Check-in liberado — ação necessária*', ''];
   l.push(`*Cliente:* ${res.cliente || '—'}`);
@@ -629,6 +642,11 @@ function msgCheckinVoo(res, t, horas) {
   if (res.pnr)    l.push(`*Localizador:* ${res.pnr}`);
   if (res.classe) l.push(`*Classe:* ${res.classe}`);
   if (res.pax)    l.push(`*Pax:* ${res.pax}`);
+  const _nomes = nomesPassageiros(res);
+  if (_nomes.length) {
+    l.push('', '*Passageiros — grafia da emissão:*');
+    _nomes.forEach(n => l.push(`• ${n}`));
+  }
   l.push('', 'Fazer o check-in online desta reserva.');
   return l.join('\n');
 }
