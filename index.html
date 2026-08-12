@@ -2623,6 +2623,13 @@ function limparForm() {
    'f-obs','f-demanda-assoc','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
+  // Campos IATA guardam o codigo em dataset.iataCode — limpar junto com o value,
+  // senao o codigo antigo sobrevive e o form parece vazio mas nao esta.
+  ['f-origem','f-destino','f-conexao','f-origem-volta','f-destino-volta','f-conexao-volta',
+   'f-hotel-destino','f-passeio-dest','f-ret-local','f-dev-local','f-volta-origem','f-volta-destino'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el && el.dataset && ('iataCode' in el.dataset)) delete el.dataset.iataCode;
+  });
   window._reservaEditandoId = null;
   window._reservaEditandoOriginal = null;
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
@@ -2734,13 +2741,26 @@ function onViagemAssocChange() {
 function getVal(id) {
   var el = document.getElementById(id);
   if (!el) return '';
-  // Campos IATA: retornar só o código (ex: "GRU" de "GRU – São Paulo")
-  if (el.dataset && el.dataset.iataCode) return el.dataset.iataCode;
-  return el.value.trim();
+  var val = (el.value || '').trim();
+  // Campos IATA: o codigo fica em dataset.iataCode. Se o campo foi apagado ou
+  // editado manualmente, esse dataset vira RESIDUO — um campo visualmente vazio
+  // continuaria "preenchido" para as validacoes (bug do voo so de ida).
+  if (el.dataset && el.dataset.iataCode) {
+    var _code = el.dataset.iataCode;
+    if (!val) { delete el.dataset.iataCode; return ''; }
+    if (val.toUpperCase().indexOf(String(_code).toUpperCase()) === 0) return _code;
+    delete el.dataset.iataCode;
+    return val;
+  }
+  return val;
 }
 function setVal(id, v) {
   var el = document.getElementById(id);
-  if (el) el.value = v;
+  if (!el) return;
+  el.value = v;
+  // Campo IATA: o valor passado ja e o codigo (ou vazio). Descartar o dataset
+  // antigo evita que um codigo anterior sobreviva a limpeza/edicao do form.
+  if (el.dataset && ('iataCode' in el.dataset)) delete el.dataset.iataCode;
 }
 
 // ── Passageiros (grafia da emissão) ─────────────────────────────────────────
@@ -5257,6 +5277,12 @@ function resolverVariaveis(texto, cli, res, extras) {
 
 // ── IATA AUTOCOMPLETE ──────────────────────────────────────────
 function iataAutocomplete(inputEl, dropdownEl) {
+  // Ao digitar/apagar, o codigo previamente selecionado deixa de valer ate que
+  // uma nova opcao seja escolhida (iataSelect regrava o dataset).
+  if (inputEl.dataset && inputEl.dataset.iataCode) {
+    var _cAtual = String(inputEl.dataset.iataCode).toUpperCase();
+    if (inputEl.value.trim().toUpperCase().indexOf(_cAtual) !== 0) delete inputEl.dataset.iataCode;
+  }
   var q = inputEl.value.trim().toLowerCase();
   if (q.length < 2) { dropdownEl.style.display = 'none'; return; }
   if (typeof IATA_AIRPORTS === 'undefined') { dropdownEl.style.display = 'none'; return; }
