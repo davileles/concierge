@@ -1241,6 +1241,7 @@ header{animation:fadeUp .45s ease both}
       <input type="text" id="cli-search" placeholder="🔍 Buscar cliente…" oninput="renderClientes()"/>
     </div>
   </div>
+  <div id="pend-box"></div>
   <div id="cli-grid"></div>
 </div>
 
@@ -1923,6 +1924,8 @@ header{animation:fadeUp .45s ease both}
 // ══════════════════════════════════════════
 var reservas = [];
 var clientes = [];
+var perfis = [];      // fidelidade, saldos, senhas, cartoes, preferencias
+var pendentes = [];   // cadastros vindos do formulario publico, aguardando aprovacao
 var activeFilter = 'todos';
 var deleteTargetId = null;
 var viagens = [];
@@ -2235,6 +2238,143 @@ function reimportarPlanilha() {
       if (okEl) { okEl.style.color = '#ff585e'; okEl.textContent = '❌ ' + e.message; }
       showToast('❌ ' + e.message, 'err');
     });
+}
+
+// ══════════════════════════════════════════
+//  PERFIL DO CLIENTE (fidelidade / senhas / cartoes)
+// ══════════════════════════════════════════
+// Arquivo separado do cadastro: o cadastral e lido a cada execucao do
+// lembrete-voo e do portal, e nao precisa carregar senha e saldo junto.
+function carregarPerfis() {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes-perfil', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.ok) perfis = d.data || []; })
+    .catch(function(e){ console.error('[perfis]', e); });
+}
+
+function perfilDe(id) {
+  for (var i = 0; i < perfis.length; i++) if (perfis[i].id === id) return perfis[i];
+  return null;
+}
+
+function _tituloSecao(txt) {
+  return '<div class="sep" style="margin:12px 0"></div>'
+    + '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">' + txt + '</div>';
+}
+
+// Uma linha por programa, senha em fonte mono e botao de copiar ao lado — o caso
+// de uso e "vou entrar na conta da Azul agora", nao "vou ler o texto inteiro".
+function _blocoSenhas(perfil) {
+  if (!perfil) return '';
+  var sn = perfil.senhas || {};
+  var itens = sn.itens || [];
+  if (!itens.length && !sn.outros) return '';
+
+  var linhas = itens.map(function(it){
+    var safe = String(it.senha).split("'").join('&#39;');
+    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border)">'
+      + '<span style="flex:0 0 150px;font-size:12px;font-weight:700">' + escHtml(it.programa) + '</span>'
+      + '<span style="flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all">' + escHtml(it.senha) + '</span>'
+      + (it.rotulo ? '<span class="tag" style="flex:0 0 auto">' + escHtml(it.rotulo) + '</span>' : '')
+      + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="' + safe + '" title="Copiar senha">📋</button>'
+      + '</div>';
+  }).join('');
+
+  return _tituloSecao('🔑 Senhas por programa')
+    + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;overflow:hidden">' + linhas + '</div>'
+    + (sn.outros
+        ? '<div style="margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7">'
+          + '<strong style="color:var(--yellow)">Sem programa identificado:</strong> ' + escHtml(sn.outros) + '</div>'
+        : '');
+}
+
+function _blocoProgramas(perfil) {
+  if (!perfil) return '';
+  var tem = (perfil.programas || []).filter(function(p){ return p.tem || (p.pontos !== null && p.pontos > 0); });
+  if (!tem.length && !perfil.outrosProgramas) return '';
+  var chips = tem.map(function(p){
+    var saldo = (p.pontos !== null && p.pontos !== undefined) ? Number(p.pontos).toLocaleString('pt-BR') : '—';
+    return '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px">'
+      + '<div style="font-size:11px;font-weight:700">' + escHtml(p.programa) + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);margin-top:2px">' + saldo + '</div>'
+      + '</div>';
+  }).join('');
+  return _tituloSecao('✈️ Programas e saldos')
+    + '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px">' + chips + '</div>'
+    + (perfil.outrosProgramas
+        ? '<div style="margin-top:8px;font-size:11px;color:var(--muted)">Outros: ' + escHtml(perfil.outrosProgramas) + '</div>' : '')
+    + (perfil.criarContas
+        ? '<div style="margin-top:6px;font-size:11px;color:var(--muted2)">Contas que faltam: ' + escHtml(perfil.criarContas) + '</div>' : '');
+}
+
+function _blocoCartoes(perfil) {
+  if (!perfil || !(perfil.cartoes || []).length) return '';
+  return _tituloSecao('💳 Cartões')
+    + '<div style="display:flex;flex-wrap:wrap;gap:8px">'
+    + perfil.cartoes.map(function(c){
+        return '<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:11.5px">' + escHtml(c) + '</span>';
+      }).join('')
+    + '</div>';
+}
+
+function _blocoPerfilViagem(perfil) {
+  if (!perfil || (!perfil.objetivos && !perfil.estilo)) return '';
+  function cx(rot, txt) {
+    if (!txt) return '';
+    return '<div style="margin-bottom:8px">'
+      + '<div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">' + rot + '</div>'
+      + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);line-height:1.75;white-space:pre-wrap">' + escHtml(txt) + '</div>'
+      + '</div>';
+  }
+  return _tituloSecao('🧭 Perfil de viagem')
+    + cx('Objetivos nos próximos 12 meses', perfil.objetivos)
+    + cx('Como gosta de viajar', perfil.estilo);
+}
+
+// ══════════════════════════════════════════
+//  FILA DE CADASTROS PENDENTES (formulario publico)
+// ══════════════════════════════════════════
+function carregarPendentes() {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/pendentes', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.ok) { pendentes = d.data || []; renderPendentes(); } })
+    .catch(function(e){ console.error('[pendentes]', e); });
+}
+
+function renderPendentes() {
+  var box = document.getElementById('pend-box');
+  if (!box) return;
+  if (!pendentes.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="card" style="border-color:var(--yellow);margin-bottom:1rem">'
+    + '<div class="card-title">📥 ' + pendentes.length + ' cadastro' + (pendentes.length !== 1 ? 's' : '') + ' aguardando aprovação</div>'
+    + pendentes.map(function(p){
+        var c = p.cadastro || {};
+        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
+          + '<div style="flex:1">'
+          +   '<div style="font-size:13px;font-weight:700">' + escHtml(c.nome || '—') + '</div>'
+          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(c.email || '') + ' · ' + escHtml(c.tel || '') + ' · ' + escHtml(c.cidade || '') + '</div>'
+          + '</div>'
+          + '<button class="btn btn-accent btn-sm" onclick="aprovarPendente(\'' + p.id + '\',\'aprovar\')">✓ Aprovar</button>'
+          + '<button class="btn btn-ghost btn-sm" onclick="aprovarPendente(\'' + p.id + '\',\'descartar\')">Descartar</button>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+function aprovarPendente(id, acao) {
+  if (acao === 'descartar' && !confirm('Descartar este cadastro? A ação não pode ser desfeita.')) return;
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/pendentes/aprovar', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, acao: acao })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha');
+      showToast(acao === 'descartar' ? '🗑 Cadastro descartado' : '✅ Cliente aprovado', 'ok');
+      carregarPendentes();
+      if (acao !== 'descartar') carregarPerfis().then(syncClientes);
+    })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
 }
 
 function populateClienteSelect() {
@@ -4263,7 +4403,7 @@ function renderClientes() {
 
   if (!list.length) {
     grid.innerHTML = '<div class="empty"><span class="empty-icon">👤</span>' +
-      (clientes.length ? 'Nenhum cliente encontrado.' : 'Nenhum cliente carregado.<br><small style="font-size:12px;margin-top:6px;display:block">Configure o Google Sheets e clique em Sincronizar.</small>') +
+      (clientes.length ? 'Nenhum cliente encontrado.' : 'Nenhum cliente carregado.<br><small style="font-size:12px;margin-top:6px;display:block">Clique em Recarregar clientes.</small>') +
       '</div>';
     return;
   }
@@ -4292,12 +4432,13 @@ function renderClientes() {
             + cliField('Complemento', c.complemento) + cliFieldCopy('CEP', c.cep)
             + cliField('Bairro', c.bairro) + cliField('Cidade', c.cidade) + cliField('Estado', c.estado)
             + '</div>' : '')
-        + (c.senhas
-          ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🔑 Senhas / Acessos</div>'
-            + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7;word-break:break-all">' + escHtml(c.senhas) + '</div>' : '')
+        + _blocoSenhas(perfilDe(c.id))
+        + _blocoProgramas(perfilDe(c.id))
+        + _blocoCartoes(perfilDe(c.id))
         + (c.acompanhantes
           ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👨‍👩‍👧 Quem Viaja Junto</div>'
-            + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>' : '');
+            + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>' : '')
+        + _blocoPerfilViagem(perfilDe(c.id));
 
       return '<tr class="dem-linha" onclick="toggleLinha(this)">'
         + '<td><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
@@ -7541,7 +7682,8 @@ function _lmsg(id, texto, tipo){
 function iniciarApp(){
   document.getElementById('login-screen').style.display = 'none';
   loadCfg(function() {
-    syncClientes();
+    carregarPerfis().then(syncClientes);
+    carregarPendentes();
   });
   syncReservas();
   syncViagens();
