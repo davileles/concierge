@@ -56,7 +56,7 @@
   {
     "id": "MOD-1785900000002",
     "nome": "Seguro · Contratação (com pontos)",
-    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{seguro_valor_tarifa}}*\nPontos utilizados: *{{seguro_milhas}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{seguro_valor_tarifa}}*\nPontos utilizados: *{{seguro_milhas}}*\nEconomia gerada: *R$ {{economia}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -65,7 +65,7 @@
   {
     "id": "MOD-1785900000003",
     "nome": "Seguro · Contratação (com acúmulo)",
-    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor da contratação: *R$ {{seguro_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Seguro viagem contratado com sucesso!*\n\n🛡️ *Detalhes da apólice*\nAssistência: *{{seguradora}}*\nPlano: *{{seguro_plano}}*\nBilhete: *{{seguro_apolice}}*\nVigência: *{{seguro_inicio}}* a *{{seguro_fim}}*\nModalidade: *{{seguro_modalidade}}*\nAbrangência: *{{seguro_territorio}}*\nCobertura médica: *{{seguro_cobertura}}*\n\n💰 *Investimento*\nValor da contratação: *R$ {{seguro_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\nEconomia gerada: *R$ {{economia}}*\n\n📞 *Em caso de emergência no exterior*\nLigue para *{{seguro_emergencia}}* antes de procurar qualquer clínica ou hospital — o acionamento prévio é o que garante o atendimento sem desembolso.\n\nGuarde o número do bilhete no celular e, se a assistência tiver aplicativo, deixe já instalado e com a sessão iniciada.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -143,7 +143,7 @@
   {
     "id": "MOD-1784919040266",
     "nome": "Carro · Locação (com acúmulo)",
-    "texto": "✅ *Locação de carro reservada com sucesso!*\n\n🚘 *Detalhes da reserva*\nModelo: *{{loc_categoria}}*\nRetirada: *{{loc_data_retirada}}* · *{{loc_local_retirada}}*\nDevolução: *{{loc_data_devolucao}}* · *{{loc_local_devolucao}}*\n\n💰 *Investimento*\nValor da reserva: *R$ {{loc_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Locação de carro reservada com sucesso!*\n\n🚘 *Detalhes da reserva*\nModelo: *{{loc_categoria}}*\nRetirada: *{{loc_data_retirada}}* · *{{loc_local_retirada}}*\nDevolução: *{{loc_data_devolucao}}* · *{{loc_local_devolucao}}*\n\n💰 *Investimento*\nValor da reserva: *R$ {{loc_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\nEconomia gerada: *R$ {{economia}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -152,7 +152,7 @@
   {
     "id": "MOD-1784814984551",
     "nome": "Hotel · Reserva (com acúmulo)",
-    "texto": "✅ *Hospedagem reservada com sucesso!*\n\n🏨 *Detalhes da reserva*\nHospedagem: *{{hotel}}*\nCheck-in: *{{checkin}}*\nCheck-out: *{{checkout}}*\n\n💰 *Investimento*\nValor da reserva: *R$ {{hotel_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Hospedagem reservada com sucesso!*\n\n🏨 *Detalhes da reserva*\nHospedagem: *{{hotel}}*\nCheck-in: *{{checkin}}*\nCheck-out: *{{checkout}}*\n\n💰 *Investimento*\nValor da reserva: *R$ {{hotel_acumulo_valor}}*\nPontos acumulados nessa estratégia: *{{acumulo_milhas}}* em *{{acumulo_programa}}*\nEconomia gerada: *R$ {{economia}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -161,7 +161,7 @@
   {
     "id": "MOD-1784749970004",
     "nome": "Carro · Locação (com pontos)",
-    "texto": "✅ *Locação de carro reservada com sucesso!*\n\n🚘 *Detalhes da reserva*\nModelo: *{{loc_categoria}}*\nRetirada: *{{loc_data_retirada}}* · *{{loc_local_retirada}}*\nDevolução: *{{loc_data_devolucao}}* · *{{loc_local_devolucao}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{loc_valor_tarifa}}*\nValor pago: *{{loc_milhas}} pontos*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Locação de carro reservada com sucesso!*\n\n🚘 *Detalhes da reserva*\nModelo: *{{loc_categoria}}*\nRetirada: *{{loc_data_retirada}}* · *{{loc_local_retirada}}*\nDevolução: *{{loc_data_devolucao}}* · *{{loc_local_devolucao}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{loc_valor_tarifa}}*\nValor pago: *{{loc_milhas}} pontos*\nEconomia gerada: *R$ {{economia}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -170,7 +170,7 @@
   {
     "id": "MOD-1784730317846",
     "nome": "Voo · Emissão (ida)",
-    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Detalhes do voo*\nIda: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{valor_tarifa}}*\nValor pago: *{{milhas_total}} milhas {{programa}}*\nEconomia gerada: \n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Detalhes do voo*\nIda: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{valor_tarifa}}*\nValor pago: *{{milhas_total}} milhas {{programa}}*\nEconomia gerada: *R$ {{economia}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -188,7 +188,7 @@
   {
     "id": "MOD-1784160612861",
     "nome": "Hotel · Reserva (com pontos)",
-    "texto": "✅ *Hospedagem reservada com sucesso!*\n\n🏨 *Detalhes da reserva*\nHospedagem: *{{hotel}}*\nCheck-in: *{{checkin}}*\nCheck-out: *{{checkout}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{hotel_valor_tarifa}}*\nValor pago: *{{hotel_milhas}} pontos*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Hospedagem reservada com sucesso!*\n\n🏨 *Detalhes da reserva*\nHospedagem: *{{hotel}}*\nCheck-in: *{{checkin}}*\nCheck-out: *{{checkout}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{hotel_valor_tarifa}}*\nValor pago: *{{hotel_milhas}} pontos*\nEconomia gerada: *R$ {{economia}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
@@ -197,7 +197,7 @@
   {
     "id": "MOD-1784159164517",
     "nome": "Voo · Emissão (ida e volta)",
-    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Ida*\nTrecho: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🛬 *Volta*\nTrecho: *{{origem_volta}} ➔ {{destino_volta}}*\nData: *{{data_volta}}* às *{{hora_partida_volta}}*\nCia aérea: *{{cia_volta}}* · Voo *{{nvoo_volta}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{valor_tarifa}}*\nValor pago: *{{milhas_total}} milhas {{programa}}*\nEconomia gerada: \n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "texto": "✅ *Passagem emitida com sucesso!*\n\n🛫 *Ida*\nTrecho: *{{origem}} ➔ {{destino}}*\nData: *{{data_ida}}* às *{{hora_partida}}*\nCia aérea: *{{cia}}* · Voo *{{nvoo_ida}}*\nClasse: *{{classe}}*\n\n🛬 *Volta*\nTrecho: *{{origem_volta}} ➔ {{destino_volta}}*\nData: *{{data_volta}}* às *{{hora_partida_volta}}*\nCia aérea: *{{cia_volta}}* · Voo *{{nvoo_volta}}*\nClasse: *{{classe}}*\n\n🎫 Localizador: *{{pnr}}*\n\n💰 *Investimento*\nValor de mercado: *R$ {{valor_tarifa}}*\nValor pago: *{{milhas_total}} milhas {{programa}}*\nEconomia gerada: *R$ {{economia}}*\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
