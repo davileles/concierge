@@ -29,6 +29,7 @@ const fs   = require('fs');
 const path = require('path');
 
 const BAILEYS      = 'https://baileys-server-production-ebfe.up.railway.app';
+const PROXY        = 'https://cdv-proxy-production.up.railway.app';
 const GITHUB_TOKEN = process.env.CDV_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
 const REPO         = 'davileles/concierge';
 const API_BASE     = `https://api.github.com/repos/${REPO}/contents`;
@@ -448,23 +449,30 @@ async function githubPut(path, data, sha, message) {
   return r.json();
 }
 
-// ── clientes via Apps Script ──────────────────────────────────────────────────
+// ── clientes via proxy CDV ────────────────────────────────────────────────────
+// Antes lia o Apps Script direto, e com dois bugs: `r.json()` devolve
+// { ok, rows } — `rows.slice(1)` num objeto lancava TypeError, engolido pelo
+// .catch do Promise.all — e `ci()` so olhava a PRIMEIRA letra da coluna, entao
+// colunas de duas letras (colSenhas 'AE', colGrupo 'BN') apontavam para o lugar
+// errado. Na pratica o loop rodava sem base de clientes, sustentado pelo
+// fallback grupoPorCliente montado a partir das reservas.
+// Agora le o JSON versionado em cdv-tsp-dados/concierge/clientes.json.
 async function carregarClientes() {
-  const { data: cfg } = await githubGet('cfg.json');
-  if (!cfg.url) return [];
-  const url = `${cfg.url}?aba=${encodeURIComponent(cfg.aba || 'Respostas ao formulário 1')}`;
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`Apps Script → ${r.status}`);
-  const rows = await r.json();
-  const ci = col => col ? col.toUpperCase().charCodeAt(0) - 65 : -1;
-  return rows.slice(1).map(row => ({
-    nome:   String(row[ci(cfg.colNome  ||'C')]||'').trim(),
-    tel:    String(row[ci(cfg.colTel   ||'D')]||'').trim(),
-    email:  String(row[ci(cfg.colEmail ||'E')]||'').trim(),
-    cpf:    String(row[ci(cfg.colCpf   ||'F')]||'').trim(),
-    cidade: String(row[ci(cfg.colCidade||'O')]||'').trim(),
-    grupo:  String(row[ci(cfg.colGrupo ||'B')]||'').trim(),
-  })).filter(c => c.nome);
+  const r = await fetch(`${PROXY}/concierge/clientes`);
+  if (!r.ok) throw new Error(`proxy /concierge/clientes → ${r.status}`);
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.erro || 'proxy respondeu ok=false');
+  return (d.data || [])
+    .map(c => ({
+      nome:   String(c.nome   || '').trim(),
+      tel:    String(c.tel    || '').trim(),
+      email:  String(c.email  || '').trim(),
+      cpf:    String(c.cpf    || '').trim(),
+      cidade: String(c.cidade || '').trim(),
+      grupo:  String(c.grupo  || '').trim(),
+      ativo:  c.ativo === true,
+    }))
+    .filter(c => c.nome);
 }
 
 // ── envio ─────────────────────────────────────────────────────────────────────
