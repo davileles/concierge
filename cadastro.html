@@ -323,10 +323,6 @@ footer { text-align: center; font-size: 10.5px; color: var(--muted2); margin-top
         <input type="text" id="outrosProgramas" placeholder="Ex.: Flying Blue, TAP Miles&amp;Go, Dragon Pass"/>
       </div>
       <div class="field">
-        <label>Senhas que você não soube associar <span class="opt">— opcional</span></label>
-        <input type="text" id="senhasOutros" placeholder="Se usa uma senha padrão para vários programas, escreva aqui"/>
-      </div>
-      <div class="field">
         <label>E os programas em que você ainda não tem conta?</label>
         <select id="criarContas">
           <option value="Pode criar para mim">Pode criar para mim</option>
@@ -605,7 +601,6 @@ function montarPayload() {
     programas:     programas,
     outrosProgramas: val('outrosProgramas'),
     senhas:        senhas,
-    senhasOutros:  val('senhasOutros'),
     cartoes:       cartoes,
     objetivos:     val('objetivos'),
     estilo:        val('estilo')
