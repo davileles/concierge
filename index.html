@@ -4456,7 +4456,8 @@ function renderClientes() {
         + (c.acompanhantes
           ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👨‍👩‍👧 Quem Viaja Junto</div>'
             + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>' : '')
-        + _blocoPerfilViagem(perfilDe(c.id));
+        + _blocoPerfilViagem(perfilDe(c.id))
+        + _blocoGestaoCliente(c);
 
       return '<tr class="dem-linha" onclick="toggleLinha(this)">'
         + '<td><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
@@ -4481,6 +4482,98 @@ function renderClientes() {
         + '<tr class="dem-linha-det"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
     + '</tbody></table></div>';
+}
+
+// Grupo de WhatsApp e status vinham da planilha (colunas BN e BO) e eram
+// editados la. Com a base em JSON, a edicao passa a ser aqui.
+function _blocoGestaoCliente(c) {
+  var id = String(c.id || '').split("'").join("\\'");
+  return _tituloSecao('⚙️ Gestão do cliente')
+    + '<div style="display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:end">'
+    +   '<div class="field" style="margin:0">'
+    +     '<label>Grupo WhatsApp <span class="tag">destino das mensagens automáticas</span></label>'
+    +     '<input type="text" id="gest-grupo-' + escHtml(c.id) + '" value="' + escHtml(c.grupo || '') + '"'
+    +       ' placeholder="120363xxxxxxxxxxxx@g.us" style="font-family:monospace;font-size:12px"/>'
+    +   '</div>'
+    +   '<div class="field" style="margin:0">'
+    +     '<label>Status</label>'
+    +     '<select id="gest-ativo-' + escHtml(c.id) + '">'
+    +       '<option value="1"' + (c.ativo ? ' selected' : '') + '>Ativo</option>'
+    +       '<option value="0"' + (c.ativo ? '' : ' selected') + '>Inativo</option>'
+    +     '</select>'
+    +   '</div>'
+    + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:12px">'
+    +   '<button class="btn btn-accent btn-sm" onclick="salvarGestaoCliente(\'' + id + '\')">💾 Salvar</button>'
+    +   '<button class="btn btn-ghost btn-sm" style="margin-left:auto;color:#ff585e;border-color:rgba(255,88,94,.4)"'
+    +     ' onclick="excluirCliente(\'' + id + '\')">🗑 Excluir cliente</button>'
+    + '</div>'
+    + '<p style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.6">'
+    +   'Só clientes <b>ativos</b> aparecem no disparo em massa. Sem grupo cadastrado, os lembretes automáticos não têm para onde ir.'
+    + '</p>';
+}
+
+function salvarClientesRemoto() {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data: clientes })
+  }).then(function(r){ return r.json(); })
+    .then(function(d){ if (!d.ok) throw new Error(d.erro || 'falha ao salvar'); return d; });
+}
+
+function salvarGestaoCliente(id) {
+  var idx = -1;
+  for (var i = 0; i < clientes.length; i++) if (clientes[i].id === id) { idx = i; break; }
+  if (idx === -1) { showToast('❌ Cliente não encontrado', 'err'); return; }
+
+  var elG = document.getElementById('gest-grupo-' + id);
+  var elA = document.getElementById('gest-ativo-' + id);
+  if (!elG || !elA) return;
+
+  var grupo = elG.value.trim();
+  // Erro mais comum: colar o link de convite em vez do ID interno do grupo.
+  if (grupo && !/@g\.us$/.test(grupo)) {
+    showToast('⚠️ O ID do grupo precisa terminar em @g.us', 'err');
+    return;
+  }
+
+  clientes[idx].grupo = grupo;
+  clientes[idx].ativo = elA.value === '1';
+
+  salvarClientesRemoto()
+    .then(function(){ showToast('✅ Cliente atualizado', 'ok'); renderClientes(); })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
+}
+
+function excluirCliente(id) {
+  var c = null;
+  for (var i = 0; i < clientes.length; i++) if (clientes[i].id === id) { c = clientes[i]; break; }
+  if (!c) return;
+
+  var nRes = reservas.filter(function(r){ return mesmoCliente(r.cliente, c.nome); }).length;
+  var aviso = 'Excluir "' + c.nome + '" da base?\n\nO cadastro e o perfil (senhas, programas, cartões) serão apagados.';
+  if (nRes) aviso += '\n\n⚠️ Este cliente tem ' + nRes + ' reserva(s). Elas NÃO serão apagadas e ficarão sem cliente vinculado.';
+  aviso += '\n\nA ação não pode ser desfeita.';
+  if (!confirm(aviso)) return;
+
+  clientes = clientes.filter(function(x){ return x.id !== id; });
+  var perfisNovos = perfis.filter(function(x){ return x.id !== id; });
+
+  salvarClientesRemoto()
+    .then(function(){
+      return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes-perfil', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: perfisNovos })
+      }).then(function(r){ return r.json(); });
+    })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha ao salvar o perfil');
+      perfis = perfisNovos;
+      showToast('🗑 Cliente excluído', 'ok');
+      populateClienteSelect();
+      renderClientes();
+    })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); syncClientes(); });
 }
 
 function cliField(label, val) {
@@ -5147,7 +5240,7 @@ function aplicarDestinoDisparo() {
     setVal('d-grupo', cli.grupo || '');
     if (info) {
       info.style.display = 'block';
-      info.innerHTML = '📱 '+cli.tel+(cli.grupo?' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>':' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado na planilha</span>');
+      info.innerHTML = '📱 '+cli.tel+(cli.grupo?' · <span style="font-family:monospace;font-size:11px;color:var(--accent)">'+cli.grupo+'</span>':' · <span style="color:var(--accent)">⚠️ Sem grupo no cadastro</span>');
     }
   } else {
     setVal('d-grupo', '');
@@ -7577,7 +7670,7 @@ function onMsgCtxChange(px) {
     ? '📱 ' + escHtml(cli.tel || '—')
       + (grupo
           ? ' · <span style="font-family:monospace;color:var(--accent)">' + escHtml(grupo) + '</span>'
-          : ' · <span style="color:var(--accent)">⚠️ Sem grupo cadastrado na planilha</span>')
+          : ' · <span style="color:var(--accent)">⚠️ Sem grupo no cadastro</span>')
     : '⚠️ Selecione o cliente para resolver as variáveis do modelo.';
 
   var mod = (modelos || []).find(function(m){ return m.id === _mel(px, 'modelo').value; });
