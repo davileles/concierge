@@ -153,6 +153,24 @@ select option { background: var(--surface); color: var(--text); }
 .btn-primary { background: var(--gold); color: #16130c; }
 .btn-ghost { background: transparent; border-color: var(--border2); color: var(--text); flex: 0 0 110px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
+.acomp-item {
+  border: 1px solid var(--border); border-radius: 11px;
+  padding: 14px 15px; margin-bottom: 10px; background: var(--surface);
+  position: relative;
+}
+.acomp-item .g-acomp { display: grid; grid-template-columns: 1fr 150px 170px; gap: 10px; }
+.acomp-num {
+  font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted2); margin-bottom: 10px; display: flex; align-items: center; gap: 8px;
+}
+.acomp-rm {
+  margin-left: auto; background: none; border: none; color: var(--muted);
+  font-size: 17px; line-height: 1; cursor: pointer; padding: 0 2px;
+  font-family: var(--font);
+}
+.acomp-rm:hover { color: var(--red); }
+@media (max-width: 560px) { .acomp-item .g-acomp { grid-template-columns: 1fr; } }
+
 .btn-add {
   background: transparent; border: 1px dashed var(--border2); color: var(--text);
   padding: 11px; font-size: 12.5px; width: 100%; border-radius: 9px;
@@ -340,8 +358,7 @@ footer { text-align: center; font-size: 11.5px; color: var(--muted2); margin-top
     <section class="etapa card" data-etapa="4" hidden>
       <div class="card-h">Cartões de crédito</div>
       <div class="card-d">
-        Só queremos saber <strong style="font-weight:500;color:var(--text)">quais</strong> cartões você tem e o limite aproximado —
-        isso define para onde vale transferir pontos e qual cartão usar em cada compra.
+        Precisamos saber <strong style="font-weight:600;color:var(--text)">quais</strong> cartões você tem, para localizar onde estão seus pontos.
         Não pedimos número, validade nem código de segurança, e você não deve informar esses dados aqui.
       </div>
       <div id="cartoes"></div>
@@ -363,8 +380,8 @@ footer { text-align: center; font-size: 11.5px; color: var(--muted2); margin-top
       </div>
       <div class="field">
         <label>Quem costuma viajar com você?</label>
-        <textarea id="acompanhantes" style="min-height:88px" placeholder="Uma pessoa por linha: Nome completo — data de nascimento — CPF"></textarea>
-        <p class="hint">Assim conseguimos emitir para todo mundo sem pedir os dados de novo a cada viagem.</p>
+        <div id="acomp-lista"></div>
+        <button type="button" class="btn-add" id="add-acomp">+ Adicionar pessoa</button>
       </div>
     </section>
 
@@ -442,11 +459,71 @@ function addCartao(placeholder) {
   var f = document.createElement('div');
   f.className = 'field';
   f.innerHTML = '<label>Cartão ' + n + (n > 1 ? ' <span class="opt">— opcional</span>' : '') + '</label>' +
-    '<input type="text" data-cartao placeholder="' + (placeholder || 'Ex.: Itaú Personnalité Black — limite 20 mil') + '"/>';
+    '<input type="text" data-cartao placeholder="' + (placeholder || 'Ex.: Itaú Personnalité Visa Infinite') + '"/>';
   $('cartoes').appendChild(f);
 }
-addCartao(); addCartao('Ex.: Nubank Ultravioleta — limite 8 mil');
+addCartao(); addCartao('Ex.: Nubank Ultravioleta');
 $('add-cartao').addEventListener('click', function () { addCartao(); });
+
+// Acompanhantes em campos separados: antes era um textarea com instrucao de
+// formato, e cada pessoa escrevia de um jeito. Aqui o dado ja nasce partido.
+function addAcomp() {
+  var lista = $('acomp-lista');
+  if (lista.children.length >= 10) return;
+  var d = document.createElement('div');
+  d.className = 'acomp-item';
+  d.innerHTML =
+    '<div class="acomp-num"><span class="acomp-rotulo"></span>' +
+      '<button type="button" class="acomp-rm" title="Remover">&times;</button></div>' +
+    '<div class="g-acomp">' +
+      '<div><label>Nome completo</label><input type="text" data-ac-nome placeholder="Como está no documento"/></div>' +
+      '<div><label>Nascimento</label><input type="date" data-ac-nasc/></div>' +
+      '<div><label>CPF</label><input type="text" data-ac-cpf inputmode="numeric" placeholder="000.000.000-00"/></div>' +
+    '</div>';
+  d.querySelector('.acomp-rm').addEventListener('click', function () {
+    d.remove();
+    renumerarAcomp();
+  });
+  d.querySelector('[data-ac-cpf]').addEventListener('input', function () {
+    var v = digitos(this.value).slice(0, 11);
+    this.value = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                  .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+  });
+  lista.appendChild(d);
+  renumerarAcomp();
+  return d;
+}
+
+function renumerarAcomp() {
+  var itens = $('acomp-lista').children;
+  for (var i = 0; i < itens.length; i++) {
+    itens[i].querySelector('.acomp-rotulo').textContent = 'Pessoa ' + (i + 1);
+    // A primeira so pode ser removida se houver outra: a lista nunca fica vazia.
+    itens[i].querySelector('.acomp-rm').style.display = (itens.length > 1) ? '' : 'none';
+  }
+}
+
+addAcomp();
+$('add-acomp').addEventListener('click', function () { addAcomp(); });
+
+// Continua saindo como texto — o painel, o lembrete-voo e as variaveis de
+// demanda leem `acompanhantes` como string. Uma pessoa por linha, no mesmo
+// formato "Nome - data - CPF" que a planilha antiga ja usava.
+function acompanhantesTexto() {
+  var linhas = [];
+  var itens = $('acomp-lista').children;
+  for (var i = 0; i < itens.length; i++) {
+    var nome = itens[i].querySelector('[data-ac-nome]').value.trim();
+    if (!nome) continue;
+    var nasc = itens[i].querySelector('[data-ac-nasc]').value;
+    var cpf  = digitos(itens[i].querySelector('[data-ac-cpf]').value);
+    var p = [nome];
+    if (nasc) p.push(nasc.split('-').reverse().join('/'));
+    if (cpf)  p.push(cpf);
+    linhas.push(p.join(' - '));
+  }
+  return linhas.join('\n');
+}
 
 $('consentimento').addEventListener('change', function () {
   $('consent-box').classList.toggle('on', this.checked);
@@ -601,7 +678,7 @@ function montarPayload() {
     bairro:        val('bairro'),
     cidade:        val('cidade'),
     estado:        val('estado'),
-    acompanhantes: val('acompanhantes'),
+    acompanhantes: acompanhantesTexto(),
     criarContas:   val('criarContas'),
     programas:     programas,
     outrosProgramas: val('outrosProgramas'),
