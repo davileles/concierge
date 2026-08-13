@@ -344,6 +344,95 @@ function localDe(valor) {
   return cidade ? `${cidade} (${code})` : code;
 }
 
+// ── economia gerada ───────────────────────────────────────────────────────────
+// Premissa: quanto vale, em R$, cada 1.000 pontos/milhas de cada programa.
+// Espelha VALORES_PONTOS_PADRAO do index.html; cfg.valoresPontos sobrescreve.
+const VALORES_PONTOS_PADRAO = {
+  'AAdvantage':      100,
+  'Azul Fidelidade':  13,
+  'Esfera':           30,
+  'Executive Club':   60.90,
+  'Finnair Plus':     60.90,
+  'Iberia Plus':      60.90,
+  'LATAM Pass':       26,
+  'Livelo':           30,
+  'Privilege Club':   60.90,
+  'Smiles':           16,
+  'SUMA':             80
+};
+let CFG_PONTOS = {}; // preenchido no main() a partir de cfg.json
+
+function parseValorBR(v) {
+  let s = String(v == null ? '' : v).replace(/[^\d,.]/g, '');
+  if (!s) return 0;
+  if (s.indexOf(',') >= 0) {
+    s = s.replace(/\./g, '').replace(',', '.');
+  } else {
+    const partes = s.split('.');
+    if (partes.length > 2) s = partes.join('');
+    else if (partes.length === 2 && partes[1].length === 3) s = partes.join('');
+  }
+  return parseFloat(s) || 0;
+}
+
+function valorMilheiro(programa) {
+  if (!programa) return 0;
+  let v = CFG_PONTOS[programa];
+  if (v === undefined || v === null || v === '') v = VALORES_PONTOS_PADRAO[programa];
+  if (v === undefined || v === null || v === '') return 0;
+  return parseValorBR(v) || 0;
+}
+
+const fmtBRL    = n => (Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtPontos = n => Math.round(Number(n) || 0).toLocaleString('pt-BR');
+
+function calcularEconomia(r) {
+  const vazio = { valor: 0, modo: null, detalhe: '' };
+  if (!r) return vazio;
+  const isLoc = (r.tipo === 'carro' && r.subtipo === 'locacao');
+  if (r.tipo !== 'voo' && r.tipo !== 'hotel' && r.tipo !== 'seguro' && !isLoc) return vazio;
+  const te = r.tipoEmissao || '';
+
+  if (te === 'milhas') {
+    let prog, pontos, ref;
+    if (r.tipo === 'voo') {
+      prog   = r.programa || '';
+      pontos = parseValorBR(r.milhasTotal) || (parseValorBR(r.milhas) * (parseInt(r.pax, 10) || 1));
+      const tar = parseValorBR(r.valor);
+      ref = (r.tarifaBase === 'total') ? tar : tar * (parseInt(r.pax, 10) || 1);
+    } else {
+      prog   = r.programaMilhas || '';
+      pontos = parseValorBR(r.valorMilhas);
+      ref    = parseValorBR(r.valorTarifaPagante);
+    }
+    const vm = valorMilheiro(prog);
+    if (!ref || !pontos || !vm) return vazio;
+    const custo = pontos / 1000 * vm;
+    return { valor: ref - custo, modo: 'resgate',
+      detalhe: `Tarifa pagante R$ ${fmtBRL(ref)} − ${fmtPontos(pontos)} ${prog} a R$ ${fmtBRL(vm)}/mil (R$ ${fmtBRL(custo)})` };
+  }
+
+  if (te === 'balcao' && r.tipo === 'voo') {
+    const tarB   = parseValorBR(r.valor);
+    const refB   = (r.tarifaBase === 'total') ? tarB : tarB * (parseInt(r.paxBalcao, 10) || 1);
+    const custoB = parseValorBR(r.valorTotalBalcao);
+    if (!refB || !custoB) return vazio;
+    return { valor: refB - custoB, modo: 'balcao',
+      detalhe: `Tarifa pagante R$ ${fmtBRL(refB)} − valor desembolsado R$ ${fmtBRL(custoB)}` };
+  }
+
+  if (te === 'dinheiro_acumulo') {
+    const progA = (r.tipo === 'voo') ? (r.programaAcumuloVoo || '') : (r.programaAcumulo || '');
+    const ptsA  = parseValorBR(r.milhasAcumulo);
+    const vmA   = valorMilheiro(progA);
+    if (!ptsA || !vmA) return vazio;
+    return { valor: ptsA / 1000 * vmA, modo: 'acumulo',
+      detalhe: `${fmtPontos(ptsA)} ${progA} acumulados a R$ ${fmtBRL(vmA)}/mil` };
+  }
+
+  return vazio;
+}
+
 // ── interpolação ──────────────────────────────────────────────────────────────
 function interpolar(texto, cli, res, viagem, viagens) {
   const rv = (t, key, val) => t.split(`{{${key}}}`).join(val || '');
@@ -406,6 +495,9 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'acumulo_programa',     res.programaAcumulo || res.programaAcumuloVoo || '');
     t = rv(t, 'acumulo_milhas',       res.milhasAcumulo || '');
     t = rv(t, 'acumulo_parceiro',     res.parceiroAcumulo || '');
+    const _eco = calcularEconomia(res);
+    t = rv(t, 'economia',         _eco.valor > 0 ? fmtBRL(_eco.valor) : (res.economiaGerada  || ''));
+    t = rv(t, 'economia_detalhe', _eco.valor > 0 ? _eco.detalhe       : (res.economiaDetalhe || ''));
   }
   // nome_viagem: viagem do contexto do gatilho ou, para gatilhos de reserva,
   // a viagem que contém a reserva entre suas atividades
@@ -745,6 +837,8 @@ async function main() {
     : (viagensResp.data?.items || []);
   // Grupo interno de alertas — mesma fonte usada pelo proxy (cfg.grupoAlertas).
   const grupoAlertas = (cfgResp.data && cfgResp.data.grupoAlertas) || '';
+  // Premissas de valor dos pontos (Configuração → Valor dos Pontos) para {{economia}}
+  CFG_PONTOS = (cfgResp.data && cfgResp.data.valoresPontos) || {};
 
   // Mapa de reservas por ID (para lookup eficiente no gatilho primeiro_voo_viagem)
   const reservasMap = {};
