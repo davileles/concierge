@@ -1252,7 +1252,7 @@ header{animation:fadeUp .45s ease both}
 <div class="main-panel" id="panel-clientes">
   <div class="sync-bar" style="margin-bottom:1rem">
     <div class="sync-dot" id="sync-dot"></div>
-    <span id="sync-label">Configurando conexão com Google Sheets…</span>
+    <span id="sync-label">Carregando base de clientes…</span>
     <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="syncClientes()">🔄 Sincronizar</button>
   </div>
   <div class="reservas-header">
@@ -1277,88 +1277,22 @@ header{animation:fadeUp .45s ease both}
   <div class="card">
     <div class="card-title">⚙️ Configuração</div>
     <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
-      A base de clientes agora vive em <strong style="color:var(--text)">cdv-tsp-dados/concierge/clientes.json</strong> (repo privado) e é lida pelo proxy CDV.
-      Os campos de planilha abaixo são <strong style="color:var(--text)">legado</strong> — servem apenas ao botão “Reimportar da planilha”, que roda no servidor e <strong style="color:var(--text)">sobrescreve</strong> a base.
+      A base de clientes vive em <strong style="color:var(--text)">cdv-tsp-dados/concierge/clientes.json</strong> (repo privado) e é lida pelo proxy CDV.
+      O cadastro é feito pelo formulário público e pela aba Clientes deste painel — a planilha do Google saiu do fluxo.
     </p>
-    <div class="settings-row">
-      <div>
-        <div class="settings-label">URL do Apps Script (Web App) <span class="tag">legado</span></div>
-        <div class="settings-desc">Usada só na reimportação pontual a partir da planilha</div>
-      </div>
-    </div>
-    <div class="field" style="margin-top:12px">
-      <label>URL do Web App (Google Sheets)</label>
-      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/…/exec" oninput="saveCfg()"/>
-    </div>
     <div class="field">
       <label>URL do Servidor Baileys (Railway)</label>
       <input type="text" id="cfg-baileys" placeholder="https://seu-servidor.railway.app" oninput="saveCfg()"/>
-      </div>
-    <div class="field">
-      <label>Nome da aba de clientes na planilha</label>
-      <input type="text" id="cfg-aba" placeholder="Ex: Clientes" oninput="saveCfg()"/>
     </div>
-    <div class="sep"></div>
-    <div class="card-title" style="margin-bottom:1rem">🗺️ Mapeamento de Colunas</div>
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Informe a <strong style="color:var(--text)">letra da coluna</strong> correspondente a cada campo na sua planilha (ex: A, B, C…)</p>
-
-    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👤 Dados Pessoais</p>
-    <div class="g3">
-      <div class="field"><label>Nome do Cliente</label><input type="text" id="cfg-col-nome" placeholder="Ex: A" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Telefone / WhatsApp</label><input type="text" id="cfg-col-tel" placeholder="Ex: B" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>E-mail</label><input type="text" id="cfg-col-email" placeholder="Ex: C" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>CPF</label><input type="text" id="cfg-col-cpf" placeholder="Ex: D" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Data de Nascimento</label><input type="text" id="cfg-col-nasc" placeholder="Ex: E" maxlength="3" oninput="saveCfg()"/></div>
-    </div>
-
-    <div class="sep"></div>
-    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🏠 Endereço</p>
-    <div class="g3">
-      <div class="field"><label>Logradouro</label><input type="text" id="cfg-col-logradouro" placeholder="Ex: F" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Número</label><input type="text" id="cfg-col-numero" placeholder="Ex: G" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Complemento</label><input type="text" id="cfg-col-complemento" placeholder="Ex: H" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>CEP</label><input type="text" id="cfg-col-cep" placeholder="Ex: I" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Bairro</label><input type="text" id="cfg-col-bairro" placeholder="Ex: J" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Cidade</label><input type="text" id="cfg-col-cidade" placeholder="Ex: K" maxlength="3" oninput="saveCfg()"/></div>
-      <div class="field"><label>Estado</label><input type="text" id="cfg-col-estado" placeholder="Ex: L" maxlength="3" oninput="saveCfg()"/></div>
-    </div>
-
-    <div class="sep"></div>
-    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">🔑 Senhas</p>
-    <div class="g3">
-      <div class="field"><label>Senhas / Acessos <span class="tag">texto livre</span></label><input type="text" id="cfg-col-senhas" placeholder="Ex: M" maxlength="3" oninput="saveCfg()"/></div>
-    </div>
-
-    <div class="sep"></div>
-    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">👨‍👩‍👧 Acompanhantes</p>
-    <div class="g3">
-      <div class="field"><label>Quem viaja com você? <span class="tag">texto livre</span></label><input type="text" id="cfg-col-acompanhantes" placeholder="Ex: N" maxlength="3" oninput="saveCfg()"/></div>
-    </div>
-
-    <div class="sep"></div>
-    <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">✅ Status do Cliente</p>
-    <div class="g3">
-      <div class="field"><label>Cliente ativo <span class="tag">sim / x / 1 = ativo</span></label><input type="text" id="cfg-col-ativo" placeholder="Ex: P" maxlength="3" oninput="saveCfg()"/></div>
-    </div>
-    <p style="font-size:11px;color:var(--muted);margin-top:-6px;line-height:1.6">Somente clientes marcados como ativos aparecem no disparo em massa. Célula vazia = inativo.</p>
-
     <div class="sep"></div>
     <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">💬 WhatsApp</p>
-    <div class="g3">
-      <div class="field"><label>ID do Grupo WhatsApp</label><input type="text" id="cfg-col-grupo" placeholder="Ex: O" maxlength="3" oninput="saveCfg()"/></div>
-    </div>
     <div class="field">
       <label>Grupo para alertas de oportunidade <span class="tag">recebe os alertas de compra e transferência bonificada das demandas</span></label>
       <input type="text" id="cfg-grupo-alertas" placeholder="Ex: 120363xxxxxx@g.us ou cdv_emissao" oninput="saveCfg()" style="font-family:monospace;font-size:12px"/>
     </div>
-    <div class="field">
-      <label>Linha de início dos dados (ex: 2 para pular cabeçalho)</label>
-      <input type="number" id="cfg-linha" placeholder="Ex: 2" min="1" oninput="saveCfg()" style="max-width:120px"/>
-    </div>
     <div class="sep"></div>
     <div class="btn-row">
       <button class="btn btn-blue" onclick="syncClientes()">🔄 Recarregar clientes</button>
-      <button class="btn btn-ghost btn-sm" onclick="reimportarPlanilha()">⬇️ Reimportar da planilha (legado)</button>
       <button class="btn btn-ghost btn-sm" onclick="backfillGrupos()">🔗 Atualizar grupo em todas as reservas</button>
       <button class="btn btn-danger btn-sm" onclick="limparDados()">🗑 Apagar todas as reservas</button>
     </div>
@@ -1377,26 +1311,6 @@ header{animation:fadeUp .45s ease both}
     </p>
     <div class="g3" id="cfg-pontos-grid"></div>
   </div>
-
-  <!-- COMO CONFIGURAR -->
-  <div class="card">
-    <div class="card-title">📖 Como Configurar o Apps Script</div>
-    <p style="font-size:13px;color:var(--muted);line-height:1.8">
-      1. Acesse sua planilha no Google Sheets<br>
-      2. Clique em <strong style="color:var(--text)">Extensões → Apps Script</strong><br>
-      3. Cole o código abaixo e salve (Ctrl+S)<br>
-      4. Clique em <strong style="color:var(--text)">Implantar → Nova implantação → Aplicativo da Web</strong><br>
-      5. Defina "Executar como: eu" e "Quem tem acesso: Qualquer pessoa"<br>
-      6. Copie a URL gerada e cole no campo acima
-    </p>
-    <div class="sep"></div>
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:4px">
-      <pre style="font-size:11px;color:var(--muted);font-family:'Courier New',monospace;white-space:pre-wrap;line-height:1.7" id="script-code"></pre>
-    </div>
-    <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="copiarScript()">📋 Copiar Código</button>
-    <p id="script-ok" style="font-size:12px;color:#22c55e;font-weight:700;margin-top:6px;min-height:14px"></p>
-  </div>
-</div>
 
 
 <!-- ══════════════════════════════════════════
@@ -1967,7 +1881,6 @@ var vinculoAlvo = null;
 var atividadesTemp = [];
 var tabAtual = 'reservas';
 
-var APPS_SCRIPT_CODE = 'function doGet(e) {\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(e.parameter.aba || \'Clientes\');\n  var linhaInicio = parseInt(e.parameter.linha || 2);\n  var data = sheet.getDataRange().getValues();\n  var rows = data.slice(linhaInicio - 1);\n  return ContentService\n    .createTextOutput(JSON.stringify({ ok: true, rows: rows }))\n    .setMimeType(ContentService.MimeType.JSON);\n}';
 
 // ══════════════════════════════════════════
 //  CONFIG (servidor via proxy)
@@ -2008,28 +1921,8 @@ function loadCfg(callback) {
 }
 
 function _applyCfg(c) {
-  setVal('cfg-url', c.url || '');
-  setVal('cfg-aba', c.aba || 'Clientes');
-  setVal('cfg-col-nome',          c.colNome         || 'A');
-  setVal('cfg-col-tel',           c.colTel          || 'B');
-  setVal('cfg-col-email',         c.colEmail        || 'C');
-  setVal('cfg-col-cpf',           c.colCpf          || 'D');
-  setVal('cfg-col-nasc',          c.colNasc         || 'E');
-  setVal('cfg-col-logradouro',    c.colLogradouro   || 'F');
-  setVal('cfg-col-numero',        c.colNumero       || 'G');
-  setVal('cfg-col-complemento',   c.colComplemento  || 'H');
-  setVal('cfg-col-cep',           c.colCep          || 'I');
-  setVal('cfg-col-bairro',        c.colBairro       || 'J');
-  setVal('cfg-col-cidade',        c.colCidade       || 'K');
-  setVal('cfg-col-estado',        c.colEstado       || 'L');
-  setVal('cfg-col-senhas',        c.colSenhas       || 'M');
-  setVal('cfg-col-acompanhantes', c.colAcompanhantes|| 'N');
-  setVal('cfg-col-grupo',         c.colGrupo        || 'O');
-  setVal('cfg-col-ativo',         c.colAtivo        || 'P');
   setVal('cfg-grupo-alertas',     c.grupoAlertas    || '');
-  setVal('cfg-linha',             c.linha           || '2');
   setVal('cfg-baileys',           c.baileys         || '');
-  document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
   renderCfgPontos(c.valoresPontos || {});
   aplicarTema(c.tema || 'dark');
 }
@@ -2100,26 +1993,7 @@ function saveCfg() {
 function _saveCfgNow() {
   if (_saveCfgInFlight) { _saveCfgPending = true; return; }
   var c = {
-    url:         getVal('cfg-url'),
-    aba:         getVal('cfg-aba') || 'Clientes',
-    colNome:          getVal('cfg-col-nome').toUpperCase()          || 'A',
-    colTel:           getVal('cfg-col-tel').toUpperCase()           || 'B',
-    colEmail:         getVal('cfg-col-email').toUpperCase()         || 'C',
-    colCpf:           getVal('cfg-col-cpf').toUpperCase()           || 'D',
-    colNasc:          getVal('cfg-col-nasc').toUpperCase()          || 'E',
-    colLogradouro:    getVal('cfg-col-logradouro').toUpperCase()    || 'F',
-    colNumero:        getVal('cfg-col-numero').toUpperCase()        || 'G',
-    colComplemento:   getVal('cfg-col-complemento').toUpperCase()   || 'H',
-    colCep:           getVal('cfg-col-cep').toUpperCase()           || 'I',
-    colBairro:        getVal('cfg-col-bairro').toUpperCase()        || 'J',
-    colCidade:        getVal('cfg-col-cidade').toUpperCase()        || 'K',
-    colEstado:        getVal('cfg-col-estado').toUpperCase()        || 'L',
-    colSenhas:        getVal('cfg-col-senhas').toUpperCase()        || 'M',
-    colAcompanhantes: getVal('cfg-col-acompanhantes').toUpperCase() || 'N',
-    colGrupo:         getVal('cfg-col-grupo').toUpperCase()         || 'O',
-    colAtivo:         getVal('cfg-col-ativo').toUpperCase()         || 'P',
     grupoAlertas:     getVal('cfg-grupo-alertas').trim(),
-    linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys'),
     tema:             _cfg.tema || 'dark',
     valoresPontos:    coletarValoresPontos()
@@ -2151,15 +2025,6 @@ function getCfg() {
   return _cfg;
 }
 
-function colIndex(letra) {
-  if (!letra) return 0;
-  var s = letra.toUpperCase().trim();
-  var result = 0;
-  for (var i = 0; i < s.length; i++) {
-    result = result * 26 + (s.charCodeAt(i) - 64);
-  }
-  return result - 1; // zero-based
-}
 
 // ══════════════════════════════════════════
 //  RESERVAS (localStorage)
@@ -2216,14 +2081,12 @@ function syncReservas() {
 // ══════════════════════════════════════════
 //  SYNC CLIENTES (JSON no repo privado)
 // ══════════════════════════════════════════
-// A base vinha do Apps Script ate agora. O /exec responde 302 para
-// script.googleusercontent.com/macros/echo?user_content_key=<KEY>, e essa KEY e
-// de uso praticamente unico: cache do Chrome, duas chamadas concorrentes ou
-// deploy revalidado devolviam 404. E as paginas de erro do Apps Script nao
-// mandam CORS, entao aba renomeada chegava aqui indistinguivel de queda de rede.
-// Agora a fonte da verdade e cdv-tsp-dados/concierge/clientes.json (repo privado:
-// tem CPF, endereco, nascimento e senhas). A planilha so entra pelo botao de
-// reimportacao, que roda server-side no proxy.
+// Fonte da verdade: cdv-tsp-dados/concierge/clientes.json (repo privado — tem
+// CPF, endereco, nascimento e senhas), lido pelo proxy CDV.
+// A planilha do Google (Apps Script) foi desativada: o /exec respondia 302 para
+// script.googleusercontent.com com uma user_content_key de uso praticamente
+// unico, e as paginas de erro nao mandavam CORS — aba renomeada chegava aqui
+// indistinguivel de queda de rede.
 function syncClientes() {
   var dot = document.getElementById('sync-dot');
   var lbl = document.getElementById('sync-label');
@@ -2280,28 +2143,6 @@ function syncClientes() {
       var csel = document.getElementById('d-cliente');
       if (csel && !clientes.length) csel.innerHTML = '<option value="">— falha ao carregar clientes —</option>';
       showToast('❌ Falha ao carregar clientes', 'err');
-    });
-}
-
-// Reimportacao pontual da planilha (legado). Roda no Railway: sem CORS, sem
-// cache do browser, sem a corrida da user_content_key. SOBRESCREVE a base.
-function reimportarPlanilha() {
-  if (!confirm('Reimportar da planilha do Google?\n\nIsso SOBRESCREVE a base de clientes atual com o conteudo da planilha. Edicoes feitas aqui no painel serao perdidas.')) return;
-  var okEl = document.getElementById('cfg-ok');
-  if (okEl) { okEl.style.color = ''; okEl.textContent = '⏳ Importando…'; }
-  fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes/importar', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
-  })
-    .then(function(r){ return r.json(); })
-    .then(function(d){
-      if (!d.ok) throw new Error(d.erro || 'falha na importacao');
-      if (okEl) { okEl.style.color = '#22c55e'; okEl.textContent = '✅ ' + d.total + ' clientes importados'; }
-      showToast('✅ ' + d.total + ' clientes importados', 'ok');
-      syncClientes();
-    })
-    .catch(function(e){
-      if (okEl) { okEl.style.color = '#ff585e'; okEl.textContent = '❌ ' + e.message; }
-      showToast('❌ ' + e.message, 'err');
     });
 }
 
@@ -3408,14 +3249,14 @@ function aplicarDadosAtivo(d) {
 // ══════════════════════════════════════════
 var VALORES_PONTOS_PADRAO = {
   'AAdvantage':      100,
-  'Azul Fidelidade':  13,
+  'Azul Fidelidade':  12,
   'Esfera':           30,
-  'Executive Club':   60.90,
-  'Finnair Plus':     60.90,
-  'Iberia Plus':      60.90,
+  'Executive Club':   60,
+  'Finnair Plus':     60,
+  'Iberia Plus':      60,
   'LATAM Pass':       26,
   'Livelo':           30,
-  'Privilege Club':   60.90,
+  'Privilege Club':   60,
   'Smiles':           16,
   'SUMA':             80
 };
@@ -4865,13 +4706,6 @@ function limparDados() {
   showToast('🗑 Todas as reservas foram apagadas', 'err');
 }
 
-function copiarScript() {
-  navigator.clipboard.writeText(APPS_SCRIPT_CODE)
-    .then(function(){ 
-      document.getElementById('script-ok').textContent = '✅ Código copiado!';
-      setTimeout(function(){ document.getElementById('script-ok').textContent=''; }, 3000);
-    });
-}
 
 
 // ══════════════════════════════════════════
@@ -7554,7 +7388,7 @@ var _massaRodando = false;
 var _massaAbortar = false;
 var _massaTimer   = null;
 
-// Valores aceitos na coluna "Cliente ativo" da planilha
+// Valores historicos aceitos no campo "ativo" (base migrada da planilha)
 function ehClienteAtivo(v) {
   var t = String(v === undefined || v === null ? '' : v).trim().toLowerCase();
   if (!t) return false;
@@ -7586,7 +7420,7 @@ function renderMassaLista() {
   }
 
   if (!ativos.length) {
-    el.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">Nenhum cliente ativo.<br><small>Marque a coluna de status na planilha e clique em Sincronizar.</small></div>';
+    el.innerHTML = '<div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">Nenhum cliente ativo.<br><small>Marque o cliente como ativo na aba Clientes e clique em Recarregar clientes.</small></div>';
     return;
   }
 
