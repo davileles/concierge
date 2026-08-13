@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<title>Travel Concierge — Cadastro</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0a0c12;
+  --surface: #12151f;
+  --card: #171b28;
+  --border: #232838;
+  --border2: #333a52;
+  --text: #f2f2f0;
+  --muted: rgba(242,242,240,.58);
+  --muted2: rgba(242,242,240,.34);
+  --gold: #c9a961;
+  --gold-dim: rgba(201,169,97,.10);
+  --gold-border: rgba(201,169,97,.32);
+  --green: #34d399;
+  --red: #ff585e;
+  --font: 'Montserrat', sans-serif;
+}
+
+html, body {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 300;
+  -webkit-font-smoothing: antialiased;
+}
+
+@keyframes fadeUp { from { opacity:0; transform: translateY(14px); } to { opacity:1; transform:none; } }
+@keyframes spin   { to { transform: rotate(360deg); } }
+.fade { animation: fadeUp .4s cubic-bezier(.16,1,.3,1) both; }
+
+.wrap { max-width: 680px; margin: 0 auto; padding: 32px 20px 80px; }
+
+/* ── CABEÇALHO ── */
+header { text-align: center; margin-bottom: 28px; }
+.mark {
+  width: 46px; height: 46px; margin: 0 auto 14px;
+  border: 1px solid var(--gold-border); border-radius: 12px;
+  background: var(--gold-dim);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+}
+h1 { font-size: 19px; font-weight: 500; letter-spacing: .2px; }
+.sub { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.7; }
+
+/* ── PROGRESSO ── */
+.prog { display: flex; gap: 5px; margin: 22px 0 26px; }
+.prog i {
+  flex: 1; height: 2px; background: var(--border); border-radius: 2px;
+  transition: background .35s ease;
+}
+.prog i.on   { background: var(--gold); }
+.prog i.done { background: rgba(201,169,97,.42); }
+.step-label {
+  text-align: center; font-size: 10.5px; letter-spacing: 1.4px;
+  text-transform: uppercase; color: var(--muted2); margin-bottom: 22px; font-weight: 500;
+}
+
+/* ── CARTÃO ── */
+.card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: 14px; padding: 26px 24px;
+}
+.card + .card { margin-top: 14px; }
+.card-h { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+.card-d { font-size: 12.5px; color: var(--muted); line-height: 1.75; margin-bottom: 20px; }
+
+/* ── CAMPOS ── */
+.field { margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+label {
+  display: block; font-size: 11px; font-weight: 500; letter-spacing: .7px;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 7px;
+}
+label .opt { text-transform: none; letter-spacing: 0; color: var(--muted2); font-weight: 300; }
+input[type=text], input[type=email], input[type=tel], input[type=date], input[type=number], textarea, select {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: 9px; padding: 12px 13px; color: var(--text);
+  font-family: var(--font); font-size: 14px; font-weight: 300;
+  transition: border-color .18s, background .18s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none; border-color: var(--gold-border); background: #0e111a;
+}
+input::placeholder, textarea::placeholder { color: var(--muted2); font-weight: 300; }
+textarea { min-height: 108px; resize: vertical; line-height: 1.7; }
+select { appearance: none; cursor: pointer;
+  background-image: linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+  background-size: 5px 5px, 5px 5px; background-repeat: no-repeat; padding-right: 34px; }
+select option { background: var(--surface); color: var(--text); }
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.g3 { display: grid; grid-template-columns: 2fr 1fr; gap: 12px; }
+.hint { font-size: 11.5px; color: var(--muted2); margin-top: 6px; line-height: 1.6; }
+.err-msg { font-size: 11.5px; color: var(--red); margin-top: 6px; display: none; }
+.field.bad input, .field.bad select { border-color: rgba(255,88,94,.55); }
+.field.bad .err-msg { display: block; }
+
+/* honeypot — invisível para humanos, irresistível para bots */
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+
+/* ── CONSENTIMENTO ── */
+.consent {
+  display: flex; gap: 13px; align-items: flex-start; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 11px; padding: 16px; transition: border-color .18s;
+}
+.consent:hover { border-color: var(--border2); }
+.consent.on { border-color: var(--gold-border); background: var(--gold-dim); }
+.consent input { margin-top: 2px; accent-color: var(--gold); width: 17px; height: 17px; flex-shrink: 0; cursor: pointer; }
+.consent span { font-size: 12.5px; color: var(--muted); line-height: 1.8; }
+
+/* ── PROGRAMAS ── */
+.prog-item {
+  border: 1px solid var(--border); border-radius: 11px;
+  padding: 14px 15px; margin-bottom: 10px;
+  background: var(--surface); transition: border-color .18s, background .18s;
+}
+.prog-item.on { border-color: var(--gold-border); background: var(--gold-dim); }
+.prog-top { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+.prog-top input { accent-color: var(--gold); width: 17px; height: 17px; flex-shrink: 0; cursor: pointer; }
+.prog-nome { flex: 1; font-size: 13.5px; font-weight: 400; }
+.prog-det { display: none; gap: 12px; margin-top: 14px; }
+.prog-item.on .prog-det { display: grid; grid-template-columns: 1fr 1fr; }
+.prog-det label { font-size: 10px; }
+
+/* ── BOTÕES ── */
+.nav { display: flex; gap: 11px; margin-top: 22px; }
+.btn {
+  flex: 1; padding: 14px; border-radius: 10px; border: 1px solid transparent;
+  font-family: var(--font); font-size: 13.5px; font-weight: 500; letter-spacing: .3px;
+  cursor: pointer; transition: opacity .18s, border-color .18s, background .18s;
+}
+.btn:hover { opacity: .86; }
+.btn-primary { background: var(--gold); color: #16130c; }
+.btn-ghost { background: transparent; border-color: var(--border2); color: var(--muted); flex: 0 0 110px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.btn-add {
+  background: transparent; border: 1px dashed var(--border2); color: var(--muted);
+  padding: 11px; font-size: 12.5px; width: 100%; border-radius: 9px;
+  font-family: var(--font); font-weight: 400; cursor: pointer; margin-top: 4px;
+}
+.btn-add:hover { border-color: var(--gold-border); color: var(--gold); }
+
+.spin {
+  display: inline-block; width: 13px; height: 13px; vertical-align: -2px;
+  border: 2px solid rgba(22,19,12,.3); border-top-color: #16130c;
+  border-radius: 50%; animation: spin .7s linear infinite; margin-right: 8px;
+}
+
+/* ── FIM ── */
+.done-box { text-align: center; padding: 46px 24px; }
+.done-icon {
+  width: 62px; height: 62px; margin: 0 auto 22px; border-radius: 50%;
+  border: 1px solid rgba(52,211,153,.3); background: rgba(52,211,153,.08);
+  display: flex; align-items: center; justify-content: center; font-size: 27px;
+}
+.done-box h2 { font-size: 18px; font-weight: 500; margin-bottom: 12px; }
+.done-box p { font-size: 13px; color: var(--muted); line-height: 1.85; max-width: 400px; margin: 0 auto; }
+
+.banner {
+  border-radius: 10px; padding: 13px 15px; font-size: 12.5px; line-height: 1.7;
+  margin-bottom: 18px; display: none;
+}
+.banner.show { display: block; }
+.banner.err { background: rgba(255,88,94,.09); border: 1px solid rgba(255,88,94,.28); color: #ff9295; }
+
+footer { text-align: center; font-size: 10.5px; color: var(--muted2); margin-top: 30px; letter-spacing: .4px; }
+
+@media (max-width: 560px) {
+  .wrap { padding: 24px 15px 60px; }
+  .card { padding: 21px 17px; }
+  .g2, .g3, .prog-item.on .prog-det { grid-template-columns: 1fr; }
+  .btn-ghost { flex: 0 0 90px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="mark">✈</div>
+    <h1>Travel Concierge</h1>
+    <p class="sub">Para cuidar bem das suas viagens, precisamos conhecer alguns detalhes.<br/>Leva cerca de 5 minutos e você pode voltar atrás a qualquer momento.</p>
+  </header>
+
+  <div class="prog" id="prog"></div>
+  <div class="step-label" id="step-label"></div>
+
+  <div class="banner err" id="banner"></div>
+
+  <form id="form" autocomplete="on" onsubmit="return false">
+
+    <!-- honeypot -->
+    <div class="hp" aria-hidden="true">
+      <label>Não preencha este campo</label>
+      <input type="text" id="website" name="website" tabindex="-1" autocomplete="off"/>
+    </div>
+
+    <!-- ETAPA 1 — CONSENTIMENTO -->
+    <section class="etapa card fade" data-etapa="0">
+      <div class="card-h">Antes de começarmos</div>
+      <div class="card-d">
+        Vamos coletar dados pessoais para emitir passagens, fazer reservas e administrar seus programas de fidelidade.
+        Usamos essas informações apenas para prestar o serviço de concierge — nunca para outra finalidade,
+        e nunca compartilhamos com terceiros além do estritamente necessário para concluir cada reserva.
+        Você pode pedir a correção ou a exclusão dos seus dados a qualquer momento.
+      </div>
+      <label class="consent" id="consent-box">
+        <input type="checkbox" id="consentimento"/>
+        <span>Concordo com o tratamento dos meus dados pessoais para as finalidades descritas acima, nos termos da Lei nº 13.709 (LGPD).</span>
+      </label>
+    </section>
+
+    <!-- ETAPA 2 — DADOS PESSOAIS -->
+    <section class="etapa card" data-etapa="1" hidden>
+      <div class="card-h">Seus dados</div>
+      <div class="card-d">Os dados de documento precisam bater exatamente com o que está no seu passaporte ou RG — companhias aéreas não aceitam divergência.</div>
+
+      <div class="field" data-req>
+        <label>Nome completo</label>
+        <input type="text" id="nome" autocomplete="name" placeholder="Como está no seu documento"/>
+        <p class="err-msg">Informe nome e sobrenome.</p>
+      </div>
+      <div class="g2">
+        <div class="field" data-req>
+          <label>Telefone com DDD</label>
+          <input type="tel" id="tel" autocomplete="tel" inputmode="numeric" placeholder="(31) 99999-0000"/>
+          <p class="err-msg">Telefone inválido.</p>
+        </div>
+        <div class="field" data-req>
+          <label>E-mail</label>
+          <input type="email" id="email" autocomplete="email" placeholder="voce@email.com"/>
+          <p class="err-msg">E-mail inválido.</p>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field" data-req>
+          <label>CPF</label>
+          <input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00"/>
+          <p class="err-msg">CPF inválido.</p>
+        </div>
+        <div class="field" data-req>
+          <label>Data de nascimento</label>
+          <input type="date" id="nasc"/>
+          <p class="err-msg">Informe a data de nascimento.</p>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field">
+          <label>Passaporte <span class="opt">— se tiver</span></label>
+          <input type="text" id="passaporte" placeholder="AB123456"/>
+        </div>
+        <div class="field">
+          <label>Validade do passaporte</label>
+          <input type="date" id="passaporteVal"/>
+        </div>
+      </div>
+    </section>
+
+    <!-- ETAPA 3 — ENDEREÇO -->
+    <section class="etapa card" data-etapa="2" hidden>
+      <div class="card-h">Endereço</div>
+      <div class="card-d">Usado no cadastro dos programas de fidelidade e como endereço de cobrança nas emissões.</div>
+
+      <div class="g3">
+        <div class="field" data-req>
+          <label>CEP</label>
+          <input type="text" id="cep" inputmode="numeric" autocomplete="postal-code" placeholder="30000-000"/>
+          <p class="err-msg">CEP inválido.</p>
+        </div>
+        <div class="field">
+          <label>Número</label>
+          <input type="text" id="numero" placeholder="123"/>
+        </div>
+      </div>
+      <div class="field" data-req>
+        <label>Logradouro</label>
+        <input type="text" id="logradouro" autocomplete="address-line1" placeholder="Rua, avenida…"/>
+        <p class="err-msg">Informe o logradouro.</p>
+      </div>
+      <div class="field">
+        <label>Complemento <span class="opt">— opcional</span></label>
+        <input type="text" id="complemento" placeholder="Apartamento, bloco, referência"/>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Bairro</label><input type="text" id="bairro"/></div>
+        <div class="field" data-req>
+          <label>Cidade</label><input type="text" id="cidade"/>
+          <p class="err-msg">Informe a cidade.</p>
+        </div>
+      </div>
+      <div class="field" data-req>
+        <label>Estado</label>
+        <select id="estado"><option value="">Selecione…</option></select>
+        <p class="err-msg">Selecione o estado.</p>
+      </div>
+    </section>
+
+    <!-- ETAPA 4 — FIDELIDADE -->
+    <section class="etapa card" data-etapa="3" hidden>
+      <div class="card-h">Programas de fidelidade</div>
+      <div class="card-d">
+        Marque os programas em que você já tem conta. Ao marcar, aparecem dois campos: o saldo aproximado
+        e a senha de acesso — guardamos cada senha separada por programa, então quando precisarmos emitir
+        pela Smiles não vamos procurar no meio de um texto corrido.
+      </div>
+      <div id="programas"></div>
+
+      <div class="field" style="margin-top:18px">
+        <label>Algum outro programa que não está na lista?</label>
+        <input type="text" id="outrosProgramas" placeholder="Ex.: Flying Blue, TAP Miles&amp;Go, Dragon Pass"/>
+      </div>
+      <div class="field">
+        <label>Senhas que você não soube associar <span class="opt">— opcional</span></label>
+        <input type="text" id="senhasOutros" placeholder="Se usa uma senha padrão para vários programas, escreva aqui"/>
+      </div>
+      <div class="field">
+        <label>E os programas em que você ainda não tem conta?</label>
+        <select id="criarContas">
+          <option value="Pode criar para mim">Pode criar para mim</option>
+          <option value="Eu vou criar">Prefiro criar eu mesmo</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- ETAPA 5 — CARTÕES -->
+    <section class="etapa card" data-etapa="4" hidden>
+      <div class="card-h">Cartões de crédito</div>
+      <div class="card-d">
+        Só queremos saber <strong style="font-weight:500;color:var(--text)">quais</strong> cartões você tem e o limite aproximado —
+        isso define para onde vale transferir pontos e qual cartão usar em cada compra.
+        Não pedimos número, validade nem código de segurança, e você não deve informar esses dados aqui.
+      </div>
+      <div id="cartoes"></div>
+      <button type="button" class="btn-add" id="add-cartao">+ Adicionar outro cartão</button>
+    </section>
+
+    <!-- ETAPA 6 — VIAGEM -->
+    <section class="etapa card" data-etapa="5" hidden>
+      <div class="card-h">Sobre suas viagens</div>
+      <div class="card-d">É a parte que mais nos ajuda a acertar. Escreva do seu jeito, sem se preocupar com formato.</div>
+
+      <div class="field">
+        <label>O que você quer realizar nos próximos 12 meses?</label>
+        <textarea id="objetivos" placeholder="Destinos que sonha conhecer, número de viagens, ocasiões especiais, quem viaja com você…"></textarea>
+      </div>
+      <div class="field">
+        <label>Como você gosta de viajar?</label>
+        <textarea id="estilo" placeholder="Hotel ou apartamento, econômica ou executiva, roteiro cheio ou tempo livre, comida local ou restaurante badalado…"></textarea>
+      </div>
+      <div class="field">
+        <label>Quem costuma viajar com você?</label>
+        <textarea id="acompanhantes" style="min-height:88px" placeholder="Uma pessoa por linha: Nome completo — data de nascimento — CPF"></textarea>
+        <p class="hint">Assim conseguimos emitir para todo mundo sem pedir os dados de novo a cada viagem.</p>
+      </div>
+    </section>
+
+    <div class="nav" id="nav">
+      <button type="button" class="btn btn-ghost" id="btn-voltar">Voltar</button>
+      <button type="button" class="btn btn-primary" id="btn-avancar">Continuar</button>
+    </div>
+  </form>
+
+  <!-- CONCLUSÃO -->
+  <div class="card done-box fade" id="done" hidden>
+    <div class="done-icon">✓</div>
+    <h2>Cadastro recebido</h2>
+    <p>Obrigado! Já temos tudo o que precisamos para começar. Vamos revisar suas informações e entrar em contato pelo WhatsApp em breve.</p>
+  </div>
+
+  <footer>Travel Concierge · Clube do Viajante</footer>
+</div>
+
+<script>
+(function () {
+'use strict';
+
+var PROXY = 'https://cdv-proxy-production.up.railway.app';
+
+// Ordem alfabética, convenção de todos os selects do ecossistema CDV.
+var PROGRAMAS = [
+  'AAdvantage', 'ALL Accor', 'Azul Fidelidade', 'Esfera', 'Executive Club',
+  'Iberia Plus', 'Itaú', 'KM de Vantagens', 'LATAM Pass', 'Livelo',
+  'Petrobras Premmia', 'Privilege Club', 'Shell Box', 'Smiles'
+];
+
+var UF = ['Acre','Alagoas','Amapá','Amazonas','Bahia','Ceará','Distrito Federal','Espírito Santo','Goiás','Maranhão','Mato Grosso','Mato Grosso do Sul','Minas Gerais','Pará','Paraíba','Paraná','Pernambuco','Piauí','Rio de Janeiro','Rio Grande do Norte','Rio Grande do Sul','Rondônia','Roraima','Santa Catarina','São Paulo','Sergipe','Tocantins'];
+
+var TITULOS = ['Consentimento', 'Dados pessoais', 'Endereço', 'Fidelidade', 'Cartões', 'Suas viagens'];
+var TOTAL = TITULOS.length;
+var etapa = 0;
+var enviando = false;
+
+function $(id) { return document.getElementById(id); }
+function val(id) { var e = $(id); return e ? e.value.trim() : ''; }
+function digitos(v) { return String(v || '').replace(/\D/g, ''); }
+
+// ── MONTAGEM ──────────────────────────────────────────────
+UF.forEach(function (uf) {
+  var o = document.createElement('option');
+  o.value = uf; o.textContent = uf;
+  $('estado').appendChild(o);
+});
+
+for (var i = 0; i < TOTAL; i++) $('prog').appendChild(document.createElement('i'));
+
+PROGRAMAS.forEach(function (nome, i) {
+  var d = document.createElement('div');
+  d.className = 'prog-item';
+  d.innerHTML =
+    '<label class="prog-top">' +
+      '<input type="checkbox" data-prog="' + i + '"/>' +
+      '<span class="prog-nome">' + nome + '</span>' +
+    '</label>' +
+    '<div class="prog-det">' +
+      '<div><label>Saldo aproximado</label><input type="text" inputmode="numeric" data-pontos="' + i + '" placeholder="Ex.: 45000"/></div>' +
+      '<div><label>Senha de acesso</label><input type="text" data-senha="' + i + '" placeholder="Senha do site/app" autocomplete="off"/></div>' +
+    '</div>';
+  d.querySelector('input[type=checkbox]').addEventListener('change', function () {
+    d.classList.toggle('on', this.checked);
+    if (this.checked) { var s = d.querySelector('[data-pontos]'); if (s) s.focus(); }
+  });
+  $('programas').appendChild(d);
+});
+
+function addCartao(placeholder) {
+  var n = $('cartoes').children.length + 1;
+  if (n > 8) return;
+  var f = document.createElement('div');
+  f.className = 'field';
+  f.innerHTML = '<label>Cartão ' + n + (n > 1 ? ' <span class="opt">— opcional</span>' : '') + '</label>' +
+    '<input type="text" data-cartao placeholder="' + (placeholder || 'Ex.: Itaú Personnalité Black — limite 20 mil') + '"/>';
+  $('cartoes').appendChild(f);
+}
+addCartao(); addCartao('Ex.: Nubank Ultravioleta — limite 8 mil');
+$('add-cartao').addEventListener('click', function () { addCartao(); });
+
+$('consentimento').addEventListener('change', function () {
+  $('consent-box').classList.toggle('on', this.checked);
+});
+
+// ── MÁSCARAS ──────────────────────────────────────────────
+$('cpf').addEventListener('input', function () {
+  var v = digitos(this.value).slice(0, 11);
+  this.value = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
+});
+$('tel').addEventListener('input', function () {
+  var v = digitos(this.value).slice(0, 11);
+  if (v.length > 10)      this.value = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
+  else if (v.length > 6)  this.value = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+  else if (v.length > 2)  this.value = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+  else                    this.value = v;
+});
+$('cep').addEventListener('input', function () {
+  var v = digitos(this.value).slice(0, 8);
+  this.value = v.length > 5 ? v.replace(/(\d{5})(\d{0,3})/, '$1-$2') : v;
+  if (v.length === 8) buscarCep(v);
+});
+
+// Preenchimento por CEP: conveniência pura. Se o serviço estiver fora do ar ou
+// o CEP não existir, o formulário segue normalmente com digitação manual.
+function buscarCep(cep) {
+  fetch('https://viacep.com.br/ws/' + cep + '/json/')
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (d.erro) return;
+      if (d.logradouro && !val('logradouro')) $('logradouro').value = d.logradouro;
+      if (d.bairro     && !val('bairro'))     $('bairro').value     = d.bairro;
+      if (d.localidade && !val('cidade'))     $('cidade').value     = d.localidade;
+      if (d.uf) {
+        var i = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'].indexOf(d.uf);
+        if (i > -1) $('estado').value = UF[i];
+      }
+      if (!val('numero')) $('numero').focus();
+    })
+    .catch(function () { /* silencioso de propósito */ });
+}
+
+// ── VALIDAÇÃO ─────────────────────────────────────────────
+function cpfValido(cpf) {
+  var t = digitos(cpf);
+  if (t.length !== 11 || /^(\d)\1{10}$/.test(t)) return false;
+  var cortes = [9, 10];
+  for (var k = 0; k < 2; k++) {
+    var corte = cortes[k], soma = 0;
+    for (var i = 0; i < corte; i++) soma += Number(t.charAt(i)) * (corte + 1 - i);
+    var dv = (soma * 10) % 11;
+    if (dv === 10) dv = 0;
+    if (dv !== Number(t.charAt(corte))) return false;
+  }
+  return true;
+}
+
+function marcar(id, ok) {
+  var f = $(id) ? $(id).closest('.field') : null;
+  if (f) f.classList.toggle('bad', !ok);
+  return ok;
+}
+
+function validarEtapa(n) {
+  var ok = true;
+  if (n === 0) {
+    if (!$('consentimento').checked) { aviso('É necessário aceitar o tratamento dos dados para continuar.'); return false; }
+  }
+  if (n === 1) {
+    ok = marcar('nome',  val('nome').split(/\s+/).length >= 2) && ok;
+    ok = marcar('tel',   digitos(val('tel')).length >= 10) && ok;
+    ok = marcar('email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val('email'))) && ok;
+    ok = marcar('cpf',   cpfValido(val('cpf'))) && ok;
+    ok = marcar('nasc',  !!val('nasc')) && ok;
+  }
+  if (n === 2) {
+    ok = marcar('cep',        digitos(val('cep')).length === 8) && ok;
+    ok = marcar('logradouro', !!val('logradouro')) && ok;
+    ok = marcar('cidade',     !!val('cidade')) && ok;
+    ok = marcar('estado',     !!val('estado')) && ok;
+  }
+  if (!ok) aviso('Confira os campos destacados.');
+  return ok;
+}
+
+function aviso(msg) {
+  var b = $('banner');
+  b.textContent = msg;
+  b.classList.add('show');
+  clearTimeout(aviso._t);
+  aviso._t = setTimeout(function () { b.classList.remove('show'); }, 6000);
+}
+
+// ── NAVEGAÇÃO ─────────────────────────────────────────────
+function render() {
+  var secoes = document.querySelectorAll('.etapa');
+  for (var i = 0; i < secoes.length; i++) {
+    var ativa = Number(secoes[i].getAttribute('data-etapa')) === etapa;
+    secoes[i].hidden = !ativa;
+    if (ativa) { secoes[i].classList.remove('fade'); void secoes[i].offsetWidth; secoes[i].classList.add('fade'); }
+  }
+  var barras = $('prog').children;
+  for (var j = 0; j < barras.length; j++) {
+    barras[j].className = j < etapa ? 'done' : (j === etapa ? 'on' : '');
+  }
+  $('step-label').textContent = (etapa + 1) + ' de ' + TOTAL + ' · ' + TITULOS[etapa];
+  $('btn-voltar').style.visibility = etapa === 0 ? 'hidden' : 'visible';
+  $('btn-avancar').textContent = etapa === TOTAL - 1 ? 'Enviar cadastro' : 'Continuar';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+$('btn-voltar').addEventListener('click', function () {
+  if (etapa > 0) { etapa--; render(); }
+});
+$('btn-avancar').addEventListener('click', function () {
+  if (enviando) return;
+  if (!validarEtapa(etapa)) return;
+  if (etapa < TOTAL - 1) { etapa++; render(); return; }
+  enviar();
+});
+
+// ── ENVIO ─────────────────────────────────────────────────
+function montarPayload() {
+  var programas = [], senhas = [];
+  PROGRAMAS.forEach(function (nome, i) {
+    var marcado = document.querySelector('[data-prog="' + i + '"]').checked;
+    var pontos  = document.querySelector('[data-pontos="' + i + '"]').value.trim();
+    var senha   = document.querySelector('[data-senha="' + i + '"]').value.trim();
+    programas.push({ programa: nome, tem: marcado, pontos: pontos });
+    if (senha) senhas.push({ programa: nome, senha: senha });
+  });
+
+  var cartoes = [];
+  var campos = document.querySelectorAll('[data-cartao]');
+  for (var i = 0; i < campos.length; i++) if (campos[i].value.trim()) cartoes.push(campos[i].value.trim());
+
+  return {
+    website:       val('website'),
+    consentimento: $('consentimento').checked,
+    nome:          val('nome'),
+    tel:           digitos(val('tel')),
+    email:         val('email'),
+    cpf:           digitos(val('cpf')),
+    nasc:          val('nasc'),
+    passaporte:    val('passaporte'),
+    passaporteVal: val('passaporteVal'),
+    cep:           digitos(val('cep')),
+    logradouro:    val('logradouro'),
+    numero:        val('numero'),
+    complemento:   val('complemento'),
+    bairro:        val('bairro'),
+    cidade:        val('cidade'),
+    estado:        val('estado'),
+    acompanhantes: val('acompanhantes'),
+    criarContas:   val('criarContas'),
+    programas:     programas,
+    outrosProgramas: val('outrosProgramas'),
+    senhas:        senhas,
+    senhasOutros:  val('senhasOutros'),
+    cartoes:       cartoes,
+    objetivos:     val('objetivos'),
+    estilo:        val('estilo')
+  };
+}
+
+function enviar() {
+  enviando = true;
+  var btn = $('btn-avancar');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Enviando…';
+
+  fetch(PROXY + '/concierge/cadastro', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(montarPayload())
+  })
+    .then(function (r) { return r.json().then(function (d) { return { status: r.status, d: d }; }); })
+    .then(function (res) {
+      if (!res.d.ok) throw new Error(res.d.erro || 'Não foi possível enviar agora.');
+      $('form').hidden = true;
+      $('prog').hidden = true;
+      $('step-label').hidden = true;
+      $('banner').classList.remove('show');
+      $('done').hidden = false;
+    })
+    .catch(function (e) {
+      enviando = false;
+      btn.disabled = false;
+      btn.textContent = 'Enviar cadastro';
+      aviso(e.message || 'Falha de conexão. Verifique sua internet e tente novamente.');
+    });
+}
+
+render();
+})();
+</script>
+</body>
+</html>
