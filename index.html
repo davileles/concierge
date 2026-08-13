@@ -2276,6 +2276,7 @@ function _blocoSenhas(perfil) {
       + '<span style="flex:0 0 150px;font-size:12px;font-weight:700">' + escHtml(it.programa) + '</span>'
       + '<span style="flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all">' + escHtml(it.senha) + '</span>'
       + (it.rotulo ? '<span class="tag" style="flex:0 0 auto">' + escHtml(it.rotulo) + '</span>' : '')
+      + (it.inferida ? '<span class="tag" style="flex:0 0 auto;color:var(--yellow);border-color:var(--yellow)" title="Deduzida do padrão do cliente — confirme no primeiro uso">inferida</span>' : '')
       + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="' + safe + '" title="Copiar senha">📋</button>'
       + '</div>';
   }).join('');
