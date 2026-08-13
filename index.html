@@ -2598,11 +2598,18 @@ function blocoDadosCliente(nomeStr) {
       + chipCli('E-mail', c.email)
       + chipCli('Endereço', endereco)
       + chipCli('Acomp', c.acompanhantes ? String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ') : '');
-    var senhas = c.senhas
-      ? '<div class="dem-cli-senhas"><pre>' + escHtml(c.senhas) + '</pre>'
-        + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="'
-        + String(c.senhas).split("'").join('&#39;').split('"').join('&quot;')
-        + '" title="Copiar senhas">📋</button></div>'
+    var perfCli = perfilDe(c.id);
+    var itensCli = (perfCli && perfCli.senhas && perfCli.senhas.itens) || [];
+    var senhas = itensCli.length
+      ? '<div class="dem-cli-senhas" style="display:block">' + itensCli.map(function(it){
+          var safe = String(it.senha).split("'").join('&#39;').split('"').join('&quot;');
+          return '<div style="display:flex;align-items:center;gap:8px;padding:4px 0">'
+            + '<span style="flex:0 0 130px;font-size:11px;font-weight:700">' + escHtml(it.programa) + '</span>'
+            + '<span style="flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;word-break:break-all">' + escHtml(it.senha) + '</span>'
+            + (it.inferida ? '<span class="tag" style="flex:0 0 auto;color:var(--yellow);border-color:var(--yellow)">inferida</span>' : '')
+            + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="' + safe + '" title="Copiar senha">📋</button>'
+            + '</div>';
+        }).join('') + '</div>'
       : '';
     return '<div class="dem-cli-linha">'
       + (achados.length > 1 ? '<div class="dem-cli-nome">' + escHtml(toTitleCase(c.nome)) + '</div>' : '')
@@ -2641,7 +2648,7 @@ function varsDemandaCliente(c) {
   var nasc = fmtDate(c.nasc);
   if (nasc === '—') nasc = '';
   var primeiro = String(c.nome || '').trim().split(/\s+/)[0] || '';
-  return [
+  var base = [
     { label: 'Acompanhantes', valor: c.acompanhantes ? String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ') : '' },
     { label: 'Bairro',        valor: c.bairro },
     { label: 'CEP',           valor: c.cep },
@@ -2656,9 +2663,18 @@ function varsDemandaCliente(c) {
     { label: 'Nome',          valor: tcNomeCompleto(c.nome) },
     { label: 'Número',        valor: c.numero },
     { label: 'Primeiro nome', valor: tcNomeCompleto(primeiro) },
-    { label: 'Senhas',        valor: c.senhas },
     { label: 'Telefone',      valor: c.tel }
-  ].filter(function(v){ return String(v.valor == null ? '' : v.valor).trim(); });
+  ];
+  // Uma variavel por programa: numa demanda de emissao pela Smiles o operador
+  // insere so a senha da Smiles, sem despejar as senhas todas na descricao.
+  // (Ate a fase 2 isto era um unico campo `c.senhas` em texto corrido; o campo
+  //  deixou de existir quando as senhas foram para o perfil.)
+  var perf = perfilDe(c.id);
+  var itens = (perf && perf.senhas && perf.senhas.itens) || [];
+  itens.forEach(function(it){
+    base.push({ label: 'Senha ' + it.programa, valor: it.senha, inferida: it.inferida === true });
+  });
+  return base.filter(function(v){ return String(v.valor == null ? '' : v.valor).trim(); });
 }
 
 function renderVarsDemanda(nomeStr) {
@@ -2674,7 +2690,8 @@ function renderVarsDemanda(nomeStr) {
       var val = String(v.valor).trim();
       return '<span class="dem-var-chip" onclick="inserirVarDemanda(this)"'
         + ' data-label="' + escAttrDem(v.label) + '" data-val="' + escAttrDem(val) + '"'
-        + ' title="Inserir ' + escAttrDem(v.label + ': ' + val.replace(/\n/g, ' ')) + '">'
+        + ' title="Inserir ' + escAttrDem(v.label + ': ' + val.replace(/\n/g, ' ')
+              + (v.inferida ? '  ⚠ senha inferida do padrão do cliente — confirme no primeiro uso' : '')) + '">'
         + '<b>' + escHtml(v.label) + '</b><span>' + escHtml(val.replace(/\n/g, ' ')) + '</span></span>';
     }).join('') + '</div>';
   });
