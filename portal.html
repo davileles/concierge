@@ -864,16 +864,16 @@ function entrar() {
   var btn=document.getElementById('btn-entrar');
   btn.textContent='Aguarde…'; btn.disabled=true;
 
-  fetch(PROXY+'/concierge/cfg')
+  // Base de clientes: cdv-tsp-dados/concierge/clientes.json via proxy.
+  // A planilha do Google saiu do fluxo — ela devolvia TODAS as linhas e colunas
+  // (CPF, endereco, senhas) para o browser do cliente antes de filtrar o e-mail.
+  fetch(PROXY+'/concierge/clientes',{cache:'no-store'})
     .then(function(r){return r.json();})
-    .then(function(cfgRes){
-      var cfg=cfgRes.data||{};
-      if(!cfg.url) throw new Error('Serviço temporariamente indisponível.');
-      function colIdx(l){var s=(l||'A').toUpperCase(),r=0;for(var i=0;i<s.length;i++)r=r*26+(s.charCodeAt(i)-64);return r-1;}
-      var sheetUrl=cfg.url+'?aba='+encodeURIComponent(cfg.aba||'Clientes')+'&linha='+encodeURIComponent(cfg.linha||2);
-      return fetch(sheetUrl).then(function(r){return r.json();}).then(function(sheetData){
-        var rows=sheetData.rows||[];
-        var clientesMatch=rows.map(function(row){return{nome:String(row[colIdx(cfg.colNome)]||'').trim(),email:String(row[colIdx(cfg.colEmail)]||'').trim().toLowerCase()};}).filter(function(c){return c.email===email&&c.nome;});
+    .then(function(cliRes){
+      if(!cliRes.ok) throw new Error('Serviço temporariamente indisponível.');
+      return Promise.resolve().then(function(){
+        var base=cliRes.data||[];
+        var clientesMatch=base.map(function(c){return{nome:String(c.nome||'').trim(),email:String(c.email||'').trim().toLowerCase()};}).filter(function(c){return c.email===email&&c.nome;});
         if(!clientesMatch.length) throw new Error('Nenhuma viagem encontrada para este e-mail.');
         var nomesCliente=clientesMatch.map(function(c){var p=c.nome.trim().split(/\s+/);return(p[0].charAt(0).toUpperCase()+p[0].slice(1).toLowerCase())+(p[1]?' '+p[1].charAt(0).toUpperCase()+p[1].slice(1).toLowerCase():'');});
         return Promise.all([
