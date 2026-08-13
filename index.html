@@ -674,7 +674,15 @@ header{animation:fadeUp .45s ease both}
           <div class="field"><label>Milhas por Passageiro <span class="tag">automático</span></label><input type="text" id="f-milhas" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
         </div>
         <div class="field"><label>Total de Passageiros <span style="color:var(--accent)">*</span></label><input type="number" id="f-pax" min="1" placeholder="Ex: 2" oninput="onPaxChange()"/></div>
-        <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
+        <div class="g2">
+          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
+          <div class="field"><label>A tarifa acima é <span class="tag">base do cálculo da economia</span></label>
+            <select id="f-tarifa-base">
+              <option value="pax">Por passageiro</option>
+              <option value="total">Total (todos os passageiros)</option>
+            </select>
+          </div>
+        </div>
       </div>
 
       <!-- DINHEIRO: só valor -->
@@ -723,8 +731,14 @@ header{animation:fadeUp .45s ease both}
           <div class="field"><label>Valor Total Gasto <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-total-balcao" placeholder="Ex: 6.400,00" oninput="formatMilhar(this);onValorBalcaoChange()"/></div>
         </div>
         <div class="g2">
-          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
+          <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span> <span style="color:var(--accent)">*</span></label><input type="text" id="f-valor-balcao" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
           <div class="field"><label>Valor por Passageiro <span class="tag">automático</span></label><input type="text" id="f-valor-pax-balcao" placeholder="Calculado automaticamente" readonly style="opacity:.7"/></div>
+        </div>
+        <div class="field"><label>A tarifa acima é <span class="tag">base do cálculo da economia</span></label>
+          <select id="f-tarifa-base-balcao">
+            <option value="pax">Por passageiro</option>
+            <option value="total">Total (todos os passageiros)</option>
+          </select>
         </div>
       </div>
     </div>
@@ -1133,6 +1147,12 @@ header{animation:fadeUp .45s ease both}
     <!-- Mensagem ao cliente — HTML gerado por htmlSecaoMensagem('nf') -->
     <div class="field" id="nf-msg-section" style="display:none"></div>
 
+    <!-- ECONOMIA GERADA — calculada automaticamente a partir das premissas de valor dos pontos -->
+    <div class="field" id="economia-box" style="display:none">
+      <label>💚 Economia Gerada <span class="tag">calculada automaticamente</span></label>
+      <div id="economia-render"></div>
+    </div>
+
     <div class="btn-row">
       <button class="btn btn-accent" id="btn-salvar-reserva" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
       <button class="btn btn-ghost" id="btn-cancelar-edicao" style="display:none" onclick="cancelarEdicaoReserva()">✕ Cancelar Edição</button>
@@ -1343,6 +1363,19 @@ header{animation:fadeUp .45s ease both}
       <button class="btn btn-danger btn-sm" onclick="limparDados()">🗑 Apagar todas as reservas</button>
     </div>
     <p id="cfg-ok" style="font-size:12px;font-weight:700;margin-top:10px;min-height:16px;color:#22c55e"></p>
+  </div>
+
+  <!-- VALOR DOS PONTOS (premissas da economia gerada) -->
+  <div class="card">
+    <div class="card-title">💎 Valor dos Pontos</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+      Premissa de mercado usada para calcular a <strong style="color:var(--text)">economia gerada</strong> de cada reserva:
+      quanto vale, em reais, cada <strong style="color:var(--text)">1.000 pontos/milhas</strong> de cada programa.
+      Em emissões com pontos, a economia é a tarifa pagante menos o custo dos pontos.
+      Em reservas em dinheiro com acúmulo, a economia é o valor de mercado dos pontos recebidos.
+      Deixe em branco para usar o valor padrão.
+    </p>
+    <div class="g3" id="cfg-pontos-grid"></div>
   </div>
 
   <!-- COMO CONFIGURAR -->
@@ -1997,7 +2030,38 @@ function _applyCfg(c) {
   setVal('cfg-linha',             c.linha           || '2');
   setVal('cfg-baileys',           c.baileys         || '');
   document.getElementById('script-code').textContent = APPS_SCRIPT_CODE;
+  renderCfgPontos(c.valoresPontos || {});
   aplicarTema(c.tema || 'dark');
+}
+
+// ── Valor dos pontos (premissas da economia gerada) ──────────────────────
+function slugPrograma(nome) { return String(nome).toLowerCase().replace(/[^a-z0-9]+/g, '-'); }
+
+function renderCfgPontos(valores) {
+  var grid = document.getElementById('cfg-pontos-grid');
+  if (!grid) return;
+  var nomes = Object.keys(VALORES_PONTOS_PADRAO).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  grid.innerHTML = nomes.map(function(nome){
+    var id  = 'cfg-pt-' + slugPrograma(nome);
+    var val = (valores && valores[nome] !== undefined && valores[nome] !== null && valores[nome] !== '')
+      ? String(valores[nome]).replace('.', ',') : '';
+    return '<div class="field"><label>' + escHtml(nome) + ' <span class="tag">R$ / 1.000</span></label>'
+         + '<input type="text" id="' + id + '" data-prog="' + escHtml(nome) + '" placeholder="Padrão: '
+         + String(VALORES_PONTOS_PADRAO[nome]).replace('.', ',') + '" value="' + val + '" oninput="saveCfg()"/></div>';
+  }).join('');
+}
+
+function coletarValoresPontos() {
+  var grid = document.getElementById('cfg-pontos-grid');
+  // Grid ainda nao renderizado: preserva o que ja esta no cfg (evita apagar as premissas)
+  if (!grid || !grid.children.length) return (_cfg && _cfg.valoresPontos) || {};
+  var out = {};
+  Object.keys(VALORES_PONTOS_PADRAO).forEach(function(nome){
+    var el = document.getElementById('cfg-pt-' + slugPrograma(nome));
+    var v  = el ? String(el.value).trim() : '';
+    if (v !== '') out[nome] = parseValorBR(v);
+  });
+  return out;
 }
 
 // ══════════════════════════════════════════
@@ -2057,7 +2121,8 @@ function _saveCfgNow() {
     grupoAlertas:     getVal('cfg-grupo-alertas').trim(),
     linha:            getVal('cfg-linha') || '2',
     baileys:          getVal('cfg-baileys'),
-    tema:             _cfg.tema || 'dark'
+    tema:             _cfg.tema || 'dark',
+    valoresPontos:    coletarValoresPontos()
   };
   _cfg = c;
   _saveCfgInFlight = true;
@@ -2752,7 +2817,7 @@ function limparForm() {
    'f-programa','f-milhas-total','f-milhas','f-pax','f-passageiros',
    'f-valor-dinheiro',
    'f-valor-acumulo','f-programa-acumulo-voo','f-fator-acumulo','f-milhas-acumulo','f-pax-acumulo',
-   'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor',
+   'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor','f-valor-balcao',
    'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes',
    'f-hotel-valor','f-hotel-programa-milhas','f-hotel-valor-tarifa',
    'f-hotel-valor-dinheiro',
@@ -3335,6 +3400,123 @@ function aplicarDadosAtivo(d) {
 }
 
 
+// ══════════════════════════════════════════
+//  ECONOMIA GERADA
+//  Premissa: quanto vale, em R$, cada 1.000 pontos/milhas de cada programa.
+//  Padrao abaixo; sobrescrevivel em Configuracao -> Valor dos Pontos
+//  (persistido em cfg.valoresPontos).
+// ══════════════════════════════════════════
+var VALORES_PONTOS_PADRAO = {
+  'AAdvantage':      100,
+  'Azul Fidelidade':  13,
+  'Esfera':           30,
+  'Executive Club':   60.90,
+  'Finnair Plus':     60.90,
+  'Iberia Plus':      60.90,
+  'LATAM Pass':       26,
+  'Livelo':           30,
+  'Privilege Club':   60.90,
+  'Smiles':           16,
+  'SUMA':             80
+};
+
+// Valor de 1.000 pontos do programa (cfg do usuario tem precedencia sobre o padrao).
+function valorMilheiro(programa) {
+  if (!programa) return 0;
+  var custom = (_cfg && _cfg.valoresPontos) || {};
+  var v = custom[programa];
+  if (v === undefined || v === null || v === '') v = VALORES_PONTOS_PADRAO[programa];
+  if (v === undefined || v === null || v === '') return 0;
+  return parseValorBR(v) || 0;
+}
+
+// 1.234,56 (sem prefixo R$ — os modelos ja escrevem "R$" antes da variavel)
+function fmtBRL(n) {
+  return (Number(n) || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function fmtPontos(n) {
+  return Math.round(Number(n) || 0).toLocaleString('pt-BR');
+}
+
+// Retorna { valor, ref, custo, modo, detalhe } para voo, hotel, locacao de carro e seguro.
+//  modo 'resgate' -> tarifa pagante menos o custo de mercado dos pontos usados
+//  modo 'balcao'  -> tarifa pagante menos o valor efetivamente desembolsado
+//  modo 'acumulo' -> valor de mercado dos pontos recebidos na reserva
+function calcularEconomia(r) {
+  var vazio = { valor: 0, ref: 0, custo: 0, modo: null, detalhe: '' };
+  if (!r) return vazio;
+  var isLoc = (r.tipo === 'carro' && r.subtipo === 'locacao');
+  if (r.tipo !== 'voo' && r.tipo !== 'hotel' && r.tipo !== 'seguro' && !isLoc) return vazio;
+  var te = r.tipoEmissao || '';
+
+  if (te === 'milhas') {
+    var prog, pontos, ref;
+    if (r.tipo === 'voo') {
+      prog   = r.programa || '';
+      pontos = parseValorBR(r.milhasTotal) || (parseValorBR(r.milhas) * (parseInt(r.pax, 10) || 1));
+      var tar = parseValorBR(r.valor);
+      ref = (r.tarifaBase === 'total') ? tar : tar * (parseInt(r.pax, 10) || 1);
+    } else {
+      prog   = r.programaMilhas || '';
+      pontos = parseValorBR(r.valorMilhas);
+      ref    = parseValorBR(r.valorTarifaPagante);
+    }
+    var vm = valorMilheiro(prog);
+    if (!ref || !pontos || !vm) return vazio;
+    var custo = pontos / 1000 * vm;
+    return { valor: ref - custo, ref: ref, custo: custo, modo: 'resgate',
+      detalhe: 'Tarifa pagante R$ ' + fmtBRL(ref) + ' − ' + fmtPontos(pontos) + ' ' + prog
+             + ' a R$ ' + fmtBRL(vm) + '/mil (R$ ' + fmtBRL(custo) + ')' };
+  }
+
+  if (te === 'balcao' && r.tipo === 'voo') {
+    var tarB = parseValorBR(r.valor);
+    var refB = (r.tarifaBase === 'total') ? tarB : tarB * (parseInt(r.paxBalcao, 10) || 1);
+    var custoB = parseValorBR(r.valorTotalBalcao);
+    if (!refB || !custoB) return vazio;
+    return { valor: refB - custoB, ref: refB, custo: custoB, modo: 'balcao',
+      detalhe: 'Tarifa pagante R$ ' + fmtBRL(refB) + ' − valor desembolsado R$ ' + fmtBRL(custoB) };
+  }
+
+  if (te === 'dinheiro_acumulo') {
+    var progA = (r.tipo === 'voo') ? (r.programaAcumuloVoo || '') : (r.programaAcumulo || '');
+    var ptsA  = parseValorBR(r.milhasAcumulo);
+    var vmA   = valorMilheiro(progA);
+    if (!ptsA || !vmA) return vazio;
+    var valA = ptsA / 1000 * vmA;
+    return { valor: valA, ref: 0, custo: 0, modo: 'acumulo',
+      detalhe: fmtPontos(ptsA) + ' ' + progA + ' acumulados a R$ ' + fmtBRL(vmA) + '/mil' };
+  }
+
+  return vazio;
+}
+
+// Box de previa no formulario de reserva.
+var _ecoTimer = null;
+function agendarEconomia() { clearTimeout(_ecoTimer); _ecoTimer = setTimeout(atualizarEconomiaBox, 250); }
+
+function atualizarEconomiaBox() {
+  var box = document.getElementById('economia-box');
+  var ren = document.getElementById('economia-render');
+  if (!box || !ren) return;
+  var r;
+  try { r = coletarReservaDoForm('PREVIEW'); } catch (e) { box.style.display = 'none'; return; }
+  var e = calcularEconomia(r);
+  if (!e.modo) { box.style.display = 'none'; ren.innerHTML = ''; return; }
+  var pos = e.valor > 0;
+  var cor = pos ? '#22c55e' : 'var(--accent)';
+  box.style.display = 'block';
+  ren.innerHTML =
+      '<div style="border:1px solid ' + cor + ';border-radius:10px;padding:12px 14px;background:rgba(34,197,94,' + (pos ? '.07' : '0') + ')">'
+    +   '<div style="font-size:22px;font-weight:800;color:' + cor + ';line-height:1.2">R$ ' + fmtBRL(e.valor) + '</div>'
+    +   '<div style="font-size:12px;color:var(--muted);margin-top:4px">' + escHtml(e.detalhe) + '</div>'
+    +   (pos ? '' : '<div style="font-size:12px;color:var(--accent);margin-top:6px">⚠️ Sem economia com essa premissa — confira a tarifa pagante e a base do cálculo.</div>')
+    + '</div>';
+}
+
+document.addEventListener('input',  function(ev){ if (ev.target && /^f-/.test(ev.target.id || '')) agendarEconomia(); });
+document.addEventListener('change', function(ev){ if (ev.target && /^f-/.test(ev.target.id || '')) agendarEconomia(); });
+
 // Monta o objeto da reserva a partir do formulario. Fonte unica usada por
 // salvarReserva() e pela pre-visualizacao da secao de mensagem embutida.
 function coletarReservaDoForm(id) {
@@ -3394,7 +3576,9 @@ function coletarReservaDoForm(id) {
       paxBalcao: getVal('f-pax-balcao'),
       valorTotalBalcao: getVal('f-valor-total-balcao'),
       valorPaxBalcao: getVal('f-valor-pax-balcao'),
-      valor: getVal('f-valor'),
+      valor: getVal('f-tipo-emissao') === 'balcao' ? (getVal('f-valor-balcao') || getVal('f-valor')) : getVal('f-valor'),
+      // Base do valor da tarifa pagante informada: 'pax' (padrao) ou 'total'
+      tarifaBase: (getVal('f-tipo-emissao') === 'balcao' ? getVal('f-tarifa-base-balcao') : getVal('f-tarifa-base')) || 'pax',
     });
   } else if (tipo === 'hotel') {
     Object.assign(res, {
@@ -3508,6 +3692,11 @@ function coletarReservaDoForm(id) {
   }
   var _cliG = clientes.find(function(c){ return c.nome === cliente; });
   if (_cliG && _cliG.grupo) res.grupo = _cliG.grupo;
+  // Economia gerada — congelada na reserva com as premissas vigentes no cadastro
+  var _eco = calcularEconomia(res);
+  res.economiaGerada  = _eco.valor > 0 ? fmtBRL(_eco.valor) : '';
+  res.economiaModo    = _eco.valor > 0 ? _eco.modo : '';
+  res.economiaDetalhe = _eco.valor > 0 ? _eco.detalhe : '';
   return res;
 }
 
@@ -4061,6 +4250,12 @@ function renderReservas() {
         + cols.filter(function(c){ return c[1] !== null && c[1] !== undefined && c[1] !== ''; })
               .map(function(c){ return '<div class="res-col"><div class="res-col-label">'+c[0]+'</div><div class="res-col-val">'+c[1]+'</div></div>'; }).join('')
         + '</div>'
+        + (function(){
+            var _e = calcularEconomia(r);
+            if (!(_e.valor > 0)) return '';
+            return '<div style="font-size:12px;color:#22c55e;font-weight:700;margin-top:10px">💚 Economia gerada: R$ ' + fmtBRL(_e.valor)
+                 + '<span style="font-weight:400;color:var(--muted)"> · ' + escHtml(_e.detalhe) + '</span></div>';
+          })()
         + (r.obs ? '<div style="font-size:12px;color:var(--muted);margin-top:10px;white-space:pre-wrap">📝 ' + escHtml(r.obs) + '</div>' : '');
 
       return '<tr class="dem-linha' + (urgente ? ' prioridade-alta' : '') + '" onclick="toggleLinha(this)">'
@@ -4226,6 +4421,9 @@ function preencherFormReserva(r, modo) {
     setVal('f-pax-balcao',r.paxBalcao||'');
     setVal('f-valor-total-balcao',r.valorTotalBalcao||''); setVal('f-valor-pax-balcao',r.valorPaxBalcao||'');
     setVal('f-valor',r.valor||'');
+    setVal('f-valor-balcao',r.valor||'');
+    setVal('f-tarifa-base',        r.tarifaBase||'pax');
+    setVal('f-tarifa-base-balcao', r.tarifaBase||'pax');
   } else if (r.tipo==='hotel'){
     setVal('f-hotel-nome',r.hotelNome); setVal('f-hotel-destino',r.destino);
     setVal('f-checkin',r.checkin); setVal('f-checkout',r.checkout);
@@ -4773,6 +4971,8 @@ var VARS_RESERVA = [
   { label: '{{seguro_acumulo_valor}}',   desc: 'Valor pago no seguro com acumulo de pontos (R$)' },
   { label: '{{seguro_milhas}}',          desc: 'Quantidade total de milhas gastas (seguro)' },
   { label: '{{seguro_valor_tarifa}}',    desc: 'Valor da tarifa pagante do seguro (R$)' },
+  { label: '{{economia}}',               desc: 'Economia gerada na reserva (R$, sem prefixo)' },
+  { label: '{{economia_detalhe}}',       desc: 'Memoria de calculo da economia gerada' },
   { label: '{{status_cia}}',             desc: 'Status do voo: cia aerea do trecho' },
   { label: '{{status_voo_num}}',         desc: 'Status do voo: numero do voo do trecho' },
   { label: '{{status_origem}}',          desc: 'Status do voo: origem do trecho' },
@@ -5445,6 +5645,9 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'milhas_total', res.milhasTotal||'');
     txt = rv(txt, 'valor_tarifa', res.valor||res.valorAcumulo||'');
     txt = rv(txt, 'valor_dinheiro', res.tipo==='voo' ? (res.valorDinheiro||'') : '');
+    var _eco = calcularEconomia(res);
+    txt = rv(txt, 'economia',         _eco.valor > 0 ? fmtBRL(_eco.valor) : (res.economiaGerada || ''));
+    txt = rv(txt, 'economia_detalhe', _eco.valor > 0 ? _eco.detalhe       : (res.economiaDetalhe || ''));
     txt = rv(txt, 'pax', res.pax);
     txt = rv(txt, 'hotel', res.hotelNome);
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
