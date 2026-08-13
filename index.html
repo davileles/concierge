@@ -1254,11 +1254,15 @@ header{animation:fadeUp .45s ease both}
     <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="verificarBaileys()">🔄 Verificar</button>
   </div>
   <div class="card">
-    <div class="card-title">⚙️ Configuração do Google Sheets</div>
+    <div class="card-title">⚙️ Configuração</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+      A base de clientes agora vive em <strong style="color:var(--text)">cdv-tsp-dados/concierge/clientes.json</strong> (repo privado) e é lida pelo proxy CDV.
+      Os campos de planilha abaixo são <strong style="color:var(--text)">legado</strong> — servem apenas ao botão “Reimportar da planilha”, que roda no servidor e <strong style="color:var(--text)">sobrescreve</strong> a base.
+    </p>
     <div class="settings-row">
       <div>
-        <div class="settings-label">URL do Apps Script (Web App)</div>
-        <div class="settings-desc">Cole a URL publicada do seu Google Apps Script com permissão "Anyone"</div>
+        <div class="settings-label">URL do Apps Script (Web App) <span class="tag">legado</span></div>
+        <div class="settings-desc">Usada só na reimportação pontual a partir da planilha</div>
       </div>
     </div>
     <div class="field" style="margin-top:12px">
@@ -1332,7 +1336,8 @@ header{animation:fadeUp .45s ease both}
     </div>
     <div class="sep"></div>
     <div class="btn-row">
-      <button class="btn btn-blue" onclick="syncClientes()">🔄 Testar Conexão e Sincronizar</button>
+      <button class="btn btn-blue" onclick="syncClientes()">🔄 Recarregar clientes</button>
+      <button class="btn btn-ghost btn-sm" onclick="reimportarPlanilha()">⬇️ Reimportar da planilha (legado)</button>
       <button class="btn btn-ghost btn-sm" onclick="backfillGrupos()">🔗 Atualizar grupo em todas as reservas</button>
       <button class="btn btn-danger btn-sm" onclick="limparDados()">🗑 Apagar todas as reservas</button>
     </div>
@@ -2141,71 +2146,46 @@ function syncReservas() {
 }
 
 // ══════════════════════════════════════════
-//  SYNC CLIENTES (Google Sheets)
+//  SYNC CLIENTES (JSON no repo privado)
 // ══════════════════════════════════════════
+// A base vinha do Apps Script ate agora. O /exec responde 302 para
+// script.googleusercontent.com/macros/echo?user_content_key=<KEY>, e essa KEY e
+// de uso praticamente unico: cache do Chrome, duas chamadas concorrentes ou
+// deploy revalidado devolviam 404. E as paginas de erro do Apps Script nao
+// mandam CORS, entao aba renomeada chegava aqui indistinguivel de queda de rede.
+// Agora a fonte da verdade e cdv-tsp-dados/concierge/clientes.json (repo privado:
+// tem CPF, endereco, nascimento e senhas). A planilha so entra pelo botao de
+// reimportacao, que roda server-side no proxy.
 function syncClientes() {
-  var c = getCfg();
   var dot = document.getElementById('sync-dot');
   var lbl = document.getElementById('sync-label');
   dot.className = 'sync-dot loading';
-  lbl.textContent = 'Sincronizando com Google Sheets…';
+  lbl.textContent = 'Carregando base de clientes…';
 
-  if (!c.url) {
-    dot.className = 'sync-dot err';
-    lbl.textContent = 'URL do Apps Script não configurada. Acesse a aba Configuração.';
-    return;
-  }
-
-  var base = c.url + '?aba=' + encodeURIComponent(c.aba || 'Clientes') + '&linha=' + encodeURIComponent(c.linha || 2);
-  // O /exec nunca serve o JSON direto: responde 302 para
-  // script.googleusercontent.com/macros/echo?user_content_key=<KEY>. Essa KEY e de
-  // uso praticamente unico. Se o Chrome servir esse 2o hop do cache (ou deduplicar
-  // duas chamadas concorrentes de syncClientes), a KEY ja foi consumida e o /echo
-  // devolve 404 — que chega legivel ao JS porque aquele host manda ACAO: *.
-  // _ts quebra o cache, no-store impede a deduplicacao e o retry cobre a corrida.
-  function buscar() {
-    return fetch(base + '&_ts=' + Date.now(), { cache: 'no-store', redirect: 'follow' });
-  }
-  buscar()
-    .then(function(r){
-      return r.status === 404 ? buscar() : r;
-    })
-    .then(function(r){
-      return r.text().then(function(t){
-        if (!r.ok) throw new Error('HTTP ' + r.status + ' no Apps Script');
-        var d;
-        try { d = JSON.parse(t); }
-        catch (eJson) {
-          var m = t.match(/errorMessage[^>]*>([\s\S]{0,300}?)</);
-          throw new Error('Apps Script devolveu HTML em vez de JSON — aba "' + (c.aba || 'Clientes') +
-            '" inexistente/renomeada, deploy antigo ou sem permissao' +
-            (m ? ' · ' + m[1].replace(/\s+/g, ' ').trim() : ''));
-        }
-        if (!d.ok) throw new Error('Apps Script respondeu ok=false' + ((d.erro || d.error) ? ': ' + (d.erro || d.error) : ''));
-        if (!Array.isArray(d.rows)) throw new Error('Apps Script nao retornou o campo "rows"');
-        return d;
-      });
-    })
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
     .then(function(d){
-      clientes = d.rows.map(function(row, i){
+      if (!d.ok) throw new Error(d.erro || 'resposta invalida do proxy');
+      clientes = (d.data || []).map(function(c, i){
         return {
-          id: 'cli-' + i,
-          nome:          toTitleCase(String(row[colIndex(c.colNome)] || '')),
-          tel:           String(row[colIndex(c.colTel)]           || '').trim(),
-          email:         String(row[colIndex(c.colEmail)]         || '').trim(),
-          cpf:           String(row[colIndex(c.colCpf)]           || '').trim(),
-          nasc:          String(row[colIndex(c.colNasc)]          || '').trim(),
-          logradouro:    String(row[colIndex(c.colLogradouro)]    || '').trim(),
-          numero:        String(row[colIndex(c.colNumero)]        || '').trim(),
-          complemento:   String(row[colIndex(c.colComplemento)]   || '').trim(),
-          cep:           String(row[colIndex(c.colCep)]           || '').trim(),
-          bairro:        String(row[colIndex(c.colBairro)]        || '').trim(),
-          cidade:        String(row[colIndex(c.colCidade)]        || '').trim(),
-          estado:        String(row[colIndex(c.colEstado)]        || '').trim(),
-          senhas:        String(row[colIndex(c.colSenhas)]        || '').trim(),
-          acompanhantes: String(row[colIndex(c.colAcompanhantes)] || '').trim(),
-          grupo:         String(row[colIndex(c.colGrupo)]         || '').trim(),
-          ativo:         ehClienteAtivo(row[colIndex(c.colAtivo || 'P')]),
+          id:            c.id || ('cli-' + i),
+          nome:          toTitleCase(String(c.nome || '')),
+          tel:           String(c.tel           || '').trim(),
+          email:         String(c.email         || '').trim(),
+          cpf:           String(c.cpf           || '').trim(),
+          nasc:          String(c.nasc          || '').trim(),
+          logradouro:    String(c.logradouro    || '').trim(),
+          numero:        String(c.numero        || '').trim(),
+          complemento:   String(c.complemento   || '').trim(),
+          cep:           String(c.cep           || '').trim(),
+          bairro:        String(c.bairro        || '').trim(),
+          cidade:        String(c.cidade        || '').trim(),
+          estado:        String(c.estado        || '').trim(),
+          senhas:        String(c.senhas        || '').trim(),
+          acompanhantes: String(c.acompanhantes || '').trim(),
+          grupo:         String(c.grupo         || '').trim(),
+          ativo:         c.ativo === true,
+          origem:        c.origem || 'planilha'
         };
       }).filter(function(c){ return c.nome; });
       dot.className = 'sync-dot ok';
@@ -2222,31 +2202,38 @@ function syncClientes() {
         dot.className = 'sync-dot err';
         lbl.textContent = clientes.length + ' clientes carregados · falha ao renderizar: ' + eRender.message;
       }
-      showToast('✅ ' + clientes.length + ' clientes sincronizados', 'ok');
-      var okEl = document.getElementById('cfg-ok');
-      if (okEl) {
-        okEl.style.color = '#22c55e';
-        okEl.textContent = '✅ Conexão estabelecida com sucesso!';
-        setTimeout(function(){ okEl.textContent = ''; }, 4000);
-      }
+      showToast('✅ ' + clientes.length + ' clientes carregados', 'ok');
     })
     .catch(function(e){
       console.error('[syncClientes]', e);
       dot.className = 'sync-dot err';
       var motivo = (e && e.message) ? e.message : 'erro desconhecido';
-      if (e && (e.name === 'TypeError' || /Failed to fetch|NetworkError|Load failed/i.test(motivo))) {
-        // O Apps Script NAO envia Access-Control-Allow-Origin nas suas paginas de
-        // erro — entao aba inexistente/deploy removido chegam aqui como CORS block,
-        // indistinguiveis de queda de rede. Listar as causas provaveis.
-        motivo = 'sem resposta do Apps Script — verifique se a aba "' + (c.aba || 'Clientes') +
-                 '" existe na planilha, se o deploy continua ativo e o acesso esta como "Qualquer pessoa"';
-      }
-      lbl.textContent = 'Falha ao sincronizar: ' + motivo;
-      var okErrEl = document.getElementById('cfg-ok');
-      if (okErrEl) { okErrEl.style.color = '#ff585e'; okErrEl.textContent = '❌ ' + motivo; }
+      lbl.textContent = 'Falha ao carregar clientes: ' + motivo;
       var csel = document.getElementById('d-cliente');
-      if (csel && !clientes.length) csel.innerHTML = '<option value="">— falha ao sincronizar clientes —</option>';
-      showToast('❌ Falha na sincronização', 'err');
+      if (csel && !clientes.length) csel.innerHTML = '<option value="">— falha ao carregar clientes —</option>';
+      showToast('❌ Falha ao carregar clientes', 'err');
+    });
+}
+
+// Reimportacao pontual da planilha (legado). Roda no Railway: sem CORS, sem
+// cache do browser, sem a corrida da user_content_key. SOBRESCREVE a base.
+function reimportarPlanilha() {
+  if (!confirm('Reimportar da planilha do Google?\n\nIsso SOBRESCREVE a base de clientes atual com o conteudo da planilha. Edicoes feitas aqui no painel serao perdidas.')) return;
+  var okEl = document.getElementById('cfg-ok');
+  if (okEl) { okEl.style.color = ''; okEl.textContent = '⏳ Importando…'; }
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes/importar', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha na importacao');
+      if (okEl) { okEl.style.color = '#22c55e'; okEl.textContent = '✅ ' + d.total + ' clientes importados'; }
+      showToast('✅ ' + d.total + ' clientes importados', 'ok');
+      syncClientes();
+    })
+    .catch(function(e){
+      if (okEl) { okEl.style.color = '#ff585e'; okEl.textContent = '❌ ' + e.message; }
+      showToast('❌ ' + e.message, 'err');
     });
 }
 
