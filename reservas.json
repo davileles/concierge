@@ -5406,5 +5406,39 @@
     "valorPaxBalcao": "",
     "valor": "1235",
     "grupo": "120363418603292365@g.us"
+  },
+  {
+    "id": "RES-1786733818737",
+    "tipo": "carro",
+    "cliente": "Oswaldo Luiz Chiabi",
+    "obs": "TGV Lyria 9774. Voiture 18 - lugares 810 (Monica Queiroz) e 811 (Oswaldo Queiroz), 2a classe, assentos prioritarios no andar inferior. Dossie 9T7GTV. E-bilhetes: 987374961 (Monica) e 420625964 (Oswaldo). Tarifa Semi Flex Standard: troca sem custo ate 7 dias antes; apos, taxa de EUR 25 por bilhete. Presenca obrigatoria no cais 2 min antes da partida. Emitido via Omio.",
+    "cadastro": "2026-08-14",
+    "arquivosAnexos": [
+      {
+        "nome": "Trem - Genebra-Paris 06:09.pdf",
+        "tipo": "application/pdf",
+        "tamanho": 430691,
+        "base64": null
+      }
+    ],
+    "arquivoAnexo": {
+      "nome": "Trem - Genebra-Paris 06:09.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 430691,
+      "base64": null
+    },
+    "temArquivo": true,
+    "subtipo": "trem",
+    "locadora": "TGV Lyria / SNCF",
+    "retLocal": "Genève Cornavin",
+    "devLocal": "Paris Gare de Lyon",
+    "retData": "2026-09-06",
+    "categoria": "TGV Lyria 9774 - 2ª Classe - Voiture 18",
+    "horaTransfer": "14:27",
+    "horaChegadaTransp": "17:42",
+    "pax": "2",
+    "valor": "204.00",
+    "conf": "9T7GTV",
+    "grupo": "120363423899202830@g.us"
   }
 ]
