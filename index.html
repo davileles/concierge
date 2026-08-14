@@ -6860,6 +6860,11 @@ function salvarViagem() {
   var clientes = getVal('vf-clientes');
   if (!nome) { showToast('⚠️ Informe o nome da viagem','err'); return; }
   if (!clientes) { showToast('⚠️ Informe o(s) cliente(s)','err'); return; }
+  var vfIni = getVal('vf-inicio'), vfFim = getVal('vf-fim');
+  if (vfIni && vfFim && vfFim < vfIni) {
+    showToast('⚠️ Data de fim (' + fmtDate(vfFim) + ') é anterior à data de início (' + fmtDate(vfIni) + ')','err');
+    return;
+  }
 
   if (viagemEditandoId) {
     var idx = viagens.findIndex(function(v){ return v.id === viagemEditandoId; });
@@ -7083,10 +7088,19 @@ function vgHojeISO() {
 
 // Fallback para v.inicio quando a viagem nao tem data fim cadastrada.
 // Viagem sem nenhuma data nunca e considerada passada.
+function viagemDatasInvertidas(v) {
+  var ini = String((v && v.inicio) || '').trim().slice(0,10);
+  var fim = String((v && v.fim) || '').trim().slice(0,10);
+  return !!(ini && fim && fim < ini);
+}
+
+// Datas invertidas nao escondem a viagem: usa a data mais recente como referencia.
 function viagemPassada(v) {
-  var fim = String((v && (v.fim || v.inicio)) || '').trim().slice(0,10);
-  if (!fim) return false;
-  return fim < vgHojeISO();
+  var ini = String((v && v.inicio) || '').trim().slice(0,10);
+  var fim = String((v && v.fim) || '').trim().slice(0,10);
+  var ref = (ini && fim) ? (fim > ini ? fim : ini) : (fim || ini);
+  if (!ref) return false;
+  return ref < vgHojeISO();
 }
 
 function toggleViagensPassadas() {
@@ -7135,6 +7149,11 @@ function renderViagens() {
     var periodo = '';
     if (v.inicio && v.fim) periodo = fmtDate(v.inicio)+' &rarr; '+fmtDate(v.fim);
     else if (v.inicio) periodo = 'A partir de '+fmtDate(v.inicio);
+    var avisoDatas = viagemDatasInvertidas(v)
+      ? '<span style="display:inline-block;margin-left:6px;padding:1px 7px;border-radius:20px;font-size:10px;font-weight:700;'
+        + 'background:rgba(255,88,94,.14);color:var(--accent);border:1px solid rgba(255,88,94,.3)" '
+        + 'title="A data de fim e anterior a data de inicio. Edite a viagem para corrigir.">&#9888;&#65039; Datas invertidas</span>'
+      : '';
     loadReservas();
     var ativsHtml = ativs.length ? ativs.map(function(a,i){
       var res = a.reservaId ? reservas.find(function(r){ return r.id===a.reservaId; }) : null;
@@ -7178,7 +7197,7 @@ function renderViagens() {
         '<div style="font-size:24px">🗺️</div>',
         '<div class="viagem-info">',
           '<div class="viagem-nome">',v.nome,'</div>',
-          '<div class="viagem-meta">',v.clientes,(periodo?' · '+periodo:''),'</div>',
+          '<div class="viagem-meta">',v.clientes,(periodo?' · '+periodo:''),avisoDatas,'</div>',
         '</div>',
         '<div class="viagem-chevron">▼</div>',
         '<div class="viagem-progress-wrap">',
