@@ -1145,6 +1145,16 @@ header{animation:fadeUp .45s ease both}
       <p id="upload-ok" style="font-size:12px;font-weight:700;margin-top:8px;min-height:14px;color:#22c55e"></p>
     </div>
 
+    <!-- TEXTO COLADO — extração com IA a partir de texto puro -->
+    <div class="field">
+      <label>📋 Colar Informações <span class="tag">cole o texto da reserva — a IA extrai e preenche os campos</span></label>
+      <textarea id="texto-ativo" placeholder="Cole aqui o e-mail, itinerário ou texto da reserva… A extração começa automaticamente ao colar." style="min-height:110px" onpaste="onTextoAtivoPaste()"></textarea>
+      <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="extrairTextoColado()">🪄 Extrair dados do texto</button>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="limparTextoAtivo()">✕ Limpar</button>
+      </div>
+    </div>
+
     <div class="field">
       <label>Observações <span class="tag">opcional</span></label>
       <textarea id="f-obs" placeholder="Preferências especiais, notas internas, pendências…" style="min-height:80px"></textarea>
@@ -3126,6 +3136,41 @@ function enviarAtivoParaIA(payload) {
   });
 }
 
+
+// ══ TEXTO COLADO — extracao de reserva a partir de texto puro ══
+function onTextoAtivoPaste() {
+  // Aguarda o valor do textarea ser atualizado apos o paste
+  setTimeout(function(){
+    var el = document.getElementById('texto-ativo');
+    if (el && el.value.trim().length >= 40) extrairTextoColado();
+  }, 250);
+}
+
+function limparTextoAtivo() {
+  var el = document.getElementById('texto-ativo');
+  if (el) el.value = '';
+  var okEl = document.getElementById('upload-ok');
+  if (okEl) { okEl.style.color = 'var(--muted)'; okEl.textContent = ''; }
+}
+
+function extrairTextoColado() {
+  var el = document.getElementById('texto-ativo');
+  var okEl = document.getElementById('upload-ok');
+  var texto = el ? el.value.trim() : '';
+  if (!texto) {
+    if (okEl) { okEl.style.color = 'var(--accent)'; okEl.textContent = '⚠️ Cole o texto da reserva antes de extrair.'; }
+    return;
+  }
+  // Junta o texto colado com eventuais arquivos ja lidos — tudo da MESMA reserva
+  var docs = ativoArquivos.filter(function(a){ return a.pronto && a.doc; }).map(function(a){ return a.doc; });
+  docs.push({ texto: texto.slice(0, 60000), nome: 'texto-colado' });
+  var lendoEl = document.getElementById('upload-lendo');
+  if (lendoEl) {
+    var lbl = lendoEl.querySelector('span');
+    if (lbl) lbl.textContent = docs.length > 1 ? 'Lendo texto + arquivos com IA…' : 'Lendo texto com IA…';
+  }
+  enviarAtivoParaIA({ documentos: docs });
+}
 
 function aplicarDadosAtivo(d) {
   function sv(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; }
