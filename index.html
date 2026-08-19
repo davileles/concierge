@@ -3817,7 +3817,7 @@ function salvarReserva(cb) {
     .then(function(){
       if (_btnSalvar) { _btnSalvar.disabled = false; _btnSalvar.style.opacity = ''; }
       showToast(_comViagem ? '✅ Reserva salva e vinculada à viagem!' : '✅ Reserva salva com sucesso!', 'ok');
-      _cb(true);
+      _cb(true, _resId);
       updateStats();
       renderReservas();
       limparForm();
@@ -4147,17 +4147,30 @@ function renderReservas() {
             return '<div style="font-size:12px;color:#22c55e;font-weight:700;margin-top:10px">💚 Economia gerada: R$ ' + fmtBRL(_e.valor)
                  + '<span style="font-weight:400;color:var(--muted)"> · ' + escHtml(_e.detalhe) + '</span></div>';
           })()
-        + (r.obs ? '<div style="font-size:12px;color:var(--muted);margin-top:10px;white-space:pre-wrap">📝 ' + escHtml(r.obs) + '</div>' : '');
+        + (r.obs ? '<div style="font-size:12px;color:var(--muted);margin-top:10px;white-space:pre-wrap">📝 ' + escHtml(r.obs) + '</div>' : '')
+        + (r.msgPendente
+            ? '<div style="margin-top:12px;border:1px solid rgba(245,158,11,.45);background:rgba(245,158,11,.10);border-radius:8px;padding:10px 12px">'
+              + '<div style="font-size:12px;font-weight:700;color:#f59e0b;margin-bottom:6px">⚠️ Mensagem não enviada ao cliente</div>'
+              + '<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Motivo: ' + escHtml(r.msgPendente.motivo || '—')
+              +   ' · ' + fmtDate(String(r.msgPendente.em || '').slice(0,10))
+              +   ' · grupo <span style="font-family:monospace">' + escHtml(r.msgPendente.grupo || '—') + '</span></div>'
+              + '<div style="font-size:12px;color:var(--text);white-space:pre-wrap;max-height:160px;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px;margin-bottom:8px">' + escHtml(r.msgPendente.texto || '') + '</div>'
+              + '<button class="dem-acao" style="width:auto;padding:6px 12px;font-size:12px" data-vid="' + r.id + '" onclick="event.stopPropagation();reenviarMsgPendente(this.dataset.vid)">↻ Reenviar mensagem</button> '
+              + '<button class="dem-acao del" style="width:auto;padding:6px 12px;font-size:12px" data-vid="' + r.id + '" onclick="event.stopPropagation();descartarMsgPendente(this.dataset.vid)">🗑 Descartar</button>'
+            + '</div>'
+            : '');
 
       return '<tr class="dem-linha' + (urgente ? ' prioridade-alta' : '') + '" onclick="toggleLinha(this)">'
         + '<td class="dem-td-icon">' + icon + '</td>'
-        + '<td><div class="dem-td-titulo">' + resTitle(r) + urgenteBadge + '</div>'
+        + '<td><div class="dem-td-titulo">' + resTitle(r) + urgenteBadge
+        +   (r.msgPendente ? '<span class="urgente-badge" style="background:rgba(245,158,11,.18);color:#f59e0b">⚠️ msg não enviada</span>' : '') + '</div>'
         +   '<div class="dem-td-sub">' + r.id + ' · cadastro ' + fmtDate(r.cadastro) + '</div></td>'
         + '<td class="dem-td-sec">' + escHtml(r.cliente || '—') + '</td>'
         + '<td class="dem-td-sec">' + (dataRef ? fmtDate(dataRef) : '—') + '</td>'
         + '<td class="dem-td-sec">' + (dataFimCol ? fmtDate(dataFimCol) : '—') + '</td>'
         + '<td class="dem-td-sec">' + escHtml(loc) + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()">'
+        +   (r.msgPendente ? '<button class="dem-acao" title="Mensagem não enviada — clique para reenviar" style="color:#f59e0b" data-vid="'+r.id+'" onclick="reenviarMsgPendente(this.dataset.vid)">↻</button>' : '')
         +   ((r.temArquivo || (r.arquivoAnexo && r.arquivoAnexo.nome)) ? '<button class="dem-acao" title="Ver bilhete" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎</button>' : '')
         +   '<button class="dem-acao" title="Editar" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️</button>'
         +   '<button class="dem-acao" title="Duplicar" data-vid="'+r.id+'" onclick="duplicarReserva(this.dataset.vid)">📄</button>'
@@ -7390,11 +7403,18 @@ function removerMsgImg(px) {
 // anexo (opcional): { base64, mime, nome, ehImagem } — quando presente vai por
 // /enviar-imagem (image/*) ou /enviar-arquivo (PDF, DOCX, XLSX...), sempre com o
 // texto como legenda (caption), em um unico disparo.
-function enviarWhatsApp(grupo, texto, statusEl, imagem) {
+function enviarWhatsApp(grupo, texto, statusEl, imagem, cbs) {
   var url = getBaileysUrl();
-  if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
-  if (!texto && !imagem) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
-  if (!url)   { showToast('⚠️ URL do Baileys não configurada', 'err'); return; }
+  // Falha SEMPRE avisa por toast. Quando statusEl e nulo (fluxo "Salvar Reserva
+  // e Enviar", que limpa o formulario antes do disparo) o erro ia parar num
+  // elemento inexistente e a mensagem sumia sem nenhum sinal na tela.
+  var _falhou = function(motivo) {
+    showToast('❌ Mensagem NÃO enviada — ' + motivo, 'err');
+    if (cbs && typeof cbs.falha === 'function') cbs.falha(motivo);
+  };
+  if (!grupo) { _falhou('selecione um cliente com grupo cadastrado'); return; }
+  if (!texto && !imagem) { _falhou('a mensagem está vazia'); return; }
+  if (!url)   { _falhou('URL do Baileys não configurada'); return; }
   var set = function(cor, txt) {
     if (!statusEl) return;
     statusEl.style.color = cor; statusEl.textContent = txt;
@@ -7418,15 +7438,81 @@ function enviarWhatsApp(grupo, texto, statusEl, imagem) {
     if (d.ok||d.success||d.status==='sent') {
       set('#22c55e', '✅ Mensagem enviada!');
       showToast('✅ Mensagem enviada!','ok');
+      if (cbs && typeof cbs.ok === 'function') cbs.ok();
     } else {
-      set('#ff585e', '❌ '+(d.erro||d.error||d.message||'falha'));
+      var _m = (d.erro||d.error||d.message||'falha no servidor');
+      set('#ff585e', '❌ '+_m);
+      _falhou(_m);
     }
     setTimeout(function(){ set('', ''); }, 5000);
   })
   .catch(function(){
     set('#ff585e', '❌ Sem resposta do servidor');
+    _falhou('sem resposta do servidor Baileys');
     setTimeout(function(){ set('', ''); }, 5000);
   });
+}
+
+// ── BAILEYS: disponibilidade + fila de reenvio ───────────────────────────
+// Em 19/08 duas reservas foram salvas durante um redeploy do Railway: o proxy
+// CDV (outro servico) gravou normalmente, o baileys-server estava fora do ar e
+// o disparo falhou em silencio. Agora o estado e conferido ANTES de salvar e a
+// mensagem que nao saiu fica presa na propria reserva, pronta para reenvio.
+function checarBaileys(cb) {
+  var url = getBaileysUrl();
+  if (!url) { cb(false, 'URL do Baileys não configurada'); return; }
+  fetch(url + '/status', { cache:'no-store', signal: AbortSignal.timeout(8000) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d && d.conectado && d.sockAtivo) cb(true, '');
+      else cb(false, d && d.conectado ? 'socket inativo' : 'WhatsApp desconectado');
+    })
+    .catch(function(){ cb(false, 'servidor não respondeu'); });
+}
+
+function guardarMsgPendente(resId, grupo, texto, motivo) {
+  if (!resId) return;
+  var idx = reservas.findIndex(function(x){ return x.id === resId; });
+  if (idx === -1) return;
+  reservas[idx].msgPendente = {
+    grupo:  grupo,
+    texto:  texto,
+    motivo: motivo || 'falha no envio',
+    em:     new Date().toISOString()
+  };
+  saveReservas()
+    .then(function(){
+      renderReservas();
+      showToast('📌 Mensagem guardada — reenvie pelo card da reserva', 'err');
+    })
+    .catch(function(e){ console.error('[msgPendente]', e.message); });
+}
+
+function reenviarMsgPendente(resId) {
+  var r = reservas.find(function(x){ return x.id === resId; });
+  if (!r || !r.msgPendente) { showToast('⚠️ Nada pendente nessa reserva', 'err'); return; }
+  var p = r.msgPendente;
+  checarBaileys(function(okWA, motivo){
+    if (!okWA) { showToast('❌ WhatsApp indisponível — ' + motivo, 'err'); return; }
+    enviarWhatsApp(p.grupo, p.texto, null, null, {
+      ok: function(){
+        var i = reservas.findIndex(function(x){ return x.id === resId; });
+        if (i === -1) return;
+        delete reservas[i].msgPendente;
+        saveReservas().then(function(){ renderReservas(); }).catch(function(){});
+      }
+    });
+  });
+}
+
+function descartarMsgPendente(resId) {
+  if (!confirm('Descartar a mensagem pendente desta reserva?')) return;
+  var i = reservas.findIndex(function(x){ return x.id === resId; });
+  if (i === -1) return;
+  delete reservas[i].msgPendente;
+  saveReservas()
+    .then(function(){ renderReservas(); showToast('🗑 Pendência descartada', 'ok'); })
+    .catch(function(){});
 }
 
 function dispararMensagem() {
@@ -7800,9 +7886,23 @@ function enviarMsgCtx(px) {
   if (px === 'nf') {
     if (!texto && !img) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
     if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
-    salvarReserva(function(ok){
-      if (!ok) return;                            // validacao ou falha no salvamento
-      enviarWhatsApp(grupo, texto, null, img);    // status elemento ja foi resetado
+    // Baileys fora do ar (tipico durante o redeploy manual do Railway) fazia a
+    // reserva salvar pelo proxy e a mensagem sumir sem aviso. Confere primeiro
+    // e deixa a decisao com o operador.
+    checarBaileys(function(okWA, motivo){
+      if (!okWA) {
+        var seguir = confirm('⚠️ O WhatsApp não está disponível agora (' + motivo + ').\n\n'
+          + 'OK = salvar a reserva mesmo assim. A mensagem fica guardada e você reenvia pelo card da reserva.\n'
+          + 'Cancelar = não salvar nada agora.');
+        if (!seguir) return;
+      }
+      salvarReserva(function(ok, resId){
+        if (!ok) return;                          // validacao ou falha no salvamento
+        if (!okWA) { guardarMsgPendente(resId, grupo, texto, motivo); return; }
+        enviarWhatsApp(grupo, texto, null, img, { // status elemento ja foi resetado
+          falha: function(m){ guardarMsgPendente(resId, grupo, texto, m); }
+        });
+      });
     });
     return;
   }
