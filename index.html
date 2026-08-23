@@ -2271,7 +2271,7 @@ function renderPendentes() {
     + '<div class="card-title">📥 ' + pendentes.length + ' cadastro' + (pendentes.length !== 1 ? 's' : '') + ' aguardando aprovação</div>'
     + pendentes.map(function(p){
         var c = p.cadastro || {};
-        return '<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
+        return '<div id="pend-row-' + p.id + '" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
           + '<div style="flex:1">'
           +   '<div style="font-size:13px;font-weight:700">' + escHtml(c.nome || '—') + '</div>'
           +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(c.email || '') + ' · ' + escHtml(c.tel || '') + ' · ' + escHtml(c.cidade || '') + '</div>'
@@ -2283,8 +2283,36 @@ function renderPendentes() {
     + '</div>';
 }
 
+// Ids em processamento. A aprovacao faz tres gravacoes no GitHub e leva alguns
+// segundos; sem esse guard o segundo clique virava um segundo cliente.
+var pendentesEmCurso = {};
+
 function aprovarPendente(id, acao) {
   if (acao === 'descartar' && !confirm('Descartar este cadastro? A ação não pode ser desfeita.')) return;
+  if (pendentesEmCurso[id]) return;
+  pendentesEmCurso[id] = true;
+
+  var row = document.getElementById('pend-row-' + id);
+  var botoes = row ? row.querySelectorAll('button') : [];
+  var rotulos = [];
+  for (var i = 0; i < botoes.length; i++) {
+    rotulos.push(botoes[i].innerHTML);
+    botoes[i].disabled = true;
+    botoes[i].style.opacity = '.55';
+    botoes[i].style.cursor = 'wait';
+  }
+  if (botoes.length) botoes[0].innerHTML = '⏳ Processando…';
+
+  function liberar() {
+    delete pendentesEmCurso[id];
+    for (var k = 0; k < botoes.length; k++) {
+      botoes[k].disabled = false;
+      botoes[k].style.opacity = '';
+      botoes[k].style.cursor = '';
+      botoes[k].innerHTML = rotulos[k];
+    }
+  }
+
   fetch('https://cdv-proxy-production.up.railway.app/concierge/pendentes/aprovar', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: id, acao: acao })
@@ -2292,11 +2320,16 @@ function aprovarPendente(id, acao) {
     .then(function(r){ return r.json(); })
     .then(function(d){
       if (!d.ok) throw new Error(d.erro || 'falha');
-      showToast(acao === 'descartar' ? '🗑 Cadastro descartado' : '✅ Cliente aprovado', 'ok');
+      showToast(acao === 'descartar' ? '🗑 Cadastro descartado'
+                : (d.jaExistia ? '✅ Cliente já estava na base — fila limpa' : '✅ Cliente aprovado'), 'ok');
+      delete pendentesEmCurso[id];
       carregarPendentes();
       if (acao !== 'descartar') carregarPerfis().then(syncClientes);
     })
-    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
+    .catch(function(e){
+      liberar();
+      showToast('❌ ' + e.message, 'err');
+    });
 }
 
 function populateClienteSelect() {
