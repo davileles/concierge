@@ -583,12 +583,12 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Conexão <span class="tag">opcional</span></label><div class="iata-wrap"><input type="text" id="f-conexao" placeholder="Ex: CDG ou Paris" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Partida — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-ida"/></div>
-        <div class="field"><label>Horário de Partida — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-partida"/></div>
+        <div class="field"><label>Data Partida — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-ida" onchange="autoDataChegada('ida')"/></div>
+        <div class="field"><label>Horário de Partida — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-partida" onchange="autoDataChegada('ida')"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-chegada-ida"/></div>
-        <div class="field"><label>Horário de Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-chegada"/></div>
+        <div class="field"><label>Data Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-chegada-ida" onchange="marcarDataChegadaManual(this)"/></div>
+        <div class="field"><label>Horário de Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-chegada" onchange="autoDataChegada('ida')"/></div>
       </div>
       <div class="g2">
         <div class="field"><label>Cia Aérea — Ida</label>
@@ -614,12 +614,12 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Conexão <span class="tag">opcional</span></label><div class="iata-wrap"><input type="text" id="f-conexao-volta" placeholder="Ex: AMS ou Amsterdam" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Partida — Volta</label><input type="date" id="f-data-volta"/></div>
-        <div class="field"><label>Horário de Partida — Volta</label><input type="time" id="f-hora-partida-volta"/></div>
+        <div class="field"><label>Data Partida — Volta</label><input type="date" id="f-data-volta" onchange="autoDataChegada('volta')"/></div>
+        <div class="field"><label>Horário de Partida — Volta</label><input type="time" id="f-hora-partida-volta" onchange="autoDataChegada('volta')"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Chegada — Volta</label><input type="date" id="f-data-chegada-volta"/></div>
-        <div class="field"><label>Horário de Chegada — Volta</label><input type="time" id="f-hora-chegada-volta"/></div>
+        <div class="field"><label>Data Chegada — Volta</label><input type="date" id="f-data-chegada-volta" onchange="marcarDataChegadaManual(this)"/></div>
+        <div class="field"><label>Horário de Chegada — Volta</label><input type="time" id="f-hora-chegada-volta" onchange="autoDataChegada('volta')"/></div>
       </div>
       <div class="g2">
         <div class="field"><label>Cia Aérea — Volta</label>
@@ -3171,6 +3171,45 @@ function extrairTextoColado() {
   enviarAtivoParaIA({ documentos: docs });
 }
 
+// ══ DATA DE CHEGADA — deducao automatica ═════════════════════════════════
+// Regra: se o horario de chegada for MENOR que o de partida, o voo cruzou a
+// meia-noite e pousa no dia seguinte. Caso contrario, pousa no mesmo dia.
+function cdvMinutosDeHora(h) {
+  var m = /^(\d{1,2}):(\d{2})/.exec(String(h || '').trim());
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+function cdvSomarDias(iso, n) {
+  if (!iso || !/^\d{4}-\d{2}-\d{2}$/.test(iso)) return iso || '';
+  var dt = new Date(iso + 'T12:00:00Z');
+  dt.setUTCDate(dt.getUTCDate() + n);
+  return dt.toISOString().slice(0, 10);
+}
+function inferirDataChegada(dataPartida, horaPartida, horaChegada) {
+  if (!dataPartida || !/^\d{4}-\d{2}-\d{2}$/.test(dataPartida)) return '';
+  var p = cdvMinutosDeHora(horaPartida);
+  var ch = cdvMinutosDeHora(horaChegada);
+  if (p === null || ch === null) return '';
+  return ch < p ? cdvSomarDias(dataPartida, 1) : dataPartida;
+}
+// Preenche o campo de Data de Chegada a partir de data/hora de partida + hora
+// de chegada. Nunca sobrescreve um valor digitado manualmente pelo usuario.
+function autoDataChegada(qual) {
+  var ids = (qual === 'volta')
+    ? { data: 'f-data-volta', hp: 'f-hora-partida-volta', hc: 'f-hora-chegada-volta', dc: 'f-data-chegada-volta' }
+    : { data: 'f-data-ida',   hp: 'f-hora-partida',       hc: 'f-hora-chegada',       dc: 'f-data-chegada-ida'  };
+  var elDc = document.getElementById(ids.dc);
+  if (!elDc) return;
+  if (elDc.value && elDc.dataset.auto !== '1') return;   // respeita edicao manual
+  function v(id) { var e = document.getElementById(id); return e ? e.value : ''; }
+  var calc = inferirDataChegada(v(ids.data), v(ids.hp), v(ids.hc));
+  if (!calc) return;
+  elDc.value = calc;
+  elDc.dataset.auto = '1';
+}
+// Marca o campo como editado manualmente (para nao ser sobrescrito)
+function marcarDataChegadaManual(el) { if (el) el.dataset.auto = ''; }
+
 function aplicarDadosAtivo(d) {
   function sv(id, val) { var el = document.getElementById(id); if (el && val) el.value = val; }
   function ssv(id, val) {
@@ -3204,9 +3243,11 @@ function aplicarDadosAtivo(d) {
   // Voo
   svIata('f-origem', d.origem); svIata('f-destino', d.destino);
   sv('f-data-ida', d.dataIda); sv('f-hora-partida', d.horaPartida); sv('f-hora-chegada', d.horaChegada);
+  sv('f-data-chegada-ida', d.dataChegadaIda || inferirDataChegada(d.dataIda, d.horaPartida, d.horaChegada));
   ssv('f-cia-ida', d.ciaIda); sv('f-nvoo-ida', d.nvooIda);
   sv('f-conexao', d.conexao);
   sv('f-data-volta', d.dataVolta); sv('f-hora-partida-volta', d.horaPartidaVolta); sv('f-hora-chegada-volta', d.horaChegadaVolta);
+  sv('f-data-chegada-volta', d.dataChegadaVolta || inferirDataChegada(d.dataVolta, d.horaPartidaVolta, d.horaChegadaVolta));
   ssv('f-cia-volta', d.ciaVolta); sv('f-nvoo-volta', d.nvooVolta);
   svIata('f-origem-volta', d.origemVolta);
   svIata('f-destino-volta', d.destinoVolta);
@@ -4305,6 +4346,7 @@ function preencherFormReserva(r, modo) {
     setVal('f-destino-volta',r.destinoVolta||'');
     setVal('f-hora-partida-volta',r.horaPartidaVolta); setVal('f-hora-chegada-volta',r.horaChegadaVolta);
     setVal('f-conexao-volta',r.conexaoVolta||'');
+    autoDataChegada('ida'); autoDataChegada('volta');
     setVal('f-classe',r.classe); setVal('f-pnr',r.pnr);
     setVal('f-tipo-emissao',r.tipoEmissao||''); onTipoEmissaoChange();
     // Milhas
