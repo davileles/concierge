@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-08-23T15:28:31.046Z",
+  "executadoEm": "2026-08-23T15:28:44.531Z",
   "modelosAtivos": [
     {
       "nome": "Seguro · Início da vigência",
@@ -54,22 +54,22 @@
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1786463696528",
       "cliente": "Debora Lima Ribeiro",
-      "horasRestantes": 49.56,
+      "horasRestantes": 49.55,
       "janela": 48,
       "temGrupo": true,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.817Z"
+      "ts": "2026-08-23T15:28:44.370Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1786463411353",
       "cliente": "Debora Lima Ribeiro",
-      "horasRestantes": 49.56,
+      "horasRestantes": 49.55,
       "janela": 48,
       "temGrupo": true,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.818Z"
+      "ts": "2026-08-23T15:28:44.370Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -78,16 +78,16 @@
       "horasRestantes": 617.52,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.830Z"
+      "ts": "2026-08-23T15:28:44.376Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Show em Londres",
-      "horasRestantes": 266.11,
+      "horasRestantes": 266.1,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.831Z"
+      "ts": "2026-08-23T15:28:44.377Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -96,7 +96,7 @@
       "horasRestantes": 240.52,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.832Z"
+      "ts": "2026-08-23T15:28:44.377Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -105,7 +105,7 @@
       "horasRestantes": 550.02,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.832Z"
+      "ts": "2026-08-23T15:28:44.377Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -114,7 +114,7 @@
       "horasRestantes": 3047.94,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.833Z"
+      "ts": "2026-08-23T15:28:44.378Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -123,7 +123,7 @@
       "horasRestantes": 1099.44,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.834Z"
+      "ts": "2026-08-23T15:28:44.378Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -132,7 +132,7 @@
       "horasRestantes": 572.19,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.835Z"
+      "ts": "2026-08-23T15:28:44.379Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -141,25 +141,25 @@
       "horasRestantes": 1104.44,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.835Z"
+      "ts": "2026-08-23T15:28:44.379Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem para Madrid #1",
-      "horasRestantes": 4466.61,
+      "horasRestantes": 4466.6,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.835Z"
+      "ts": "2026-08-23T15:28:44.379Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 1276.86,
+      "horasRestantes": 1276.85,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.837Z"
+      "ts": "2026-08-23T15:28:44.380Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -168,7 +168,7 @@
       "horasRestantes": 2323.94,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.837Z"
+      "ts": "2026-08-23T15:28:44.380Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -177,25 +177,25 @@
       "horasRestantes": 3269.77,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.837Z"
+      "ts": "2026-08-23T15:28:44.380Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 1776.36,
+      "horasRestantes": 1776.35,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.838Z"
+      "ts": "2026-08-23T15:28:44.380Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 436.86,
+      "horasRestantes": 436.85,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.838Z"
+      "ts": "2026-08-23T15:28:44.380Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -204,7 +204,7 @@
       "horasRestantes": 196.94,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.838Z"
+      "ts": "2026-08-23T15:28:44.381Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -213,25 +213,25 @@
       "horasRestantes": -901.31,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.839Z"
+      "ts": "2026-08-23T15:28:44.381Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -870.39,
+      "horasRestantes": -870.4,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.841Z"
+      "ts": "2026-08-23T15:28:44.382Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -952.89,
+      "horasRestantes": -952.9,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.842Z"
+      "ts": "2026-08-23T15:28:44.383Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -240,7 +240,7 @@
       "horasRestantes": 2168.02,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.843Z"
+      "ts": "2026-08-23T15:28:44.383Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -249,7 +249,7 @@
       "horasRestantes": -884.98,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.844Z"
+      "ts": "2026-08-23T15:28:44.383Z"
     },
     {
       "bloco": "checkin_voo",
@@ -259,7 +259,7 @@
       "horasRestantes": 27.77,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-23T15:28:30.847Z"
+      "ts": "2026-08-23T15:28:44.385Z"
     }
   ]
 }
