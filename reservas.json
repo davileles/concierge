@@ -1,5 +1,48 @@
 [
   {
+    "id": "RES-1787584065459",
+    "tipo": "hotel",
+    "cliente": "José De Resende",
+    "obs": "Titular da reserva: Paula Matos. Penalidade por cancelamento após 19/09/2026: R$ 369,60.",
+    "cadastro": "2026-08-24",
+    "arquivosAnexos": [
+      {
+        "nome": "Hotel Cascavel - José.pdf",
+        "tipo": "application/pdf",
+        "tamanho": 83573,
+        "base64": null
+      }
+    ],
+    "arquivoAnexo": {
+      "nome": "Hotel Cascavel - José.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 83573,
+      "base64": null
+    },
+    "temArquivo": true,
+    "hotelNome": "Central Park Hotel by Bourbon",
+    "destino": "Cascavel",
+    "checkin": "2026-09-20",
+    "checkout": "2026-09-21",
+    "noites": "1",
+    "conf": "RES068596-1899",
+    "hospedes": "2",
+    "tipoEmissao": "milhas",
+    "valorMilhas": "21.121",
+    "programaMilhas": "Azul Fidelidade",
+    "valorTarifaPagante": "370",
+    "valorDinheiro": "",
+    "valorAcumulo": "",
+    "fatorAcumulo": "",
+    "milhasAcumulo": "",
+    "programaAcumulo": "",
+    "parceiroAcumulo": "",
+    "grupo": "120363407463456235@g.us",
+    "economiaGerada": "116,55",
+    "economiaModo": "resgate",
+    "economiaDetalhe": "Tarifa pagante R$ 370,00 − 21.121 Azul Fidelidade a R$ 12,00/mil (R$ 253,45)"
+  },
+  {
     "id": "RES-1787482488647",
     "tipo": "voo",
     "cliente": "Debora Lima Ribeiro",
