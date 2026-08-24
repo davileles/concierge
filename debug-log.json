@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-08-24T18:15:46.049Z",
+  "executadoEm": "2026-08-24T18:23:08.638Z",
   "modelosAtivos": [
     {
       "nome": "Seguro · Início da vigência",
@@ -54,222 +54,222 @@
       "gatilho": "voo_volta_dt",
       "reservaId": "RES-1785869636944",
       "cliente": "Diogo Ottoni Da",
-      "horasRestantes": 48.65,
+      "horasRestantes": 48.53,
       "janela": 48,
       "temGrupo": true,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.809Z"
+      "ts": "2026-08-24T18:23:08.390Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1785867673269",
       "cliente": "Diogo Ottoni Da",
-      "horasRestantes": 48.65,
+      "horasRestantes": 48.53,
       "janela": 48,
       "temGrupo": true,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.818Z"
+      "ts": "2026-08-24T18:23:08.400Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1784731253679",
       "cliente": "Mateus De",
-      "horasRestantes": 48.15,
+      "horasRestantes": 48.03,
       "janela": 48,
       "temGrupo": true,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.821Z"
+      "ts": "2026-08-24T18:23:08.404Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Cascavel com a filha",
-      "horasRestantes": 590.74,
+      "horasRestantes": 590.61,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.826Z"
+      "ts": "2026-08-24T18:23:08.410Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Show em Londres",
-      "horasRestantes": 239.32,
+      "horasRestantes": 239.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.827Z"
+      "ts": "2026-08-24T18:23:08.411Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Buenos Aires com Emirates",
-      "horasRestantes": 213.74,
+      "horasRestantes": 213.61,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.828Z"
+      "ts": "2026-08-24T18:23:08.412Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Missão no Cairo",
-      "horasRestantes": 523.24,
+      "horasRestantes": 523.11,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.828Z"
+      "ts": "2026-08-24T18:23:08.412Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Reveillon em Paris",
-      "horasRestantes": 3021.15,
+      "horasRestantes": 3021.03,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.829Z"
+      "ts": "2026-08-24T18:23:08.413Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Foz em família",
-      "horasRestantes": 1072.65,
+      "horasRestantes": 1072.53,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.830Z"
+      "ts": "2026-08-24T18:23:08.415Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Aniversário Diogo",
-      "horasRestantes": 545.4,
+      "horasRestantes": 545.28,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.831Z"
+      "ts": "2026-08-24T18:23:08.415Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dia das crianças em SP",
-      "horasRestantes": 1077.65,
+      "horasRestantes": 1077.53,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.832Z"
+      "ts": "2026-08-24T18:23:08.416Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem para Madrid #1",
-      "horasRestantes": 4439.82,
+      "horasRestantes": 4439.7,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.832Z"
+      "ts": "2026-08-24T18:23:08.416Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 1250.07,
+      "horasRestantes": 1249.95,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.833Z"
+      "ts": "2026-08-24T18:23:08.417Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 2297.15,
+      "horasRestantes": 2297.03,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.833Z"
+      "ts": "2026-08-24T18:23:08.418Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 3242.99,
+      "horasRestantes": 3242.86,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.833Z"
+      "ts": "2026-08-24T18:23:08.418Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 1749.57,
+      "horasRestantes": 1749.45,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.834Z"
+      "ts": "2026-08-24T18:23:08.419Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 410.07,
+      "horasRestantes": 409.95,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.834Z"
+      "ts": "2026-08-24T18:23:08.419Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Marcelo e Patrícia em Paris 2026",
-      "horasRestantes": 170.15,
+      "horasRestantes": 170.03,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.835Z"
+      "ts": "2026-08-24T18:23:08.419Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -928.1,
+      "horasRestantes": -928.22,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.835Z"
+      "ts": "2026-08-24T18:23:08.420Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Visto Rachel",
-      "horasRestantes": 48.15,
+      "horasRestantes": 48.03,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.835Z"
+      "ts": "2026-08-24T18:23:08.420Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -897.18,
+      "horasRestantes": -897.3,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.838Z"
+      "ts": "2026-08-24T18:23:08.423Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -979.68,
+      "horasRestantes": -979.8,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.839Z"
+      "ts": "2026-08-24T18:23:08.424Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 2141.24,
+      "horasRestantes": 2141.11,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.840Z"
+      "ts": "2026-08-24T18:23:08.425Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -911.76,
+      "horasRestantes": -911.89,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-08-24T18:15:45.840Z"
+      "ts": "2026-08-24T18:23:08.425Z"
     }
   ]
 }
