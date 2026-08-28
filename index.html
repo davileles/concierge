@@ -8353,6 +8353,9 @@ function rgCarregarViagem() {
   document.getElementById('rg-hero').value = v.heroImageRoteiro || '';
   document.getElementById('rg-destino-manual').value = v.destinoManual || '';
   document.getElementById('rg-viajantes-extra').value = v.viajantesExtra || '';
+  // Dias do roteiro ficam salvos na viagem; sem isto o trabalho se perde ao trocar de aba.
+  rgDias = Array.isArray(v.roteiroDias) ? JSON.parse(JSON.stringify(v.roteiroDias)) : [];
+  rgRenderDias();
   // Mostrar configurações e gerar prévia
   if (configEl) configEl.style.display = '';
   if (acoesEl) { acoesEl.style.display = 'flex'; }
@@ -8748,6 +8751,7 @@ async function rgPublicar() {
     v.eyebrowRoteiro = document.getElementById('rg-eyebrow').value.trim();
     v.destinoManual = document.getElementById('rg-destino-manual').value.trim();
     v.viajantesExtra = document.getElementById('rg-viajantes-extra').value.trim();
+    v.roteiroDias = rgDias;
     saveViagens();
   }
   var data = rgMontarDataObj();
