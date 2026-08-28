@@ -1475,6 +1475,12 @@ header{animation:fadeUp .45s ease both}
           </div>
         </div>
 
+        <!-- AGENDAMENTOS PENDENTES -->
+        <div class="card" id="d-agenda-card" style="margin-bottom:0;display:none">
+          <div class="card-title">🗓️ Mensagens agendadas</div>
+          <div id="d-agenda-lista" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+
         <!-- STATUS DO VOO (aparece so quando o modelo usa variaveis status_) -->
         <div class="card" id="d-status-card" style="margin-bottom:0;display:none">
           <div class="card-title">🛫 Status do voo</div>
@@ -1548,6 +1554,33 @@ header{animation:fadeUp .45s ease both}
           <textarea id="d-msg-final" rows="14" style="min-height:320px;font-size:13px;line-height:1.8" placeholder="Selecione modelo e cliente para gerar a mensagem…"></textarea>
         </div>
         <div class="field" id="d-msg-img-wrap"></div>
+
+        <!-- QUANDO ENVIAR: agora ou data/hora marcada -->
+        <div class="field">
+          <label>Quando enviar</label>
+          <div class="btn-row" style="gap:6px">
+            <button type="button" id="d-quando-agora"   class="btn btn-sm btn-accent" style="flex:1" onclick="setQuandoDisparo('agora')">⚡ Agora</button>
+            <button type="button" id="d-quando-agendar" class="btn btn-sm btn-ghost"  style="flex:1" onclick="setQuandoDisparo('agendar')">🗓️ Agendar</button>
+          </div>
+        </div>
+        <div id="d-agenda-campos" style="display:none">
+          <div class="g2">
+            <div class="field">
+              <label>🗓️ Data do envio</label>
+              <input type="date" id="d-agenda-data"/>
+            </div>
+            <div class="field">
+              <label>Horário</label>
+              <input type="time" id="d-agenda-hora" value="09:00"/>
+            </div>
+          </div>
+          <p style="font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 10px">
+            ⏰ O envio é feito pelo servidor, com verificação a cada 5 min — o computador pode estar desligado.
+            A mensagem sai exatamente como está na prévia acima (as variáveis já foram resolvidas).
+            <b>Anexos não são agendados</b>: para enviar imagem ou arquivo, use ⚡ Agora.
+          </p>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-accent" style="flex:1" id="d-send-btn" onclick="dispararMensagem()">📤 Enviar para o Grupo</button>
           <button class="btn btn-ghost btn-sm" onclick="copiarDisparar()">📋 Copiar</button>
@@ -5330,6 +5363,8 @@ function initDisparar() {
 
   populateDispararClientes();
   onDispararChange();
+  setQuandoDisparo(_quandoDisparo);
+  carregarAgendamentos();
 }
 
 // Popula o select de clientes da aba Mensagens -> Disparar.
@@ -5392,7 +5427,6 @@ function setDestinoDisparo(dest) {
 
 function aplicarDestinoDisparo() {
   var info = document.getElementById('d-grupo-info');
-  var btn  = document.getElementById('d-send-btn');
 
   if (_destinoDisparo === 'equipe') {
     var g = (_cfg && _cfg.grupoAlertas) || '';
@@ -5403,7 +5437,7 @@ function aplicarDestinoDisparo() {
         ? '🔔 Grupo da equipe · <span style="font-family:monospace;font-size:11px;color:var(--accent)">' + g + '</span>'
         : '<span style="color:var(--accent)">⚠️ Grupo da equipe nao configurado — defina em Configuração → WhatsApp</span>';
     }
-    if (btn) btn.textContent = '📤 Enviar para a Equipe';
+    atualizarBotaoDisparo();
     return;
   }
 
@@ -5418,7 +5452,138 @@ function aplicarDestinoDisparo() {
     setVal('d-grupo', '');
     if (info) info.style.display = 'none';
   }
-  if (btn) btn.textContent = '📤 Enviar para o Grupo';
+  atualizarBotaoDisparo();
+}
+
+// ══════════════════════════════════════════
+//  QUANDO ENVIAR: agora ou data/hora marcada
+//  Agendado nao sai do navegador: vai para agendamentos.json (repo concierge)
+//  e quem dispara e o worker do proxy Railway, de 5 em 5 min. Por isso o texto
+//  ja vai final — o proxy nao reprocessa variaveis de modelo.
+// ══════════════════════════════════════════
+var _quandoDisparo = 'agora';
+var _agendamentos  = [];
+
+function setQuandoDisparo(q) {
+  _quandoDisparo = (q === 'agendar') ? 'agendar' : 'agora';
+  var ba = document.getElementById('d-quando-agora');
+  var bg = document.getElementById('d-quando-agendar');
+  if (ba) ba.className = 'btn btn-sm ' + (_quandoDisparo === 'agora'   ? 'btn-accent' : 'btn-ghost');
+  if (bg) bg.className = 'btn btn-sm ' + (_quandoDisparo === 'agendar' ? 'btn-accent' : 'btn-ghost');
+  var campos = document.getElementById('d-agenda-campos');
+  if (campos) campos.style.display = (_quandoDisparo === 'agendar') ? 'block' : 'none';
+  // Default gentil: amanha no mesmo horario redondo, so na primeira abertura
+  if (_quandoDisparo === 'agendar' && !getVal('d-agenda-data')) {
+    var d = new Date(); d.setDate(d.getDate() + 1);
+    setVal('d-agenda-data', d.toISOString().slice(0, 10));
+  }
+  atualizarBotaoDisparo();
+}
+
+function atualizarBotaoDisparo() {
+  var btn = document.getElementById('d-send-btn');
+  if (!btn) return;
+  if (_quandoDisparo === 'agendar') { btn.textContent = '🗓️ Agendar envio'; return; }
+  btn.textContent = (_destinoDisparo === 'equipe') ? '📤 Enviar para a Equipe' : '📤 Enviar para o Grupo';
+}
+
+function agendarMensagem() {
+  var grupo = getGrupoId();
+  var texto = (document.getElementById('d-msg-final').value || '').trim();
+  var data  = getVal('d-agenda-data');
+  var hora  = getVal('d-agenda-hora') || '09:00';
+  var st    = document.getElementById('d-send-ok');
+
+  if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
+  if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
+  if (!data)  { showToast('⚠️ Informe a data do envio', 'err'); return; }
+  if (new Date(data + 'T' + hora + ':00').getTime() < Date.now() - 60000) {
+    showToast('⚠️ Esse horário já passou', 'err'); return;
+  }
+  // Anexo nao viaja no agendamento (base64 no JSON do repo seria insustentavel)
+  if (_msgImagens['d'] && !confirm('O anexo NÃO será agendado — só o texto. Continuar?')) return;
+
+  if (st) { st.style.color = '#f59e0b'; st.textContent = '⏳ Agendando…'; }
+
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/agendamento', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      grupo:       grupo,
+      mensagem:    texto,
+      data:        data,
+      hora:        hora,
+      destino:     _destinoDisparo,
+      clienteNome: (_destinoDisparo === 'equipe') ? 'Grupo da equipe' : getVal('d-cliente'),
+      modeloNome:  (function(){ var m = modelos.find(function(x){ return x.id === getVal('d-modelo'); }); return m ? m.nome : ''; })(),
+      reservaId:   getVal('d-reserva') || ''
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (!d.ok) throw new Error(d.erro || 'falha no servidor');
+    if (st) { st.style.color = '#22c55e'; st.textContent = '✅ Agendado para ' + fmtDate(data) + ' às ' + hora; }
+    showToast('🗓️ Mensagem agendada!', 'ok');
+    carregarAgendamentos();
+    setTimeout(function(){ if (st) { st.style.color = ''; st.textContent = ''; } }, 6000);
+  })
+  .catch(function(e){
+    if (st) { st.style.color = '#ff585e'; st.textContent = '❌ ' + e.message; }
+    showToast('❌ Não foi possível agendar — ' + e.message, 'err');
+  });
+}
+
+function carregarAgendamentos() {
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/agendamentos', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ _agendamentos = d.data || []; renderAgendamentos(); })
+    .catch(function(){});
+}
+
+function renderAgendamentos() {
+  var card = document.getElementById('d-agenda-card');
+  var el   = document.getElementById('d-agenda-lista');
+  if (!card || !el) return;
+
+  // Enviados so interessam por alguns dias; erro fica ate ser cancelado na mao
+  var lista = _agendamentos.filter(function(a){ return (a.status || 'pendente') !== 'enviado'; })
+    .sort(function(a, b){
+      return ((a.data || '') + (a.hora || '')).localeCompare((b.data || '') + (b.hora || ''));
+    });
+
+  if (!lista.length) { card.style.display = 'none'; el.innerHTML = ''; return; }
+  card.style.display = 'block';
+
+  el.innerHTML = lista.map(function(a){
+    var erro = (a.status === 'erro');
+    var cor  = erro ? '#ff585e' : '#eab308';
+    return '<div style="border:1px solid var(--border);border-left:3px solid ' + cor + ';border-radius:8px;padding:10px 12px">'
+      + '<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px">'
+      +   '<span style="font-size:12px;font-weight:700;color:' + cor + '">'
+      +     (erro ? '❌ Falhou' : '⏰ ' + fmtDate(a.data) + ' às ' + (a.hora || '')) + '</span>'
+      +   '<button class="btn btn-ghost btn-sm" style="padding:2px 8px;font-size:11px" onclick="cancelarAgendamento(\'' + escHtml(a.id) + '\')">✕ Cancelar</button>'
+      + '</div>'
+      + '<div style="font-size:12px;font-weight:600;color:var(--text)">' + escHtml(a.clienteNome || '—')
+      +   (a.modeloNome ? ' <span class="tag">' + escHtml(a.modeloNome) + '</span>' : '') + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5">'
+      +   escHtml(String(a.mensagem || '').slice(0, 110)) + (String(a.mensagem || '').length > 110 ? '…' : '') + '</div>'
+      + (erro ? '<div style="font-size:11px;color:#ff585e;margin-top:6px">' + escHtml(a.erro || '') + '</div>' : '')
+      + '</div>';
+  }).join('');
+}
+
+function cancelarAgendamento(id) {
+  if (!confirm('Cancelar esta mensagem agendada?')) return;
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/agendamento', {
+    method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    if (!d.ok) throw new Error(d.erro || 'falha no servidor');
+    showToast('🗑 Agendamento cancelado', 'ok');
+    carregarAgendamentos();
+  })
+  .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
 }
 
 function onDispararChange() {
@@ -7595,6 +7760,7 @@ function dispararMensagem() {
     showToast('⚠️ Defina o grupo da equipe em Configuração → WhatsApp', 'err');
     return;
   }
+  if (_quandoDisparo === 'agendar') { agendarMensagem(); return; }
   enviarWhatsApp(
     getGrupoId(),
     document.getElementById('d-msg-final').value.trim(),
