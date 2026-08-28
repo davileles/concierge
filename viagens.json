@@ -350,7 +350,129 @@
     "slugRoteiro": "foz-em-familia",
     "heroImageRoteiro": "https://plus.unsplash.com/premium_photo-1697729979889-31ec7ecf6f06?q=80&w=1471&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "subtituloRoteiro": "Natureza, compras e cidade grande",
-    "eyebrowRoteiro": "Travel Concierge by @davileles"
+    "eyebrowRoteiro": "Travel Concierge by @davileles",
+    "roteiroDias": [
+      {
+        "num": 1,
+        "data": "2026-10-08",
+        "titulo": "Chegada a Foz do Iguaçu",
+        "resumo": "Voo de Belo Horizonte e entrada no Bourbon Cataratas.",
+        "atividades": [
+          {
+            "horario": "07:55",
+            "nome": "Voo CNF → IGU · Azul 2857 / 4233",
+            "descricao": "Partida de Belo Horizonte (Tancredo Neves) com conexão em Curitiba. Chegada em Foz do Iguaçu às 12:05. Localizador JH7UYI · 4 passageiros · Econômica.",
+            "dica": "Conexão em CWB: confira se as bagagens seguem despachadas até IGU."
+          },
+          {
+            "horario": "Após a chegada",
+            "nome": "Check-in · Bourbon Cataratas do Iguaçu Thermas Eco Resort",
+            "descricao": "Confirmação 956433235 · 4 hóspedes · 5 noites, até 13/10."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 2,
+        "data": "2026-10-09",
+        "titulo": "Foz do Iguaçu",
+        "resumo": "Dia inteiro em Foz — programação a definir.",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 3,
+        "data": "2026-10-10",
+        "titulo": "Foz do Iguaçu",
+        "resumo": "Dia inteiro em Foz — programação a definir.",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 4,
+        "data": "2026-10-11",
+        "titulo": "Foz do Iguaçu",
+        "resumo": "Dia inteiro em Foz — programação a definir.",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 5,
+        "data": "2026-10-12",
+        "titulo": "Foz do Iguaçu",
+        "resumo": "Dia inteiro em Foz — programação a definir.",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 6,
+        "data": "2026-10-13",
+        "titulo": "Foz do Iguaçu",
+        "resumo": "Dia em Foz. Virada de reserva no mesmo hotel.",
+        "atividades": [
+          {
+            "horario": "",
+            "nome": "Troca de reserva no Bourbon Cataratas",
+            "descricao": "Encerra a confirmação 956433235 e inicia a 956436375 (1 noite, até 14/10). Mesmo hotel.",
+            "dica": "Confirmar na recepção se a família permanece no mesmo apartamento ou se haverá troca."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 7,
+        "data": "2026-10-14",
+        "titulo": "Foz do Iguaçu → Curitiba",
+        "resumo": "Voo ao meio-dia e entrada no Radisson.",
+        "atividades": [
+          {
+            "horario": "Manhã",
+            "nome": "Check-out · Bourbon Cataratas do Iguaçu",
+            "descricao": "Confirmação 956436375.",
+            "dica": "Voo às 12:45 — deixar o traslado ao aeroporto acertado para o meio da manhã."
+          },
+          {
+            "horario": "12:45",
+            "nome": "Voo IGU → CWB · Azul 4130",
+            "descricao": "Chegada em Curitiba (Afonso Pena) às 13:50. Localizador ZMU8RJ · 4 passageiros · Econômica."
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Check-in · Radisson Hotel Curitiba",
+            "descricao": "Confirmação 72077721790920 · 4 hóspedes · 2 noites, até 16/10."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 8,
+        "data": "2026-10-15",
+        "titulo": "Curitiba",
+        "resumo": "Único dia cheio em Curitiba — programação a definir.",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 9,
+        "data": "2026-10-16",
+        "titulo": "Curitiba → Belo Horizonte",
+        "resumo": "Retorno para casa pela manhã.",
+        "atividades": [
+          {
+            "horario": "Início da manhã",
+            "nome": "Check-out · Radisson Hotel Curitiba",
+            "descricao": "Confirmação 72077721790920.",
+            "dica": "Voo às 10:20 — combinar o check-out para as primeiras horas e sair do hotel cedo."
+          },
+          {
+            "horario": "10:20",
+            "nome": "Voo CWB → CNF · Azul",
+            "descricao": "Chegada em Belo Horizonte às 11:55. Localizador GMKG7D · 4 passageiros · Econômica."
+          }
+        ],
+        "deslocamentos": []
+      }
+    ]
   },
   {
     "id": "VGM-1785868715795",
