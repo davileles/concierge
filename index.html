@@ -8688,11 +8688,29 @@ function rgMontarDataObj() {
   if (v.inicio && v.fim) pills.push('📅 '+fmtDate(v.inicio)+' – '+fmtDate(v.fim));
   if (cliPub) pills.push('👤 '+cliPub);
   if (hoteis.length) pills.push('🏨 '+hoteis.map(function(h){return h.hotelNome;}).join(' · '));
+  var _mapaIata = _iataMapa();
+  function _nomeIata(c){ return _mapaIata[String(c==null?'':c).trim().toUpperCase()] || ''; }
+  // Conexao igual a origem ou destino do proprio trecho e ruido de cadastro: nao exibe.
+  function _conexaoLimpa(cx, orig, dest){
+    var c = String(cx==null?'':cx).trim().toUpperCase();
+    if (!c) return '';
+    var o = String(orig==null?'':orig).trim().toUpperCase();
+    var d = String(dest==null?'':dest).trim().toUpperCase();
+    return (c === o || c === d) ? '' : cx;
+  }
   var voosData = [];
   voos.forEach(function(r){
-    if (r.dataIda) voosData.push({tipo:'ida',origemIata:r.origem,origemNome:'',destinoIata:r.destino,destinoNome:'',data:r.dataIda,horaPartida:r.horaPartida,horaChegada:r.horaChegada,cia:r.ciaIda,nvoo:r.nvooIda,conexao:r.conexao,classe:r.classe,pnr:r.pnr});
-    if (r.dataVolta) voosData.push({tipo:'volta',origemIata:r.origemVolta||r.destino,origemNome:'',destinoIata:r.destinoVolta||r.origem,destinoNome:'',data:r.dataVolta,horaPartida:r.horaPartidaVolta,horaChegada:r.horaChegadaVolta,cia:r.ciaVolta,nvoo:r.nvooVolta,conexao:r.conexaoVolta,classe:r.classe,pnr:r.pnr});
+    if (r.dataIda) voosData.push({tipo:'ida',origemIata:r.origem,origemNome:_nomeIata(r.origem),destinoIata:r.destino,destinoNome:_nomeIata(r.destino),data:r.dataIda,dataChegada:r.dataChegadaIda||r.dataIda,horaPartida:r.horaPartida,horaChegada:r.horaChegada,cia:r.ciaIda,nvoo:r.nvooIda,conexao:_conexaoLimpa(r.conexao,r.origem,r.destino),classe:r.classe,pnr:r.pnr});
+    if (r.dataVolta) voosData.push({tipo:'volta',origemIata:r.origemVolta||r.destino,origemNome:_nomeIata(r.origemVolta||r.destino),destinoIata:r.destinoVolta||r.origem,destinoNome:_nomeIata(r.destinoVolta||r.origem),data:r.dataVolta,dataChegada:r.dataChegadaVolta||r.dataVolta,horaPartida:r.horaPartidaVolta,horaChegada:r.horaChegadaVolta,cia:r.ciaVolta,nvoo:r.nvooVolta,conexao:_conexaoLimpa(r.conexaoVolta,r.origemVolta||r.destino,r.destinoVolta||r.origem),classe:r.classe,pnr:r.pnr});
   });
+  // Trechos cadastrados como reservas separadas chegam todos como 'ida'.
+  // O ultimo trecho que retorna ao aeroporto de partida e a volta.
+  if (voosData.length > 1 && voosData.every(function(x){ return x.tipo === 'ida'; })) {
+    var _ord = voosData.slice().sort(function(a,b){ return String(a.data||'').localeCompare(String(b.data||'')); });
+    var _casa = String(_ord[0].origemIata||'').trim().toUpperCase();
+    var _ult = _ord[_ord.length-1];
+    if (_casa && String(_ult.destinoIata||'').trim().toUpperCase() === _casa) _ult.tipo = 'volta';
+  }
   var hospedagemData = hoteis.map(function(r){ return {nome:r.hotelNome,cidade:r.destino,checkin:r.checkin,checkout:r.checkout,noites:r.noites,conf:r.conf,hospedes:r.hospedes}; });
   var servicosData = [];
   carros.forEach(function(r){ var isT=r.subtipo==='transfer'; servicosData.push({tipo:'carro',icon:isT?'🚐':'🚗',nome:isT?(r.retLocal||'?')+' → '+(r.devLocal||'?'):r.locadora+(r.categoria?' — '+r.categoria:''),meta:isT?(r.retData?fmtDate(r.retData)+' ':'')+(r.locadora||''):(r.retData?'Ret: '+fmtDate(r.retData)+' ':'')+(r.devData?'Dev: '+fmtDate(r.devData):''),badge:r.conf?'Conf. '+r.conf:''}); });
