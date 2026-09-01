@@ -1746,7 +1746,7 @@ header{animation:fadeUp .45s ease both}
     </div>
 
     <!-- Ações -->
-    <div id="rg-acoes" style="display:none;margin-top:1.5rem;display:none;gap:10px;flex-wrap:wrap;align-items:center">
+    <div id="rg-acoes" style="display:none;margin-top:1.5rem;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-accent" onclick="rgPublicar()">🚀 Publicar Roteiro</button>
       <button class="btn btn-ghost" onclick="rgPrevisualizar()">👁 Pré-visualizar</button>
       <a id="rg-link-publicado" href="#" target="_blank" style="display:none;font-size:12px;color:var(--accent);font-weight:700">🔗 Ver roteiro publicado</a>
@@ -1757,7 +1757,7 @@ header{animation:fadeUp .45s ease both}
     <div style="display:none">
       <div id="rg-meta"></div>
       <div id="rg-meta2"></div>
-      <div id="rg-dias-wrap"><div id="rg-dias-list"></div></div>
+      <div id="rg-dias-wrap"><span id="rg-dias-count"></span><div id="rg-dias-list"></div></div>
       <textarea id="rg-ia-prompt"></textarea>
       <div id="rg-ia-wrap"></div>
     </div>
@@ -8355,11 +8355,11 @@ function rgCarregarViagem() {
   document.getElementById('rg-viajantes-extra').value = v.viajantesExtra || '';
   // Dias do roteiro ficam salvos na viagem; sem isto o trabalho se perde ao trocar de aba.
   rgDias = Array.isArray(v.roteiroDias) ? JSON.parse(JSON.stringify(v.roteiroDias)) : [];
-  rgRenderDias();
-  // Mostrar configurações e gerar prévia
+  // Mostrar configurações ANTES de renderizar (falha de render nao esconde mais o painel)
   if (configEl) configEl.style.display = '';
   if (acoesEl) { acoesEl.style.display = 'flex'; }
-  rgGerarPrevia(v);
+  try { rgRenderDias(); } catch(e) { console.error('rgRenderDias', e); }
+  try { rgGerarPrevia(v); } catch(e) { console.error('rgGerarPrevia', e); }
 }
 
 function rgGerarPrevia(v) {
@@ -8579,7 +8579,8 @@ function rgResNome(res) {
 function rgRenderDias() {
   var cont = document.getElementById('rg-dias-list');
   var count = document.getElementById('rg-dias-count');
-  count.textContent = rgDias.length + ' dia' + (rgDias.length!==1?'s':'');
+  if (count) count.textContent = rgDias.length + ' dia' + (rgDias.length!==1?'s':'');
+  if (!cont) return;
   cont.innerHTML = rgDias.map(function(d, di) {
     var ativsHtml = d.atividades.map(function(a, ai) {
       return '<div style="display:flex;gap:6px;margin-bottom:4px;align-items:center">'
