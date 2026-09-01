@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-09-01T18:19:23.844Z",
+  "executadoEm": "2026-09-01T18:19:37.777Z",
   "modelosAtivos": [
     {
       "nome": "Seguro · Início da vigência",
@@ -60,7 +60,7 @@
       "janela": 48,
       "temGrupo": true,
       "disparar": true,
-      "ts": "2026-09-01T18:19:23.415Z"
+      "ts": "2026-09-01T18:19:37.312Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
@@ -71,7 +71,7 @@
       "tentativa": "erro",
       "erro": "forbidden (HTTP 500)",
       "erroStack": "Error: forbidden (HTTP 500)\n    at enviarWhatsApp (/home/runner/work/concierge/concierge/lembrete-voo.js:591:20)\n    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)\n    at async main (/home/runner/work/concierge/concierge/lembrete-voo.js:1002:13)",
-      "ts": "2026-09-01T18:19:23.640Z"
+      "ts": "2026-09-01T18:19:37.613Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -80,7 +80,7 @@
       "horasRestantes": 497.09,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.654Z"
+      "ts": "2026-09-01T18:19:37.625Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -89,16 +89,16 @@
       "horasRestantes": 5548.59,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.654Z"
+      "ts": "2026-09-01T18:19:37.625Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Cascavel com a filha",
-      "horasRestantes": 398.68,
+      "horasRestantes": 398.67,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.655Z"
+      "ts": "2026-09-01T18:19:37.625Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -107,7 +107,7 @@
       "horasRestantes": 47.26,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.656Z"
+      "ts": "2026-09-01T18:19:37.626Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -116,7 +116,7 @@
       "horasRestantes": -6047.99,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.656Z"
+      "ts": "2026-09-01T18:19:37.627Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -125,7 +125,7 @@
       "horasRestantes": 2829.09,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.657Z"
+      "ts": "2026-09-01T18:19:37.628Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -134,7 +134,7 @@
       "horasRestantes": 880.59,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.658Z"
+      "ts": "2026-09-01T18:19:37.629Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -143,7 +143,7 @@
       "horasRestantes": 353.34,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.659Z"
+      "ts": "2026-09-01T18:19:37.629Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -152,7 +152,7 @@
       "horasRestantes": 885.59,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.659Z"
+      "ts": "2026-09-01T18:19:37.630Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -161,7 +161,7 @@
       "horasRestantes": 4247.76,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.660Z"
+      "ts": "2026-09-01T18:19:37.630Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -170,7 +170,7 @@
       "horasRestantes": 1058.01,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.661Z"
+      "ts": "2026-09-01T18:19:37.631Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -179,16 +179,16 @@
       "horasRestantes": 2105.09,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.661Z"
+      "ts": "2026-09-01T18:19:37.631Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 3050.93,
+      "horasRestantes": 3050.92,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.661Z"
+      "ts": "2026-09-01T18:19:37.632Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -197,7 +197,7 @@
       "horasRestantes": 1557.51,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.662Z"
+      "ts": "2026-09-01T18:19:37.632Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -206,7 +206,7 @@
       "horasRestantes": 218.01,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.662Z"
+      "ts": "2026-09-01T18:19:37.632Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -215,7 +215,7 @@
       "horasRestantes": -1120.16,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.663Z"
+      "ts": "2026-09-01T18:19:37.633Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -224,7 +224,7 @@
       "horasRestantes": -1089.24,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.665Z"
+      "ts": "2026-09-01T18:19:37.635Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
@@ -233,25 +233,25 @@
       "horasRestantes": -1171.74,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.666Z"
+      "ts": "2026-09-01T18:19:37.636Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 1949.18,
+      "horasRestantes": 1949.17,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.667Z"
+      "ts": "2026-09-01T18:19:37.636Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -1103.82,
+      "horasRestantes": -1103.83,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.667Z"
+      "ts": "2026-09-01T18:19:37.637Z"
     },
     {
       "bloco": "checkin_voo",
@@ -261,7 +261,7 @@
       "horasRestantes": 26.09,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-01T18:19:23.670Z"
+      "ts": "2026-09-01T18:19:37.639Z"
     }
   ]
 }
