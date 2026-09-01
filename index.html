@@ -1709,10 +1709,10 @@ header{animation:fadeUp .45s ease both}
           <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Deixe em branco para detectar automaticamente pelo voo</span>
         </div>
         <div class="field">
-          <label>Viajantes adicionais <span class="tag">opcional</span></label>
-          <input type="text" id="rg-viajantes-extra" placeholder="Ex: Andrea Bocelli, Marco Silva"
-            oninput="rgSalvarCampo('viajantesExtra', this.value)"/>
-          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Nomes além do cliente principal, separados por vírgula</span>
+          <label>Viajantes <span class="tag">opcional</span></label>
+          <input type="text" id="rg-viajantes" placeholder="Ex: Marisa Fialho, Ana Fialho"
+            oninput="rgSalvarCampo('viajantes', this.value)"/>
+          <span style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Nomes exatamente como aparecerão no roteiro, separados por vírgula. Deixe em branco para omitir.</span>
         </div>
       </div>
       <!-- Publicação -->
@@ -8352,7 +8352,7 @@ function rgCarregarViagem() {
   document.getElementById('rg-subtitulo').value = v.subtituloRoteiro || (v.nome||'');
   document.getElementById('rg-hero').value = v.heroImageRoteiro || '';
   document.getElementById('rg-destino-manual').value = v.destinoManual || '';
-  document.getElementById('rg-viajantes-extra').value = v.viajantesExtra || '';
+  document.getElementById('rg-viajantes').value = rgViajantes(v);
   // Dias do roteiro ficam salvos na viagem; sem isto o trabalho se perde ao trocar de aba.
   rgDias = Array.isArray(v.roteiroDias) ? JSON.parse(JSON.stringify(v.roteiroDias)) : [];
   // Mostrar configurações ANTES de renderizar (falha de render nao esconde mais o painel)
@@ -8457,9 +8457,7 @@ function rgGerarPrevia(v) {
   }
 
   // Cabeçalho com dados da viagem
-  var cliBase = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
-  var cliExtra = v.viajantesExtra ? v.viajantesExtra.trim() : '';
-  var cliStr = cliExtra ? cliBase + (cliBase ? ', ' : '') + cliExtra : cliBase;
+  var cliStr = rgViajantes(v);
   var periodoStr = (v.inicio && v.fim) ? fmtDate(v.inicio) + ' a ' + fmtDate(v.fim) : '';
   var destinoStr = v.destinoManual || rgExtrairDestino(v);
   var html = '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">';
@@ -8499,9 +8497,20 @@ function rgSalvarCampo(campo, valor) {
   v[campo] = valor;
   saveViagens();
   // Atualizar a prévia se for campo de destino ou viajantes
-  if (campo === 'destinoManual' || campo === 'viajantesExtra') {
+  if (campo === 'destinoManual' || campo === 'viajantes') {
     rgGerarPrevia(v);
   }
+}
+
+// Viajantes exibidos no roteiro. Quando o campo ja foi editado, vale exatamente o
+// que esta salvo (inclusive vazio). Caso contrario, sugere clientes + legado viajantesExtra.
+function rgViajantes(v) {
+  if (!v) return '';
+  if (typeof v.viajantes === 'string') return v.viajantes.trim();
+  var base = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
+  var legado = v.viajantesExtra ? String(v.viajantesExtra).trim() : '';
+  if (legado) return base ? base + ', ' + legado : legado;
+  return base;
 }
 
 function rgExtrairDestino(v) {
@@ -8682,9 +8691,8 @@ function rgMontarDataObj() {
   var destinoPub = v.destinoManual || rgExtrairDestino(v) || (voos.length ? voos[0].destino : '');
   if (destinoPub) visaoGeral.push({label:'Destino',value:destinoPub,variant:'coral'});
   if (v.inicio && v.fim) visaoGeral.push({label:'Período',value:fmtDate(v.inicio)+' a '+fmtDate(v.fim)});
-  var cliBasePub = v.clientes ? (Array.isArray(v.clientes) ? v.clientes.join(', ') : String(v.clientes)) : '';
-  var cliExtraPub = v.viajantesExtra ? v.viajantesExtra.trim() : '';
-  var cliPub = cliExtraPub ? cliBasePub + (cliBasePub ? ', ' : '') + cliExtraPub : cliBasePub;
+  var _elViaj = document.getElementById('rg-viajantes');
+  var cliPub = _elViaj ? _elViaj.value.trim() : rgViajantes(v);
   if (cliPub) visaoGeral.push({label:'Viajantes',value:cliPub});
   if (hoteis.length) visaoGeral.push({label:'Hospedagem',value:hoteis.map(function(h){return h.hotelNome;}).join(' · ')});
   if (rgDias.length) visaoGeral.push({label:'Duração',value:rgDias.length+' dia'+(rgDias.length!==1?'s':''),variant:'coral'});
@@ -8751,7 +8759,7 @@ async function rgPublicar() {
     v.subtituloRoteiro = document.getElementById('rg-subtitulo').value.trim();
     v.eyebrowRoteiro = document.getElementById('rg-eyebrow').value.trim();
     v.destinoManual = document.getElementById('rg-destino-manual').value.trim();
-    v.viajantesExtra = document.getElementById('rg-viajantes-extra').value.trim();
+    v.viajantes = document.getElementById('rg-viajantes').value.trim();
     v.roteiroDias = rgDias;
     saveViagens();
   }
