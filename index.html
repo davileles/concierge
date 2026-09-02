@@ -1305,6 +1305,27 @@ header{animation:fadeUp .45s ease both}
       <label>Grupo para alertas de oportunidade <span class="tag">recebe os alertas de compra e transferência bonificada das demandas</span></label>
       <input type="text" id="cfg-grupo-alertas" placeholder="Ex: 120363xxxxxx@g.us ou cdv_emissao" oninput="saveCfg()" style="font-family:monospace;font-size:12px"/>
     </div>
+    <div class="field">
+      <label>Número que dispara as mensagens <span class="tag">vale para manuais, automáticas e agendadas</span></label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="cfg-conta-envio" onchange="saveCfg()" style="flex:1;min-width:200px">
+          <option value="">— conta principal —</option>
+        </select>
+        <button class="btn btn-ghost btn-sm" onclick="carregarContasBaileys()">🔄 Recarregar</button>
+      </div>
+      <p id="cfg-conta-status" style="font-size:11px;color:var(--muted2);margin-top:6px;line-height:1.6">Carregando números pareados…</p>
+    </div>
+    <div class="field">
+      <label>Adicionar número <span class="tag">apelido: 2 a 24 caracteres, letras sem acento, números, - e _</span></label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="cfg-conta-nova" placeholder="Ex: concierge" style="flex:1;min-width:180px"/>
+        <button class="btn btn-blue btn-sm" onclick="parearNovaConta()">📱 Gerar QR</button>
+      </div>
+      <p style="font-size:11px;color:var(--muted2);margin-top:6px;line-height:1.6">
+        O QR abre em outra aba. Depois de escanear no WhatsApp (Dispositivos conectados → Conectar dispositivo),
+        clique em <b>Recarregar</b> e selecione o número na lista acima.
+      </p>
+    </div>
     <div class="sep"></div>
     <div class="btn-row">
       <button class="btn btn-blue" onclick="syncClientes()">🔄 Recarregar clientes</button>
@@ -1973,6 +1994,85 @@ function _applyCfg(c) {
   setVal('cfg-baileys',           c.baileys         || '');
   renderCfgPontos(c.valoresPontos || {});
   aplicarTema(c.tema || 'dark');
+  // A lista de numeros vem do Baileys, entao so da para montar o select depois
+  // que a URL do servidor ja esta no cfg — por isso a chamada mora aqui.
+  carregarContasBaileys();
+}
+
+// ══════════════════════════════════════════
+//  NUMERO DE DISPARO (conta secundaria do Baileys)
+// ══════════════════════════════════════════
+// Uma conta para TODO o concierge: manuais, automaticas (lembrete-voo.js) e
+// agendadas. Vazio = conta principal, que e o comportamento historico.
+// O apelido e so um rotulo interno do Baileys; quem manda e o pareamento.
+function contaEnvioAtual() {
+  return String(getCfg().contaEnvio || '').trim();
+}
+
+function carregarContasBaileys() {
+  var sel = document.getElementById('cfg-conta-envio');
+  var st  = document.getElementById('cfg-conta-status');
+  if (!sel) return;
+  var salva = contaEnvioAtual();
+  var url = getBaileysUrl();
+  if (!url) {
+    if (st) { st.style.color = 'var(--muted2)'; st.textContent = 'Configure a URL do Baileys para listar os números.'; }
+    return;
+  }
+  if (st) { st.style.color = 'var(--muted2)'; st.textContent = 'Carregando números pareados…'; }
+  fetch(url + '/contas', { cache: 'no-store', signal: AbortSignal.timeout(8000) })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var opts = [{ id: '', rotulo: '— conta principal —', conectado: !!(d.principal && d.principal.conectado) }];
+      (d.extras || []).forEach(function(c){
+        opts.push({ id: c.id, rotulo: c.id, conectado: !!c.conectado, erro: c.ultimoErro || '' });
+      });
+      // Conta gravada que sumiu do servidor (removida na aba Conexão do TSP)
+      // continua na lista, marcada: some-la em silêncio faria o select "voltar
+      // para principal" sozinho sem ninguém entender por quê.
+      var existe = opts.some(function(o){ return o.id === salva; });
+      if (salva && !existe) opts.push({ id: salva, rotulo: salva + ' (não encontrada)', conectado: false });
+      sel.innerHTML = opts.map(function(o){
+        var marca = o.id === '' ? '' : (o.conectado ? ' ✅' : ' ⚠️');
+        return '<option value="' + escHtml(o.id) + '"' + (o.id === salva ? ' selected' : '') + '>'
+             + escHtml(o.rotulo) + marca + '</option>';
+      }).join('');
+      var atual = opts.filter(function(o){ return o.id === salva; })[0];
+      if (!st) return;
+      if (!salva) {
+        st.style.color = 'var(--muted2)';
+        st.textContent = 'Disparando pela conta principal do Baileys.';
+      } else if (atual && atual.conectado) {
+        st.style.color = '#22c55e';
+        st.textContent = '✅ Disparando por "' + salva + '".';
+      } else {
+        st.style.color = '#f59e0b';
+        st.textContent = '⚠️ "' + salva + '" não está conectada agora — os envios caem na conta principal até ela voltar.';
+      }
+    })
+    .catch(function(e){
+      if (st) { st.style.color = '#ff585e'; st.textContent = 'Não foi possível listar os números: ' + (e.message || 'sem resposta'); }
+    });
+}
+
+function parearNovaConta() {
+  var apelido = (document.getElementById('cfg-conta-nova').value || '').trim();
+  var url = getBaileysUrl();
+  if (!url) { showToast('❌ Configure a URL do Baileys primeiro', 'err'); return; }
+  if (!/^[a-z0-9_-]{2,24}$/i.test(apelido)) {
+    showToast('⚠️ Apelido inválido: 2 a 24 caracteres, sem acento e sem espaço', 'err');
+    return;
+  }
+  // A aba é aberta ANTES do fetch de propósito: navegador bloqueia window.open
+  // disparado dentro de um .then() (fora do gesto do usuário).
+  var aba = window.open(url + '/contas/' + encodeURIComponent(apelido) + '/qr', '_blank');
+  fetch(url + '/contas/' + encodeURIComponent(apelido) + '/conectar', { method: 'POST' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (d.ok) { showToast('📱 Escaneie o QR na aba que abriu', 'ok'); setTimeout(carregarContasBaileys, 15000); }
+      else { showToast('❌ ' + (d.erro || 'falha ao iniciar o pareamento'), 'err'); if (aba) aba.close(); }
+    })
+    .catch(function(){ showToast('❌ Sem resposta do Baileys', 'err'); });
 }
 
 // ── Valor dos pontos (premissas da economia gerada) ──────────────────────
@@ -2043,6 +2143,7 @@ function _saveCfgNow() {
   var c = {
     grupoAlertas:     getVal('cfg-grupo-alertas').trim(),
     baileys:          getVal('cfg-baileys'),
+    contaEnvio:       getVal('cfg-conta-envio').trim(),
     tema:             _cfg.tema || 'dark',
     valoresPontos:    coletarValoresPontos()
   };
@@ -2058,6 +2159,7 @@ function _saveCfgNow() {
         throw new Error((res.body && res.body.erro) || ('HTTP ' + res.status));
       }
       showToast('✅ Configurações salvas!', 'ok');
+      carregarContasBaileys();
     })
     .catch(function(e){
       console.error('[saveCfg]', e);
@@ -7665,9 +7767,11 @@ function enviarWhatsApp(grupo, texto, statusEl, imagem, cbs) {
   set('#f59e0b', imagem ? (anexoEhImagem ? '⏳ Enviando imagem…' : '⏳ Enviando arquivo…') : '⏳ Enviando…');
 
   var rota = imagem ? (anexoEhImagem ? '/enviar-imagem' : '/enviar-arquivo') : '/enviar';
+  // conta: numero de disparo do concierge (aba Configuração). Vazio = principal.
+  var conta = contaEnvioAtual();
   var corpo = imagem
-    ? { grupo: grupo, legenda: texto, base64: imagem.base64, mimetype: imagem.mime, nomeArquivo: imagem.nome }
-    : { grupo: grupo, mensagem: texto };
+    ? { grupo: grupo, legenda: texto, base64: imagem.base64, mimetype: imagem.mime, nomeArquivo: imagem.nome, conta: conta }
+    : { grupo: grupo, mensagem: texto, conta: conta };
 
   fetch(url + rota, {
     method:'POST', headers:{'Content-Type':'application/json'},
@@ -7922,7 +8026,7 @@ function _massaEnviarProximo(alvos, i, base, url, contador) {
   fetch(url + '/enviar', {
     method: 'POST',
     headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ grupo: c.grupo, mensagem: _massaTextoPara(c, base) })
+    body: JSON.stringify({ grupo: c.grupo, mensagem: _massaTextoPara(c, base), conta: contaEnvioAtual() })
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
