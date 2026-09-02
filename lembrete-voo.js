@@ -568,6 +568,13 @@ async function carregarClientes() {
 }
 
 // ── envio ─────────────────────────────────────────────────────────────────────
+// Numero de disparo do concierge (Configuracao -> "Numero que dispara as
+// mensagens", gravado em cfg.json). Vazio = conta principal do Baileys, que era
+// o comportamento antes deste campo existir. Precisa ser modulo-global: o
+// enviarWhatsApp e chamado de meia duzia de lugares, e passar o apelido por
+// parametro em todos eles so criaria oportunidade de esquecer um.
+let CONTA_ENVIO = '';
+
 async function enviarWhatsApp(grupoId, mensagem) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25000);
@@ -576,7 +583,7 @@ async function enviarWhatsApp(grupoId, mensagem) {
     r = await fetch(`${BAILEYS}/enviar`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ grupo: grupoId, mensagem }),
+      body: JSON.stringify({ grupo: grupoId, mensagem, conta: CONTA_ENVIO }),
       signal: controller.signal
     });
   } catch (e) {
@@ -839,6 +846,9 @@ async function main() {
   const grupoAlertas = (cfgResp.data && cfgResp.data.grupoAlertas) || '';
   // Premissas de valor dos pontos (Configuração → Valor dos Pontos) para {{economia}}
   CFG_PONTOS = (cfgResp.data && cfgResp.data.valoresPontos) || {};
+  // Número que dispara: mesma conta usada pelos envios manuais do painel.
+  CONTA_ENVIO = String((cfgResp.data && cfgResp.data.contaEnvio) || '').trim();
+  if (CONTA_ENVIO) console.log(`[envio] Disparando pela conta "${CONTA_ENVIO}".`);
 
   // Mapa de reservas por ID (para lookup eficiente no gatilho primeiro_voo_viagem)
   const reservasMap = {};
