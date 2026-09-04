@@ -516,14 +516,47 @@ function interpolar(texto, cli, res, viagem, viagens) {
 }
 
 // ── GitHub API ────────────────────────────────────────────────────────────────
+// A Contents API do GitHub devolve 404/500 espúrios sob carga — vimos um 404 em
+// msgs-enviadas.json (arquivo que existe) derrubar a deduplicação inteira e
+// reenviar lembrete para o cliente. Toda leitura passa a ter retry com backoff;
+// o `status` fica exposto no erro para quem chamou decidir o que fazer.
+const GH_GET_TENTATIVAS = 4;
 async function githubGet(path) {
-  const r = await fetch(`${API_BASE}/${path}`, {
+  let ultimo;
+  for (let t = 1; t <= GH_GET_TENTATIVAS; t++) {
+    try {
+      const r = await fetch(`${API_BASE}/${path}`, {
+        headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: 'application/vnd.github+json' }
+      });
+      if (!r.ok) { const e = new Error(`GitHub GET ${path} → ${r.status}`); e.status = r.status; throw e; }
+      const d = await r.json();
+      const content = Buffer.from(d.content.replace(/\n/g, ''), 'base64').toString('utf-8');
+      return { data: JSON.parse(content), sha: d.sha };
+    } catch (e) {
+      ultimo = e;
+      if (t < GH_GET_TENTATIVAS) {
+        console.warn(`[github] GET ${path} falhou (${e.message}) — tentativa ${t}/${GH_GET_TENTATIVAS}`);
+        await new Promise(ok => setTimeout(ok, 1500 * t));
+      }
+    }
+  }
+  throw ultimo;
+}
+
+// Confere na LISTAGEM do diretório se o arquivo existe de fato. Serve para
+// separar "404 porque o arquivo é novo" de "404 transitório da API" — a
+// diferença entre começar um ledger vazio e reenviar tudo por engano.
+async function arquivoExisteNoRepo(path) {
+  const corte = path.lastIndexOf('/');
+  const dir   = corte >= 0 ? path.slice(0, corte) : '';
+  const alvo  = corte >= 0 ? path.slice(corte + 1) : path;
+  const r = await fetch(`${API_BASE}/${dir}`, {
     headers: { Authorization: `Bearer ${GITHUB_TOKEN}`, Accept: 'application/vnd.github+json' }
   });
-  if (!r.ok) throw new Error(`GitHub GET ${path} → ${r.status}`);
+  if (!r.ok) throw new Error(`GitHub LIST ${dir || '/'} → ${r.status}`);
   const d = await r.json();
-  const content = Buffer.from(d.content.replace(/\n/g, ''), 'base64').toString('utf-8');
-  return { data: JSON.parse(content), sha: d.sha };
+  if (!Array.isArray(d)) throw new Error(`GitHub LIST ${dir || '/'} não devolveu array`);
+  return d.some(f => f && f.name === alvo);
 }
 
 async function githubPut(path, data, sha, message) {
@@ -618,6 +651,15 @@ let ledgerSha = null;
 
 function ledgerKey(modeloId, alvoId) { return `${modeloId}|${alvoId}`; }
 
+// FAIL-CLOSED. Sem ledger confiável não existe deduplicação: seguir com o mapa
+// vazio faz a execução reenviar TUDO que estiver na janela. Foi exatamente isso
+// em 04/09/2026 — um 404 transitório às 20:40 zerou o ledger, o lembrete de voo
+// do cliente saiu, o PUT de registro morreu em 422 (sha nulo em arquivo que
+// existe) e a execução das 21:05 mandou a mesma mensagem de novo.
+// Só aceitamos ledger vazio quando a LISTAGEM do repositório confirma que o
+// arquivo realmente não existe. Qualquer outra falha aborta a execução — o
+// workflow já repete o processo até 3x, e não enviar agora é sempre melhor do
+// que enviar duas vezes.
 async function carregarLedger() {
   try {
     const { data, sha } = await githubGet(LEDGER_FILE);
@@ -625,7 +667,16 @@ async function carregarLedger() {
     if (Array.isArray(data))                     for (const k of data) ledger[k] = null;
     else if (data && typeof data === 'object')   ledger = data;
   } catch (e) {
-    console.warn(`[ledger] ${LEDGER_FILE} indisponível (${e.message}) — começando vazio`);
+    let existe = true;
+    try { existe = await arquivoExisteNoRepo(LEDGER_FILE); }
+    catch (e2) {
+      throw new Error(`[ledger] ${LEDGER_FILE} ilegível (${e.message}) e a listagem também falhou (${e2.message}) — abortando sem enviar nada.`);
+    }
+    if (existe) {
+      throw new Error(`[ledger] ${LEDGER_FILE} existe no repositório mas não pôde ser lido (${e.message}) — abortando sem enviar nada para não duplicar.`);
+    }
+    console.warn(`[ledger] ${LEDGER_FILE} ainda não existe no repositório — começando vazio (bootstrap).`);
+    ledgerSha = null;
   }
   console.log(`[ledger] ${Object.keys(ledger).length} envio(s) já registrado(s)`);
 }
@@ -643,9 +694,11 @@ async function registrarEnvio(modeloId, alvoId) {
       ledgerSha = (r && r.content && r.content.sha) || null;
       return true;
     } catch (e) {
-      // 409 = escrita concorrente venceu a corrida: recarrega, reaplica o que
-      // temos em memória por cima e tenta de novo com SHA fresco.
-      if (/409/.test(e.message) && tentativa < 2) {
+      // 409 = escrita concorrente venceu a corrida.
+      // 422 = SHA nulo ou obsoleto (arquivo existe e mandamos sha: null).
+      // Nos dois casos: recarrega, reaplica o que temos em memória por cima e
+      // tenta de novo com SHA fresco.
+      if (/\b(409|422)\b/.test(e.message) && tentativa < 2) {
         try {
           const { data, sha } = await githubGet(LEDGER_FILE);
           ledgerSha = sha;
