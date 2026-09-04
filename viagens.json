@@ -1860,15 +1860,6 @@
         "pos": 50
       },
       {
-        "icon": "🚌",
-        "nome": "Transporte",
-        "titulo": "Locação de Carro · 19/08/2026 a 25/08/2026",
-        "descricao": "",
-        "pos": 70,
-        "status": "concluida",
-        "reservaId": "RES-1786358510420"
-      },
-      {
         "icon": "🏨",
         "nome": "Hotel",
         "titulo": "NH Collection Roma Giustiniano · 20/08/2026 a 21/08/2026",
@@ -1876,6 +1867,15 @@
         "pos": 60,
         "status": "concluida",
         "reservaId": "RES-1784161169743"
+      },
+      {
+        "icon": "🚌",
+        "nome": "Transporte",
+        "titulo": "Locação de Carro · 19/08/2026 a 25/08/2026",
+        "descricao": "",
+        "pos": 70,
+        "status": "concluida",
+        "reservaId": "RES-1786358510420"
       },
       {
         "icon": "🏨",
@@ -1943,11 +1943,11 @@
       {
         "icon": "🚌",
         "nome": "Transporte",
-        "titulo": "🚆 Suíça → Suíça · 29/08/2026",
+        "titulo": "🚆 Milano Centrale → Brig · 29/08/2026",
         "descricao": "",
-        "pos": 170,
+        "pos": 150,
         "status": "concluida",
-        "reservaId": "RES-1786731612662"
+        "reservaId": "RES-1786732911793"
       },
       {
         "icon": "🚌",
@@ -1961,11 +1961,11 @@
       {
         "icon": "🚌",
         "nome": "Transporte",
-        "titulo": "🚆 Milano Centrale → Brig · 29/08/2026",
+        "titulo": "🚆 Suíça → Suíça · 29/08/2026",
         "descricao": "",
-        "pos": 150,
+        "pos": 170,
         "status": "concluida",
-        "reservaId": "RES-1786732911793"
+        "reservaId": "RES-1786731612662"
       },
       {
         "icon": "🚌",
@@ -1986,6 +1986,15 @@
         "reservaId": "RES-1785091816491"
       },
       {
+        "icon": "🚌",
+        "nome": "Transporte",
+        "titulo": "🚆 GENEVE CFF → PARIS GARE DE LYON · 06/09/2026",
+        "descricao": "",
+        "pos": 200,
+        "status": "concluida",
+        "reservaId": "RES-1786787748053"
+      },
+      {
         "icon": "🏨",
         "nome": "Hotel",
         "titulo": "Hyatt House Paris Charles de Gaulle Airport · 06/09/2026 a 07/09/2026",
@@ -1997,20 +2006,11 @@
       {
         "icon": "🚌",
         "nome": "Transporte",
-        "titulo": "🚆 GENEVE CFF → PARIS GARE DE LYON · 06/09/2026",
+        "titulo": "🚐 Hyatt Place - House CDG → T2TGV · 07/09/2026",
         "descricao": "",
-        "pos": 200,
+        "pos": 220,
         "status": "concluida",
-        "reservaId": "RES-1786787748053"
-      },
-      {
-        "icon": "🌍",
-        "nome": "Passagem Internacional",
-        "titulo": "CDG → SSA · 07/09/2026",
-        "descricao": "Emitir CDG-SSA via Smiles\nExecutiva Air France",
-        "status": "concluida",
-        "reservaId": "RES-1783539827887",
-        "pos": 240
+        "reservaId": "RES-1786788039112"
       },
       {
         "icon": "✈️",
@@ -2022,13 +2022,27 @@
         "reservaId": "RES-1784842213301"
       },
       {
-        "icon": "🚌",
-        "nome": "Transporte",
-        "titulo": "🚐 Hyatt Place - House CDG → T2TGV · 07/09/2026",
-        "descricao": "",
-        "pos": 220,
+        "icon": "🌍",
+        "nome": "Passagem Internacional",
+        "titulo": "CDG → SSA · 07/09/2026",
+        "descricao": "Emitir CDG-SSA via Smiles\nExecutiva Air France",
         "status": "concluida",
-        "reservaId": "RES-1786788039112"
+        "reservaId": "RES-1783539827887",
+        "pos": 240
+      },
+      {
+        "id": "atv-1788514109175",
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "Comprar bagagem despachada",
+        "descricao": "Comprar uma bagagem despachada adicional para cada um dos passageiros deste voo. Eles já possuem uma bagagem despachada, então ficarão com duas por passageiro.\n\nLocalizador: YICNWR\nCia aérea: Gol\nOrigem: SSA\nDestino: CNF\nData: 07/09\n\nCaso ainda não tenha o espaço conforto comprado, pode incluir também. O Oswaldo sempre no corredor e a Mônica no meio ou no outro corredor.\n\n4015631101345467\n12/30\n553\nOSWALDO L C QUEIROZ",
+        "status": "pendente",
+        "reservaId": null,
+        "demPrazo": "2026-09-04",
+        "demResponsavel": "Felipe",
+        "demPrioridade": "normal",
+        "demClientes": "Oswaldo Luiz Chiabi",
+        "pos": 241
       }
     ],
     "cadastro": "2026-07-05",
