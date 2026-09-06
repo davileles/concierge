@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-09-06T01:38:21.284Z",
+  "executadoEm": "2026-09-06T02:08:14.682Z",
   "modelosAtivos": [
     {
       "nome": "Seguro · Início da vigência",
@@ -46,219 +46,197 @@
     "janelaHoras": 24,
     "grupo": "120363428533434849@g.us"
   },
-  "totalAlteracoes": 1,
-  "resultados": [
-    "✅ [Voo · Lembrete de embarque (volta)] → \"Debora Lima Ribeiro\" (2026-09-07)"
-  ],
+  "totalAlteracoes": 0,
+  "resultados": [],
   "eventos": [
-    {
-      "modelo": "Voo · Lembrete de embarque (volta)",
-      "gatilho": "voo_volta_dt",
-      "reservaId": "RES-1787170275193",
-      "cliente": "Debora Lima Ribeiro",
-      "horasRestantes": 47.78,
-      "janela": 48,
-      "temGrupo": true,
-      "disparar": true,
-      "ts": "2026-09-06T01:38:19.133Z"
-    },
-    {
-      "modelo": "Voo · Lembrete de embarque (volta)",
-      "gatilho": "voo_volta_dt",
-      "reservaId": "RES-1787170275193",
-      "cliente": "Debora Lima Ribeiro",
-      "grupo": "120363418603292365@g.us",
-      "tentativa": "sucesso",
-      "ts": "2026-09-06T01:38:21.077Z"
-    },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Pedal em Salta e Jujuy",
-      "horasRestantes": -40.31,
+      "horasRestantes": -40.8,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.091Z"
+      "ts": "2026-09-06T02:08:14.555Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Reveillon em Arraial",
-      "horasRestantes": 2747.61,
+      "horasRestantes": 2747.11,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.091Z"
+      "ts": "2026-09-06T02:08:14.556Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Aniversário de casamento R&J",
-      "horasRestantes": 393.78,
+      "horasRestantes": 393.28,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.091Z"
+      "ts": "2026-09-06T02:08:14.556Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Países Baixos e Europa Nórdica",
-      "horasRestantes": 5445.28,
+      "horasRestantes": 5444.78,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.091Z"
+      "ts": "2026-09-06T02:08:14.556Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Cascavel com a filha",
-      "horasRestantes": 295.36,
+      "horasRestantes": 294.86,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.091Z"
+      "ts": "2026-09-06T02:08:14.557Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Missão no Cairo",
-      "horasRestantes": -6151.31,
+      "horasRestantes": -6151.8,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.092Z"
+      "ts": "2026-09-06T02:08:14.558Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Reveillon em Paris",
-      "horasRestantes": 2725.78,
+      "horasRestantes": 2725.28,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.092Z"
+      "ts": "2026-09-06T02:08:14.559Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Foz em família",
-      "horasRestantes": 777.28,
+      "horasRestantes": 776.78,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.093Z"
+      "ts": "2026-09-06T02:08:14.560Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Aniversário Diogo",
-      "horasRestantes": 250.03,
+      "horasRestantes": 249.53,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.093Z"
+      "ts": "2026-09-06T02:08:14.561Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dia das crianças em SP",
-      "horasRestantes": 782.28,
+      "horasRestantes": 781.78,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.094Z"
+      "ts": "2026-09-06T02:08:14.561Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem para Madrid #1",
-      "horasRestantes": 4144.44,
+      "horasRestantes": 4143.95,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.094Z"
+      "ts": "2026-09-06T02:08:14.562Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Irmãs na Europa",
-      "horasRestantes": 954.69,
+      "horasRestantes": 954.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.094Z"
+      "ts": "2026-09-06T02:08:14.563Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 2001.78,
+      "horasRestantes": 2001.28,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.095Z"
+      "ts": "2026-09-06T02:08:14.563Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 2947.61,
+      "horasRestantes": 2947.11,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.095Z"
+      "ts": "2026-09-06T02:08:14.563Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 1454.19,
+      "horasRestantes": 1453.7,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.095Z"
+      "ts": "2026-09-06T02:08:14.564Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Interior francês e italiano",
-      "horasRestantes": 114.69,
+      "horasRestantes": 114.2,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.095Z"
+      "ts": "2026-09-06T02:08:14.564Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -1223.47,
+      "horasRestantes": -1223.97,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.096Z"
+      "ts": "2026-09-06T02:08:14.565Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -1192.56,
+      "horasRestantes": -1193.05,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.097Z"
+      "ts": "2026-09-06T02:08:14.567Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -1275.06,
+      "horasRestantes": -1275.55,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.098Z"
+      "ts": "2026-09-06T02:08:14.568Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 1845.86,
+      "horasRestantes": 1845.36,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.098Z"
+      "ts": "2026-09-06T02:08:14.569Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -1207.14,
+      "horasRestantes": -1207.64,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-06T01:38:21.098Z"
+      "ts": "2026-09-06T02:08:14.570Z"
     }
   ]
 }
