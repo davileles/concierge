@@ -1,5 +1,52 @@
 [
   {
+    "id": "RES-1788979403644",
+    "tipo": "carro",
+    "cliente": "Marisa Fernandes Fialho",
+    "obs": "Trem de ida: Frecciarossa 9607, Coach 10, Seats 10D (Lucileia) e 9D (Janelucy), Super Economy, 26.90 EUR cada. Trem de volta: Italo 9948, Wagon 7/7, Seats 5/6, Economy Smart, 23.90 EUR cada.",
+    "cadastro": "2026-09-09",
+    "arquivosAnexos": [
+      {
+        "nome": "Omio_Print_Tickets_VXF69N_QKEDRK.pdf",
+        "tipo": "application/pdf",
+        "tamanho": 439570,
+        "base64": null
+      }
+    ],
+    "arquivoAnexo": {
+      "nome": "Omio_Print_Tickets_VXF69N_QKEDRK.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 439570,
+      "base64": null
+    },
+    "temArquivo": true,
+    "subtipo": "trem",
+    "locadora": "Trenitalia",
+    "retLocal": "Milano Centrale",
+    "devLocal": "Bologna Centrale",
+    "retData": "2026-10-19",
+    "devData": "",
+    "categoria": "Frecciarossa 9607",
+    "horaTransfer": "07:00",
+    "horaChegadaTransp": "08:04",
+    "pax": "2",
+    "valor": "664,35",
+    "conf": "VXF69N",
+    "seguro": "",
+    "voltaOrigem": "Bologna Centrale",
+    "voltaDestino": "Milano Centrale",
+    "voltaData": "2026-10-19",
+    "voltaHora": "19:06",
+    "voltaHoraChegada": "20:20",
+    "voltaOperadora": "Italo",
+    "voltaConf": "QKEDRK",
+    "voltaCategoria": "Economy Smart",
+    "grupo": "120363427304739979@g.us",
+    "economiaGerada": "",
+    "economiaModo": "",
+    "economiaDetalhe": ""
+  },
+  {
     "id": "RES-1788978988241",
     "tipo": "carro",
     "cliente": "Marisa Fernandes Fialho",
