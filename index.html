@@ -5062,6 +5062,24 @@ var VARS_RESERVA = [
   { label: '{{ferry_volta_hora_chegada}}',    desc: 'Hora de chegada do ferry (volta)' },
   { label: '{{ferry_volta_cabine}}',          desc: 'Tipo de cabine / acomodacao (volta)' },
   { label: '{{ferry_volta_conf}}',            desc: 'Localizador / confirmacao (volta)' },
+  { label: '{{trem_companhia}}',              desc: 'Companhia ferroviaria (ida)' },
+  { label: '{{trem_estacao_embarque}}',       desc: 'Estacao de origem (ida)' },
+  { label: '{{trem_estacao_desembarque}}',    desc: 'Estacao de destino (ida)' },
+  { label: '{{trem_data}}',                   desc: 'Data de partida do trem (ida)' },
+  { label: '{{trem_hora_partida}}',           desc: 'Hora de partida do trem (ida)' },
+  { label: '{{trem_hora_chegada}}',           desc: 'Hora de chegada do trem (ida)' },
+  { label: '{{trem_classe}}',                 desc: 'Classe / tipo de bilhete (ida)' },
+  { label: '{{trem_pax}}',                    desc: 'Total de passageiros no trem' },
+  { label: '{{trem_conf}}',                   desc: 'Localizador / confirmacao do trem' },
+  { label: '{{trem_valor}}',                  desc: 'Valor pago no trem (R$)' },
+  { label: '{{trem_volta_companhia}}',        desc: 'Companhia ferroviaria (volta)' },
+  { label: '{{trem_volta_estacao_embarque}}', desc: 'Estacao de origem (volta)' },
+  { label: '{{trem_volta_estacao_desembarque}}',desc: 'Estacao de destino (volta)' },
+  { label: '{{trem_volta_data}}',             desc: 'Data de partida do trem (volta)' },
+  { label: '{{trem_volta_hora_partida}}',     desc: 'Hora de partida do trem (volta)' },
+  { label: '{{trem_volta_hora_chegada}}',     desc: 'Hora de chegada do trem (volta)' },
+  { label: '{{trem_volta_classe}}',           desc: 'Classe / tipo de bilhete (volta)' },
+  { label: '{{trem_volta_conf}}',             desc: 'Localizador / confirmacao (volta)' },
   { label: '{{seguradora}}',             desc: 'Seguradora / assistencia do seguro viagem' },
   { label: '{{seguro_plano}}',           desc: 'Plano / produto do seguro' },
   { label: '{{seguro_apolice}}',         desc: 'Numero do bilhete / apolice do seguro' },
@@ -5927,6 +5945,27 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'ferry_volta_hora_chegada',     _fry ? (res.voltaHoraChegada||'') : '');
     txt = rv(txt, 'ferry_volta_cabine',           _fry ? (res.voltaCategoria||res.categoria||'') : '');
     txt = rv(txt, 'ferry_volta_conf',             _fry ? (res.voltaConf||res.conf||'') : '');
+
+    // ── Trem (transporte ponto-a-ponto, subtipo trem) ──
+    var _trm = (res.tipo === 'carro' && res.subtipo === 'trem');
+    txt = rv(txt, 'trem_companhia',                _trm ? (res.locadora||'') : '');
+    txt = rv(txt, 'trem_estacao_embarque',         _trm ? (res.retLocal||'') : '');
+    txt = rv(txt, 'trem_estacao_desembarque',      _trm ? (res.devLocal||'') : '');
+    txt = rv(txt, 'trem_data',                     _trm && res.retData ? fmtDate(res.retData) : '');
+    txt = rv(txt, 'trem_hora_partida',             _trm ? (res.horaTransfer||'') : '');
+    txt = rv(txt, 'trem_hora_chegada',             _trm ? (res.horaChegadaTransp||'') : '');
+    txt = rv(txt, 'trem_classe',                   _trm ? (res.categoria||'') : '');
+    txt = rv(txt, 'trem_pax',                      _trm ? (res.pax||'') : '');
+    txt = rv(txt, 'trem_conf',                     _trm ? (res.conf||'') : '');
+    txt = rv(txt, 'trem_valor',                    _trm ? (res.valor||'') : '');
+    txt = rv(txt, 'trem_volta_companhia',          _trm ? (res.voltaOperadora||res.locadora||'') : '');
+    txt = rv(txt, 'trem_volta_estacao_embarque',   _trm ? (res.voltaOrigem||res.devLocal||'') : '');
+    txt = rv(txt, 'trem_volta_estacao_desembarque',_trm ? (res.voltaDestino||res.retLocal||'') : '');
+    txt = rv(txt, 'trem_volta_data',               _trm && res.voltaData ? fmtDate(res.voltaData) : '');
+    txt = rv(txt, 'trem_volta_hora_partida',       _trm ? (res.voltaHora||'') : '');
+    txt = rv(txt, 'trem_volta_hora_chegada',       _trm ? (res.voltaHoraChegada||'') : '');
+    txt = rv(txt, 'trem_volta_classe',             _trm ? (res.voltaCategoria||res.categoria||'') : '');
+    txt = rv(txt, 'trem_volta_conf',               _trm ? (res.voltaConf||res.conf||'') : '');
     // ── Seguro viagem ──
     var _seg = res.tipo === 'seguro';
     var _modLbl = { anual:'Anual', multiviagem:'Multiviagem', unica:'Viagem unica' }[res.seguroModalidade] || (res.seguroModalidade||'');
