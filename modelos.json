@@ -257,5 +257,23 @@
     "modo": "programado",
     "gatilho": "primeiro_voo_viagem",
     "horaRef": null
+  },
+  {
+    "id": "MOD-1786200000001",
+    "nome": "Trem · Reserva confirmada (ida)",
+    "texto": "✅ *Trem reservado com sucesso!*\n\n🚆 *Detalhes da viagem*\nTrecho: *{{trem_estacao_embarque}} ➔ {{trem_estacao_desembarque}}*\nData: *{{trem_data}}* às *{{trem_hora_partida}}*\nChegada prevista: *{{trem_hora_chegada}}*\nCompanhia: *{{trem_companhia}}*\nClasse: *{{trem_classe}}*\nPassageiros: *{{trem_pax}}*\n\n🎫 Localizador: *{{trem_conf}}*\n\n💰 *Investimento*\nValor total: *R$ {{trem_valor}}*\n\n📌 *Antes do embarque*\nChegue à estação com pelo menos *30 minutos* de antecedência — em trens de alta velocidade e internacionais o embarque encerra antes do horário de partida.\nTenha em mãos documento oficial com foto (passaporte, em trechos internacionais) e o bilhete com o localizador acima.\nConfira a plataforma nos painéis da estação: ela costuma ser divulgada poucos minutos antes da partida.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
+  },
+  {
+    "id": "MOD-1786200000002",
+    "nome": "Trem · Reserva confirmada (ida e volta)",
+    "texto": "✅ *Trem reservado com sucesso!*\n\n🚆 *Ida*\nTrecho: *{{trem_estacao_embarque}} ➔ {{trem_estacao_desembarque}}*\nData: *{{trem_data}}* às *{{trem_hora_partida}}*\nChegada prevista: *{{trem_hora_chegada}}*\nCompanhia: *{{trem_companhia}}*\nClasse: *{{trem_classe}}*\nLocalizador: *{{trem_conf}}*\n\n🔁 *Volta*\nTrecho: *{{trem_volta_estacao_embarque}} ➔ {{trem_volta_estacao_desembarque}}*\nData: *{{trem_volta_data}}* às *{{trem_volta_hora_partida}}*\nChegada prevista: *{{trem_volta_hora_chegada}}*\nCompanhia: *{{trem_volta_companhia}}*\nClasse: *{{trem_volta_classe}}*\nLocalizador: *{{trem_volta_conf}}*\n\n👥 Passageiros: *{{trem_pax}}*\n\n💰 *Investimento*\nValor total: *R$ {{trem_valor}}*\n\n📌 *Antes do embarque*\nChegue à estação com pelo menos *30 minutos* de antecedência — em trens de alta velocidade e internacionais o embarque encerra antes do horário de partida.\nTenha em mãos documento oficial com foto (passaporte, em trechos internacionais) e o bilhete com o localizador do trecho.\nConfira a plataforma nos painéis da estação: ela costuma ser divulgada poucos minutos antes da partida.\n\nQualquer dúvida ou necessidade, estamos à disposição.\n\n*Boa viagem e conte conosco!* ✈️",
+    "modo": "manual",
+    "gatilho": "",
+    "antecedencia": null,
+    "horaRef": null
   }
 ]
