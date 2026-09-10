@@ -1027,7 +1027,561 @@
     "heroImageRoteiro": "https://plus.unsplash.com/premium_photo-1675975678457-d70708bf77c8?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     "subtituloRoteiro": "Itália e Suíça",
     "eyebrowRoteiro": "Travel Concierge by @davileles",
-    "roteiroDias": []
+    "roteiroDias": [
+      {
+        "num": 1,
+        "data": "2026-10-15",
+        "titulo": "Belo Horizonte → Lisboa",
+        "resumo": "Embarque noturno em Executiva rumo à Europa.",
+        "energia": "🔋 Leve",
+        "atividades": [
+          {
+            "horario": "14:20",
+            "nome": "Chegada ao Aeroporto de Confins (CNF)",
+            "descricao": "Chegar com 3h de antecedência para o voo internacional. Separar passaporte, apólice do seguro Assist Card e os comprovantes dos trechos seguintes (voo Lisboa → Milão).",
+            "dica": "O passaporte precisa ter validade de pelo menos 3 meses após a data de saída da Europa (04/11/2026)."
+          },
+          {
+            "horario": "17:20",
+            "nome": "Voo CNF → LIS · TAP 0104 · Executiva",
+            "descricao": "Localizador AXFPPS · 2 passageiras. Voo noturno de aproximadamente 9h20, com chegada em Lisboa às 06:40 do dia seguinte.",
+            "dica": "Fuso: Lisboa fica 4h à frente de Brasília e a Itália, 5h. Vale tentar dormir no voo para chegar no horário europeu."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 2,
+        "data": "2026-10-16",
+        "titulo": "Lisboa → Milão",
+        "resumo": "Chegada à Europa, conexão própria em Lisboa e voo para Milão.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "06:40",
+            "nome": "Chegada em Lisboa · entrada na Europa",
+            "descricao": "A imigração é feita aqui, primeira entrada no espaço Schengen. Desde 2025 o controle inclui registro biométrico (foto e digitais) no sistema EES, então a fila pode demorar mais que o normal.",
+            "dica": "O voo seguinte é uma reserva separada: retirar as malas na esteira e despachar de novo para Milão."
+          },
+          {
+            "horario": "Manhã",
+            "nome": "Check-in e despacho para Milão",
+            "descricao": "Há bastante folga até o embarque. Conferir no cartão de embarque o terminal de saída — em Lisboa, parte das companhias low-cost opera no Terminal 2, ligado ao Terminal 1 por ônibus gratuito.",
+            "dica": "Fazer o check-in online antes de chegar ao aeroporto: algumas low-cost cobram pelo check-in no balcão."
+          },
+          {
+            "horario": "14:00",
+            "nome": "Voo LIS → MXP (Milão Malpensa)",
+            "descricao": "Localizador KD63M49 · 1 bagagem despachada por passageira · chegada às 17:35 (horário da Itália, 1h à frente de Lisboa).",
+            "dica": ""
+          },
+          {
+            "horario": "17:35",
+            "nome": "Malpensa → centro de Milão",
+            "descricao": "O Malpensa Express liga o aeroporto à estação Milano Centrale em cerca de 50 minutos. Táxi e transfer também são opções com bagagem.",
+            "dica": "Milano Centrale é a estação de partida de quase todos os trens da semana — hospedagem perto dela facilita muito as manhãs."
+          },
+          {
+            "horario": "Noite",
+            "nome": "Check-in no hotel e jantar leve",
+            "descricao": "Primeira noite na Itália depois de um dia longo — jantar perto do hotel e descanso.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 3,
+        "data": "2026-10-17",
+        "titulo": "Milão",
+        "resumo": "Dia livre para se ambientar e recuperar do fuso.",
+        "energia": "🔋 Leve",
+        "atividades": [
+          {
+            "horario": "Manhã",
+            "nome": "Duomo di Milano e terraços",
+            "descricao": "A catedral é o cartão-postal da cidade. Os terraços no telhado têm vista de perto das agulhas góticas e de toda a praça.",
+            "dica": "Ingressos com horário marcado evitam fila, principalmente no sábado."
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Galleria Vittorio Emanuele II e Castello Sforzesco",
+            "descricao": "A galeria fica colada à Piazza del Duomo. Uma caminhada pela Via Dante leva ao castelo e ao Parque Sempione.",
+            "dica": ""
+          },
+          {
+            "horario": "Noite",
+            "nome": "Recolher cedo",
+            "descricao": "O trem de amanhã sai às 06:20 da Milano Centrale. Deixar roupa de frio, passaporte e bilhetes separados.",
+            "dica": "Levar um lanche para o trem: o café da manhã do hotel provavelmente ainda não estará aberto."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 4,
+        "data": "2026-10-18",
+        "titulo": "Tirano e St. Moritz",
+        "resumo": "Bate-volta de trem pelos Alpes: Lago de Como, Valtellina e a Linha Bernina até a Suíça.",
+        "energia": "🔋 Intenso",
+        "atividades": [
+          {
+            "horario": "06:20",
+            "nome": "Trem Milano Centrale → Tirano · Regionale 2812",
+            "descricao": "Chegada às 08:52 · 2ª classe, sem assento marcado. Bilhetes 2944862866 e 2944862865.",
+            "dica": "No trecho à beira do Lago de Como a água fica do lado esquerdo do trem, e o dia amanhece durante o percurso."
+          },
+          {
+            "horario": "09:41",
+            "nome": "Trem Tirano → St. Moritz · Linha Bernina",
+            "descricao": "Chegada às 12:11. A estação da Ferrovia Rética fica ao lado da estação italiana em Tirano. A linha é Patrimônio Mundial da UNESCO: passa pelo viaduto em espiral de Brusio, pelas geleiras e pelo Passo do Bernina, a mais de 2.200 m.",
+            "dica": "Bilhetes pessoais, válidos em qualquer trem do dia: apresentar junto com o passaporte. A Suíça usa franco suíço (CHF), mas cartão é aceito em quase todo lugar."
+          },
+          {
+            "horario": "12:11 – 16:30",
+            "nome": "St. Moritz",
+            "descricao": "Almoço e caminhada ao redor do lago, com as montanhas da Engadina em volta. A cidade fica a cerca de 1.800 m de altitude.",
+            "dica": "Meados de outubro é entressafra em St. Moritz: parte do comércio e dos restaurantes fecha. Levar casaco — pode fazer frio de inverno."
+          },
+          {
+            "horario": "16:48",
+            "nome": "Trem St. Moritz → Tirano",
+            "descricao": "Chegada prevista às 19:02. Mesmo percurso pela Linha Bernina, agora no fim da tarde.",
+            "dica": ""
+          },
+          {
+            "horario": "20:08",
+            "nome": "Trem Tirano → Milano Centrale · Regionale 2843",
+            "descricao": "Chegada às 22:40 · 2ª classe, sem assento marcado. Bilhetes 2944862863 e 2944862862.",
+            "dica": "Há cerca de 1h em Tirano antes do trem — dá para um lanche rápido perto da estação."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 5,
+        "data": "2026-10-19",
+        "titulo": "Bologna",
+        "resumo": "Bate-volta à capital gastronômica da Itália.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "07:00",
+            "nome": "Frecciarossa 9607 · Milano Centrale → Bologna Centrale",
+            "descricao": "Chegada às 08:04 · Carro 10, assentos 10D (Léia) e 9D (Jane) · PNR VXF69N.",
+            "dica": "As portas fecham 1 minuto antes da partida. O número da plataforma aparece no painel cerca de 15 minutos antes."
+          },
+          {
+            "horario": "Manhã",
+            "nome": "Piazza Maggiore e Basílica de San Petronio",
+            "descricao": "Da estação são uns 15 a 20 minutos a pé pela Via dell'Indipendenza, sempre sob os pórticos que são Patrimônio da UNESCO. Na praça ficam a basílica, a Fonte de Netuno e os palácios medievais.",
+            "dica": ""
+          },
+          {
+            "horario": "Almoço",
+            "nome": "Quadrilatero",
+            "descricao": "Ruelas medievais de mercado atrás da Piazza Maggiore. Lugar para provar tagliatelle al ragù, tortellini e mortadela.",
+            "dica": ""
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Archiginnasio e Due Torri",
+            "descricao": "O antigo prédio da universidade tem o Teatro Anatômico em madeira. As duas torres inclinadas são o símbolo da cidade.",
+            "dica": "Segunda-feira muitos museus italianos fecham — as ruas, praças e igrejas seguem abertas."
+          },
+          {
+            "horario": "19:06",
+            "nome": "Italo 9948 · Bologna Centrale → Milano Centrale",
+            "descricao": "Chegada às 20:20 · Carro 7, assentos 5 e 6 · Código QKEDRK.",
+            "dica": "A volta é pela Italo, outra companhia: não embarcar no Frecciarossa. Os trens de alta velocidade saem da parte subterrânea da estação — chegar com 20 minutos de folga."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 6,
+        "data": "2026-10-20",
+        "titulo": "Verona",
+        "resumo": "Bate-volta à cidade de Romeu e Julieta e da Arena romana.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "07:25",
+            "nome": "Trem Milano Centrale → Verona Porta Nuova · Regionale Trenord 2615",
+            "descricao": "Chegada às 09:17 · 2ª classe, sem assento marcado. Bilhetes 2944931268 e 2944931269.",
+            "dica": "Bilhete regional: deixar o QR Code do app à mão e, se o app pedir check-in, fazer antes de embarcar."
+          },
+          {
+            "horario": "Manhã",
+            "nome": "Arena di Verona e Piazza Bra",
+            "descricao": "Da estação são uns 20 minutos a pé. A arena romana do século I segue em uso para óperas.",
+            "dica": ""
+          },
+          {
+            "horario": "Meio do dia",
+            "nome": "Via Mazzini, Casa di Giulietta e Piazza delle Erbe",
+            "descricao": "A rua de compras leva ao pátio com a varanda da Julieta e à praça do antigo fórum. A Torre dei Lamberti tem a melhor vista do centro.",
+            "dica": ""
+          },
+          {
+            "horario": "Fim da tarde",
+            "nome": "Ponte Pietra e mirante de Castel San Pietro",
+            "descricao": "A ponte romana atravessa o Adige; do outro lado, o mirante mostra a cidade toda.",
+            "dica": ""
+          },
+          {
+            "horario": "19:02",
+            "nome": "Frecciarossa 9752 · Verona Porta Nuova → Milano Centrale",
+            "descricao": "Chegada às 20:17 · Carro 7, assentos 18C (Léia) e 18D (Jane) · PNR VXTVSN.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 7,
+        "data": "2026-10-21",
+        "titulo": "Milão",
+        "resumo": "Dia livre em Milão, sem horários de trem.",
+        "energia": "🔋 Leve",
+        "atividades": [
+          {
+            "horario": "Manhã",
+            "nome": "A Última Ceia (Cenacolo Vinciano)",
+            "descricao": "O afresco de Leonardo da Vinci fica em Santa Maria delle Grazie.",
+            "dica": "Só entra com ingresso antecipado e eles esgotam cedo — reservar com antecedência."
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Brera",
+            "descricao": "Bairro de ruas de pedra, galerias e cafés, com a Pinacoteca de Brera.",
+            "dica": ""
+          },
+          {
+            "horario": "Noite",
+            "nome": "Aperitivo nos Navigli",
+            "descricao": "Os canais ficam animados no fim do dia, com bares servindo aperitivo.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 8,
+        "data": "2026-10-22",
+        "titulo": "Lago de Como",
+        "resumo": "Bate-volta ao Lago de Como.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "07:43",
+            "nome": "Trem Milano Centrale → Como Lago",
+            "descricao": "Trenord 25508 até Como Camerlata (08:17) e troca para o Regionale 117 às 08:34, com chegada em Como Lago às 08:44. Bilhetes 2944947497 e 2944947499.",
+            "dica": "A troca em Camerlata tem 17 minutos — conferir a plataforma assim que desembarcar."
+          },
+          {
+            "horario": "Manhã",
+            "nome": "Centro de Como e Duomo",
+            "descricao": "A estação fica na beira do lago. O centro histórico e a catedral estão a poucos minutos a pé.",
+            "dica": ""
+          },
+          {
+            "horario": "Meio do dia",
+            "nome": "Funicular Como–Brunate",
+            "descricao": "Subida rápida até Brunate, com vista de todo o primeiro braço do lago e dos Alpes ao fundo.",
+            "dica": ""
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Passeio de barco ou orla até Villa Olmo",
+            "descricao": "Os barcos da Navigazione Laghi saem em frente à estação. A caminhada pela orla até os jardins de Villa Olmo é a alternativa tranquila.",
+            "dica": "Em outubro os barcos já têm horário reduzido: conferir o horário de volta antes de embarcar."
+          },
+          {
+            "horario": "17:16",
+            "nome": "Trem Como Lago → Milano Centrale",
+            "descricao": "Regionale 166 até Como Camerlata (17:25) e troca para o Trenord 25529 às 17:41, com chegada em Milão às 18:17. Bilhetes 2944947496 e 2944947498.",
+            "dica": ""
+          },
+          {
+            "horario": "Noite",
+            "nome": "Arrumar as malas",
+            "descricao": "Amanhã cedo é dia de mudar de cidade.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 9,
+        "data": "2026-10-23",
+        "titulo": "Milão → Veneza",
+        "resumo": "Frecciarossa em Business até Veneza e primeiro dia nos canais.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "Cedo",
+            "nome": "Check-out em Milão",
+            "descricao": "Sair do hotel com folga para estar na Milano Centrale por volta das 06:55, com as malas.",
+            "dica": ""
+          },
+          {
+            "horario": "07:15",
+            "nome": "Frecciarossa 9705 · Milano Centrale → Venezia S. Lucia · Business",
+            "descricao": "Chegada às 09:44 · Carro 3, assentos 5B (Léia) e 5D (Jane) · PNR VXYT8N.",
+            "dica": "Tarifa FrecciaDAYS: não permite alteração nem reembolso."
+          },
+          {
+            "horario": "09:44",
+            "nome": "Chegada a Veneza",
+            "descricao": "A estação Santa Lucia sai direto no Grande Canal. Vaporetto (linhas 1 ou 2) ou táxi aquático até o hotel.",
+            "dica": "Veneza tem muitas pontes com escadas: quanto mais leve a bagagem, melhor. Se o quarto não estiver pronto, deixar as malas no hotel."
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Grande Canal de vaporetto e Rialto",
+            "descricao": "A linha 1 percorre o Grande Canal devagar, parando em todas as margens — é o passeio mais bonito pelo preço de um bilhete.",
+            "dica": ""
+          },
+          {
+            "horario": "Fim da tarde",
+            "nome": "Piazza San Marco",
+            "descricao": "A praça fica mais tranquila no fim do dia. Depois, cicchetti e spritz num bacaro.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 10,
+        "data": "2026-10-24",
+        "titulo": "Veneza",
+        "resumo": "Dia inteiro em Veneza e nas ilhas.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "Manhã",
+            "nome": "Basílica de São Marcos e Palácio Ducal",
+            "descricao": "Os dois ficam na Piazza San Marco. Do Palácio Ducal se atravessa a Ponte dos Suspiros.",
+            "dica": "Reservar horário evita as filas mais longas."
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Murano e Burano",
+            "descricao": "Murano é a ilha do vidro; Burano, das casas coloridas. Os vaporettos saem de Fondamente Nove.",
+            "dica": "Fim de outubro é temporada de acqua alta: vale olhar a previsão de maré do dia."
+          },
+          {
+            "horario": "Noite",
+            "nome": "Recolher cedo · mudança de horário",
+            "descricao": "O trem de amanhã sai às 07:26. Nesta madrugada termina o horário de verão europeu: às 03:00 os relógios voltam para 02:00.",
+            "dica": "Celular ajusta sozinho — usar o alarme do celular, não de relógio de pulso."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 11,
+        "data": "2026-10-25",
+        "titulo": "Veneza → Florença",
+        "resumo": "Trem cedo para a Toscana e primeiro dia em Florença. Começa o horário de inverno.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "06:45",
+            "nome": "Check-out e vaporetto até a estação",
+            "descricao": "Domingo cedo os vaporettos passam com menos frequência — sair com folga.",
+            "dica": "A partir de hoje a Itália fica 4h à frente de Brasília."
+          },
+          {
+            "horario": "07:26",
+            "nome": "Frecciarossa 9405 · Venezia S. Lucia → Firenze S. M. Novella",
+            "descricao": "Chegada às 09:39 · Carro 7, assentos 8B (Léia) e 7B (Jane) · PNR VX8NRN.",
+            "dica": "Tarifa FrecciaDAYS: não permite alteração nem reembolso."
+          },
+          {
+            "horario": "09:39",
+            "nome": "Chegada a Florença",
+            "descricao": "A estação Santa Maria Novella fica no centro, a cerca de 10 minutos a pé do Duomo. Deixar as malas no hotel.",
+            "dica": ""
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Duomo, Piazza della Signoria e Ponte Vecchio",
+            "descricao": "Da catedral de Brunelleschi até o rio é tudo a pé, passando pela praça do Palazzo Vecchio.",
+            "dica": "A subida à cúpula exige reserva de horário."
+          },
+          {
+            "horario": "Fim da tarde",
+            "nome": "Piazzale Michelangelo",
+            "descricao": "O mirante com a vista clássica de Florença. Com o horário de inverno, escurece por volta das 17h.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 12,
+        "data": "2026-10-26",
+        "titulo": "Florença",
+        "resumo": "Programação a definir.",
+        "energia": "",
+        "atividades": [
+          {
+            "horario": "",
+            "nome": "Museus fechados às segundas",
+            "descricao": "A Galeria Uffizi e a Galleria dell'Accademia (onde está o David) não abrem às segundas-feiras.",
+            "dica": "Reservar esses dois para outro dia da estadia."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 13,
+        "data": "2026-10-27",
+        "titulo": "Toscana e Roma",
+        "resumo": "Programação a definir.",
+        "energia": "",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 14,
+        "data": "2026-10-28",
+        "titulo": "Toscana e Roma",
+        "resumo": "Programação a definir.",
+        "energia": "",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 15,
+        "data": "2026-10-29",
+        "titulo": "Toscana e Roma",
+        "resumo": "Programação a definir.",
+        "energia": "",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 16,
+        "data": "2026-10-30",
+        "titulo": "Toscana e Roma",
+        "resumo": "Programação a definir.",
+        "energia": "",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 17,
+        "data": "2026-10-31",
+        "titulo": "Toscana e Roma",
+        "resumo": "Programação a definir.",
+        "energia": "",
+        "atividades": [],
+        "deslocamentos": []
+      },
+      {
+        "num": 18,
+        "data": "2026-11-01",
+        "titulo": "Roma",
+        "resumo": "Véspera do voo para Lisboa. Programação a definir.",
+        "energia": "",
+        "atividades": [
+          {
+            "horario": "",
+            "nome": "Feriado de Todos os Santos",
+            "descricao": "Dia 1º de novembro é feriado nacional na Itália: parte do comércio fecha ou abre em horário reduzido.",
+            "dica": "Ideal já estar hospedadas em Roma nesta noite, por causa do voo de amanhã."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 19,
+        "data": "2026-11-02",
+        "titulo": "Roma → Lisboa",
+        "resumo": "Voo para Lisboa e última parada da viagem.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "11:00",
+            "nome": "Leonardo Express · Roma Termini → Fiumicino",
+            "descricao": "Trem direto até o aeroporto, cerca de 32 minutos.",
+            "dica": "Chegar ao aeroporto por volta das 12:00."
+          },
+          {
+            "horario": "14:00",
+            "nome": "Voo FCO → LIS · Ryanair FR9903",
+            "descricao": "Chegada às 16:10 (Lisboa fica 1h atrás da Itália) · Assentos 14C (Jane) e 14B (Léia) · Localizador DUUSJF. Cada uma tem mala de porão de 20 kg, prioridade e 2 malas de cabine.",
+            "dica": "Na Ryanair o check-in online é obrigatório, com o cartão de embarque no app. O despacho de bagagem fecha 40 minutos antes do voo."
+          },
+          {
+            "horario": "16:10",
+            "nome": "Chegada a Lisboa",
+            "descricao": "Voo dentro do espaço Schengen: não passa pela imigração.",
+            "dica": "Se o desembarque for no Terminal 2, há ônibus gratuito até o Terminal 1, onde ficam metrô e táxis."
+          },
+          {
+            "horario": "Noite",
+            "nome": "Check-in no hotel e jantar",
+            "descricao": "Primeira noite em Lisboa.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 20,
+        "data": "2026-11-03",
+        "titulo": "Lisboa",
+        "resumo": "Último dia inteiro da viagem.",
+        "energia": "🔋 Moderado",
+        "atividades": [
+          {
+            "horario": "Manhã",
+            "nome": "Belém",
+            "descricao": "Mosteiro dos Jerónimos, Torre de Belém e os pastéis de Belém na fábrica original, a poucos passos do mosteiro.",
+            "dica": ""
+          },
+          {
+            "horario": "Tarde",
+            "nome": "Alfama e Miradouro de Santa Luzia",
+            "descricao": "O bairro mais antigo de Lisboa, de ruelas em ladeira, com vista para o Tejo.",
+            "dica": ""
+          },
+          {
+            "horario": "Noite",
+            "nome": "Jantar e malas prontas",
+            "descricao": "O voo de amanhã sai às 09:55 — deixar documentos e malas organizados.",
+            "dica": "Compras com tax free na Itália: a validação é feita no último aeroporto da União Europeia, em Lisboa, antes da imigração."
+          }
+        ],
+        "deslocamentos": []
+      },
+      {
+        "num": 21,
+        "data": "2026-11-04",
+        "titulo": "Lisboa → Belo Horizonte",
+        "resumo": "Voo de volta para casa em Executiva.",
+        "energia": "🔋 Leve",
+        "atividades": [
+          {
+            "horario": "07:00",
+            "nome": "Chegada ao Aeroporto de Lisboa",
+            "descricao": "Chegar com cerca de 3h de antecedência: é um voo internacional com saída do espaço Schengen, com controle de passaporte e registro de saída no EES.",
+            "dica": ""
+          },
+          {
+            "horario": "09:55",
+            "nome": "Voo LIS → CNF · TAP 0103 · Executiva",
+            "descricao": "Chegada em Confins às 16:45 · Localizador AXFPPS.",
+            "dica": ""
+          }
+        ],
+        "deslocamentos": []
+      }
+    ]
   },
   {
     "id": "VGM-1785261914613",
