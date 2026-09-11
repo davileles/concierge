@@ -1,5 +1,5 @@
 {
-  "executadoEm": "2026-09-11T10:05:23.456Z",
+  "executadoEm": "2026-09-11T10:33:51.974Z",
   "modelosAtivos": [
     {
       "nome": "Seguro · Início da vigência",
@@ -54,233 +54,233 @@
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1788524845665",
       "cliente": "Edwin Olaf Ingmar",
-      "horasRestantes": 24.83,
+      "horasRestantes": 24.35,
       "janela": 48,
       "temGrupo": false,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.220Z"
+      "ts": "2026-09-11T10:33:51.818Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1788524845666",
       "cliente": "Edwin Olaf Ingmar",
-      "horasRestantes": 28.66,
+      "horasRestantes": 28.19,
       "janela": 48,
       "temGrupo": false,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.220Z"
+      "ts": "2026-09-11T10:33:51.818Z"
     },
     {
       "modelo": "Voo · Lembrete de embarque (ida)",
       "gatilho": "voo_ida_dt",
       "reservaId": "RES-1788524845667",
       "cliente": "Edwin Olaf Ingmar",
-      "horasRestantes": 34.08,
+      "horasRestantes": 33.6,
       "janela": 48,
       "temGrupo": false,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.221Z"
+      "ts": "2026-09-11T10:33:51.818Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Pedal em Salta e Jujuy",
-      "horasRestantes": -168.76,
+      "horasRestantes": -169.23,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.234Z"
+      "ts": "2026-09-11T10:33:51.835Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Reveillon em Arraial",
-      "horasRestantes": 2619.16,
+      "horasRestantes": 2618.69,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.235Z"
+      "ts": "2026-09-11T10:33:51.836Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Aniversário de casamento R&J",
-      "horasRestantes": 265.33,
+      "horasRestantes": 264.85,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.235Z"
+      "ts": "2026-09-11T10:33:51.836Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Países Baixos e Europa Nórdica",
-      "horasRestantes": 5316.83,
+      "horasRestantes": 5316.35,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.235Z"
+      "ts": "2026-09-11T10:33:51.836Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Cascavel com a filha",
-      "horasRestantes": 166.91,
+      "horasRestantes": 166.44,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.236Z"
+      "ts": "2026-09-11T10:33:51.837Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Missão no Cairo",
-      "horasRestantes": -6279.76,
+      "horasRestantes": -6280.23,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.236Z"
+      "ts": "2026-09-11T10:33:51.837Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Reveillon em Paris",
-      "horasRestantes": 2597.33,
+      "horasRestantes": 2596.85,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.237Z"
+      "ts": "2026-09-11T10:33:51.838Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Foz em família",
-      "horasRestantes": 648.83,
+      "horasRestantes": 648.35,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.238Z"
+      "ts": "2026-09-11T10:33:51.840Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Aniversário Diogo",
-      "horasRestantes": 121.58,
+      "horasRestantes": 121.1,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.239Z"
+      "ts": "2026-09-11T10:33:51.840Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dia das crianças em SP",
-      "horasRestantes": 653.83,
+      "horasRestantes": 653.35,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.239Z"
+      "ts": "2026-09-11T10:33:51.841Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Viagem para Madrid #1",
-      "horasRestantes": 4015.99,
+      "horasRestantes": 4015.52,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.239Z"
+      "ts": "2026-09-11T10:33:51.841Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Cunhadas na Europa",
-      "horasRestantes": 826.24,
+      "horasRestantes": 825.77,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.240Z"
+      "ts": "2026-09-11T10:33:51.842Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Noronhe-se",
-      "horasRestantes": 1873.33,
+      "horasRestantes": 1872.85,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.240Z"
+      "ts": "2026-09-11T10:33:51.842Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Ski nos alpes franceses",
-      "horasRestantes": 2819.16,
+      "horasRestantes": 2818.69,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.241Z"
+      "ts": "2026-09-11T10:33:51.842Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Casamento em Comandatuba",
-      "horasRestantes": 1325.74,
+      "horasRestantes": 1325.27,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.241Z"
+      "ts": "2026-09-11T10:33:51.843Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Dunas & Lagoas",
-      "horasRestantes": -1351.92,
+      "horasRestantes": -1352.4,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.242Z"
+      "ts": "2026-09-11T10:33:51.843Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andrea Bocelli na Toscana",
-      "horasRestantes": -1321.01,
+      "horasRestantes": -1321.48,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.244Z"
+      "ts": "2026-09-11T10:33:51.846Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Andes em família - Neve e memórias",
-      "horasRestantes": -1403.51,
+      "horasRestantes": -1403.98,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.245Z"
+      "ts": "2026-09-11T10:33:51.847Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Eurotrip de aniversário da Jamilli",
-      "horasRestantes": 1717.41,
+      "horasRestantes": 1716.94,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.245Z"
+      "ts": "2026-09-11T10:33:51.848Z"
     },
     {
       "modelo": "Voo · Instruções pré-voo",
       "gatilho": "primeiro_voo_viagem",
       "viagem": "Curaçao - Rodolpho, Jamilli, Leo e Gabi",
-      "horasRestantes": -1335.59,
+      "horasRestantes": -1336.06,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.246Z"
+      "ts": "2026-09-11T10:33:51.848Z"
     },
     {
       "bloco": "checkin_voo",
       "perna": "ida",
       "reservaId": "RES-1788524845665",
       "cliente": "Edwin Olaf Ingmar",
-      "horasRestantes": 24.83,
+      "horasRestantes": 24.35,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.247Z"
+      "ts": "2026-09-11T10:33:51.850Z"
     },
     {
       "bloco": "checkin_voo",
       "perna": "ida",
       "reservaId": "RES-1788524845666",
       "cliente": "Edwin Olaf Ingmar",
-      "horasRestantes": 28.66,
+      "horasRestantes": 28.19,
       "janela": 24,
       "disparar": false,
-      "ts": "2026-09-11T10:05:23.247Z"
+      "ts": "2026-09-11T10:33:51.850Z"
     }
   ]
 }
