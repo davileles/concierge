@@ -1,5 +1,56 @@
 [
   {
+    "id": "RES-1789497402757",
+    "tipo": "carro",
+    "cliente": "Diogo Ottoni Da",
+    "obs": "Diária com KM livre. Proteção padrão (LDW) incluída. Taxa Administrativa de 15%. Valor a ser pago na loja. Tolerância de 1 hora no horário de retirada.",
+    "cadastro": "2026-09-15",
+    "arquivosAnexos": [
+      {
+        "nome": "reserva_movida_tamanho_14.pdf",
+        "tipo": "application/pdf",
+        "tamanho": 85442,
+        "base64": null
+      }
+    ],
+    "arquivoAnexo": {
+      "nome": "reserva_movida_tamanho_14.pdf",
+      "tipo": "application/pdf",
+      "tamanho": 85442,
+      "base64": null
+    },
+    "temArquivo": true,
+    "subtipo": "locacao",
+    "locadora": "Movida",
+    "retLocal": "Florianópolis Aeroporto - Rodovia de Acesso ao Aeroporto, 6200 - Florianópolis - SC",
+    "devLocal": "Florianópolis Aeroporto - Rodovia de Acesso ao Aeroporto, 6200 - Florianópolis - SC",
+    "retData": "2026-09-16",
+    "devData": "2026-09-20",
+    "categoria": "GRUPO HN - SUV automático - Hyundai Creta 1.0 Turbo ou similar",
+    "horaTransfer": "",
+    "horaChegadaTransp": "",
+    "pax": "1",
+    "valor": "798,65",
+    "conf": "MV1SBVQYQOBR",
+    "seguro": "Cobertura Básica",
+    "horaRetirada": "11:00",
+    "horaDevolucao": "11:00",
+    "tipoEmissao": "dinheiro_acumulo",
+    "valorDinheiro": "",
+    "valorMilhas": "",
+    "programaMilhas": "",
+    "valorTarifaPagante": "",
+    "valorAcumulo": "798,65",
+    "fatorAcumulo": "15",
+    "milhasAcumulo": "11.980",
+    "programaAcumulo": "Livelo",
+    "parceiroAcumulo": "Movida",
+    "grupo": "120363419998992026@g.us",
+    "economiaGerada": "359,40",
+    "economiaModo": "acumulo",
+    "economiaDetalhe": "11.980 Livelo acumulados a R$ 30,00/mil"
+  },
+  {
     "id": "RES-1789318954264",
     "tipo": "voo",
     "cliente": "Rafael Fernandes Goulart",
