@@ -1565,6 +1565,43 @@ header{animation:fadeUp .45s ease both}
           <p style="font-size:11px;color:var(--muted2);margin:2px 0 0">Campos em branco viram "a confirmar" na mensagem.</p>
         </div>
 
+        <!-- ALERTA DE DISPONIBILIDADE (aparece so quando o modelo usa variaveis disp_) -->
+        <div class="card" id="d-disp-card" style="margin-bottom:0;display:none">
+          <div class="card-title">🔔 Alerta de disponibilidade</div>
+          <div class="g2">
+            <div class="field"><label>Origem</label><div class="iata-wrap"><input type="text" id="dp-origem" placeholder="Ex: GRU ou São Paulo" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling);onDispChange()" onkeydown="iataKeydown(event,this,this.nextElementSibling)" onblur="onDispChange()"/><div class="iata-dropdown" onmouseup="setTimeout(onDispChange,0)"></div></div></div>
+            <div class="field"><label>Destino</label><div class="iata-wrap"><input type="text" id="dp-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling);onDispChange()" onkeydown="iataKeydown(event,this,this.nextElementSibling)" onblur="onDispChange()"/><div class="iata-dropdown" onmouseup="setTimeout(onDispChange,0)"></div></div></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>🛫 Data de ida</label><input type="date" id="dp-data-ida" onchange="onDispChange()"/></div>
+            <div class="field"><label>🛬 Data de volta <span class="tag">opcional</span></label><input type="date" id="dp-data-volta" onchange="onDispChange()"/></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>Cia aérea</label><select id="dp-cia" onchange="onDispChange()"></select></div>
+            <div class="field"><label>Classe</label><select id="dp-classe" onchange="onDispChange()"></select></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>Programa de fidelidade</label><select id="dp-programa" onchange="onDispProgramaChange()"></select></div>
+            <div class="field"><label>Valor do milheiro <span class="tag">R$ · automático</span></label><input type="text" id="dp-milheiro" placeholder="Ex: 16,00" oninput="onDispChange()"/></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>Milhas por passageiro</label><input type="text" id="dp-milhas" placeholder="Ex: 45.000" oninput="formatMilhar(this);onDispChange()"/></div>
+            <div class="field"><label>Passageiros</label><input type="number" id="dp-pax" min="1" value="1" oninput="onDispChange()"/></div>
+          </div>
+          <div class="g2">
+            <div class="field"><label>Taxas por passageiro <span class="tag">R$</span></label><input type="text" id="dp-taxas" placeholder="Ex: 350,00" oninput="onDispChange()"/></div>
+            <div class="field"><label>Tarifa pagante total <span class="tag">R$ · opcional</span></label><input type="text" id="dp-tarifa" placeholder="Ex: 9.800,00" oninput="onDispChange()"/></div>
+          </div>
+          <div class="field">
+            <label>Observação <span class="tag">opcional</span></label>
+            <textarea id="dp-obs" rows="2" style="min-height:52px" placeholder="Ex: Voo direto, saída às 23h45. Há 4 assentos nesse valor." oninput="onDispChange()"></textarea>
+          </div>
+          <div class="btn-row" style="gap:6px">
+            <button type="button" class="btn btn-sm btn-ghost" style="flex:1" onclick="limparDisp()">🧹 Limpar campos</button>
+          </div>
+          <p style="font-size:11px;color:var(--muted2);margin:8px 0 0">Linhas sem informação são removidas da mensagem. Valor das milhas = total de milhas × milheiro do programa (Configuração → Valor dos Pontos).</p>
+        </div>
+
       </div>
 
       <!-- COLUNA DIREITA: Mensagem + Enviar -->
@@ -5111,6 +5148,25 @@ var VARS_RESERVA = [
   { label: '{{status_chegada_est}}',     desc: 'Status do voo: chegada estimada' },
   { label: '{{status_esteira}}',         desc: 'Status do voo: esteira de bagagem' },
   { label: '{{status_obs}}',             desc: 'Status do voo: observacao livre' },
+  { label: '{{disp_origem}}',            desc: 'Alerta de disponibilidade: origem' },
+  { label: '{{disp_destino}}',           desc: 'Alerta de disponibilidade: destino' },
+  { label: '{{disp_data_ida}}',          desc: 'Alerta de disponibilidade: data de ida' },
+  { label: '{{disp_data_volta}}',        desc: 'Alerta de disponibilidade: data de volta' },
+  { label: '{{disp_datas}}',             desc: 'Alerta de disponibilidade: linhas 🛫 ida / 🛬 volta (volta some se vazia)' },
+  { label: '{{disp_cia}}',               desc: 'Alerta de disponibilidade: cia aerea' },
+  { label: '{{disp_classe}}',            desc: 'Alerta de disponibilidade: classe' },
+  { label: '{{disp_programa}}',          desc: 'Alerta de disponibilidade: programa de fidelidade' },
+  { label: '{{disp_milhas}}',            desc: 'Alerta de disponibilidade: milhas por passageiro' },
+  { label: '{{disp_pax}}',               desc: 'Alerta de disponibilidade: total de passageiros' },
+  { label: '{{disp_milhas_total}}',      desc: 'Alerta de disponibilidade: total de milhas' },
+  { label: '{{disp_taxas}}',             desc: 'Alerta de disponibilidade: taxas totais (R$, sem prefixo)' },
+  { label: '{{disp_valor_milheiro}}',    desc: 'Alerta de disponibilidade: valor do milheiro (R$, sem prefixo)' },
+  { label: '{{disp_valor_milhas}}',      desc: 'Alerta de disponibilidade: quanto valem as milhas (R$, sem prefixo)' },
+  { label: '{{disp_custo_total}}',       desc: 'Alerta de disponibilidade: valor das milhas + taxas (R$, sem prefixo)' },
+  { label: '{{disp_tarifa}}',            desc: 'Alerta de disponibilidade: tarifa pagante total (R$, sem prefixo)' },
+  { label: '{{disp_economia}}',          desc: 'Alerta de disponibilidade: tarifa pagante - custo total (R$, sem prefixo)' },
+  { label: '{{disp_comparativo}}',       desc: 'Alerta de disponibilidade: frase comparando com a tarifa pagante (some se vazia)' },
+  { label: '{{disp_obs}}',               desc: 'Alerta de disponibilidade: observacao livre (some se vazia)' },
 ];
 
 function loadModelos(cb) {
@@ -5725,6 +5781,8 @@ function onDispararChange() {
     document.getElementById('d-msg-final').value='';
     var _sc0 = document.getElementById('d-status-card');
     if (_sc0) _sc0.style.display = 'none';
+    var _dc0 = document.getElementById('d-disp-card');
+    if (_dc0) _dc0.style.display = 'none';
     return;
   }
 
@@ -5733,13 +5791,119 @@ function onDispararChange() {
   var scard = document.getElementById('d-status-card');
   if (scard) scard.style.display = usaStatus ? 'block' : 'none';
 
+  // Card de alerta de disponibilidade: so aparece se o modelo usar {{disp_...}}
+  var usaDisp = /\{\{disp_/.test(mod.texto || '');
+  var dcard = document.getElementById('d-disp-card');
+  if (dcard) dcard.style.display = usaDisp ? 'block' : 'none';
+
   var extras = null;
   if (usaStatus) {
     preencherDefaultsStatus(res, false);
     extras = montarExtrasStatus(res);
   }
+  if (usaDisp) {
+    prepararCardDisp();
+    var _ed = montarExtrasDisp();
+    extras = extras || {};
+    for (var _kd in _ed) extras[_kd] = _ed[_kd];
+  }
 
-  document.getElementById('d-msg-final').value = resolverVariaveis(mod.texto, cli, res, extras);
+  var _msg = resolverVariaveis(mod.texto, cli, res, extras);
+  if (usaDisp) _msg = limparLinhasDisp(_msg);
+  document.getElementById('d-msg-final').value = _msg;
+}
+
+// ── ALERTA DE DISPONIBILIDADE (preenchimento manual no disparo) ─────────────
+// Mesmo padrao do status do voo: nada e persistido, o operador informa o que
+// encontrou e os campos viram variaveis {{disp_...}}. O valor das milhas usa
+// valorMilheiro() (cfg.valoresPontos > padrao), editavel no proprio card.
+// Listas de cia/classe/programa sao copiadas dos selects do form de reserva
+// para manter uma fonte unica.
+function prepararCardDisp() {
+  [['dp-cia','f-cia-ida'], ['dp-classe','f-classe'], ['dp-programa','f-programa']].forEach(function(p){
+    var dst = document.getElementById(p[0]), src = document.getElementById(p[1]);
+    if (dst && src && dst.options.length <= 1) dst.innerHTML = src.innerHTML;
+  });
+}
+
+function onDispProgramaChange() {
+  var vm = valorMilheiro(getVal('dp-programa'));
+  setVal('dp-milheiro', vm ? fmtBRL(vm) : '');
+  onDispararChange();
+}
+
+function onDispChange() { onDispararChange(); }
+
+function limparDisp() {
+  ['dp-origem','dp-destino','dp-data-ida','dp-data-volta','dp-cia','dp-classe','dp-programa',
+   'dp-milheiro','dp-milhas','dp-taxas','dp-tarifa','dp-obs'].forEach(function(id){ setVal(id, ''); });
+  setVal('dp-pax', '1');
+  onDispararChange();
+}
+
+function montarExtrasDisp() {
+  var pax     = parseInt(getVal('dp-pax'), 10) || 1;
+  var milhas  = parseValorBR(getVal('dp-milhas'));
+  var total   = milhas * pax;
+  var vm      = parseValorBR(getVal('dp-milheiro'));
+  var taxas   = parseValorBR(getVal('dp-taxas')) * pax;
+  var valorMi = (total && vm) ? total / 1000 * vm : 0;
+  var custo   = valorMi + taxas;
+  var tarifa  = parseValorBR(getVal('dp-tarifa'));
+  var eco     = (tarifa && valorMi) ? tarifa - custo : 0;
+  var ida     = getVal('dp-data-ida'), volta = getVal('dp-data-volta');
+  var obs     = String(getVal('dp-obs') || '').trim();
+
+  var datas = [];
+  if (ida)   datas.push('🛫 ' + fmtDate(ida));
+  if (volta) datas.push('🛬 ' + fmtDate(volta));
+
+  var comp = '';
+  if (tarifa && valorMi) {
+    comp = eco > 0
+      ? 'Em dinheiro, a mesma viagem sai por R$ ' + fmtBRL(tarifa) + ' — economia de *R$ ' + fmtBRL(eco) + '*.'
+      : 'Em dinheiro, a mesma viagem sai por R$ ' + fmtBRL(tarifa) + '.';
+  }
+
+  return {
+    disp_origem:         localDe(getVal('dp-origem')),
+    disp_destino:        localDe(getVal('dp-destino')),
+    disp_data_ida:       ida   ? fmtDate(ida)   : '',
+    disp_data_volta:     volta ? fmtDate(volta) : '',
+    disp_datas:          datas.join('\n'),
+    disp_cia:            getVal('dp-cia'),
+    disp_classe:         getVal('dp-classe'),
+    disp_programa:       getVal('dp-programa'),
+    disp_milhas:         milhas ? fmtPontos(milhas) : '',
+    disp_pax:            String(pax),
+    disp_milhas_total:   total ? fmtPontos(total) : '',
+    disp_taxas:          taxas ? fmtBRL(taxas) : '',
+    disp_valor_milheiro: vm ? fmtBRL(vm) : '',
+    disp_valor_milhas:   valorMi ? fmtBRL(valorMi) : '',
+    disp_custo_total:    valorMi ? fmtBRL(custo) : '',
+    disp_tarifa:         tarifa ? fmtBRL(tarifa) : '',
+    disp_economia:       eco > 0 ? fmtBRL(eco) : '',
+    disp_comparativo:    comp,
+    disp_obs:            obs ? ('ℹ️ ' + obs) : ''
+  };
+}
+
+// Remove linhas que contenham variavel {{disp_...}} nao resolvida (campo vazio).
+// Bloco (paragrafo) cujo titulo ficou sozinho — todas as linhas abaixo dele
+// eram variaveis vazias — tambem sai, evitando secoes orfas na mensagem.
+function limparLinhasDisp(txt) {
+  var reVar = /\{\{disp_[a-z_]+\}\}/;
+  return String(txt || '')
+    .split(/\n[ \t]*\n/)
+    .map(function(bloco){
+      var linhas = bloco.split('\n');
+      var kept = linhas.filter(function(l){ return !reVar.test(l); });
+      if (linhas.length > 1 && kept.length === 1 && kept[0] === linhas[0]) return '';
+      return kept.join('\n');
+    })
+    .filter(function(b){ return b.trim() !== ''; })
+    .join('\n\n')
+    .trim();
 }
 
 // ── STATUS DO VOO (preenchimento manual no disparo) ──────────────────────────
