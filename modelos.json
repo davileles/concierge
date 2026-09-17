@@ -2,7 +2,7 @@
   {
     "id": "MOD-1789665582799",
     "nome": "Voo · Alerta de disponibilidade",
-    "texto": "🔔 *Alerta de disponibilidade*\n\n{{primeiro_nome}}, encontramos disponibilidade em milhas para a viagem que você pediu:\n\n✈️ *{{disp_origem}} → {{disp_destino}}*\n{{disp_datas}}\nCompanhia: *{{disp_cia}}*\nClasse: *{{disp_classe}}*\n\n💳 *Emissão*\nPrograma: *{{disp_programa}}*\nMilhas por passageiro: *{{disp_milhas}}*\nPassageiros: *{{disp_pax}}*\nTotal de milhas: *{{disp_milhas_total}}*\nTaxas: *R$ {{disp_taxas}}*\n\n💰 *Quanto vale*\nAs milhas valem *R$ {{disp_valor_milhas}}* (R$ {{disp_valor_milheiro}} o milheiro)\nCusto total estimado: *R$ {{disp_custo_total}}*\n{{disp_comparativo}}\n\n{{disp_obs}}\n\n⚠️ A disponibilidade em milhas muda rápido e pode acabar a qualquer momento. Se quiser garantir, é só responder aqui que seguimos com a emissão. 🤝",
+    "texto": "🔔 *Alerta de disponibilidade*\n\nEncontramos disponibilidade em milhas para a viagem que você pediu:\n\n✈️ *{{disp_origem}} → {{disp_destino}}*\n{{disp_datas}}\nCompanhia: *{{disp_cia}}*\nClasse: *{{disp_classe}}*\n\n💳 *Emissão*\nPrograma: *{{disp_programa}}*\nMilhas por passageiro: *{{disp_milhas}}*\nPassageiros: *{{disp_pax}}*\nTotal de milhas: *{{disp_milhas_total}}*\nTaxas: *R$ {{disp_taxas}}*\n\n💰 *Quanto vale*\nAs milhas valem *R$ {{disp_valor_milhas}}* (R$ {{disp_valor_milheiro}} o milheiro)\nCusto total estimado: *R$ {{disp_custo_total}}*\n{{disp_comparativo}}\n\n{{disp_obs}}\n\n⚠️ A disponibilidade em milhas muda rápido e pode acabar a qualquer momento. Se quiser garantir, é só responder aqui que seguimos com a emissão. 🤝",
     "modo": "manual",
     "gatilho": "",
     "antecedencia": null,
