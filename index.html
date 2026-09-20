@@ -1973,6 +1973,41 @@ header{animation:fadeUp .45s ease both}
 
 <script>
 // ══════════════════════════════════════════
+//  AUTENTICACAO DAS CHAMADAS AO PROXY
+//  Toda rota /concierge/* do proxy exige o token de sessao (X-CDV-Auth),
+//  emitido no login OTP. Este wrapper injeta o header em qualquer fetch para
+//  essas rotas — nenhuma chamada precisa lembrar de mandar. 401 com sessao
+//  ativa = token expirado ou revogado: limpa o cookie e volta ao login.
+// ══════════════════════════════════════════
+(function(){
+  var _fetchOrig = window.fetch.bind(window);
+  var BASE = 'https://cdv-proxy-production.up.railway.app/concierge/';
+  function tokenAtual(){
+    var m = document.cookie.match(/(?:^|; )cdv_conc_sess=([^;]*)/);
+    return m ? decodeURIComponent(m[1]) : '';
+  }
+  var _expirando = false;
+  window.fetch = function(input, init){
+    var url = typeof input === 'string' ? input : (input && input.url) || '';
+    if (url.indexOf(BASE) !== 0) return _fetchOrig(input, init);
+    var tk = tokenAtual();
+    var opts = Object.assign({}, init || {});
+    var h = new Headers(opts.headers || (typeof input !== 'string' && input.headers) || {});
+    if (tk) h.set('X-CDV-Auth', tk);
+    opts.headers = h;
+    return _fetchOrig(input, opts).then(function(r){
+      if (r.status === 401 && tk && !_expirando) {
+        _expirando = true;
+        document.cookie = 'cdv_conc_sess=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+        alert('Sua sessao expirou. Entre novamente.');
+        location.reload();
+      }
+      return r;
+    });
+  };
+})();
+
+// ══════════════════════════════════════════
 //  ESTADO GLOBAL
 // ══════════════════════════════════════════
 var reservas = [];
@@ -8519,15 +8554,17 @@ function backfillGrupos() {
 // ════════════════════════════════════════════════════════════════
 //  LOGIN — OTP por e-mail via proxy CDV
 //  Sem localStorage/sessionStorage: sessao persistida em cookie.
+//  O cookie guarda o token assinado pelo proxy (nao o e-mail): e ele que as
+//  rotas /concierge/* conferem. Validade de 12h, igual a do token.
 // ════════════════════════════════════════════════════════════════
 var AUTH_PROXY   = 'https://cdv-proxy-production.up.railway.app';
-var AUTH_COOKIE  = 'cdv_conc_auth';
+var AUTH_COOKIE  = 'cdv_conc_sess';
 var AUTH_TTL_H   = 12; // horas
 var _authEmail   = '';
 
-function _setAuthCookie(email){
+function _setAuthCookie(token){
   var exp = new Date(Date.now() + AUTH_TTL_H*3600*1000).toUTCString();
-  document.cookie = AUTH_COOKIE + '=' + encodeURIComponent(email) + ';expires=' + exp + ';path=/;SameSite=Lax';
+  document.cookie = AUTH_COOKIE + '=' + encodeURIComponent(token) + ';expires=' + exp + ';path=/;SameSite=Lax;Secure';
 }
 function _getAuthCookie(){
   var m = document.cookie.match(new RegExp('(?:^|; )' + AUTH_COOKIE + '=([^;]*)'));
@@ -8593,7 +8630,8 @@ function validarCodigoAcesso(){
   })
   .then(function(r){ return r.json(); })
   .then(function(d){
-    if(d.ok){ _setAuthCookie(d.email); iniciarApp(); return; }
+    if(d.ok && d.conciergeToken){ _setAuthCookie(d.conciergeToken); iniciarApp(); return; }
+    if(d.ok){ _lmsg('login-msg2','Login aceito, mas o servidor nao emitiu a sessao. Tente de novo em instantes.','err'); btn.disabled = false; btn.textContent = 'Entrar'; return; }
     var msgs = { expirado:'Codigo expirado. Solicite outro.', invalido:'Codigo incorreto.', nao_encontrado:'Solicite um novo codigo.', nao_autorizado:'E-mail sem autorizacao de acesso.' };
     _lmsg('login-msg2', msgs[d.motivo] || 'Nao foi possivel validar.', 'err');
     btn.disabled = false; btn.textContent = 'Entrar';
@@ -8614,7 +8652,20 @@ function voltarEtapaEmail(){
 window.addEventListener('DOMContentLoaded', function(){
   document.getElementById('login-email').addEventListener('keydown', function(e){ if(e.key==='Enter') enviarCodigoAcesso(); });
   document.getElementById('login-codigo').addEventListener('keydown', function(e){ if(e.key==='Enter') validarCodigoAcesso(); });
-  if(_getAuthCookie()) iniciarApp();
+  // Sessao salva: confere com o proxy antes de abrir (token expirado ou
+  // e-mail removido da allowlist cai direto no login).
+  var tk = _getAuthCookie();
+  if(tk){
+    fetch(AUTH_PROXY + '/concierge-auth/status', { headers: { 'X-CDV-Auth': tk }, cache: 'no-store' })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(d && d.ok) { iniciarApp(); return; }
+        document.cookie = AUTH_COOKIE + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+      })
+      .catch(function(){ iniciarApp(); });
+  }
+  // Cookie antigo (guardava so o e-mail) nao vale mais: remove.
+  document.cookie = 'cdv_conc_auth=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
 });
 
 // ════════════════════════════════════════════════════════════════

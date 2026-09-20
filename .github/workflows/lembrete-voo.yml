@@ -24,6 +24,7 @@ jobs:
       - name: Verificar e enviar lembretes de voo (com retry)
         env:
           CDV_GITHUB_TOKEN: ${{ secrets.CDV_CONCIERGE_TOKEN }}
+          CDV_SERVICO_CONCIERGE: ${{ secrets.CDV_SERVICO_CONCIERGE }}
         run: |
           for i in 1 2 3; do
             node lembrete-voo.js && exit 0

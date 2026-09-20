@@ -583,7 +583,11 @@ async function githubPut(path, data, sha, message) {
 // fallback grupoPorCliente montado a partir das reservas.
 // Agora le o JSON versionado em cdv-tsp-dados/concierge/clientes.json.
 async function carregarClientes() {
-  const r = await fetch(`${PROXY}/concierge/clientes`);
+  // Rota protegida: o job se identifica com a chave de servico (secret
+  // CDV_SERVICO_CONCIERGE do repo, exposto como env no lembrete-voo.yml).
+  const r = await fetch(`${PROXY}/concierge/clientes`, {
+    headers: { 'X-CDV-Servico': process.env.CDV_SERVICO_CONCIERGE || '' }
+  });
   if (!r.ok) throw new Error(`proxy /concierge/clientes → ${r.status}`);
   const d = await r.json();
   if (!d.ok) throw new Error(d.erro || 'proxy respondeu ok=false');
