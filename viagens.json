@@ -806,20 +806,6 @@
     "obs": "",
     "atividades": [
       {
-        "id": "atv-1785852936884",
-        "icon": "✈️",
-        "nome": "Passagem Doméstica",
-        "titulo": "CNF ⇄ CGH · 07/10/2026 a 12/10/2026",
-        "descricao": "Emitir os voos abaixo pela Azul, com pagamento em dinheiro:\n\nIda — 07/10\nConfins (CNF) → Congonhas (CGH)\nSaída às 09:20 | Chegada às 10:45\n\nVolta — 12/10\nCongonhas (CGH) → Confins (CNF)\nSaída às 19:25 | Chegada às 20:40\n\nO Diogo possui status, então peço que já faça a marcação do Espaço Conforto para ele.\nPara o pagamento, utilize o cartão abaixo, que garante 10% de desconto.\n\nLogin: 06315884695\nSenha: ytxuy4gA@7\n\n4220071055296138\n1033\n606\nDIOGO O DA SILVEIRA",
-        "status": "concluida",
-        "reservaId": "RES-1785868334331",
-        "demPrazo": "2026-08-04",
-        "demResponsavel": "Felipe",
-        "demPrioridade": "normal",
-        "demClientes": "Diogo Ottoni Da",
-        "pos": 30
-      },
-      {
         "id": "atv-1785853625265",
         "icon": "✈️",
         "nome": "Passagem Doméstica",
@@ -841,6 +827,34 @@
         "pos": 20,
         "status": "concluida",
         "reservaId": "RES-1785869636944"
+      },
+      {
+        "id": "atv-1785852936884",
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "CNF ⇄ CGH · 07/10/2026 a 12/10/2026",
+        "descricao": "Emitir os voos abaixo pela Azul, com pagamento em dinheiro:\n\nIda — 07/10\nConfins (CNF) → Congonhas (CGH)\nSaída às 09:20 | Chegada às 10:45\n\nVolta — 12/10\nCongonhas (CGH) → Confins (CNF)\nSaída às 19:25 | Chegada às 20:40\n\nO Diogo possui status, então peço que já faça a marcação do Espaço Conforto para ele.\nPara o pagamento, utilize o cartão abaixo, que garante 10% de desconto.\n\nLogin: 06315884695\nSenha: ytxuy4gA@7\n\n4220071055296138\n1033\n606\nDIOGO O DA SILVEIRA",
+        "status": "concluida",
+        "reservaId": "RES-1785868334331",
+        "demPrazo": "2026-08-04",
+        "demResponsavel": "Felipe",
+        "demPrioridade": "normal",
+        "demClientes": "Diogo Ottoni Da",
+        "pos": 30
+      },
+      {
+        "id": "atv-1789986703818",
+        "icon": "✈️",
+        "nome": "Passagem Doméstica",
+        "titulo": "Reservar passagem com pontos na Azul para terceiro",
+        "descricao": "Emitir a passagem para o passageiro abaixo usando a conta do Diogo, na Azul.\n\nCPF: 06315884695\nSenha Azul Fidelidade: ytxuy4gA@7\n\nIda — 07/10\nPartida: 9h20 - Belo Horizonte\nChegada: 10h45 - Congonhas SP\nCusto: cerca de 44 mil pontos\n\nVolta — 08/10\nPartida: 17h55 - Congonhas SP\nChegada: 19h15 - Belo Horizonte\nCusto: cerca de 44 mil pontos\n\nO passageiro ainda não está cadastrado como beneficiário, então será necessário incluí-lo pelo fluxo de compra ou pelo cadastro de beneficiários da Azul.\n\nPedro tavares paes gramiscelli\n20/09/1992\n103.848.336-08\npedrogramiscelli@gmail.com\n\n4037924041955543\n08/31\n600\nDIOGO O SILVEIRA",
+        "status": "pendente",
+        "reservaId": null,
+        "demPrazo": "2026-09-21",
+        "demResponsavel": "Felipe",
+        "demPrioridade": "normal",
+        "demClientes": "Diogo Ottoni Da",
+        "pos": 31
       }
     ],
     "cadastro": "2026-08-04",
