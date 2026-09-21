@@ -3087,6 +3087,12 @@ function passageirosTexto(arr) {
   }).filter(Boolean).join('\n');
 }
 
+// Clientes da viagem como lista — salvarViagem() grava "A, B" como string única
+function _listaClientesViagem(v) {
+  if (!v || !v.clientes) return [];
+  var arr = Array.isArray(v.clientes) ? v.clientes : String(v.clientes).split(',');
+  return arr.map(function(c){ return String(c).trim(); }).filter(Boolean);
+}
 // Popula o select de associação de viagem no form de nova reserva
 function populateViagemAssocSelect(reservadoParaId) {
   var sel = document.getElementById('f-viagem-assoc');
@@ -3095,9 +3101,7 @@ function populateViagemAssocSelect(reservadoParaId) {
   var clienteSel = toTitleCase((getVal('f-cliente') || '').trim());
   var viagensFiltradas = viagens.filter(function(v) {
     if (!clienteSel) return true;
-    var lista = v.clientes
-      ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(function(c){ return toTitleCase(c).toLowerCase(); })
-      : [];
+    var lista = _listaClientesViagem(v).map(function(c){ return toTitleCase(c).toLowerCase(); });
     return lista.some(function(c){ return mesmoCliente(c, clienteSel); });
   });
   if (viagensFiltradas.length === 0 && clienteSel) {
@@ -3107,9 +3111,7 @@ function populateViagemAssocSelect(reservadoParaId) {
     sel.appendChild(opt0);
   }
   viagensFiltradas.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
-    var clientes = v.clientes
-      ? (Array.isArray(v.clientes) ? v.clientes : [v.clientes]).map(toTitleCase).join(', ')
-      : '';
+    var clientes = _listaClientesViagem(v).map(toTitleCase).join(', ');
     var label = v.nome + (clientes ? ' — ' + clientes : '');
     if (v.inicio) label += ' (' + fmtDate(v.inicio) + ')';
     var opt = document.createElement('option');
