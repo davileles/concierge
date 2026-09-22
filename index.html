@@ -1937,10 +1937,22 @@ header{animation:fadeUp .45s ease both}
         ⏳ Agendar demanda <span class="tag">só vai para o grupo da equipe na data marcada</span>
       </label>
       <div id="df-agenda-campos" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-        <div><label>🗓️ Data do disparo</label><input type="date" id="df-agenda-data"/></div>
+        <div><label>🗓️ Data do disparo</label><input type="date" id="df-agenda-data" onchange="demandaAgendarChange()"/></div>
         <div><label>Horário</label><input type="time" id="df-agenda-hora" value="09:00"/></div>
       </div>
       <div id="df-agenda-info" style="display:none;font-size:11px;color:var(--muted);line-height:1.6;margin-top:8px">Até lá a demanda fica como <b>⏳ Agendada</b> no painel. Na data, a mensagem sai no grupo definido em <b>Configuração → WhatsApp</b> e a demanda vira <b>Pendente</b>. Ex.: cancelar um clube depois de garantir o bônus.</div>
+    </div>
+    <div class="field" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+        <input type="checkbox" id="df-avisar-cli" onchange="demandaAvisarCliChange()" style="width:auto;margin:0"/>
+        📣 Avisar o cliente agora <span class="tag">mensagem no grupo do cliente ao salvar</span>
+      </label>
+      <div id="df-avisar-cli-hist" style="display:none;font-size:11px;color:var(--muted);margin-top:6px"></div>
+      <div id="df-avisar-cli-campos" style="display:none;margin-top:10px">
+        <div id="df-avisar-cli-grupos" style="font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.6"></div>
+        <textarea id="df-avisar-cli-msg" rows="7" oninput="this.dataset.editado='1'" style="min-height:150px;font-size:13.5px;line-height:1.7;resize:vertical"></textarea>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6"><b>{{nome}}</b> vira o primeiro nome do(s) cliente(s) de cada grupo. A descrição interna não vai para o cliente. <a href="#" onclick="event.preventDefault();demandaAvisarCliChange(true)" style="color:var(--accent)">↻ Refazer texto</a></div>
+      </div>
     </div>
     <div class="field">
       <label>Vincular à viagem <span class="tag">opcional</span></label>
@@ -3053,6 +3065,8 @@ function inserirVarDemanda(el) {
 function demandaClienteChange() {
   var nomeStr = document.getElementById('df-clientes').value;
   renderVarsDemanda(nomeStr);
+  var _avCli = document.getElementById('df-avisar-cli');
+  if (_avCli && _avCli.checked) atualizarGruposAvisoCli();
   var box = document.getElementById('df-cliente-dados');
   if (!box) return;
   var html = blocoDadosCliente(nomeStr);
@@ -9370,6 +9384,7 @@ function aplicarNaAtividade(d, dados) {
   if (dados.clientes !== undefined)    a.demClientes = dados.clientes;
   if (dados.agendadaPara !== undefined)  a.demAgendadaPara = dados.agendadaPara;
   if (dados.agendamentoId !== undefined) a.demAgendamentoId = dados.agendamentoId;
+  if (dados.clienteAvisadoEm !== undefined) a.demClienteAvisadoEm = dados.clienteAvisadoEm;
   return true;
 }
 
@@ -9404,6 +9419,8 @@ function demandaAgendarChange() {
   var bS = document.getElementById('df-btn-salvar'), bA = document.getElementById('df-btn-avisar');
   if (bS) bS.textContent = on ? '⏳ Salvar e Agendar' : '💾 Salvar Demanda';
   if (bA) bA.style.display = on ? 'none' : '';
+  var _avCli = document.getElementById('df-avisar-cli');
+  if (_avCli && _avCli.checked) demandaAvisarCliChange();
 }
 function preencherAgendaForm(d) {
   var ativo = demandaEstaAgendada(d);
@@ -9436,6 +9453,99 @@ function agendarDisparoDemanda(d) {
   })
   .catch(function(e){ showToast('❌ Demanda salva, mas o disparo NÃO foi agendado — ' + e.message, 'err'); });
 }
+// ══ AVISO AO CLIENTE (grupo do cliente, na hora de salvar) ══
+// Independe do agendamento: a equipe recebe a demanda na data marcada (ou
+// agora, pelo "Salvar e Avisar Grupo"), e o cliente fica sabendo já que
+// estamos com aquilo no radar. Grupo vem do cadastro (clientes[].grupo);
+// clientes que dividem o mesmo grupo recebem uma única mensagem.
+function _nomeNorm(s) { return String(s || '').trim().toLowerCase(); }
+
+function gruposClientesDemanda(nomeStr) {
+  var mapa = {}, ordem = [], semGrupo = [];
+  parseClientesStr(nomeStr).forEach(function(n) {
+    var c = (clientes || []).find(function(x){ return _nomeNorm(x.nome) === _nomeNorm(n); });
+    if (!c || !c.grupo) { semGrupo.push(n); return; }
+    if (!mapa[c.grupo]) { mapa[c.grupo] = []; ordem.push(c.grupo); }
+    mapa[c.grupo].push(n);
+  });
+  return { grupos: ordem.map(function(g){ return { grupo: g, nomes: mapa[g] }; }), semGrupo: semGrupo };
+}
+
+function _primeirosNomes(nomes) {
+  var p = nomes.map(function(n){ return tcNomeCompleto(n).split(' ')[0]; });
+  return p.length > 1 ? p.slice(0, -1).join(', ') + ' e ' + p[p.length - 1] : (p[0] || '');
+}
+
+function msgPadraoAvisoCliente() {
+  var titulo = document.getElementById('df-titulo').value.trim();
+  var L = ['Olá, {{nome}}! 👋', '', 'Passando para avisar que já estamos acompanhando isto por aqui:', '', '*' + (titulo || 'Sua solicitação') + '*'];
+  if (document.getElementById('df-agendar').checked) {
+    var dt = document.getElementById('df-agenda-data').value;
+    if (dt) { var p = dt.split('-'); L.push('📅 Programado para ' + p[2] + '/' + p[1] + '/' + p[0] + '.'); }
+  }
+  L.push('', 'Pode deixar com a gente — avisamos por aqui quando estiver concluído.');
+  return L.join('\n');
+}
+
+function atualizarGruposAvisoCli() {
+  var box = document.getElementById('df-avisar-cli-grupos');
+  if (!box) return;
+  var r = gruposClientesDemanda(document.getElementById('df-clientes').value);
+  var h = r.grupos.length
+    ? '📱 Vai para ' + r.grupos.length + ' grupo' + (r.grupos.length > 1 ? 's' : '') + ': ' + r.grupos.map(function(g){ return escHtml(g.nomes.join(' + ')); }).join(' · ')
+    : '<span style="color:var(--accent)">⚠️ Nenhum cliente da demanda tem grupo no cadastro</span>';
+  if (r.semGrupo.length) h += '<br><span style="color:var(--accent)">⚠️ Sem grupo (não recebe): ' + escHtml(r.semGrupo.join(', ')) + '</span>';
+  box.innerHTML = h;
+}
+
+function demandaAvisarCliChange(regerar) {
+  var on = document.getElementById('df-avisar-cli').checked;
+  if (regerar === true && !on) { document.getElementById('df-avisar-cli').checked = on = true; }
+  document.getElementById('df-avisar-cli-campos').style.display = on ? '' : 'none';
+  if (!on) return;
+  var ta = document.getElementById('df-avisar-cli-msg');
+  if (regerar === true || !ta.value.trim() || ta.dataset.editado !== '1') {
+    ta.value = msgPadraoAvisoCliente();
+    ta.dataset.editado = '';
+  }
+  atualizarGruposAvisoCli();
+}
+
+function preencherAvisoCliForm(d) {
+  document.getElementById('df-avisar-cli').checked = false;
+  var ta = document.getElementById('df-avisar-cli-msg');
+  ta.value = ''; ta.dataset.editado = '';
+  document.getElementById('df-avisar-cli-campos').style.display = 'none';
+  var hist = document.getElementById('df-avisar-cli-hist');
+  if (d && d.clienteAvisadoEm) {
+    hist.style.display = '';
+    hist.textContent = '✅ Cliente já avisado em ' + fmtDate(String(d.clienteAvisadoEm).slice(0, 10)) + '. Marque de novo só se quiser mandar outra mensagem.';
+  } else { hist.style.display = 'none'; hist.textContent = ''; }
+}
+
+// Envia em sequência (o Baileys serializa o socket) e marca a demanda no fim
+function enviarAvisoClienteDemanda(d, texto, grupos) {
+  var i = 0, okCount = 0;
+  var proximo = function() {
+    if (i >= grupos.length) {
+      if (okCount) {
+        d.clienteAvisadoEm = new Date().toISOString();
+        aplicarNaAtividade(d, { clienteAvisadoEm: d.clienteAvisadoEm });
+        saveDemandas();
+        showToast('📣 Cliente avisado (' + okCount + '/' + grupos.length + ' grupo' + (grupos.length > 1 ? 's' : '') + ')', 'ok');
+      }
+      return;
+    }
+    var g = grupos[i++];
+    var msg = texto.split('{{nome}}').join(_primeirosNomes(g.nomes));
+    enviarWhatsApp(g.grupo, msg, null, null, {
+      ok: function(){ okCount++; setTimeout(proximo, 1500); },
+      falha: function(){ setTimeout(proximo, 1500); }
+    });
+  };
+  proximo();
+}
+
 // Cancela o disparo pendente e limpa o vínculo na demanda (e na atividade).
 // Não grava: quem chama decide quando persistir.
 function cancelarAgendaDemanda(d) {
@@ -9481,6 +9591,7 @@ function loadDemandas() {
           reservaId: a.reservaId || null,
           agendadaPara: a.demAgendadaPara || '',
           agendamentoId: a.demAgendamentoId || '',
+          clienteAvisadoEm: a.demClienteAvisadoEm || '',
           criadoEm: new Date().toISOString().split('T')[0]
         });
       }
@@ -9533,6 +9644,7 @@ function abrirNovaDemanda() {
   document.getElementById('df-prioridade').value = 'normal';
   document.getElementById('df-tipo').value = '✈️ Passagem Doméstica';
   preencherAgendaForm(null);
+  preencherAvisoCliForm(null);
   // Popular viagens
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
@@ -9614,6 +9726,18 @@ function salvarDemanda(avisarGrupo) {
   }
   var dAgenda = null;
 
+  // Aviso ao cliente (capturado antes: o fluxo abaixo pode reabrir o modal)
+  var avisoCli = null;
+  if (document.getElementById('df-avisar-cli').checked) {
+    var taCli = document.getElementById('df-avisar-cli-msg');
+    var txtCli = (taCli.dataset.editado === '1' ? taCli.value : msgPadraoAvisoCliente()).trim();
+    var gCli = gruposClientesDemanda(clientes).grupos;
+    if (!txtCli) { showToast('⚠️ A mensagem para o cliente está vazia', 'err'); return; }
+    if (!gCli.length) { showToast('⚠️ Nenhum cliente da demanda tem grupo no cadastro — desmarque "Avisar o cliente"', 'err'); return; }
+    avisoCli = { texto: txtCli, grupos: gCli };
+  }
+  var dSalva = null;
+
   var eraNova = !demandaEditandoId;
   var novoIdCriado = null;
 
@@ -9635,6 +9759,7 @@ function salvarDemanda(avisarGrupo) {
       } else if (demandas[idx].agendamentoId) {
         cancelarAgendaDemanda(demandas[idx]);
       }
+      dSalva = demandas[idx];
       // Espelha na atividade da viagem — sem isso os campos somem no reload
       aplicarNaAtividade(demandas[idx], {
         titulo: titulo, descricao: descricao, icon: icon, nome: nomeAtiv,
@@ -9707,10 +9832,12 @@ function salvarDemanda(avisarGrupo) {
     if (agendar) aplicarNaAtividade(novaDem, { agendadaPara: agendadaPara, agendamentoId: novaDem.agendamentoId });
     demandas.unshift(novaDem);
     novoIdCriado = novaDem.id;
+    dSalva = novaDem;
   }
 
   saveDemandas();
   if (dAgenda) agendarDisparoDemanda(dAgenda);
+  if (avisoCli && dSalva) enviarAvisoClienteDemanda(dSalva, avisoCli.texto, avisoCli.grupos);
 
   // Demanda recém-criada: em vez de fechar, reabre o modal em modo edição para
   // liberar a seção de alerta (ela depende do demandaId, que só existe após salvar).
@@ -9756,6 +9883,7 @@ function editarDemanda(id) {
   document.getElementById('df-prioridade').value = d.prioridade || 'normal';
   document.getElementById('df-tipo').value = d.tipo || '✈️ Passagem Doméstica';
   preencherAgendaForm(d);
+  preencherAvisoCliForm(d);
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
   viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
@@ -9898,6 +10026,7 @@ function renderDemandas() {
           reservaId: a.reservaId || null,
           agendadaPara: a.demAgendadaPara || '',
           agendamentoId: a.demAgendamentoId || '',
+          clienteAvisadoEm: a.demClienteAvisadoEm || '',
           criadoEm: new Date().toISOString().split('T')[0]
         });
       } else {
@@ -9906,6 +10035,7 @@ function renderDemandas() {
         if (a.reservaId) existe.reservaId = a.reservaId;
         if (a.demAgendadaPara !== undefined) existe.agendadaPara = a.demAgendadaPara || '';
         if (a.demAgendamentoId !== undefined) existe.agendamentoId = a.demAgendamentoId || '';
+        if (a.demClienteAvisadoEm) existe.clienteAvisadoEm = a.demClienteAvisadoEm;
       }
     });
   });
