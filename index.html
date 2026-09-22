@@ -1931,6 +1931,11 @@ header{animation:fadeUp .45s ease both}
         <input type="text" id="df-responsavel" placeholder="Funcionário responsável" />
       </div>
     </div>
+    <div class="field" style="background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:10px;padding:12px 14px">
+      <label style="margin:0 0 8px">📢 Mensagem para o grupo operador <span class="tag">vai no disparo agendado e no "Salvar e Avisar Grupo"</span></label>
+      <textarea id="df-msg-operador" rows="9" oninput="this.dataset.editado='1'" onfocus="atualizarMsgOperador()" style="min-height:180px;font-size:13.5px;line-height:1.7;resize:vertical"></textarea>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6">Montada a partir dos campos acima enquanto você não editar à mão. <a href="#" onclick="event.preventDefault();atualizarMsgOperador(true)" style="color:var(--accent)">↻ Refazer texto</a></div>
+    </div>
     <div class="field" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
       <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
         <input type="checkbox" id="df-agendar" onchange="demandaAgendarChange()" style="width:auto;margin:0"/>
@@ -9385,6 +9390,7 @@ function aplicarNaAtividade(d, dados) {
   if (dados.agendadaPara !== undefined)  a.demAgendadaPara = dados.agendadaPara;
   if (dados.agendamentoId !== undefined) a.demAgendamentoId = dados.agendamentoId;
   if (dados.clienteAvisadoEm !== undefined) a.demClienteAvisadoEm = dados.clienteAvisadoEm;
+  if (dados.msgOperador !== undefined) a.demMsgOperador = dados.msgOperador;
   return true;
 }
 
@@ -9439,7 +9445,7 @@ function agendarDisparoDemanda(d) {
     body: JSON.stringify({
       id: d.agendamentoId,
       grupo: (_cfg && _cfg.grupoAlertas) || '',
-      mensagem: montarMensagemDemanda(d),
+      mensagem: textoOperadorDemanda(d),
       data: p[0], hora: p[1] || '09:00',
       destino: 'equipe',
       clienteNome: d.clientes || '',
@@ -9453,6 +9459,44 @@ function agendarDisparoDemanda(d) {
   })
   .catch(function(e){ showToast('❌ Demanda salva, mas o disparo NÃO foi agendado — ' + e.message, 'err'); });
 }
+// ══ MENSAGEM DO GRUPO OPERADOR ══
+// Campo próprio, separado do aviso ao cliente. Vazio/não editado = gerado
+// por montarMensagemDemanda() com os dados atuais; editado à mão = grava em
+// d.msgOperador e passa a ser o texto usado no agendamento e no 📢.
+function demandaDoFormulario() {
+  var ex = demandaEditandoId ? demandas.find(function(x){ return x.id === demandaEditandoId; }) : null;
+  var vid = document.getElementById('df-viagem-assoc').value;
+  var v = vid ? viagens.find(function(x){ return x.id === vid; }) : null;
+  return {
+    numero: ex ? ex.numero : (_demandaCounter + 1),
+    titulo: document.getElementById('df-titulo').value.trim(),
+    tipo: document.getElementById('df-tipo').value,
+    clientes: document.getElementById('df-clientes').value.trim(),
+    viagemNome: v ? (v.nome || '') : '',
+    prazo: document.getElementById('df-prazo').value,
+    responsavel: document.getElementById('df-responsavel').value.trim(),
+    prioridade: document.getElementById('df-prioridade').value,
+    status: ex ? ex.status : 'pendente',
+    descricao: document.getElementById('df-descricao').value.trim()
+  };
+}
+function atualizarMsgOperador(forcar) {
+  var ta = document.getElementById('df-msg-operador');
+  if (!ta) return;
+  if (forcar === true || ta.dataset.editado !== '1') {
+    ta.value = montarMensagemDemanda(demandaDoFormulario());
+    ta.dataset.editado = '';
+  }
+}
+function preencherMsgOperadorForm(d) {
+  var ta = document.getElementById('df-msg-operador');
+  if (d && d.msgOperador) { ta.value = d.msgOperador; ta.dataset.editado = '1'; }
+  else { ta.dataset.editado = ''; ta.value = d ? montarMensagemDemanda(d) : montarMensagemDemanda(demandaDoFormulario()); }
+}
+function textoOperadorDemanda(d) {
+  return (d && d.msgOperador) ? d.msgOperador : montarMensagemDemanda(d);
+}
+
 // ══ AVISO AO CLIENTE (grupo do cliente, na hora de salvar) ══
 // Independe do agendamento: a equipe recebe a demanda na data marcada (ou
 // agora, pelo "Salvar e Avisar Grupo"), e o cliente fica sabendo já que
@@ -9592,6 +9636,7 @@ function loadDemandas() {
           agendadaPara: a.demAgendadaPara || '',
           agendamentoId: a.demAgendamentoId || '',
           clienteAvisadoEm: a.demClienteAvisadoEm || '',
+          msgOperador: a.demMsgOperador || '',
           criadoEm: new Date().toISOString().split('T')[0]
         });
       }
@@ -9645,6 +9690,8 @@ function abrirNovaDemanda() {
   document.getElementById('df-tipo').value = '✈️ Passagem Doméstica';
   preencherAgendaForm(null);
   preencherAvisoCliForm(null);
+  document.getElementById('df-msg-operador').value = '';
+  document.getElementById('df-msg-operador').dataset.editado = '';
   // Popular viagens
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
@@ -9662,6 +9709,7 @@ function abrirNovaDemanda() {
   resetBuscaClientes();
   renderChipsClientes();
   demandaClienteChange();
+  atualizarMsgOperador(true);
   document.getElementById('modal-demanda').classList.add('open');
 }
 
@@ -9737,6 +9785,8 @@ function salvarDemanda(avisarGrupo) {
     avisoCli = { texto: txtCli, grupos: gCli };
   }
   var dSalva = null;
+  var taOp = document.getElementById('df-msg-operador');
+  var msgOperador = (taOp && taOp.dataset.editado === '1') ? taOp.value.trim() : '';
 
   var eraNova = !demandaEditandoId;
   var novoIdCriado = null;
@@ -9759,6 +9809,8 @@ function salvarDemanda(avisarGrupo) {
       } else if (demandas[idx].agendamentoId) {
         cancelarAgendaDemanda(demandas[idx]);
       }
+      demandas[idx].msgOperador = msgOperador;
+      aplicarNaAtividade(demandas[idx], { msgOperador: msgOperador });
       dSalva = demandas[idx];
       // Espelha na atividade da viagem — sem isso os campos somem no reload
       aplicarNaAtividade(demandas[idx], {
@@ -9830,6 +9882,8 @@ function salvarDemanda(avisarGrupo) {
     }
 
     if (agendar) aplicarNaAtividade(novaDem, { agendadaPara: agendadaPara, agendamentoId: novaDem.agendamentoId });
+    novaDem.msgOperador = msgOperador;
+    aplicarNaAtividade(novaDem, { msgOperador: msgOperador });
     demandas.unshift(novaDem);
     novoIdCriado = novaDem.id;
     dSalva = novaDem;
@@ -9884,6 +9938,7 @@ function editarDemanda(id) {
   document.getElementById('df-tipo').value = d.tipo || '✈️ Passagem Doméstica';
   preencherAgendaForm(d);
   preencherAvisoCliForm(d);
+  preencherMsgOperadorForm(d);
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
   viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
@@ -10027,6 +10082,7 @@ function renderDemandas() {
           agendadaPara: a.demAgendadaPara || '',
           agendamentoId: a.demAgendamentoId || '',
           clienteAvisadoEm: a.demClienteAvisadoEm || '',
+          msgOperador: a.demMsgOperador || '',
           criadoEm: new Date().toISOString().split('T')[0]
         });
       } else {
@@ -10036,6 +10092,7 @@ function renderDemandas() {
         if (a.demAgendadaPara !== undefined) existe.agendadaPara = a.demAgendadaPara || '';
         if (a.demAgendamentoId !== undefined) existe.agendamentoId = a.demAgendamentoId || '';
         if (a.demClienteAvisadoEm) existe.clienteAvisadoEm = a.demClienteAvisadoEm;
+        if (a.demMsgOperador !== undefined) existe.msgOperador = a.demMsgOperador || '';
       }
     });
   });
@@ -10188,7 +10245,7 @@ function abrirEnvioDemanda(id) {
       : '<span style="color:var(--accent)">⚠️ Grupo da equipe não configurado — defina em Configuração → WhatsApp ou cole o ID acima</span>';
   }
 
-  setVal('dem-envio-msg', montarMensagemDemanda(d));
+  setVal('dem-envio-msg', textoOperadorDemanda(d));
   var st = document.getElementById('dem-envio-status');
   if (st) { st.textContent = ''; st.style.color = ''; }
   document.getElementById('modal-dem-envio').classList.add('open');
