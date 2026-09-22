@@ -1277,6 +1277,7 @@ header{animation:fadeUp .45s ease both}
     </div>
   </div>
   <div id="pend-box"></div>
+  <div id="ds160-box"></div>
   <div id="cli-grid"></div>
 </div>
 
@@ -1685,6 +1686,17 @@ header{animation:fadeUp .45s ease both}
   </div>
 
 </div><!-- /panel-mensagens -->
+
+<!-- MODAL FICHA DS-160 -->
+<div class="modal-overlay" id="modal-ds160" onclick="if(event.target===this) closeModal('modal-ds160')">
+  <div class="modal" style="max-width:640px">
+    <div class="modal-header">
+      <span class="modal-title" id="ds160-titulo">🇺🇸 Ficha DS-160</span>
+      <button class="modal-close" onclick="closeModal('modal-ds160')">×</button>
+    </div>
+    <div id="ds160-corpo"></div>
+  </div>
+</div>
 
 <!-- MODAL CONFIRMAÇÃO DELETE -->
 <div class="modal-overlay" id="modal-delete">
@@ -2535,6 +2547,150 @@ function aprovarPendente(id, acao) {
     })
     .catch(function(e){
       liberar();
+      showToast('❌ ' + e.message, 'err');
+    });
+}
+
+// ══════════════════════════════════════════
+//  FORMULÁRIOS DS-160 (visto americano)
+// ══════════════════════════════════════════
+// O ds160.html envia a `ficha` já rotulada e na ordem do formulário; aqui só
+// se renderiza. O botão de copiar tira acentos e cedilha, que o site do
+// consulado recusa em vários campos.
+var DS160_LINK = 'https://concierge.clubedoviajante.com.br/ds160.html';
+var ds160Lista = [];
+var ds160Aberto = null;
+
+function _ds160SemAcento(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function carregarDs160() {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/ds160', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (d.ok) { ds160Lista = d.data || []; renderDs160(); } })
+    .catch(function(e){ console.error('[ds160]', e); });
+}
+
+function _ds160Cliente(r) {
+  var cpf = String((r.resumo || {}).cpf || '');
+  if (!cpf || typeof clientes === 'undefined') return null;
+  for (var i = 0; i < clientes.length; i++) {
+    if (String(clientes[i].cpf || '').replace(/\D/g, '') === cpf) return clientes[i];
+  }
+  return null;
+}
+
+function renderDs160() {
+  var box = document.getElementById('ds160-box');
+  if (!box) return;
+  var lista = ds160Lista.slice().sort(function(a, b){
+    if ((a.status === 'novo') !== (b.status === 'novo')) return a.status === 'novo' ? -1 : 1;
+    return String(b.recebidoEm).localeCompare(String(a.recebidoEm));
+  });
+  var novos = lista.filter(function(r){ return r.status === 'novo'; }).length;
+  box.innerHTML = '<div class="card" style="margin-bottom:1rem' + (novos ? ';border-color:var(--yellow)' : '') + '">'
+    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+    +   '<div class="card-title" style="margin:0">🇺🇸 Formulários DS-160'
+    +     (novos ? ' · ' + novos + ' novo' + (novos !== 1 ? 's' : '') : '') + '</div>'
+    +   '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="copiarLinkDs160()">🔗 Copiar link do formulário</button>'
+    + '</div>'
+    + (lista.length ? '' : '<div style="font-size:12px;color:var(--muted);margin-top:8px">Nenhum formulário recebido ainda.</div>')
+    + lista.map(function(r){
+        var s = r.resumo || {};
+        var cli = _ds160Cliente(r);
+        var feito = r.status === 'preenchido';
+        var chegada = s.chegada ? s.chegada.split('-').reverse().join('/') : '';
+        return '<div id="ds160-row-' + r.id + '" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap' + (feito ? ';opacity:.6' : '') + '">'
+          + '<div style="flex:1;min-width:200px">'
+          +   '<div style="font-size:13px;font-weight:700">' + (feito ? '✅ ' : '🆕 ') + escHtml(s.nome || '—')
+          +     (cli ? ' <span style="font-size:10px;font-weight:600;color:var(--muted)">· cliente</span>' : '') + '</div>'
+          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">'
+          +     escHtml(s.email || '') + ' · ' + escHtml(s.tel || '')
+          +     (chegada ? ' · 🛫 ' + escHtml(chegada) : '')
+          +     (s.consulado ? ' · ' + escHtml(s.consulado) : '')
+          +     ' · recebido ' + escHtml(String(r.recebidoEm || '').slice(0, 10).split('-').reverse().join('/'))
+          +   '</div>'
+          + '</div>'
+          + '<button class="btn btn-accent btn-sm" onclick="abrirDs160(\'' + r.id + '\')">📄 Ver ficha</button>'
+          + (feito
+              ? '<button class="btn btn-ghost btn-sm" onclick="statusDs160(\'' + r.id + '\',\'novo\')">↺ Reabrir</button>'
+              : '<button class="btn btn-ghost btn-sm" onclick="statusDs160(\'' + r.id + '\',\'preenchido\')">✓ Preenchido</button>')
+          + '<button class="btn btn-ghost btn-sm" title="Excluir" onclick="statusDs160(\'' + r.id + '\',\'excluir\')">🗑</button>'
+          + '</div>';
+      }).join('')
+    + '</div>';
+}
+
+function abrirDs160(id) {
+  var r = null;
+  for (var i = 0; i < ds160Lista.length; i++) if (ds160Lista[i].id === id) r = ds160Lista[i];
+  if (!r) return;
+  ds160Aberto = r;
+  document.getElementById('ds160-titulo').textContent = '🇺🇸 ' + ((r.resumo || {}).nome || 'Ficha DS-160');
+  var html = '<div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">'
+    + '<button class="btn btn-ghost btn-sm" onclick="copiarDs160Tudo()">📋 Copiar ficha completa</button>'
+    + '<span style="font-size:11px;color:var(--muted);align-self:center">Clique num valor para copiar sem acentos.</span>'
+    + '</div>';
+  (r.ficha || []).forEach(function(sec, si){
+    if (!sec.campos || !sec.campos.length) return;
+    html += _tituloSecao(escHtml(sec.titulo));
+    html += '<div style="margin-bottom:14px">';
+    sec.campos.forEach(function(c, ci){
+      html += '<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px">'
+        + '<div style="flex:0 0 42%;color:var(--muted)">' + escHtml(c.r) + '</div>'
+        + '<div style="flex:1;cursor:pointer;white-space:pre-wrap;word-break:break-word" title="Copiar" onclick="copiarDs160Campo(' + si + ',' + ci + ')">' + escHtml(c.v) + '</div>'
+        + '</div>';
+    });
+    html += '</div>';
+  });
+  document.getElementById('ds160-corpo').innerHTML = html;
+  document.getElementById('modal-ds160').classList.add('open');
+}
+
+function copiarDs160Campo(si, ci) {
+  if (!ds160Aberto) return;
+  var c = ((ds160Aberto.ficha || [])[si] || {}).campos[ci];
+  if (!c) return;
+  navigator.clipboard.writeText(_ds160SemAcento(c.v)).then(function(){ showToast('📋 Copiado!', 'ok'); });
+}
+
+function copiarDs160Tudo() {
+  if (!ds160Aberto) return;
+  var linhas = ['DS-160 — ' + ((ds160Aberto.resumo || {}).nome || '')];
+  (ds160Aberto.ficha || []).forEach(function(sec){
+    if (!sec.campos || !sec.campos.length) return;
+    linhas.push('', '== ' + sec.titulo + ' ==');
+    sec.campos.forEach(function(c){ linhas.push(c.r + ': ' + c.v); });
+  });
+  navigator.clipboard.writeText(linhas.join('\n')).then(function(){ showToast('📋 Ficha copiada!', 'ok'); });
+}
+
+function copiarLinkDs160() {
+  navigator.clipboard.writeText(DS160_LINK).then(function(){ showToast('🔗 Link copiado!', 'ok'); });
+}
+
+var ds160EmCurso = {};
+function statusDs160(id, acao) {
+  if (acao === 'excluir' && !confirm('Excluir este formulário DS-160? A ação não pode ser desfeita.')) return;
+  if (ds160EmCurso[id]) return;
+  ds160EmCurso[id] = true;
+  var row = document.getElementById('ds160-row-' + id);
+  if (row) row.style.opacity = '.4';
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/ds160/status', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id: id, acao: acao })
+  })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      delete ds160EmCurso[id];
+      if (!d.ok) throw new Error(d.erro || 'falha');
+      showToast(acao === 'excluir' ? '🗑 Formulário excluído' : acao === 'preenchido' ? '✅ Marcado como preenchido' : '↺ Reaberto', 'ok');
+      carregarDs160();
+    })
+    .catch(function(e){
+      delete ds160EmCurso[id];
+      if (row) row.style.opacity = '';
       showToast('❌ ' + e.message, 'err');
     });
 }
@@ -8588,6 +8744,7 @@ function iniciarApp(){
   loadCfg(function() {
     carregarPerfis().then(syncClientes);
     carregarPendentes();
+    carregarDs160();
   });
   syncReservas();
   syncViagens();
