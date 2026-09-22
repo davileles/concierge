@@ -158,6 +158,8 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-linha:last-child{border-bottom:none}
 .dem-linha:hover{background:var(--surface2)}
 .dem-linha.concluida{opacity:.55}
+.dem-linha.agendada{opacity:.78}
+.dem-agenda-pill{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;padding:4px 8px;border-radius:10px;background:rgba(160,120,255,.15);color:#a078ff;border:1px solid rgba(160,120,255,.35);white-space:nowrap}
 .dem-linha.prioridade-alta td:first-child{box-shadow:inset 3px 0 0 var(--accent)}
 .dem-tabela td{padding:9px 12px;vertical-align:middle}
 .dem-td-num{font-size:11px;font-weight:700;color:var(--muted2);white-space:nowrap}
@@ -1853,6 +1855,7 @@ header{animation:fadeUp .45s ease both}
         <option value="em_andamento">🟡 Em andamento</option>
         <option value="aguardando">🔵 Aguardando</option>
         <option value="concluida">✅ Concluída</option>
+        <option value="agendada">⏳ Agendada</option>
       </select>
       <select id="dem-filtro-tipo" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex-shrink:0">
         <option value="todos">Todos os tipos</option>
@@ -1928,6 +1931,17 @@ header{animation:fadeUp .45s ease both}
         <input type="text" id="df-responsavel" placeholder="Funcionário responsável" />
       </div>
     </div>
+    <div class="field" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin:0">
+        <input type="checkbox" id="df-agendar" onchange="demandaAgendarChange()" style="width:auto;margin:0"/>
+        ⏳ Agendar demanda <span class="tag">só vai para o grupo da equipe na data marcada</span>
+      </label>
+      <div id="df-agenda-campos" style="display:none;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+        <div><label>🗓️ Data do disparo</label><input type="date" id="df-agenda-data"/></div>
+        <div><label>Horário</label><input type="time" id="df-agenda-hora" value="09:00"/></div>
+      </div>
+      <div id="df-agenda-info" style="display:none;font-size:11px;color:var(--muted);line-height:1.6;margin-top:8px">Até lá a demanda fica como <b>⏳ Agendada</b> no painel. Na data, a mensagem sai no grupo definido em <b>Configuração → WhatsApp</b> e a demanda vira <b>Pendente</b>. Ex.: cancelar um clube depois de garantir o bônus.</div>
+    </div>
     <div class="field">
       <label>Vincular à viagem <span class="tag">opcional</span></label>
       <select id="df-viagem-assoc" onchange="demandaViagemChange()">
@@ -1944,8 +1958,8 @@ header{animation:fadeUp .45s ease both}
          Só aparece ao editar uma demanda já existente (alerta precisa de um vínculo). -->
     <div id="dfa-alerta-section" style="display:none;margin-top:1.2rem"></div>
     <div style="display:flex;gap:8px;margin-top:1rem">
-      <button class="btn btn-accent" onclick="salvarDemanda()" style="flex:1">💾 Salvar Demanda</button>
-      <button class="btn btn-blue" onclick="salvarDemanda(true)" title="Salva a demanda e já abre a prévia da mensagem para o grupo da equipe">📢 Salvar e Avisar Grupo</button>
+      <button class="btn btn-accent" id="df-btn-salvar" onclick="salvarDemanda()" style="flex:1">💾 Salvar Demanda</button>
+      <button class="btn btn-blue" id="df-btn-avisar" onclick="salvarDemanda(true)" title="Salva a demanda e já abre a prévia da mensagem para o grupo da equipe">📢 Salvar e Avisar Grupo</button>
       <button class="btn btn-ghost" onclick="fecharNovaDemanda()">Cancelar</button>
     </div>
   </div>
@@ -9354,7 +9368,89 @@ function aplicarNaAtividade(d, dados) {
   if (dados.responsavel !== undefined) a.demResponsavel = dados.responsavel;
   if (dados.prioridade !== undefined)  a.demPrioridade = dados.prioridade;
   if (dados.clientes !== undefined)    a.demClientes = dados.clientes;
+  if (dados.agendadaPara !== undefined)  a.demAgendadaPara = dados.agendadaPara;
+  if (dados.agendamentoId !== undefined) a.demAgendamentoId = dados.agendamentoId;
   return true;
+}
+
+// ══ AGENDAMENTO DE DEMANDA ══
+// A demanda existe desde já no painel, mas só é disparada no grupo da equipe
+// (cfg.grupoAlertas) na data marcada. O envio reaproveita as mensagens
+// agendadas do proxy (POST /concierge/agendamento → agendamentos.json, worker
+// de 5 min) — nenhum endpoint novo. O id do agendamento é gerado aqui para a
+// demanda já nascer com o vínculo (demanda avulsa → demandas.json; demanda de
+// viagem → demAgendadaPara/demAgendamentoId na atividade, em viagens.json).
+// "Agendada" é derivado: enquanto agendadaPara está no futuro. Depois disso
+// vale o status gravado (pendente), sem precisar o proxy mexer na demanda.
+function tsAgendaDemanda(d) {
+  if (!d || !d.agendadaPara) return null;
+  var t = new Date(String(d.agendadaPara) + ':00-03:00').getTime();
+  return isNaN(t) ? null : t;
+}
+function demandaEstaAgendada(d) {
+  var t = tsAgendaDemanda(d);
+  return t !== null && t > Date.now();
+}
+function fmtAgendaDemanda(d) {
+  var p = String((d && d.agendadaPara) || '').split('T');
+  if (!p[0]) return '';
+  var dm = p[0].split('-');
+  return dm[2] + '/' + dm[1] + (p[1] ? ' ' + p[1] : '');
+}
+function demandaAgendarChange() {
+  var on = document.getElementById('df-agendar').checked;
+  document.getElementById('df-agenda-campos').style.display = on ? 'grid' : 'none';
+  document.getElementById('df-agenda-info').style.display   = on ? '' : 'none';
+  var bS = document.getElementById('df-btn-salvar'), bA = document.getElementById('df-btn-avisar');
+  if (bS) bS.textContent = on ? '⏳ Salvar e Agendar' : '💾 Salvar Demanda';
+  if (bA) bA.style.display = on ? 'none' : '';
+}
+function preencherAgendaForm(d) {
+  var ativo = demandaEstaAgendada(d);
+  var p = ativo ? String(d.agendadaPara).split('T') : ['', '09:00'];
+  document.getElementById('df-agendar').checked = ativo;
+  document.getElementById('df-agenda-data').value = p[0] || '';
+  document.getElementById('df-agenda-hora').value = p[1] || '09:00';
+  demandaAgendarChange();
+}
+function agendarDisparoDemanda(d) {
+  var p = String(d.agendadaPara).split('T');
+  var num = '#' + String(d.numero || '').padStart(3, '0');
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/agendamento', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      id: d.agendamentoId,
+      grupo: (_cfg && _cfg.grupoAlertas) || '',
+      mensagem: montarMensagemDemanda(d),
+      data: p[0], hora: p[1] || '09:00',
+      destino: 'equipe',
+      clienteNome: d.clientes || '',
+      modeloNome: 'Demanda ' + num
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(r){
+    if (!r.ok) throw new Error(r.erro || 'falha no agendamento');
+    showToast('⏳ Demanda ' + num + ' agendada para ' + fmtAgendaDemanda(d), 'ok');
+  })
+  .catch(function(e){ showToast('❌ Demanda salva, mas o disparo NÃO foi agendado — ' + e.message, 'err'); });
+}
+// Cancela o disparo pendente e limpa o vínculo na demanda (e na atividade).
+// Não grava: quem chama decide quando persistir.
+function cancelarAgendaDemanda(d) {
+  if (!d || !d.agendamentoId) return;
+  var id = d.agendamentoId;
+  if (demandaEstaAgendada(d)) {
+    fetch('https://cdv-proxy-production.up.railway.app/concierge/agendamento', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: id })
+    }).catch(function(e){ console.error('[cancelarAgendaDemanda]', e.message); });
+  }
+  d.agendadaPara = '';
+  d.agendamentoId = '';
+  aplicarNaAtividade(d, { agendadaPara: '', agendamentoId: '' });
 }
 
 function loadDemandas() {
@@ -9383,6 +9479,8 @@ function loadDemandas() {
           viagemNome: v.nome || '',
           atividadeRef: a.id,
           reservaId: a.reservaId || null,
+          agendadaPara: a.demAgendadaPara || '',
+          agendamentoId: a.demAgendamentoId || '',
           criadoEm: new Date().toISOString().split('T')[0]
         });
       }
@@ -9434,6 +9532,7 @@ function abrirNovaDemanda() {
   });
   document.getElementById('df-prioridade').value = 'normal';
   document.getElementById('df-tipo').value = '✈️ Passagem Doméstica';
+  preencherAgendaForm(null);
   // Popular viagens
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
@@ -9501,6 +9600,20 @@ function salvarDemanda(avisarGrupo) {
   var icon = tipo.split(' ')[0];
   var nomeAtiv = tipo.split(' ').slice(1).join(' ');
 
+  // Agendamento do disparo
+  var agendar = document.getElementById('df-agendar').checked;
+  var agendadaPara = '';
+  if (agendar) {
+    var agData = document.getElementById('df-agenda-data').value;
+    var agHora = document.getElementById('df-agenda-hora').value || '09:00';
+    if (!agData) { showToast('⚠️ Informe a data do disparo agendado', 'err'); return; }
+    agendadaPara = agData + 'T' + agHora;
+    if (!demandaEstaAgendada({ agendadaPara: agendadaPara })) { showToast('⚠️ Esse horário já passou — escolha uma data futura', 'err'); return; }
+    if (!(_cfg && _cfg.grupoAlertas)) { showToast('⚠️ Grupo da equipe não configurado (Configuração → WhatsApp)', 'err'); return; }
+    avisarGrupo = false;
+  }
+  var dAgenda = null;
+
   var eraNova = !demandaEditandoId;
   var novoIdCriado = null;
 
@@ -9514,6 +9627,14 @@ function salvarDemanda(avisarGrupo) {
       demandas[idx].prazo = prazo;
       demandas[idx].responsavel = responsavel;
       demandas[idx].prioridade = prioridade;
+      if (agendar) {
+        demandas[idx].agendadaPara = agendadaPara;
+        demandas[idx].agendamentoId = demandas[idx].agendamentoId || ('AGD-DEM-' + Date.now().toString(36));
+        aplicarNaAtividade(demandas[idx], { agendadaPara: agendadaPara, agendamentoId: demandas[idx].agendamentoId });
+        dAgenda = demandas[idx];
+      } else if (demandas[idx].agendamentoId) {
+        cancelarAgendaDemanda(demandas[idx]);
+      }
       // Espelha na atividade da viagem — sem isso os campos somem no reload
       aplicarNaAtividade(demandas[idx], {
         titulo: titulo, descricao: descricao, icon: icon, nome: nomeAtiv,
@@ -9536,8 +9657,11 @@ function salvarDemanda(avisarGrupo) {
       viagemNome: v ? (v.nome || '') : '',
       atividadeRef: null,
       reservaId: null,
+      agendadaPara: agendadaPara,
+      agendamentoId: agendar ? ('AGD-DEM-' + Date.now().toString(36)) : '',
       criadoEm: new Date().toISOString().split('T')[0]
     };
+    if (agendar) dAgenda = novaDem;
 
     // Vincular/criar atividade na viagem
     if (v) {
@@ -9580,11 +9704,13 @@ function salvarDemanda(avisarGrupo) {
       }
     }
 
+    if (agendar) aplicarNaAtividade(novaDem, { agendadaPara: agendadaPara, agendamentoId: novaDem.agendamentoId });
     demandas.unshift(novaDem);
     novoIdCriado = novaDem.id;
   }
 
   saveDemandas();
+  if (dAgenda) agendarDisparoDemanda(dAgenda);
 
   // Demanda recém-criada: em vez de fechar, reabre o modal em modo edição para
   // liberar a seção de alerta (ela depende do demandaId, que só existe após salvar).
@@ -9629,6 +9755,7 @@ function editarDemanda(id) {
   document.getElementById('df-responsavel').value = d.responsavel || '';
   document.getElementById('df-prioridade').value = d.prioridade || 'normal';
   document.getElementById('df-tipo').value = d.tipo || '✈️ Passagem Doméstica';
+  preencherAgendaForm(d);
   var sel = document.getElementById('df-viagem-assoc');
   sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
   viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
@@ -9675,6 +9802,7 @@ function excluirDemanda(id) {
   if (d.viagemId && d.atividadeRef) {
     if (!confirm('Remover a demanda ' + num + ' da lista?\n\nA atividade continua na viagem "' + (d.viagemNome || '') + '" — para apagá-la de vez, use a aba Viagens.')) return;
 
+    cancelarAgendaDemanda(d);
     _demandasExcluidas.push(d.atividadeRef);
     var v = viagens.find(function(x){ return x.id === d.viagemId; });
     if (v) {
@@ -9695,6 +9823,7 @@ function excluirDemanda(id) {
   }
 
   if (!confirm('Remover a demanda ' + num + '?')) return;
+  cancelarAgendaDemanda(d);
   demandas = demandas.filter(function(x){ return x.id !== id; });
   saveDemandas();
   renderDemandas();
@@ -9705,6 +9834,7 @@ function alterarStatusDemanda(id, novoStatus) {
   var d = demandas.find(function(x){ return x.id === id; });
   if (!d) return;
   d.status = novoStatus;
+  if (novoStatus === 'concluida' && demandaEstaAgendada(d)) cancelarAgendaDemanda(d);
   // Atualizar atividade vinculada
   if (d.viagemId && d.atividadeRef) {
     var v = viagens.find(function(x){ return x.id === d.viagemId; });
@@ -9766,12 +9896,16 @@ function renderDemandas() {
           viagemNome: v.nome || '',
           atividadeRef: a.id,
           reservaId: a.reservaId || null,
+          agendadaPara: a.demAgendadaPara || '',
+          agendamentoId: a.demAgendamentoId || '',
           criadoEm: new Date().toISOString().split('T')[0]
         });
       } else {
         // Atualiza status se mudou na viagem
         if (a.status === 'concluida') existe.status = 'concluida';
         if (a.reservaId) existe.reservaId = a.reservaId;
+        if (a.demAgendadaPara !== undefined) existe.agendadaPara = a.demAgendadaPara || '';
+        if (a.demAgendamentoId !== undefined) existe.agendamentoId = a.demAgendamentoId || '';
       }
     });
   });
@@ -9784,7 +9918,9 @@ function renderDemandas() {
   var ehNum = buscaNum !== '' && /^\d+$/.test(buscaNum);
 
   var lista = demandas.filter(function(d) {
-    if (filtroStatus !== 'todas' && d.status !== filtroStatus) return false;
+    var agd = demandaEstaAgendada(d);
+    if (filtroStatus === 'agendada') { if (!agd) return false; }
+    else if (filtroStatus !== 'todas' && (agd || d.status !== filtroStatus)) return false;
     if (filtroTipo !== 'todos' && d.tipo.indexOf(filtroTipo) === -1) return false;
     if (busca) {
       var bateNum   = ehNum && String(d.numero || '') === buscaNum;
@@ -9798,6 +9934,9 @@ function renderDemandas() {
   // Ordenar: alta prioridade primeiro, depois por status (pendente > em_andamento > aguardando > concluida)
   var ordemStatus = {pendente:0, em_andamento:1, aguardando:2, concluida:3};
   lista.sort(function(a,b) {
+    var ga = demandaEstaAgendada(a) ? 1 : 0, gb = demandaEstaAgendada(b) ? 1 : 0;
+    if (ga !== gb) return ga - gb;
+    if (ga && gb) return String(a.agendadaPara).localeCompare(String(b.agendadaPara));
     if (a.prioridade === 'alta' && b.prioridade !== 'alta') return -1;
     if (b.prioridade === 'alta' && a.prioridade !== 'alta') return 1;
     return (ordemStatus[a.status]||0) - (ordemStatus[b.status]||0);
@@ -9828,6 +9967,7 @@ function renderDemandas() {
     + lista.map(function(d) {
       var icon = (d.tipo || '📌').split(' ')[0];
       var alAtivo = alertaDaDemanda(d);
+      var agendada = demandaEstaAgendada(d);
       var prazo = d.prazo ? fmtDate(d.prazo) : '—';
       var atrasado = d.prazo && d.status !== 'concluida' && d.prazo < new Date().toISOString().split('T')[0];
       var subtitulo = d.descricao
@@ -9835,7 +9975,7 @@ function renderDemandas() {
         : (d.viagemNome ? '<div class="dem-td-sub">🗺️ ' + escHtml(d.viagemNome) + '</div>' : '');
 
       return '<tr class="dem-linha' + (d.prioridade === 'alta' ? ' prioridade-alta' : '')
-        + (d.status === 'concluida' ? ' concluida' : '') + '" id="dem-' + d.id + '"'
+        + (d.status === 'concluida' ? ' concluida' : '') + (agendada ? ' agendada' : '') + '" id="dem-' + d.id + '"'
         + ' ondblclick="editarDemanda(\'' + d.id + '\')">'
         + '<td class="dem-td-num">#' + String(d.numero||'').padStart(3,'0') + '</td>'
         + '<td class="dem-td-icon">' + icon + '</td>'
@@ -9844,13 +9984,15 @@ function renderDemandas() {
         + '<td class="dem-td-sec' + (atrasado ? ' atrasado' : '') + '">' + prazo + '</td>'
         + '<td class="dem-td-sec">' + escHtml(d.responsavel || '—') + '</td>'
         + '<td>'
-        + '<select class="dem-sel-status ' + (statusClasses[d.status]||'dem-status-pendente') + '"'
+        + (agendada
+          ? '<span class="dem-agenda-pill" title="Vai para o grupo da equipe nesse horário e vira Pendente">⏳ ' + fmtAgendaDemanda(d) + '</span>'
+          : '<select class="dem-sel-status ' + (statusClasses[d.status]||'dem-status-pendente') + '"'
         + ' onclick="event.stopPropagation()" ondblclick="event.stopPropagation()"'
         + ' onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
         + ['pendente','em_andamento','aguardando','concluida'].map(function(st){
             return '<option value="' + st + '"' + (d.status===st?' selected':'') + '>' + (statusLabels[st]||st) + '</option>';
           }).join('')
-        + '</select>'
+        + '</select>')
         + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
         + (alAtivo ? '<span class="dem-acao" title="' + rgEsc(resumoAlerta(alAtivo)) + '" style="cursor:default">🔔</span>' : '')
@@ -9932,7 +10074,11 @@ function enviarDemandaGrupo() {
   var texto = document.getElementById('dem-envio-msg').value.trim();
   if (!grupo) { showToast('⚠️ Informe o grupo destino', 'err'); return; }
   if (!texto) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
-  enviarWhatsApp(grupo, texto, document.getElementById('dem-envio-status'));
+  var dEnv = demandas.find(function(x){ return x.id === _demEnvioId; });
+  var eraAgendada = demandaEstaAgendada(dEnv);
+  enviarWhatsApp(grupo, texto, document.getElementById('dem-envio-status'), null, eraAgendada ? {
+    ok: function(){ cancelarAgendaDemanda(dEnv); saveDemandas(); renderDemandas(); showToast('⏳ Disparo agendado cancelado — demanda enviada agora', 'ok'); }
+  } : undefined);
   setTimeout(function(){ fecharEnvioDemanda(); }, 1400);
 }
 
