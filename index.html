@@ -5020,7 +5020,12 @@ function renderClientes() {
     + list.map(function(c){
       var resCount = reservas.filter(function(r){ return mesmoCliente(r.cliente, c.nome); }).length;
 
-      var detalhe = '<div class="cli-grid">'
+      var editando = cliEditando === c.id;
+      var idEsc = String(c.id || '').split("'").join("\\'");
+      var detalhe = editando ? _formEditarCliente(c) : '<div style="display:flex;justify-content:flex-end;margin-bottom:10px">'
+        +   '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editarCliente(\'' + idEsc + '\')">✏️ Editar dados</button>'
+        + '</div>'
+        + '<div class="cli-grid">'
         + cliFieldCopy('CPF', c.cpf) + cliField('Data de Nascimento', fmtDate(c.nasc))
         + cliField('Telefone', c.tel) + cliField('E-mail', c.email)
         + '</div>'
@@ -5039,7 +5044,7 @@ function renderClientes() {
         + _blocoPerfilViagem(perfilDe(c.id))
         + _blocoGestaoCliente(c);
 
-      return '<tr class="dem-linha" onclick="toggleLinha(this)">'
+      return '<tr class="dem-linha' + (editando ? ' aberto' : '') + '" onclick="toggleLinha(this)">'
         + '<td><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
         +   (c.acompanhantes ? '<div class="dem-td-sub">👨‍👩‍👧 ' + escHtml(String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ')) + '</div>' : '')
         + '</td>'
@@ -5059,9 +5064,204 @@ function renderClientes() {
         + '</td>'
         + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
         + '</tr>'
-        + '<tr class="dem-linha-det"><td colspan="8">' + detalhe + '</td></tr>';
+        + '<tr class="dem-linha-det' + (editando ? ' open' : '') + '"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
     + '</tbody></table></div>';
+}
+
+// ══════════════════════════════════════════
+//  EDICAO DO CLIENTE (cadastro + perfil)
+// ══════════════════════════════════════════
+// Um cliente por vez: o formulario substitui o detalhe da linha e o
+// renderClientes mantem a linha aberta enquanto cliEditando apontar para ela.
+var cliEditando = null;
+
+function editarCliente(id) { cliEditando = id; renderClientes(); }
+function cancelarEdicaoCliente() { cliEditando = null; renderClientes(); }
+
+function _nascParaInput(v) {
+  var s = String(v || '').trim();
+  if (!s) return '';
+  var m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (m) return m[3] + '-' + m[2] + '-' + m[1];
+  var dt = new Date(s);
+  if (isNaN(dt.getTime())) return '';
+  return dt.getUTCFullYear() + '-' + String(dt.getUTCMonth() + 1).padStart(2, '0') + '-' + String(dt.getUTCDate()).padStart(2, '0');
+}
+
+function _attr(v) { return escHtml(v == null ? '' : v).split('"').join('&quot;'); }
+
+function _edInput(campo, label, val, tipo, extra) {
+  return '<div class="field" style="margin:0"><label>' + label + '</label>'
+    + '<input type="' + (tipo || 'text') + '" id="ed-' + campo + '" value="' + _attr(val) + '"' + (extra || '') + '/></div>';
+}
+function _edArea(campo, label, val, rows) {
+  return '<div class="field" style="margin:0"><label>' + label + '</label>'
+    + '<textarea id="ed-' + campo + '" rows="' + (rows || 3) + '">' + escHtml(val || '') + '</textarea></div>';
+}
+
+function _edLinhaSenha(it) {
+  it = it || {};
+  return '<div class="ed-sn-row" data-orig="' + _attr(it.senha || '') + '" data-inferida="' + (it.inferida ? '1' : '') + '"'
+    + ' style="display:grid;grid-template-columns:1fr 1.3fr 1fr 32px;gap:6px;margin-bottom:6px">'
+    + '<input data-k="programa" placeholder="Programa" value="' + _attr(it.programa) + '"/>'
+    + '<input data-k="senha" placeholder="Senha" value="' + _attr(it.senha) + '" style="font-family:ui-monospace,Menlo,Consolas,monospace"/>'
+    + '<input data-k="rotulo" placeholder="Rótulo (opcional)" value="' + _attr(it.rotulo) + '"/>'
+    + '<button class="btn btn-ghost btn-sm" title="Remover" onclick="this.parentNode.remove()">✕</button>'
+    + '</div>';
+}
+function _edLinhaPrograma(pr) {
+  pr = pr || { tem: true };
+  var pts = (pr.pontos !== null && pr.pontos !== undefined && pr.pontos !== '') ? pr.pontos : '';
+  return '<div class="ed-pr-row" style="display:grid;grid-template-columns:28px 1.4fr 1fr 32px;gap:6px;align-items:center;margin-bottom:6px">'
+    + '<input type="checkbox" data-k="tem"' + (pr.tem ? ' checked' : '') + ' title="Tem conta"/>'
+    + '<input data-k="programa" placeholder="Programa" value="' + _attr(pr.programa) + '"/>'
+    + '<input data-k="pontos" type="number" min="0" placeholder="Saldo" value="' + _attr(pts) + '"/>'
+    + '<button class="btn btn-ghost btn-sm" title="Remover" onclick="this.parentNode.remove()">✕</button>'
+    + '</div>';
+}
+function addLinhaEd(boxId, tipo) {
+  var box = document.getElementById(boxId);
+  if (!box) return;
+  box.insertAdjacentHTML('beforeend', tipo === 'senha' ? _edLinhaSenha() : _edLinhaPrograma());
+}
+
+function _formEditarCliente(c) {
+  var pf = perfilDe(c.id) || {};
+  var sn = pf.senhas || {};
+  var g2 = 'display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px';
+  return '<div onclick="event.stopPropagation()">'
+    + '<div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:10px">✏️ Editando cadastro</div>'
+    + '<div style="' + g2 + '">'
+    +   _edInput('nome', 'Nome', c.nome)
+    +   _edInput('cpf', 'CPF', c.cpf)
+    +   _edInput('nasc', 'Data de nascimento', _nascParaInput(c.nasc), 'date')
+    +   _edInput('tel', 'Telefone', c.tel)
+    +   _edInput('email', 'E-mail', c.email, 'email')
+    + '</div>'
+    + _tituloSecao('🏠 Endereço')
+    + '<div style="' + g2 + '">'
+    +   _edInput('cep', 'CEP', c.cep)
+    +   _edInput('logradouro', 'Logradouro', c.logradouro)
+    +   _edInput('numero', 'Número', c.numero)
+    +   _edInput('complemento', 'Complemento', c.complemento)
+    +   _edInput('bairro', 'Bairro', c.bairro)
+    +   _edInput('cidade', 'Cidade', c.cidade)
+    +   _edInput('estado', 'Estado', c.estado, 'text', ' maxlength="2" style="text-transform:uppercase"')
+    + '</div>'
+    + _tituloSecao('👨‍👩‍👧 Quem viaja junto')
+    + _edArea('acompanhantes', 'Um por linha', c.acompanhantes, 3)
+    + _tituloSecao('🔑 Senhas por programa')
+    + '<div id="ed-senhas">' + (sn.itens || []).map(_edLinhaSenha).join('') + '</div>'
+    + '<button class="btn btn-ghost btn-sm" onclick="addLinhaEd(\'ed-senhas\',\'senha\')">+ Senha</button>'
+    + '<div style="margin-top:10px">' + _edArea('sn-outros', 'Sem programa identificado', sn.outros, 2) + '</div>'
+    + _tituloSecao('✈️ Programas e saldos')
+    + '<div style="font-size:11px;color:var(--muted2);margin-bottom:6px">☑ = tem conta no programa</div>'
+    + '<div id="ed-programas">' + (pf.programas || []).map(_edLinhaPrograma).join('') + '</div>'
+    + '<button class="btn btn-ghost btn-sm" onclick="addLinhaEd(\'ed-programas\',\'programa\')">+ Programa</button>'
+    + '<div style="' + g2 + ';margin-top:10px">'
+    +   _edArea('outrosProgramas', 'Outros programas', pf.outrosProgramas, 2)
+    +   _edArea('criarContas', 'Contas que faltam', pf.criarContas, 2)
+    + '</div>'
+    + _tituloSecao('💳 Cartões')
+    + _edArea('cartoes', 'Um por linha', (pf.cartoes || []).join('\n'), 3)
+    + _tituloSecao('🧭 Perfil de viagem')
+    + _edArea('objetivos', 'Objetivos nos próximos 12 meses', pf.objetivos, 3)
+    + '<div style="margin-top:10px">' + _edArea('estilo', 'Como gosta de viajar', pf.estilo, 3) + '</div>'
+    + '<div style="display:flex;gap:8px;margin-top:14px">'
+    +   '<button class="btn btn-accent btn-sm" id="ed-salvar" onclick="salvarEdicaoCliente(\'' + String(c.id).split("'").join("\\'") + '\')">💾 Salvar alterações</button>'
+    +   '<button class="btn btn-ghost btn-sm" onclick="cancelarEdicaoCliente()">Cancelar</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function salvarEdicaoCliente(id) {
+  var idx = -1;
+  for (var i = 0; i < clientes.length; i++) if (clientes[i].id === id) { idx = i; break; }
+  if (idx === -1) { showToast('❌ Cliente não encontrado', 'err'); return; }
+  function v(campo) { var el = document.getElementById('ed-' + campo); return el ? el.value.trim() : ''; }
+
+  var nome = toTitleCase(v('nome'));
+  if (!nome) { showToast('⚠️ O nome é obrigatório', 'err'); return; }
+  var email = v('email');
+  if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('⚠️ E-mail inválido', 'err'); return; }
+
+  var antigo = clientes[idx];
+  var nomeAntigo = antigo.nome;
+  var resVinc = [];
+  if (_normNome(nome) !== _normNome(nomeAntigo)) {
+    resVinc = reservas.filter(function(r){ return mesmoCliente(r.cliente, nomeAntigo); });
+    if (resVinc.length && !confirm('O nome mudou. ' + resVinc.length + ' reserva(s) estão vinculadas a "' + nomeAntigo + '" e serão atualizadas para "' + nome + '". Continuar?')) return;
+  }
+
+  var novoCli = Object.assign({}, antigo, {
+    nome: nome, cpf: v('cpf'), nasc: v('nasc'), tel: v('tel'), email: email,
+    cep: v('cep'), logradouro: v('logradouro'), numero: v('numero'), complemento: v('complemento'),
+    bairro: v('bairro'), cidade: v('cidade'), estado: v('estado').toUpperCase(),
+    acompanhantes: v('acompanhantes')
+  });
+
+  var itens = [];
+  document.querySelectorAll('#ed-senhas .ed-sn-row').forEach(function(row){
+    var g = function(k){ return row.querySelector('[data-k="' + k + '"]').value.trim(); };
+    var it = { programa: g('programa'), senha: g('senha') };
+    if (!it.programa && !it.senha) return;
+    var rot = g('rotulo'); if (rot) it.rotulo = rot;
+    // "inferida" so sobrevive se a senha nao foi tocada.
+    if (row.getAttribute('data-inferida') === '1' && it.senha === row.getAttribute('data-orig')) it.inferida = true;
+    itens.push(it);
+  });
+  var programas = [];
+  document.querySelectorAll('#ed-programas .ed-pr-row').forEach(function(row){
+    var nomeP = row.querySelector('[data-k="programa"]').value.trim();
+    if (!nomeP) return;
+    var pts = row.querySelector('[data-k="pontos"]').value.trim();
+    programas.push({ programa: nomeP, tem: row.querySelector('[data-k="tem"]').checked, pontos: pts === '' ? null : Number(pts) });
+  });
+
+  var pfAntigo = perfilDe(id);
+  var novoPf = Object.assign({}, pfAntigo || { id: id }, {
+    senhas: Object.assign({}, (pfAntigo || {}).senhas || {}, { itens: itens, outros: v('sn-outros') }),
+    programas: programas,
+    outrosProgramas: v('outrosProgramas'),
+    criarContas: v('criarContas'),
+    cartoes: v('cartoes').split('\n').map(function(x){ return x.trim(); }).filter(Boolean),
+    objetivos: v('objetivos'),
+    estilo: v('estilo')
+  });
+  var perfisNovos = pfAntigo
+    ? perfis.map(function(x){ return x.id === id ? novoPf : x; })
+    : perfis.concat([novoPf]);
+
+  var btn = document.getElementById('ed-salvar');
+  if (btn) { btn.disabled = true; btn.textContent = '⏳ Salvando…'; }
+
+  clientes[idx] = novoCli;
+  salvarClientesRemoto()
+    .then(function(){
+      return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes-perfil', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: perfisNovos })
+      }).then(function(r){ return r.json(); });
+    })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha ao salvar o perfil');
+      perfis = perfisNovos;
+      if (!resVinc.length) return;
+      resVinc.forEach(function(r){ r.cliente = nome; });
+      return saveReservas().then(function(){ renderReservas(); });
+    })
+    .then(function(){
+      cliEditando = null;
+      showToast('✅ Cliente atualizado', 'ok');
+      populateClienteSelect();
+      renderClientes();
+    })
+    .catch(function(e){
+      showToast('❌ ' + e.message, 'err');
+      if (btn) { btn.disabled = false; btn.textContent = '💾 Salvar alterações'; }
+      carregarPerfis(); syncClientes();
+    });
 }
 
 // Grupo de WhatsApp e status vinham da planilha (colunas BN e BO) e eram
