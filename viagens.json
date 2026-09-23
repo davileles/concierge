@@ -1350,6 +1350,12 @@
             "nome": "🚄 Milano Centrale → Venezia S. Lucia · Frecciarossa 9705 · Business",
             "descricao": "Chegada às 09:44 · Carro 3, assentos 5B (Léia) e 5D (Jane) · PNR VXYT8N · FrecciaDAYS, sem alteração ou reembolso",
             "dica": ""
+          },
+          {
+            "horario": "",
+            "nome": "🏨 Check-in · NH Venezia Santa Lucia",
+            "descricao": "Rio Terà Lista di Spagna 116/A, ao lado da estação S. Lucia · Quarto Standard, sem café · Reserva SV15JM · Conf. 1056725765 · City tax cobrada no hotel",
+            "dica": "São duas reservas seguidas no mesmo hotel (23–24 e 24–25/10). Avisem na recepção para manter o mesmo quarto nas duas noites."
           }
         ],
         "deslocamentos": []
@@ -1359,7 +1365,14 @@
         "data": "2026-10-24",
         "titulo": "Veneza",
         "resumo": "",
-        "atividades": [],
+        "atividades": [
+          {
+            "horario": "",
+            "nome": "🏨 2ª noite · NH Venezia Santa Lucia",
+            "descricao": "Quarto Standard, sem café · Reserva 2N1JWB · Conf. 41709781202 · City tax cobrada no hotel",
+            "dica": ""
+          }
+        ],
         "deslocamentos": []
       },
       {
@@ -1369,10 +1382,22 @@
         "resumo": "",
         "atividades": [
           {
+            "horario": "",
+            "nome": "🏨 Check-out · NH Venezia Santa Lucia",
+            "descricao": "Fazer check-out antes do trem das 07:26 · hotel a poucos passos da estação",
+            "dica": ""
+          },
+          {
             "horario": "07:26",
             "nome": "🚄 Venezia S. Lucia → Firenze S. M. Novella · Frecciarossa 9405 · Standard",
             "descricao": "Chegada às 09:39 · Carro 7, assentos 8B (Léia) e 7B (Jane) · PNR VX8NRN · FrecciaDAYS, sem alteração ou reembolso",
             "dica": ""
+          },
+          {
+            "horario": "14:00",
+            "nome": "🏨 Check-in · Grand Hotel Mediterraneo",
+            "descricao": "Lungarno del Tempio 44, Firenze · Double/Twin Classic com café da manhã · Reserva ZZ313Z · Conf. 207-16841445 · Taxas de 56 EUR pagas no hotel",
+            "dica": "Chegada às 09:39: deixem as malas na recepção até o horário do check-in."
           }
         ],
         "deslocamentos": []
@@ -1380,7 +1405,7 @@
       {
         "num": 12,
         "data": "2026-10-26",
-        "titulo": "A definir",
+        "titulo": "Florença",
         "resumo": "",
         "atividades": [],
         "deslocamentos": []
@@ -1388,7 +1413,7 @@
       {
         "num": 13,
         "data": "2026-10-27",
-        "titulo": "A definir",
+        "titulo": "Florença",
         "resumo": "",
         "atividades": [],
         "deslocamentos": []
@@ -1396,7 +1421,7 @@
       {
         "num": 14,
         "data": "2026-10-28",
-        "titulo": "A definir",
+        "titulo": "Florença",
         "resumo": "",
         "atividades": [],
         "deslocamentos": []
@@ -1404,23 +1429,37 @@
       {
         "num": 15,
         "data": "2026-10-29",
-        "titulo": "A definir",
+        "titulo": "Florença",
         "resumo": "",
-        "atividades": [],
+        "atividades": [
+          {
+            "horario": "12:00",
+            "nome": "🏨 Check-out · Grand Hotel Mediterraneo",
+            "descricao": "Check-out até 12:00",
+            "dica": ""
+          }
+        ],
         "deslocamentos": []
       },
       {
         "num": 16,
         "data": "2026-10-30",
-        "titulo": "A definir",
+        "titulo": "Roma",
         "resumo": "",
-        "atividades": [],
+        "atividades": [
+          {
+            "horario": "14:00",
+            "nome": "🏨 Check-in · Mercure Roma Centro Colosseo",
+            "descricao": "Via Labicana 144, Roma · Superior Twin, sem café · Reserva W8N2H9 · Conf. 207-16841437 · Taxas de 45 EUR pagas no hotel",
+            "dica": ""
+          }
+        ],
         "deslocamentos": []
       },
       {
         "num": 17,
         "data": "2026-10-31",
-        "titulo": "A definir",
+        "titulo": "Roma",
         "resumo": "",
         "atividades": [],
         "deslocamentos": []
@@ -1428,7 +1467,7 @@
       {
         "num": 18,
         "data": "2026-11-01",
-        "titulo": "A definir",
+        "titulo": "Roma",
         "resumo": "",
         "atividades": [],
         "deslocamentos": []
@@ -1439,6 +1478,12 @@
         "titulo": "Roma → Lisboa",
         "resumo": "",
         "atividades": [
+          {
+            "horario": "Manhã",
+            "nome": "🏨 Check-out · Mercure Roma Centro Colosseo",
+            "descricao": "Check-out antes de seguir para o aeroporto de Fiumicino (voo às 14:00)",
+            "dica": ""
+          },
           {
             "horario": "14:00",
             "nome": "✈️ Voo FCO → LIS · Ryanair FR9903",
