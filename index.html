@@ -2362,9 +2362,12 @@ function syncClientes() {
           id:            c.id || ('cli-' + i),
           nome:          toTitleCase(String(c.nome || '')),
           tel:           String(c.tel           || '').trim(),
+          aparelho:      String(c.aparelho      || '').trim(),
           email:         String(c.email         || '').trim(),
           cpf:           String(c.cpf           || '').trim(),
           nasc:          String(c.nasc          || '').trim(),
+          passaporte:    String(c.passaporte    || '').trim(),
+          passaporteVal: String(c.passaporteVal || '').trim(),
           logradouro:    String(c.logradouro    || '').trim(),
           numero:        String(c.numero        || '').trim(),
           complemento:   String(c.complemento   || '').trim(),
@@ -2529,7 +2532,7 @@ function renderPendentes() {
         return '<div id="pend-row-' + p.id + '" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
           + '<div style="flex:1">'
           +   '<div style="font-size:13px;font-weight:700">' + escHtml(c.nome || '—') + '</div>'
-          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(c.email || '') + ' · ' + escHtml(c.tel || '') + ' · ' + escHtml(c.cidade || '') + '</div>'
+          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(c.email || '') + ' · ' + escHtml(c.tel || '') + (c.aparelho ? ' (' + escHtml(c.aparelho) + ')' : '') + ' · ' + escHtml(c.cidade || '') + '</div>'
           + '</div>'
           + '<button class="btn btn-accent btn-sm" onclick="aprovarPendente(\'' + p.id + '\',\'aprovar\')">✓ Aprovar</button>'
           + '<button class="btn btn-ghost btn-sm" onclick="aprovarPendente(\'' + p.id + '\',\'descartar\')">Descartar</button>'
@@ -2948,6 +2951,7 @@ function blocoDadosCliente(nomeStr) {
     var chips = chipCli('CPF', c.cpf)
       + chipCli('Nasc', fmtDate(c.nasc))
       + chipCli('Tel', c.tel)
+      + chipCli('Aparelho', c.aparelho)
       + chipCli('E-mail', c.email)
       + chipCli('Endereço', endereco)
       + chipCli('Acomp', c.acompanhantes ? String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ') : '');
@@ -3003,6 +3007,7 @@ function varsDemandaCliente(c) {
   var primeiro = String(c.nome || '').trim().split(/\s+/)[0] || '';
   var base = [
     { label: 'Acompanhantes', valor: c.acompanhantes ? String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ') : '' },
+    { label: 'Aparelho',      valor: c.aparelho },
     { label: 'Bairro',        valor: c.bairro },
     { label: 'CEP',           valor: c.cep },
     { label: 'Cidade',        valor: c.cidade },
@@ -5027,7 +5032,7 @@ function renderClientes() {
         + '</div>'
         + '<div class="cli-grid">'
         + cliFieldCopy('CPF', c.cpf) + cliField('Data de Nascimento', fmtDate(c.nasc))
-        + cliField('Telefone', c.tel) + cliField('E-mail', c.email)
+        + cliField('Telefone', c.tel) + cliField('Aparelho', c.aparelho) + cliField('E-mail', c.email)
         + '</div>'
         + (c.logradouro || c.cep
           ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">🏠 Endereço</div><div class="cli-grid">'
@@ -5095,6 +5100,12 @@ function _edInput(campo, label, val, tipo, extra) {
   return '<div class="field" style="margin:0"><label>' + label + '</label>'
     + '<input type="' + (tipo || 'text') + '" id="ed-' + campo + '" value="' + _attr(val) + '"' + (extra || '') + '/></div>';
 }
+function _edSelect(campo, label, val, opcoes) {
+  return '<div class="field" style="margin:0"><label>' + label + '</label>'
+    + '<select id="ed-' + campo + '">' + opcoes.map(function(o){
+        return '<option value="' + _attr(o) + '"' + (o === (val || '') ? ' selected' : '') + '>' + (o ? escHtml(o) : '—') + '</option>';
+      }).join('') + '</select></div>';
+}
 function _edArea(campo, label, val, rows) {
   return '<div class="field" style="margin:0"><label>' + label + '</label>'
     + '<textarea id="ed-' + campo + '" rows="' + (rows || 3) + '">' + escHtml(val || '') + '</textarea></div>';
@@ -5137,6 +5148,7 @@ function _formEditarCliente(c) {
     +   _edInput('cpf', 'CPF', c.cpf)
     +   _edInput('nasc', 'Data de nascimento', _nascParaInput(c.nasc), 'date')
     +   _edInput('tel', 'Telefone', c.tel)
+    +   _edSelect('aparelho', 'Aparelho', c.aparelho, ['', 'Android', 'iPhone'])
     +   _edInput('email', 'E-mail', c.email, 'email')
     + '</div>'
     + _tituloSecao('🏠 Endereço')
@@ -5195,7 +5207,7 @@ function salvarEdicaoCliente(id) {
   }
 
   var novoCli = Object.assign({}, antigo, {
-    nome: nome, cpf: v('cpf'), nasc: v('nasc'), tel: v('tel'), email: email,
+    nome: nome, cpf: v('cpf'), nasc: v('nasc'), tel: v('tel'), aparelho: v('aparelho'), email: email,
     cep: v('cep'), logradouro: v('logradouro'), numero: v('numero'), complemento: v('complemento'),
     bairro: v('bairro'), cidade: v('cidade'), estado: v('estado').toUpperCase(),
     acompanhantes: v('acompanhantes')
