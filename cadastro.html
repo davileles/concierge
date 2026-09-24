@@ -272,6 +272,15 @@ footer .by { font-style: italic; opacity: .72; }
           <p class="err-msg">E-mail inválido.</p>
         </div>
       </div>
+      <div class="field" data-req>
+        <label>Seu celular é</label>
+        <select id="aparelho">
+          <option value="">Selecione…</option>
+          <option value="Android">Android</option>
+          <option value="iPhone">iPhone</option>
+        </select>
+        <p class="err-msg">Informe se o seu celular é Android ou iPhone.</p>
+      </div>
       <div class="g2">
         <div class="field" data-req>
           <label>CPF</label>
@@ -597,6 +606,7 @@ function validarEtapa(n) {
   if (n === 1) {
     ok = marcar('nome',  val('nome').split(/\s+/).length >= 2) && ok;
     ok = marcar('tel',   digitos(val('tel')).length >= 10) && ok;
+    ok = marcar('aparelho', val('aparelho') === 'Android' || val('aparelho') === 'iPhone') && ok;
     ok = marcar('email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val('email'))) && ok;
     ok = marcar('cpf',   cpfValido(val('cpf'))) && ok;
     ok = marcar('nasc',  !!val('nasc')) && ok;
@@ -667,6 +677,7 @@ function montarPayload() {
     consentimento: $('consentimento').checked,
     nome:          val('nome'),
     tel:           digitos(val('tel')),
+    aparelho:      val('aparelho'),
     email:         val('email'),
     cpf:           digitos(val('cpf')),
     nasc:          val('nasc'),
