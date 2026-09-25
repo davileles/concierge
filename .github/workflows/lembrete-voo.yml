@@ -21,6 +21,16 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Checar acesso do token ao repo de dados (diagnostico)
+        continue-on-error: true
+        env:
+          CDV_GITHUB_TOKEN: ${{ secrets.CDV_CONCIERGE_TOKEN }}
+        run: |
+          st=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $CDV_GITHUB_TOKEN" https://api.github.com/repos/davileles/dados/contents/concierge)
+          echo "ACESSO_DADOS_LEITURA=$st"
+          perm=$(curl -s -H "Authorization: Bearer $CDV_GITHUB_TOKEN" https://api.github.com/repos/davileles/dados | python3 -c "import json,sys;print(json.load(sys.stdin).get('permissions'))" 2>/dev/null)
+          echo "PERMISSOES_DADOS=$perm"
+
       - name: Verificar e enviar lembretes de voo (com retry)
         env:
           CDV_GITHUB_TOKEN: ${{ secrets.CDV_CONCIERGE_TOKEN }}
