@@ -31,8 +31,11 @@ const path = require('path');
 const BAILEYS      = 'https://baileys-server-production-ebfe.up.railway.app';
 const PROXY        = 'https://cdv-proxy-production.up.railway.app';
 const GITHUB_TOKEN = process.env.CDV_GITHUB_TOKEN || process.env.GITHUB_TOKEN || '';
-const REPO         = 'davileles/concierge';
-const API_BASE     = `https://api.github.com/repos/${REPO}/contents`;
+// Os dados do concierge (reservas, viagens, modelos, cfg, msgs-enviadas,
+// debug-log) moram no repo PRIVADO de dados, na pasta concierge/. Este repo
+// (davileles/concierge) e publico e so guarda o site e este script.
+const REPO         = process.env.CONCIERGE_DADOS_REPO || 'davileles/dados';
+const API_BASE     = `https://api.github.com/repos/${REPO}/contents/concierge`;
 const TZ_SP        = 'America/Sao_Paulo';
 
 // ── helpers ───────────────────────────────────────────────────────────────────

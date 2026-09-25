@@ -639,14 +639,21 @@ html, body {
     <div class="login-divider"></div>
 
     <h1 class="login-headline">Sua viagem,<br><span>acompanhada.</span></h1>
-    <p class="login-sub">Acesse com o e-mail cadastrado para acompanhar reservas e atividades em tempo real.</p>
+    <p class="login-sub" id="login-sub">Acesse com o e-mail cadastrado para acompanhar reservas e atividades em tempo real.</p>
 
-    <div class="login-field">
+    <div class="login-field" id="campo-email">
       <span class="login-field-icon">✉</span>
       <input type="email" id="login-email" placeholder="seu@email.com" onkeydown="if(event.key==='Enter')entrar()"/>
     </div>
+    <div class="login-field" id="campo-codigo" style="display:none">
+      <span class="login-field-icon">#</span>
+      <input type="text" id="login-codigo" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Código de 6 dígitos" onkeydown="if(event.key==='Enter')entrar()"/>
+    </div>
     <button class="login-btn" id="btn-entrar" onclick="entrar()">
       Acessar →
+    </button>
+    <button class="login-btn" id="btn-voltar" onclick="voltarEmail()" style="display:none;background:transparent;border:1px solid var(--border,#333);margin-top:8px">
+      Usar outro e-mail
     </button>
     <div class="login-error" id="login-error"></div>
     <div class="login-footer">Acesso exclusivo · Travel Concierge</div>
@@ -857,52 +864,129 @@ function toggleViagem(id,vi){
   if(card) card.classList.toggle('expanded',open);
 }
 
-function entrar() {
-  var email=document.getElementById('login-email').value.trim().toLowerCase();
-  var errEl=document.getElementById('login-error');
-  if(!email||!email.includes('@')){errEl.textContent='Digite um e-mail válido.';return;}
-  errEl.textContent='';
+// ══════════════════════════════════════════
+//  LOGIN: e-mail -> codigo de 6 digitos -> token do portal (7 dias, cookie)
+// ══════════════════════════════════════════
+var _etapa = 'email';
+var _emailLogin = '';
+function _tokenPortal(){
+  var m = document.cookie.match(/(?:^|; )cdv_portal_sess=([^;]*)/);
+  return m ? decodeURIComponent(m[1]) : '';
+}
+function _salvarTokenPortal(tk){
+  document.cookie = 'cdv_portal_sess=' + encodeURIComponent(tk) + ';max-age=' + (7*24*3600) + ';path=/;SameSite=Strict;Secure';
+}
+function _apagarTokenPortal(){
+  document.cookie = 'cdv_portal_sess=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+}
+function _btnPadrao(){
   var btn=document.getElementById('btn-entrar');
-  btn.textContent='Aguarde…'; btn.disabled=true;
+  btn.innerHTML = _etapa==='codigo' ? 'Confirmar código →' : 'Acessar →';
+  btn.disabled=false;
+}
+function _mostrarEtapa(etapa){
+  _etapa = etapa;
+  var cod = etapa==='codigo';
+  document.getElementById('campo-email').style.display = cod ? 'none' : '';
+  document.getElementById('campo-codigo').style.display = cod ? '' : 'none';
+  document.getElementById('btn-voltar').style.display = cod ? '' : 'none';
+  document.getElementById('login-sub').textContent = cod
+    ? 'Enviamos um código de 6 dígitos para ' + _emailLogin + '. Ele vale por 10 minutos.'
+    : 'Acesse com o e-mail cadastrado para acompanhar reservas e atividades em tempo real.';
+  _btnPadrao();
+  document.getElementById(cod ? 'login-codigo' : 'login-email').focus();
+}
+function voltarEmail(){
+  document.getElementById('login-codigo').value='';
+  document.getElementById('login-error').textContent='';
+  _mostrarEtapa('email');
+}
 
-  // O proxy filtra no servidor e devolve so as viagens e reservas deste e-mail.
-  // O portal nao le mais as bases completas (clientes, reservas, viagens).
-  fetch(PROXY+'/concierge/portal?email='+encodeURIComponent(email),{cache:'no-store'})
+function entrar() {
+  var errEl=document.getElementById('login-error');
+  var btn=document.getElementById('btn-entrar');
+  errEl.textContent='';
+
+  if (_etapa === 'email') {
+    var email=document.getElementById('login-email').value.trim().toLowerCase();
+    if(!email||!email.includes('@')){errEl.textContent='Digite um e-mail válido.';return;}
+    btn.textContent='Enviando código…'; btn.disabled=true;
+    fetch(PROXY+'/concierge/portal/enviar-codigo',{
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:email})
+    })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if(!d||!d.ok) throw new Error((d&&d.erro)||'Serviço temporariamente indisponível.');
+        _emailLogin=email;
+        _mostrarEtapa('codigo');
+        if(d.aguarde) errEl.textContent='Um código já foi enviado há pouco. Confira seu e-mail (e a caixa de spam).';
+      })
+      .catch(function(e){ _btnPadrao(); errEl.textContent=e.message||'Erro de conexão. Tente novamente.'; });
+    return;
+  }
+
+  var codigo=document.getElementById('login-codigo').value.replace(/\D/g,'');
+  if(codigo.length!==6){errEl.textContent='Digite o código de 6 dígitos.';return;}
+  btn.textContent='Aguarde…'; btn.disabled=true;
+  fetch(PROXY+'/concierge/portal/verificar-codigo',{
+    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email:_emailLogin,codigo:codigo})
+  })
     .then(function(r){return r.json();})
+    .then(function(d){
+      if(d&&d.ok&&d.token){ _salvarTokenPortal(d.token); return carregarPortal(); }
+      var msg = {invalido:'Código incorreto.', expirado:'Código expirado. Peça um novo.', tentativas:'Muitas tentativas. Peça um novo código.'}[d&&d.motivo] || (d&&d.erro) || 'Não foi possível validar o código.';
+      if(d&&(d.motivo==='expirado'||d.motivo==='tentativas')) voltarEmail();
+      throw new Error(msg);
+    })
+    .catch(function(e){ _btnPadrao(); errEl.textContent=e.message||'Erro de conexão. Tente novamente.'; });
+}
+
+// O proxy identifica o cliente pelo token (header X-CDV-Portal) e devolve so as
+// viagens e reservas dele.
+function carregarPortal() {
+  var tk=_tokenPortal();
+  if(!tk) return Promise.resolve(false);
+  return fetch(PROXY+'/concierge/portal',{cache:'no-store',headers:{'X-CDV-Portal':tk}})
+    .then(function(r){
+      if(r.status===401){ _apagarTokenPortal(); throw new Error('Sua sessão expirou. Entre novamente.'); }
+      return r.json();
+    })
     .then(function(d){
       if(!d||!d.ok) throw new Error('Serviço temporariamente indisponível.');
       if(!d.clientes||!d.clientes.length) throw new Error('Nenhuma viagem encontrada para este e-mail.');
-      return {clientes:d.clientes,nomesCliente:d.nomesCliente||[],viagens:d.viagens||[],reservas:d.reservas||[]};
-    })
-    .then(function(dados){
-      btn.innerHTML='Acessar →'; btn.disabled=false;
+      var dados={clientes:d.clientes,nomesCliente:d.nomesCliente||[],viagens:d.viagens||[],reservas:d.reservas||[]};
       _dados=dados;
       var nome=toTitleCase(dados.clientes[0].nome).split(' ')[0];
       document.getElementById('portal-nome').innerHTML='Olá, <span style="color:var(--accent)">'+nome+'</span> 👋';
       document.getElementById('nav-nome').textContent=nome;
-      document.getElementById('portal-email').textContent=email;
+      document.getElementById('portal-email').textContent=dados.clientes[0].email||'';
       document.getElementById('login-wrap').style.display='none';
       var pw=document.getElementById('portal-wrap');
       pw.style.display='block';
       pw.classList.add('fade-in');
       renderPortal();
+      return true;
     })
     .catch(function(e){
-      btn.innerHTML='Acessar →'; btn.disabled=false;
-      errEl.textContent=e.message||'Erro de conexão. Tente novamente.';
+      _mostrarEtapa('email');
+      document.getElementById('login-error').textContent=e.message||'Erro de conexão. Tente novamente.';
+      return false;
     });
 }
 
 function sair(){
   _dados=null;
+  _apagarTokenPortal();
   var pw=document.getElementById('portal-wrap');
   pw.style.display='none'; pw.classList.remove('fade-in');
   document.getElementById('login-wrap').style.display='flex';
   document.getElementById('login-email').value='';
+  document.getElementById('login-codigo').value='';
   document.getElementById('login-error').textContent='';
+  _mostrarEtapa('email');
 }
 
-document.getElementById('login-email').focus();
+if (_tokenPortal()) carregarPortal(); else document.getElementById('login-email').focus();
 </script>
 </body>
 </html>

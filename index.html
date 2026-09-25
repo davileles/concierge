@@ -9423,16 +9423,15 @@ async function rgChamarIA() {
   if (extra) ctx += 'Contexto adicional: '+extra+'\n';
   rgSetStatus('⏳ Gerando roteiro com IA…','info');
   try {
-    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+    // Passa pelo proxy (rota /concierge/*, com a sessao do painel): a chave da
+    // Anthropic fica no servidor. O prompt tambem mora la.
+    var resp = await fetch(AUTH_PROXY + '/concierge/ia/roteiro-dias', {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({model:'claude-sonnet-4-6',max_tokens:4000,messages:[{role:'user',
-        content:'Você é um assistente de roteiros de viagem premium. Com base nos dados abaixo, crie um roteiro dia a dia para o cliente.\n\n'+ctx+'\n\nRetorne SOMENTE um JSON válido sem markdown, no formato:\\n[{"num":1,"titulo":"Título curto","data":"YYYY-MM-DD","atividades":[{"horario":"09:00","nome":"Nome completo do local","descricao":"Descrição detalhada","dica":"Dica prática ou null","lat":-23.5505,"lng":-46.6333}],"deslocamentos":[],"custos":[]}]\\nIMPORTANTE: inclua lat e lng reais e precisos para CADA atividade — são usados para gerar links do Google Maps entre os pontos. Se não souber as exatas, use aproximadas da região. Se não há datas, distribua logicamente pelos dias. Inclua refeições e deslocamentos relevantes.'}]})
+      body: JSON.stringify({ contexto: ctx })
     });
-    var data = await resp.json();
-    var text = (data.content||[]).find(function(b){return b.type==='text';});
-    if (!text) throw new Error('Sem resposta');
-    var clean = text.text.replace(/```json|```/g,'').trim();
-    rgDias = JSON.parse(clean);
+    var data = await resp.json().catch(function(){ return {}; });
+    if (!resp.ok || !data.ok) throw new Error(data.erro || ('HTTP ' + resp.status));
+    rgDias = data.dias;
     rgRenderDias();
     document.getElementById('rg-ia-wrap').style.display='none';
     rgSetStatus('✅ Roteiro gerado com IA! Revise os dias abaixo antes de publicar.','ok');
