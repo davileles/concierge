@@ -1,6 +1,18 @@
 {
   "limiarRemocao": 150,
   "arquivos": {
+    "extensao/content.js": {
+      "minLinhas": 150,
+      "obrigatorio": ["function preencher(", "function colarManual(", "function fazPostback("]
+    },
+    "extensao/mapa.js": {
+      "minLinhas": 450,
+      "obrigatorio": ["function montarItens(", "function sufixos(", "function camposData("]
+    },
+    "extensao/painel.js": {
+      "minLinhas": 350,
+      "obrigatorio": ["function preencherItem(", "function preencherPagina(", "function traduzir("]
+    },
     "index.html": {
       "minLinhas": 8152,
       "obrigatorio": [

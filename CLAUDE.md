@@ -161,7 +161,7 @@ TeamRausch, financas e castanheiras são ISOLADOS (serviços, tokens e dados pr�
 - Passagens: `/passagens/{registrar,excluir,listar,comportamento,panorama}`.
 - Membros e dados do membro: `/membros/*`, `/perfis/*`, `/milhas/*`, `/cartoes/*`, `/assinaturas/*`, `/compras/desejos{,/aviso}`.
 - IA: `/ia/{extrair-reserva,reclamacao,roteiro-chat,roteiro-extrair}` (modelo `claude-sonnet-4-6`).
-- Concierge: `/concierge/{reservas,viagens,demandas,clientes,clientes-perfil,ds160,cfg,modelos,msgs-enviadas}` (GET/POST), `cadastro`, `ds160/status`, `pendentes{,/aprovar}`, `portal{,/tema}`, `alerta` (POST/DELETE), `alertas`, `alerta/disparar`, `lembretes/checar`, `agendamento` (POST/DELETE), `agendamentos{,/checar}`, `arquivo{,/:reservaId,/:reservaId/:idx}`.
+- Concierge: `/concierge/{reservas,viagens,demandas,clientes,clientes-perfil,ds160,cfg,modelos,msgs-enviadas}` (GET/POST), `cadastro`, `ds160/status`, `pendentes{,/aprovar}`, `portal{,/tema}`, `alerta` (POST/DELETE), `alertas`, `alerta/disparar`, `lembretes/checar`, `agendamento` (POST/DELETE), `agendamentos{,/checar}`, `arquivo{,/:reservaId,/:reservaId/:idx}`, `ia/{roteiro-dias,traduzir-ds160}`.
 - Roteiros: `/roteiros/{publicar,meus,dados,doc-upload,doc-meta}`.
 - Parceiros/lounges/cartões: `/parceiros*`, `/lounges/{buscar,sala,aeroportos}`, `/catalogo-cartoes*`, `/bandeiras`.
 - TSP/afiliados: `/tsp/planilha?sheet=` (Apps Script lido **pelo proxy** — direto dá 404 com Chrome multi-conta), `/afiliados/{comissoes,descobertas,rastreio}`.
@@ -288,6 +288,7 @@ Cron do GitHub está degradado (atrasa 2–4 h): disparo real vem do Railway; cr
 - Auto-envio de emissão aprovada quando pontos ≤ média histórica ± tolerância.
 - **Alaska Atmos é proibido de envio automático** — sempre aprovação manual.
 - Comparador: abas de compras bonificadas e transferências bonificadas; parceiros Tier 1 recebem mensagens individuais; projeções de frequência/próximo aumento.
+- **Lembrete "ACABA HOJE"** (baileys-server, `checarLembretesAcabaHoje`): toda oferta do radar de categoria `transferencia`, `clube` ou `compra` enviada a um grupo é reenviada automaticamente no último dia do prazo (09:00 SP; 2 h antes se a promo acaba cedo), com o **mesmo texto** e `⏰ ACABA HOJE!` no título. Vai direto pela `filaRadar` (não passa pelo proxy): **não registra no `historico-transferencias.json`**. Texto em `sessao/lembretes_radar.json`; prazo/categoria de `ofertas.json`. Inspeção: `GET /radar/lembretes` (`?checar=1`). Kill switch `LEMBRETE_ACABA_HOJE=off`; categorias em `LEMBRETE_ACABA_HOJE_CATS`.
 - Coleta de passagens do seats.aero é feita por automação de navegador (API bloqueada para o Brasil) e entra por `/passagens/registrar`.
 
 ---
@@ -307,7 +308,8 @@ Cron do GitHub está degradado (atrasa 2–4 h): disparo real vem do Railway; cr
 - IA do "Gerar Roteiro": `rgChamarIA` → `POST /concierge/ia/roteiro-dias` (proxy, chave no servidor). Nunca chamar `api.anthropic.com` do navegador.
 - Portal (`portal.html`): tema escuro premium, `font-weight:300`, branco sobre `#0a0c12`, sem partículas/efeitos. Login por **código no e-mail**: `POST /concierge/portal/enviar-codigo` → `POST /concierge/portal/verificar-codigo` (10 min, 5 tentativas) → token de portal (7 dias, cookie `cdv_portal_sess`, chave HMAC própria) → `GET /concierge/portal` com header `X-CDV-Portal` (o e-mail sai do token, nunca da query).
 - Modelo do serviço (contexto): contrato de 12 meses (contratante, cônjuge e filhos), pagamento único por link, assinatura via ZapSign, atendimento dias úteis 8h–18h; após assinar, cliente preenche cadastro (dados, beneficiários, logins de fidelidade); aprovações de emissão acontecem na conversa.
-- Planejado: extensão Chrome do concierge que preenche cadastros em sites (cias, hotéis) com dados do cliente — primeiro fechar autenticação das rotas `/concierge/*`, depois usar o mesmo login OTP.
+- **Extensão Chrome DS-160** (`concierge/extensao/`, MV3, instalada por "Carregar sem compactação"): painel lateral com o mesmo login OTP (`app:'concierge'`, token em `chrome.storage.local`) → lista `GET /concierge/ds160` → `mapa.js` converte `registro.dados` em itens do DS-160 (ids `ctl00_SiteContentPlaceHolder_FormView1_<sufixo>`, datas em dia/mês/ano, selects casados por value ou texto, "~" = contém) → `content.js` (só em `ceac.state.gov`) preenche campo a campo ou a página inteira, destacando em amarelo; para no campo que dispara `__doPostBack`, espera a página recarregar e continua. Modo manual: clicar no campo do site e em ↘. Textos livres traduzidos por `POST /concierge/ia/traduzir-ds160`. "Marcar como preenchido" usa `/concierge/ds160/status`. Nada de dado de cliente persiste no navegador (só marcações de preenchido e traduções da sessão). **Mudou campo no `ds160.html`? Ajuste o `mapa.js`.** Ids de parentes nos EUA e de ex-cônjuge/viúvo são estimados — se o site não achar, o item cai no modo manual.
+- Planejado: estender a extensão para cadastros em sites (cias, hotéis) com dados do cliente.
 
 ### 4.5 `roteiros`
 - Raiz: `CNAME`, `README.md`, `CLAUDE.md`, `system-prompt-final.md` (assistente de roteiros: 11 perguntas uma a uma, entrega em blocos de 2 dias), `template/index.html`, `assets/images/`. **Sem `index.html` na raiz.**

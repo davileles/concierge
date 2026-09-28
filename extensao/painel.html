@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DS-160 · Concierge</title>
+<link rel="stylesheet" href="painel.css">
+</head>
+<body>
+<header class="topo">
+  <div class="marca"><span class="bola">DS</span><div><b>DS-160</b><small>Concierge Estratégico</small></div></div>
+  <button class="btn-link" id="btn-sair" hidden>Sair</button>
+</header>
+
+<!-- LOGIN -->
+<section id="v-login" class="vista" hidden>
+  <div class="card">
+    <div class="card-h">Entrar</div>
+    <p class="muted">Mesmo acesso do painel do concierge: código de 6 dígitos no e-mail.</p>
+    <div id="login-etapa-email">
+      <label>E-mail</label>
+      <input id="login-email" type="email" autocomplete="email" placeholder="voce@email.com">
+      <button class="btn btn-accent" id="login-enviar">Enviar código</button>
+    </div>
+    <div id="login-etapa-codigo" hidden>
+      <label>Código</label>
+      <input id="login-codigo" inputmode="numeric" maxlength="6" placeholder="000000">
+      <button class="btn btn-accent" id="login-validar">Entrar</button>
+      <button class="btn-link" id="login-voltar">Trocar e-mail</button>
+    </div>
+    <div class="msg" id="login-msg"></div>
+  </div>
+</section>
+
+<!-- LISTA DE FORMULÁRIOS -->
+<section id="v-lista" class="vista" hidden>
+  <div class="barra">
+    <input id="busca" type="search" placeholder="Buscar cliente…">
+    <button class="btn btn-ghost" id="btn-recarregar" title="Recarregar">↻</button>
+  </div>
+  <div id="lista"></div>
+</section>
+
+<!-- CLIENTE -->
+<section id="v-cliente" class="vista" hidden>
+  <div class="barra">
+    <button class="btn btn-ghost" id="btn-voltar">← Formulários</button>
+    <span class="progresso" id="progresso"></span>
+  </div>
+  <div class="card cliente-h">
+    <div class="cliente-nome" id="cliente-nome"></div>
+    <div class="muted" id="cliente-info"></div>
+    <div class="acoes">
+      <button class="btn btn-ghost" id="btn-traduzir">🌐 Traduzir textos</button>
+      <button class="btn btn-ghost" id="btn-concluir">✓ Marcar como preenchido</button>
+    </div>
+  </div>
+
+  <div class="card pagina" id="pagina">
+    <div class="pagina-h">
+      <div>
+        <div class="card-h" id="pagina-titulo">Página do DS-160</div>
+        <div class="muted" id="pagina-status">Abra o DS-160 nesta aba.</div>
+      </div>
+      <button class="btn btn-accent" id="btn-pagina" disabled>Preencher esta página</button>
+    </div>
+    <div id="pagina-itens"></div>
+  </div>
+
+  <div class="dica">
+    <b>Modo manual:</b> clique no campo do site e depois em <b>↘</b> no valor desejado. Clique no valor para copiar.
+  </div>
+
+  <div id="secoes"></div>
+</section>
+
+<div class="toast" id="toast"></div>
+
+<script src="mapa.js"></script>
+<script src="painel.js"></script>
+</body>
+</html>
