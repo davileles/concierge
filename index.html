@@ -5072,6 +5072,8 @@ function renderClientes() {
         + '<tr class="dem-linha-det' + (editando ? ' open' : '') + '"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
     + '</tbody></table></div>';
+  // Lista de grupos do WhatsApp para o seletor da gestao (uma vez por sessao)
+  if (_gruposConciergeCache) _preencherSelectsGrupo(); else carregarGruposConcierge();
 }
 
 // ══════════════════════════════════════════
@@ -5284,8 +5286,14 @@ function _blocoGestaoCliente(c) {
     + '<div style="display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:end">'
     +   '<div class="field" style="margin:0">'
     +     '<label>Grupo WhatsApp <span class="tag">destino das mensagens automáticas</span></label>'
-    +     '<input type="text" id="gest-grupo-' + escHtml(c.id) + '" value="' + escHtml(c.grupo || '') + '"'
-    +       ' placeholder="120363xxxxxxxxxxxx@g.us" style="font-family:monospace;font-size:12px"/>'
+    +     '<div style="display:flex;gap:6px">'
+    +       '<select id="gest-grupo-' + escHtml(c.id) + '" class="gest-grupo-sel" data-atual="' + escHtml(c.grupo || '') + '"'
+    +         ' data-cliente="' + escHtml(c.nome || '') + '" onchange="gestGrupoChange(this)" style="flex:1;min-width:0">'
+    +         _opcoesGrupoCliente(c.grupo || '', c.nome || '', _gruposConciergeCache)
+    +       '</select>'
+    +       '<button type="button" class="btn btn-ghost btn-sm" title="Recarregar lista de grupos" onclick="carregarGruposConcierge(true)">🔄</button>'
+    +     '</div>'
+    +     '<div class="gest-grupo-info" style="font-size:11px;color:var(--muted2);margin-top:4px"></div>'
     +   '</div>'
     +   '<div class="field" style="margin:0">'
     +     '<label>Status</label>'
@@ -5303,6 +5311,92 @@ function _blocoGestaoCliente(c) {
     + '<p style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.6">'
     +   'Só clientes <b>ativos</b> aparecem no disparo em massa. Sem grupo cadastrado, os lembretes automáticos não têm para onde ir.'
     + '</p>';
+}
+
+// ── Seletor de grupo do cliente ─────────────────────────────────────────
+// Lista os grupos da conta no Baileys (GET /grupos) e mostra so os de
+// clientes do concierge: nome comecando com "Consultoria" ou "Travel Concierge"
+// (sem diferenciar acento/maiusculas). O valor salvo continua sendo o ID @g.us.
+var _gruposConciergeCache = null;   // [{id, nome}] ja filtrado e ordenado
+var _gruposConciergeCarregando = null;
+
+function _normGrupo(s) {
+  return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+}
+function _ehGrupoConcierge(nome) {
+  var n = _normGrupo(nome);
+  return n.indexOf('consultoria') === 0 || n.indexOf('travel concierge') === 0;
+}
+
+function _opcoesGrupoCliente(atual, clienteNome, lista) {
+  var h = '<option value="">— Sem grupo —</option>';
+  var achou = false;
+  // Quem ja usa cada grupo (para avisar vinculo duplicado)
+  var dono = {};
+  (clientes || []).forEach(function(cl){
+    if (cl.grupo && cl.nome !== clienteNome) dono[cl.grupo] = cl.nome;
+  });
+  (lista || []).forEach(function(g){
+    var sel = g.id === atual;
+    if (sel) achou = true;
+    var extra = dono[g.id] ? '  · já vinculado a ' + dono[g.id] : '';
+    h += '<option value="' + escHtml(g.id) + '"' + (sel ? ' selected' : '') + '>' + escHtml(g.nome + extra) + '</option>';
+  });
+  if (atual && !achou) {
+    h += '<option value="' + escHtml(atual) + '" selected>' + escHtml((lista ? '⚠️ Fora da lista · ' : '') + atual) + '</option>';
+  }
+  h += '<option value="__manual__">✏️ Informar ID manualmente…</option>';
+  return h;
+}
+
+function carregarGruposConcierge(forcar) {
+  if (_gruposConciergeCarregando && !forcar) return _gruposConciergeCarregando;
+  var url = getBaileysUrl();
+  var infos = document.querySelectorAll('.gest-grupo-info');
+  var setInfo = function(txt, cor){
+    infos = document.querySelectorAll('.gest-grupo-info');
+    for (var i = 0; i < infos.length; i++) { infos[i].style.color = cor || 'var(--muted2)'; infos[i].textContent = txt; }
+  };
+  if (!url) { setInfo('Configure a URL do Baileys para listar os grupos.', 'var(--yellow)'); return Promise.resolve(null); }
+  setInfo('⏳ Carregando grupos…');
+  var conta = contaEnvioAtual();
+  _gruposConciergeCarregando = fetch(url + '/grupos' + (conta ? '?conta=' + encodeURIComponent(conta) : ''), { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var lista = (d && (d.grupos || d.data)) || [];
+      var vistos = {};
+      _gruposConciergeCache = lista
+        .filter(function(g){ return g && g.id && _ehGrupoConcierge(g.nome); })
+        .filter(function(g){ if (vistos[g.id]) return false; vistos[g.id] = 1; return true; })
+        .map(function(g){ return { id: g.id, nome: String(g.nome).trim() }; })
+        .sort(function(a, b){ return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }); });
+      _preencherSelectsGrupo();
+      setInfo(_gruposConciergeCache.length + ' grupos "Consultoria" / "Travel Concierge" encontrados.');
+      return _gruposConciergeCache;
+    })
+    .catch(function(){
+      _gruposConciergeCarregando = null;
+      setInfo('⚠️ Não foi possível listar os grupos do Baileys. Use "Informar ID manualmente".', 'var(--yellow)');
+      return null;
+    });
+  return _gruposConciergeCarregando;
+}
+
+function _preencherSelectsGrupo() {
+  var sels = document.querySelectorAll('select.gest-grupo-sel');
+  for (var i = 0; i < sels.length; i++) {
+    var s = sels[i];
+    var atual = s.value && s.value !== '__manual__' ? s.value : (s.getAttribute('data-atual') || '');
+    s.innerHTML = _opcoesGrupoCliente(atual, s.getAttribute('data-cliente') || '', _gruposConciergeCache);
+  }
+}
+
+function gestGrupoChange(sel) {
+  if (sel.value !== '__manual__') return;
+  var atual = sel.getAttribute('data-atual') || '';
+  var v = (prompt('ID do grupo (termina em @g.us):', atual) || '').trim();
+  if (v) sel.setAttribute('data-atual', v);
+  sel.innerHTML = _opcoesGrupoCliente(v || atual, sel.getAttribute('data-cliente') || '', _gruposConciergeCache);
 }
 
 function salvarClientesRemoto() {
@@ -5323,6 +5417,7 @@ function salvarGestaoCliente(id) {
   if (!elG || !elA) return;
 
   var grupo = elG.value.trim();
+  if (grupo === '__manual__') grupo = String(clientes[idx].grupo || '');
   // Erro mais comum: colar o link de convite em vez do ID interno do grupo.
   if (grupo && !/@g\.us$/.test(grupo)) {
     showToast('⚠️ O ID do grupo precisa terminar em @g.us', 'err');
