@@ -3866,7 +3866,16 @@ function calcularEconomia(r) {
 
 // Box de previa no formulario de reserva.
 var _ecoTimer = null;
-function agendarEconomia() { clearTimeout(_ecoTimer); _ecoTimer = setTimeout(atualizarEconomiaBox, 250); }
+function agendarEconomia() { clearTimeout(_ecoTimer); _ecoTimer = setTimeout(function(){ atualizarEconomiaBox(); atualizarMsgFormReserva(); }, 250); }
+
+// Mensagem embutida no form de reserva: regera ao editar os campos (ex.: trocar a
+// base da tarifa pagante para "Total"), senao a previa fica com o calculo antigo.
+// Se o texto foi editado a mao, nao sobrescreve (o botao Atualizar continua valendo).
+function atualizarMsgFormReserva() {
+  var ta = document.getElementById('nf-msg-texto');
+  if (!ta || !ta.value || ta.dataset.manual === '1') return;
+  try { onMsgCtxChange('nf'); } catch (e) {}
+}
 
 function atualizarEconomiaBox() {
   var box = document.getElementById('economia-box');
@@ -3887,7 +3896,10 @@ function atualizarEconomiaBox() {
     + '</div>';
 }
 
-document.addEventListener('input',  function(ev){ if (ev.target && /^f-/.test(ev.target.id || '')) agendarEconomia(); });
+document.addEventListener('input',  function(ev){
+  if (ev.target && ev.target.id === 'nf-msg-texto') { ev.target.dataset.manual = '1'; return; }
+  if (ev.target && /^f-/.test(ev.target.id || '')) agendarEconomia();
+});
 document.addEventListener('change', function(ev){ if (ev.target && /^f-/.test(ev.target.id || '')) agendarEconomia(); });
 
 // Monta o objeto da reserva a partir do formulario. Fonte unica usada por
@@ -5594,7 +5606,7 @@ var VARS_RESERVA = [
   { label: '{{programa}}',              desc: 'Programa de emissão' },
   { label: '{{milhas}}',                desc: 'Milhas por pax' },
   { label: '{{milhas_total}}',          desc: 'Quantidade total de milhas gastas' },
-  { label: '{{valor_tarifa}}',          desc: 'Valor da tarifa pagante (R$)' },
+  { label: '{{valor_tarifa}}',          desc: 'Valor da tarifa pagante total de todos os passageiros (R$)' },
   { label: '{{valor_dinheiro}}',        desc: 'Valor pago na emissao em dinheiro (R$)' },
   { label: '{{pax}}',                   desc: 'Total passageiros' },
   { label: '{{passageiros}}',           desc: 'Nomes dos passageiros (grafia da emissão)' },
@@ -6602,9 +6614,13 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'programa', res.programa);
     txt = rv(txt, 'milhas', res.milhas);
     txt = rv(txt, 'milhas_total', res.milhasTotal||'');
-    txt = rv(txt, 'valor_tarifa', res.valor||res.valorAcumulo||'');
-    txt = rv(txt, 'valor_dinheiro', res.tipo==='voo' ? (res.valorDinheiro||'') : '');
     var _eco = calcularEconomia(res);
+    // Voo em milhas/balcao: tarifa pagante TOTAL (ja respeita a base "por pax" x "total"),
+    // coerente com {{milhas_total}} e {{economia}}.
+    var _vt = (res.tipo==='voo' && (_eco.modo==='resgate' || _eco.modo==='balcao') && _eco.ref > 0)
+      ? fmtBRL(_eco.ref) : (res.valor||res.valorAcumulo||'');
+    txt = rv(txt, 'valor_tarifa', _vt);
+    txt = rv(txt, 'valor_dinheiro', res.tipo==='voo' ? (res.valorDinheiro||'') : '');
     txt = rv(txt, 'economia',         _eco.valor > 0 ? fmtBRL(_eco.valor) : (res.economiaGerada || ''));
     txt = rv(txt, 'economia_detalhe', _eco.valor > 0 ? _eco.detalhe       : (res.economiaDetalhe || ''));
     txt = rv(txt, 'pax', res.pax);
@@ -8958,6 +8974,7 @@ function onMsgCtxChange(px) {
   var extras = null;
   try { extras = ctx.extras ? ctx.extras() : null; } catch(e) { extras = null; }
   ta.value = resolverVariaveis(mod.texto, cli, res, extras);
+  ta.dataset.manual = '';
 }
 
 function enviarMsgCtx(px) {
