@@ -1305,8 +1305,18 @@ header{animation:fadeUp .45s ease both}
     <div class="sep"></div>
     <p style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">💬 WhatsApp</p>
     <div class="field">
-      <label>Grupo para alertas de oportunidade <span class="tag">recebe os alertas de compra e transferência bonificada das demandas</span></label>
-      <input type="text" id="cfg-grupo-alertas" placeholder="Ex: 120363xxxxxx@g.us ou cdv_emissao" oninput="saveCfg()" style="font-family:monospace;font-size:12px"/>
+      <label>Grupo de gestão do concierge <span class="tag">check-in de voo, lembretes com data, avisos de demanda para a equipe</span></label>
+      <select id="cfg-grupo-alertas-sel" class="cfg-grupo-sel" data-alvo="cfg-grupo-alertas" onchange="cfgGrupoChange(this)"></select>
+      <input type="hidden" id="cfg-grupo-alertas"/>
+    </div>
+    <div class="field">
+      <label>Grupo de alertas de oportunidade <span class="tag">compra/transferência bonificada, ofertas e cupons das demandas — vazio = usa o grupo de gestão</span></label>
+      <select id="cfg-grupo-oport-sel" class="cfg-grupo-sel" data-alvo="cfg-grupo-oportunidades" onchange="cfgGrupoChange(this)"></select>
+      <input type="hidden" id="cfg-grupo-oportunidades"/>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:6px">
+        <button class="btn btn-ghost btn-sm" onclick="carregarGruposCfg(true)">🔄 Recarregar grupos</button>
+        <span id="cfg-grupos-info" style="font-size:11px;color:var(--muted2)"></span>
+      </div>
     </div>
     <div class="field">
       <label>Número que dispara as mensagens <span class="tag">vale para manuais, automáticas e agendadas</span></label>
@@ -2101,12 +2111,82 @@ function loadCfg(callback) {
 
 function _applyCfg(c) {
   setVal('cfg-grupo-alertas',     c.grupoAlertas    || '');
+  setVal('cfg-grupo-oportunidades', c.grupoOportunidades || '');
   setVal('cfg-baileys',           c.baileys         || '');
   renderCfgPontos(c.valoresPontos || {});
   aplicarTema(c.tema || 'dark');
   // A lista de numeros vem do Baileys, entao so da para montar o select depois
   // que a URL do servidor ja esta no cfg — por isso a chamada mora aqui.
   carregarContasBaileys();
+  carregarGruposCfg(false);
+}
+
+// ── Seletores de grupo da Configuração ──────────────────────────────────
+// Lista TODOS os grupos da conta de envio (GET <baileys>/grupos), em ordem
+// alfabética. O valor fica num input hidden (fonte do saveCfg): assim o
+// select vazio antes de a lista chegar nunca apaga o grupo salvo.
+var _gruposCfgCache = null;
+
+function _opcoesGrupoCfg(atual, lista, vazioTxt) {
+  var h = '<option value="">' + vazioTxt + '</option>';
+  var achou = false;
+  (lista || []).forEach(function(g){
+    var sel = g.id === atual;
+    if (sel) achou = true;
+    h += '<option value="' + escHtml(g.id) + '"' + (sel ? ' selected' : '') + '>' + escHtml(g.nome) + '</option>';
+  });
+  if (atual && !achou) h += '<option value="' + escHtml(atual) + '" selected>' + escHtml((lista ? '⚠️ Fora da lista · ' : '') + atual) + '</option>';
+  h += '<option value="__manual__">✏️ Informar ID manualmente…</option>';
+  return h;
+}
+
+function _renderSelectsGrupoCfg() {
+  var sels = document.querySelectorAll('select.cfg-grupo-sel');
+  for (var i = 0; i < sels.length; i++) {
+    var s = sels[i];
+    var alvo = s.getAttribute('data-alvo');
+    var vazio = alvo === 'cfg-grupo-oportunidades' ? '— Mesmo grupo de gestão —' : '— Nenhum —';
+    s.innerHTML = _opcoesGrupoCfg(getVal(alvo).trim(), _gruposCfgCache, vazio);
+  }
+}
+
+function carregarGruposCfg(forcar) {
+  _renderSelectsGrupoCfg();
+  var info = document.getElementById('cfg-grupos-info');
+  var url = getBaileysUrl();
+  if (!url) { if (info) info.textContent = 'Configure a URL do Baileys para listar os grupos.'; return; }
+  if (_gruposCfgCache && !forcar) return;
+  if (info) info.textContent = '⏳ Carregando grupos…';
+  var conta = contaEnvioAtual();
+  fetch(url + '/grupos' + (conta ? '?conta=' + encodeURIComponent(conta) : ''), { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      var lista = (d && (d.grupos || d.data)) || [];
+      var vistos = {};
+      _gruposCfgCache = lista
+        .filter(function(g){ return g && g.id && /@g\.us$/.test(g.id); })
+        .filter(function(g){ if (vistos[g.id]) return false; vistos[g.id] = 1; return true; })
+        .map(function(g){ return { id: g.id, nome: String(g.nome || g.id).trim() }; })
+        .sort(function(a, b){ return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }); });
+      _renderSelectsGrupoCfg();
+      if (info) info.textContent = _gruposCfgCache.length + ' grupos encontrados.';
+    })
+    .catch(function(){
+      if (info) info.textContent = '⚠️ Não foi possível listar os grupos. Use "Informar ID manualmente".';
+    });
+}
+
+function cfgGrupoChange(sel) {
+  var alvo = sel.getAttribute('data-alvo');
+  var v = sel.value;
+  if (v === '__manual__') {
+    var atual = getVal(alvo).trim();
+    v = (prompt('ID do grupo (termina em @g.us) ou chave como cdv_emissao:', atual) || '').trim();
+    if (!v) { _renderSelectsGrupoCfg(); return; }
+  }
+  setVal(alvo, v);
+  _renderSelectsGrupoCfg();
+  saveCfg();
 }
 
 // ══════════════════════════════════════════
@@ -2252,6 +2332,7 @@ function _saveCfgNow() {
   if (_saveCfgInFlight) { _saveCfgPending = true; return; }
   var c = {
     grupoAlertas:     getVal('cfg-grupo-alertas').trim(),
+    grupoOportunidades: getVal('cfg-grupo-oportunidades').trim(),
     baileys:          getVal('cfg-baileys'),
     contaEnvio:       getVal('cfg-conta-envio').trim(),
     tema:             _cfg.tema || 'dark',
@@ -7475,7 +7556,7 @@ function htmlSecaoAlerta(px) {
   +     '</div>'
   +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">⏰ Disparo único: chega no horário marcado e o lembrete é consumido. Nada a ver com oferta — serve para qualquer tarefa com prazo (cancelar clube, renovar assinatura, cobrar crédito de pontos…).</div>'
   +   '</div>'
-  +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">📲 Enviado para o grupo definido em <b>Configuração → WhatsApp</b>.</div>'
+  +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">📲 Oportunidades vão para o <b>grupo de alertas de oportunidade</b>; lembretes com data, para o <b>grupo de gestão</b> (Configuração → WhatsApp).</div>'
   +   '<button id="'+px+'-alerta-btn" onclick="salvarAlertaCtx(\'' + px + '\')" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">🔔 Criar Alerta</button>'
   + '</div>';
 }
@@ -7755,11 +7836,14 @@ function _persistirVinculoAlerta(ctx, alertaId) {
 function salvarAlertaCtx(px) {
   var ctx = _alertaCtx[px];
   if (!ctx) return;
-  if (!(_cfg && _cfg.grupoAlertas)) {
-    showToast('⚠️ Defina o grupo de alertas em Configuração → WhatsApp', 'err');
+  var alvo = _ael(px, 'alvo').value;
+  var grupoDestino = alvo === 'lembrete'
+    ? (_cfg && _cfg.grupoAlertas)
+    : (_cfg && (_cfg.grupoOportunidades || _cfg.grupoAlertas));
+  if (!grupoDestino) {
+    showToast('⚠️ Defina o grupo em Configuração → WhatsApp', 'err');
     return;
   }
-  var alvo = _ael(px, 'alvo').value;
   var payload = {
     id: 'ALT-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     alvo: alvo,
