@@ -7406,7 +7406,7 @@ function htmlSecaoAlerta(px) {
   +   '<div id="'+px+'-alerta-campos-compra" style="display:flex;flex-direction:column;gap:10px">'
   +     '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">'
   +       '<div>'
-  +         '<div style="'+_LBL+'">Parceiro</div>'
+  +         '<div style="'+_LBL+'">Parceiro(s) — separe por vírgula</div>'
   +         '<div style="position:relative">'
   +           '<input type="text" id="'+px+'-alerta-parceiro" placeholder="Digite para buscar…" autocomplete="off" oninput="onAlertaParceiroInput(\'' + px + '\')" style="'+_INP+'"/>'
   +           '<div id="'+px+'-alerta-parceiro-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:8px;max-height:160px;overflow-y:auto;z-index:100;margin-top:2px;box-shadow:0 4px 16px rgba(0,0,0,.4)"></div>'
@@ -7550,7 +7550,8 @@ function _linhaParceiro(p, px) {
 }
 
 function onAlertaParceiroInput(px) {
-  var q = _ael(px, 'parceiro').value.toLowerCase().trim();
+  // Vários parceiros separados por vírgula: a busca vale para o último trecho
+  var q = _ael(px, 'parceiro').value.split(',').pop().toLowerCase().trim();
   var drop = _ael(px, 'parceiro-drop');
   if (!q || q.length < 2) { drop.style.display = 'none'; return; }
   carregarParceiros(function(viagem) {
@@ -7579,9 +7580,12 @@ function selecionarParceiro(el, px) {
   px = px || 'mad';
   var nome = el.dataset.nome;
   var progs = el.dataset.progs ? el.dataset.progs.split(',').filter(Boolean) : [];
-  _ael(px, 'parceiro').value = nome;
+  var partes = _ael(px, 'parceiro').value.split(',').map(function(s){ return s.trim(); });
+  partes[partes.length - 1] = nome;
+  _ael(px, 'parceiro').value = partes.filter(Boolean).join(', ');
   _ael(px, 'parceiro-drop').style.display = 'none';
   var sel = _ael(px, 'programa');
+  var progAnterior = sel.value;
   var PROG_LABEL = {
     smiles: 'Smiles', livelo: 'Livelo', esfera: 'Esfera',
     latampass: 'LATAM Pass', 'latam pass': 'LATAM Pass',
@@ -7596,6 +7600,7 @@ function selecionarParceiro(el, px) {
         return '<option value="'+o.v+'">'+o.label+'</option>';
       }).join('')
     : '<option value="">Nenhum programa disponível</option>';
+  if (progAnterior && progs.indexOf(progAnterior) !== -1) sel.value = progAnterior;
 }
 
 function resumoAlerta(al) {
