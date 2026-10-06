@@ -7398,6 +7398,7 @@ function htmlSecaoAlerta(px) {
   +     '<select id="'+px+'-alerta-alvo" onchange="alertaAlvoChange(\'' + px + '\')" style="'+_INP+'">'
   +       '<option value="compra_bonificada">🛍️ Compra bonificada</option>'
   +       '<option value="lembrete">⏰ Lembrete com data</option>'
+  +       '<option value="palavra_chave">🔎 Oferta ou cupom (palavra-chave)</option>'
   +       '<option value="transferencia">🔄 Transferência bonificada</option>'
   +     '</select>'
   +   '</div>'
@@ -7437,6 +7438,22 @@ function htmlSecaoAlerta(px) {
   +       '<div style="'+_LBL+'">Bônus mínimo (%)</div>'
   +       '<input type="number" id="'+px+'-alerta-bonusmin" placeholder="Ex: 80" min="1" step="5" style="'+_INP+'"/>'
   +     '</div>'
+  +   '</div>'
+  // ── oferta/cupom por palavra-chave ──
+  +   '<div id="'+px+'-alerta-campos-palavra" style="display:none;flex-direction:column;gap:10px">'
+  +     '<div>'
+  +       '<div style="'+_LBL+'">Palavras-chave (separe por vírgula)</div>'
+  +       '<input type="text" id="'+px+'-alerta-palavras" placeholder="Ex: Azul Viagens, Localiza, Rent Cars" style="'+_INP+'"/>'
+  +     '</div>'
+  +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">🔎 Dispara quando uma oferta aprovada ou publicada no CDV citar qualquer um dos termos (título, resumo, loja, cupom ou regras). Bom para cupom da Azul Viagens, promoção de locadora etc.</div>'
+  +   '</div>'
+  // ── prazo-limite (oportunidades) ──
+  +   '<div id="'+px+'-alerta-campos-prazo" style="display:flex;flex-direction:column;gap:6px">'
+  +     '<div style="max-width:50%">'
+  +       '<div style="'+_LBL+'">⏳ Se nada aparecer até (opcional)</div>'
+  +       '<input type="date" id="'+px+'-alerta-prazo" style="'+_INP+'"/>'
+  +     '</div>'
+  +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">Nessa data, às 9h, o grupo recebe o aviso de que o prazo chegou sem oferta — ex.: reserva segurada que precisa da transferência de qualquer jeito.</div>'
   +   '</div>'
   // ── lembrete com data ──
   +   '<div id="'+px+'-alerta-campos-lembrete" style="display:none;flex-direction:column;gap:10px">'
@@ -7518,6 +7535,8 @@ function alertaAlvoChange(px) {
   _ael(px, 'campos-compra').style.display   = (alvo === 'compra_bonificada') ? 'flex' : 'none';
   _ael(px, 'campos-transf').style.display   = (alvo === 'transferencia')     ? 'flex' : 'none';
   _ael(px, 'campos-lembrete').style.display = (alvo === 'lembrete')          ? 'flex' : 'none';
+  _ael(px, 'campos-palavra').style.display  = (alvo === 'palavra_chave')     ? 'flex' : 'none';
+  _ael(px, 'campos-prazo').style.display    = (alvo !== 'lembrete')          ? 'flex' : 'none';
 }
 
 function _linhaParceiro(p, px) {
@@ -7581,13 +7600,17 @@ function selecionarParceiro(el, px) {
 
 function resumoAlerta(al) {
   var alvo = al.alvo || 'compra_bonificada';
-  if (alvo === 'transferencia') {
-    return '🔄 ' + (al.origem || 'Qualquer origem') + ' → ' + al.destino + ' ≥ ' + al.bonusMin + '% de bônus';
-  }
   if (alvo === 'lembrete') {
     return '⏰ ' + fmtDate(al.dataLembrete) + (al.horaLembrete ? ' ' + al.horaLembrete : '') + ' · ' + (al.textoLembrete || 'Lembrete');
   }
-  return '🛍️ ' + al.parceiro + ' · ' + al.programa + ' ≥ ' + al.minPts + ' pts/R$';
+  var prazo = al.prazoLimite ? ' · ⏳ até ' + fmtDate(al.prazoLimite) : '';
+  if (alvo === 'transferencia') {
+    return '🔄 ' + (al.origem || 'Qualquer origem') + ' → ' + al.destino + ' ≥ ' + al.bonusMin + '% de bônus' + prazo;
+  }
+  if (alvo === 'palavra_chave') {
+    return '🔎 ' + (al.palavras || '') + prazo;
+  }
+  return '🛍️ ' + al.parceiro + ' · ' + al.programa + ' ≥ ' + al.minPts + ' pts/R$' + prazo;
 }
 
 // Monta (uma vez), reseta e abre o form de alerta no container de prefixo px.
@@ -7614,6 +7637,8 @@ function abrirSecaoAlerta(px, ctx) {
   _ael(px, 'texto').value    = '';
   _ael(px, 'data').value     = '';
   _ael(px, 'hora').value     = '09:00';
+  _ael(px, 'palavras').value = '';
+  _ael(px, 'prazo').value    = '';
 
   if (!ctx.alertaId) return;
   // Alerta existente: se já disparou, some da lista e o form fica limpo
@@ -7641,11 +7666,14 @@ function preencherFormAlerta(px, al) {
     _ael(px, 'texto').value = al.textoLembrete || '';
     _ael(px, 'data').value  = al.dataLembrete || '';
     _ael(px, 'hora').value  = al.horaLembrete || '09:00';
+  } else if (alvo === 'palavra_chave') {
+    _ael(px, 'palavras').value = al.palavras || '';
   } else {
     _ael(px, 'parceiro').value = al.parceiro || '';
     _ael(px, 'programa').innerHTML = '<option value="'+(al.programa||'')+'">'+(al.programa||'')+'</option>';
     _ael(px, 'minpts').value = al.minPts || '';
   }
+  _ael(px, 'prazo').value = al.prazoLimite || '';
   var txt = _ael(px, 'info-txt');
   if (txt) txt.textContent = resumoAlerta(al);
   _ael(px, 'ativo').style.display = '';
@@ -7713,12 +7741,23 @@ function salvarAlertaCtx(px) {
     if (!payload.textoLembrete || !payload.dataLembrete) {
       showToast('⚠️ Preencha o que lembrar e a data', 'err'); return;
     }
+  } else if (alvo === 'palavra_chave') {
+    payload.palavras = _ael(px, 'palavras').value.trim();
+    if (!payload.palavras) {
+      showToast('⚠️ Informe ao menos uma palavra-chave', 'err'); return;
+    }
   } else {
     payload.parceiro = _ael(px, 'parceiro').value.trim();
     payload.programa = _ael(px, 'programa').value;
     payload.minPts   = _ael(px, 'minpts').value;
     if (!payload.parceiro || !payload.programa || !payload.minPts) {
       showToast('⚠️ Preencha parceiro, programa e pontuação mínima', 'err'); return;
+    }
+  }
+  if (alvo !== 'lembrete') {
+    payload.prazoLimite = _ael(px, 'prazo').value || '';
+    if (payload.prazoLimite && payload.prazoLimite < new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10)) {
+      showToast('⚠️ O prazo-limite já passou', 'err'); return;
     }
   }
 
