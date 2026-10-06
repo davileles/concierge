@@ -7391,7 +7391,9 @@ function htmlSecaoAlerta(px) {
   +     '<button onclick="removerAlertaCtx(\'' + px + '\')" style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:12px;flex-shrink:0">✕ Remover</button>'
   +   '</div>'
   + '</div>'
+  + '<div id="'+px+'-alerta-lista" style="display:none;flex-direction:column;gap:6px;margin-bottom:10px"></div>'
   + '<div id="'+px+'-alerta-hist" style="display:none;font-size:11px;color:var(--muted);background:rgba(138,155,191,.1);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:10px">✅ Um alerta deste item já foi disparado. Crie outro se ainda precisar acompanhar.</div>'
+  + '<div id="'+px+'-alerta-novo-lbl" style="display:none;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">➕ Adicionar outro alerta (outra forma de resolver)</div>'
   + '<div id="'+px+'-alerta-form" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:14px">'
   +   '<div>'
   +     '<div style="'+_LBL+'">Tipo de alerta</div>'
@@ -7474,7 +7476,7 @@ function htmlSecaoAlerta(px) {
   +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">⏰ Disparo único: chega no horário marcado e o lembrete é consumido. Nada a ver com oferta — serve para qualquer tarefa com prazo (cancelar clube, renovar assinatura, cobrar crédito de pontos…).</div>'
   +   '</div>'
   +   '<div style="font-size:11px;color:var(--muted);line-height:1.6">📲 Enviado para o grupo definido em <b>Configuração → WhatsApp</b>.</div>'
-  +   '<button onclick="salvarAlertaCtx(\'' + px + '\')" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">🔔 Criar Alerta</button>'
+  +   '<button id="'+px+'-alerta-btn" onclick="salvarAlertaCtx(\'' + px + '\')" style="background:rgba(234,179,8,.15);color:#eab308;border:1px solid rgba(234,179,8,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer;width:100%;margin-top:4px">🔔 Criar Alerta</button>'
   + '</div>';
 }
 
@@ -7516,9 +7518,10 @@ function alertaDaDemanda(d) {
 function badgeAlertaAtiv(a) {
   if (!a.alertaId || !_alertasAtivos) return '';
   var al = _alertasAtivos[a.alertaId];
-  if (al) {
-    var tip = resumoAlerta(al).replace(/"/g, '&quot;');
-    return '<span class="ativ-alerta" title="'+tip+'" onclick="event.stopPropagation()">🔔 alerta</span>';
+  var todos = al ? alertasDoCtx({ alertaId: a.alertaId, atividadeId: a.id, viagemId: al.viagemId }) : [];
+  if (todos.length) {
+    var tip = todos.map(resumoAlerta).join('\n').replace(/"/g, '&quot;');
+    return '<span class="ativ-alerta" title="'+tip+'" onclick="event.stopPropagation()">🔔 ' + (todos.length > 1 ? todos.length + ' alertas' : 'alerta') + '</span>';
   }
   return '<span class="ativ-alerta enviado" title="Alerta desta atividade já foi disparado" onclick="event.stopPropagation()">🔔 enviado</span>';
 }
@@ -7645,18 +7648,59 @@ function abrirSecaoAlerta(px, ctx) {
   _ael(px, 'palavras').value = '';
   _ael(px, 'prazo').value    = '';
 
-  if (!ctx.alertaId) return;
-  // Alerta existente: se já disparou, some da lista e o form fica limpo
+  renderListaAlertas(px);
+  // Lista fresca do servidor: um item pode ter vários alertas (ex.: aluguel de
+  // carro por compra bonificada E por cupom da Azul Viagens). Alerta disparado
+  // some da lista (é consumido).
   fetch('https://cdv-proxy-production.up.railway.app/concierge/alertas')
     .then(function(r){ return r.json(); })
     .then(function(d){
       if (!d.ok) return;
+      var mapa = {};
+      (d.data || []).forEach(function(al){ if (al.id) mapa[al.id] = al; });
+      _alertasAtivos = mapa;
       if (_alertaCtx[px] !== ctx) return; // modal já trocou de item
-      var al = (d.data || []).find(function(x){ return x.id === ctx.alertaId; });
-      if (!al) { _ael(px, 'hist').style.display = ''; return; }
-      preencherFormAlerta(px, al);
+      renderListaAlertas(px);
     })
     .catch(function(){});
+}
+
+// Alertas ativos do item aberto (demanda e/ou atividade de viagem)
+function alertasDoCtx(ctx) {
+  if (!ctx || !_alertasAtivos) return [];
+  return Object.keys(_alertasAtivos).map(function(k){ return _alertasAtivos[k]; }).filter(function(al){
+    if (ctx.alertaId && al.id === ctx.alertaId) return true;
+    if (ctx.demandaId && al.demandaId === ctx.demandaId) return true;
+    if (ctx.atividadeId && al.atividadeId === ctx.atividadeId && (!ctx.viagemId || al.viagemId === ctx.viagemId)) return true;
+    return false;
+  }).sort(function(a, b){ return String(a.criadoEm || '').localeCompare(String(b.criadoEm || '')); });
+}
+
+function renderListaAlertas(px) {
+  var ctx = _alertaCtx[px];
+  var box = _ael(px, 'lista');
+  if (!box || !ctx) return;
+  var lista = alertasDoCtx(ctx);
+  box.innerHTML = lista.map(function(al){
+    return '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;background:rgba(234,179,8,.1);border:1px solid rgba(234,179,8,.4);border-radius:10px;padding:8px 12px;font-size:12px">'
+      + '<span style="color:#eab308;font-weight:600">' + escHtml(resumoAlerta(al)) + '</span>'
+      + '<button onclick="removerAlertaId(\'' + px + '\',\'' + al.id + '\')" style="background:none;border:none;cursor:pointer;color:var(--muted2);font-size:12px;flex-shrink:0">✕ Remover</button>'
+      + '</div>';
+  }).join('');
+  box.style.display = lista.length ? 'flex' : 'none';
+  _ael(px, 'novo-lbl').style.display = lista.length ? '' : 'none';
+  _ael(px, 'hist').style.display = (!lista.length && ctx.alertaId && _alertasAtivos && !_alertasAtivos[ctx.alertaId]) ? '' : 'none';
+  _ael(px, 'ativo').style.display = 'none';
+  _ael(px, 'form').style.display = '';
+  var btn = _ael(px, 'btn');
+  if (btn) btn.textContent = lista.length ? '➕ Adicionar alerta' : '🔔 Criar Alerta';
+}
+
+function resetFormAlerta(px) {
+  _ael(px, 'parceiro').value = '';
+  _ael(px, 'programa').innerHTML = '<option value="">Selecione o parceiro primeiro…</option>';
+  ['minpts','origem','destino','bonusmin','texto','data','palavras','prazo'].forEach(function(f){ _ael(px, f).value = ''; });
+  _ael(px, 'hora').value = '09:00';
 }
 
 function preencherFormAlerta(px, al) {
@@ -7717,7 +7761,7 @@ function salvarAlertaCtx(px) {
   }
   var alvo = _ael(px, 'alvo').value;
   var payload = {
-    id: ctx.alertaId || ('ALT-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6)),
+    id: 'ALT-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6),
     alvo: alvo,
     vinculo: ctx.escopo || 'atividade',
     viagemId: ctx.viagemId || '',
@@ -7784,16 +7828,15 @@ function salvarAlertaCtx(px) {
       showToast(payload.alvo === 'lembrete'
         ? '⏰ Data já passou: lembrete enviado ao grupo agora!'
         : '🔔 Já havia oferta ativa: alerta enviado ao grupo agora!', 'ok');
-      _ael(px, 'hist').style.display  = '';
-      _ael(px, 'ativo').style.display = 'none';
-      _ael(px, 'form').style.display  = '';
+      resetFormAlerta(px);
+      renderListaAlertas(px);
       return;
     }
+    if (!_alertasAtivos) _alertasAtivos = {};
+    _alertasAtivos[id] = Object.assign({}, payload, { id: id, criadoEm: new Date().toISOString() });
+    resetFormAlerta(px);
     showToast(payload.alvo === 'lembrete' ? '⏰ Lembrete agendado!' : '🔔 Alerta criado com sucesso!', 'ok');
-    var txt = _ael(px, 'info-txt');
-    if (txt) txt.textContent = resumoAlerta(payload);
-    _ael(px, 'ativo').style.display = '';
-    _ael(px, 'form').style.display  = 'none';
+    renderListaAlertas(px);
   })
   .catch(function(e){ showToast('❌ Erro de conexão', 'err'); });
 }
@@ -7801,7 +7844,12 @@ function salvarAlertaCtx(px) {
 function removerAlertaCtx(px) {
   var ctx = _alertaCtx[px];
   if (!ctx || !ctx.alertaId) { showToast('⚠️ Sem alerta para remover', 'err'); return; }
-  var id = ctx.alertaId;
+  removerAlertaId(px, ctx.alertaId);
+}
+
+function removerAlertaId(px, id) {
+  var ctx = _alertaCtx[px];
+  if (!ctx || !id) return;
   fetch('https://cdv-proxy-production.up.railway.app/concierge/alerta', {
     method: 'DELETE',
     headers: {'Content-Type': 'application/json'},
@@ -7810,13 +7858,16 @@ function removerAlertaCtx(px) {
   .then(function(r){ return r.json(); })
   .then(function(d){
     if (!d.ok) { showToast('❌ Erro ao remover alerta', 'err'); return; }
-    ctx.alertaId = null;
-    _persistirVinculoAlerta(ctx, null);
+    if (_alertasAtivos) delete _alertasAtivos[id];
+    if (ctx.alertaId === id) {
+      // O selo do item aponta para um alerta: passa para outro que continue ativo
+      var resta = alertasDoCtx(Object.assign({}, ctx, { alertaId: null }))[0];
+      ctx.alertaId = resta ? resta.id : null;
+      _persistirVinculoAlerta(ctx, ctx.alertaId);
+    }
     carregarAlertasAtivos(true);
     showToast('🗑 Alerta removido', 'ok');
-    _ael(px, 'hist').style.display  = 'none';
-    _ael(px, 'ativo').style.display = 'none';
-    _ael(px, 'form').style.display  = '';
+    renderListaAlertas(px);
   })
   .catch(function(e){ showToast('❌ Erro ao remover alerta', 'err'); });
 }
@@ -10517,7 +10568,11 @@ function renderDemandas() {
         + '</select>')
         + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
-        + (alAtivo ? '<span class="dem-acao" title="' + rgEsc(resumoAlerta(alAtivo)) + '" style="cursor:default">🔔</span>' : '')
+        + (alAtivo ? (function(){
+            var todos = alertasDoCtx({ alertaId: d.alertaId || alAtivo.id, demandaId: d.id, atividadeId: d.atividadeRef || '' });
+            if (!todos.length) todos = [alAtivo];
+            return '<span class="dem-acao" title="' + rgEsc(todos.map(resumoAlerta).join(' | ')) + '" style="cursor:default">🔔' + (todos.length > 1 ? todos.length : '') + '</span>';
+          })() : '')
         + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
         + (!d.reservaId ? '<button class="dem-acao" title="Criar reserva para esta demanda" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
         + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
