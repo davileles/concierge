@@ -7442,10 +7442,10 @@ function htmlSecaoAlerta(px) {
   // ── oferta/cupom por palavra-chave ──
   +   '<div id="'+px+'-alerta-campos-palavra" style="display:none;flex-direction:column;gap:10px">'
   +     '<div>'
-  +       '<div style="'+_LBL+'">Palavras-chave (separe por vírgula)</div>'
-  +       '<input type="text" id="'+px+'-alerta-palavras" placeholder="Ex: Azul Viagens, Localiza, Rent Cars" style="'+_INP+'"/>'
+  +       '<div style="'+_LBL+'">Palavras-chave</div>'
+  +       '<input type="text" id="'+px+'-alerta-palavras" placeholder="Ex: cupom Azul Viagens, Localiza Livelo" style="'+_INP+'"/>'
   +     '</div>'
-  +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">🔎 Dispara quando uma oferta aprovada ou publicada no CDV citar qualquer um dos termos (título, resumo, loja, cupom ou regras). Bom para cupom da Azul Viagens, promoção de locadora etc.</div>'
+  +     '<div style="font-size:11px;color:var(--muted);line-height:1.6">🔎 Palavras no mesmo grupo precisam aparecer <b>todas</b> na oferta (em qualquer ordem); a <b>vírgula</b> separa alternativas. Ex.: <i>cupom Azul Viagens, Localiza Livelo</i> = (cupom + Azul + Viagens) <b>ou</b> (Localiza + Livelo). Vale para ofertas aprovadas ou publicadas no CDV. Para transferência com % de bônus, prefira o tipo Transferência bonificada.</div>'
   +   '</div>'
   // ── prazo-limite (oportunidades) ──
   +   '<div id="'+px+'-alerta-campos-prazo" style="display:flex;flex-direction:column;gap:6px">'
