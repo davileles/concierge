@@ -3945,6 +3945,20 @@ function calcularEconomia(r) {
   return vazio;
 }
 
+// O que foi efetivamente pago no voo, ja com a unidade, conforme o tipo de emissao:
+//  milhas -> "150.000 milhas Smiles" · balcao / dinheiro / dinheiro c/ acumulo -> "R$ 6.400,00"
+// Alimenta {{valor_pago}}.
+function valorPagoVoo(r) {
+  if (!r || r.tipo !== 'voo') return '';
+  var te = r.tipoEmissao || '';
+  var brl = function(v) { var n = parseValorBR(v); return n > 0 ? 'R$ ' + fmtBRL(n) : ''; };
+  if (te === 'balcao')           return brl(r.valorTotalBalcao);
+  if (te === 'dinheiro')         return brl(r.valorDinheiro);
+  if (te === 'dinheiro_acumulo') return brl(r.valorAcumulo);
+  if (!r.milhasTotal) return '';
+  return r.milhasTotal + ' milhas' + (r.programa ? ' ' + r.programa : '');
+}
+
 // Box de previa no formulario de reserva.
 var _ecoTimer = null;
 function agendarEconomia() { clearTimeout(_ecoTimer); _ecoTimer = setTimeout(function(){ atualizarEconomiaBox(); atualizarMsgFormReserva(); }, 250); }
@@ -5689,6 +5703,7 @@ var VARS_RESERVA = [
   { label: '{{milhas_total}}',          desc: 'Quantidade total de milhas gastas' },
   { label: '{{valor_tarifa}}',          desc: 'Valor da tarifa pagante total de todos os passageiros (R$)' },
   { label: '{{valor_dinheiro}}',        desc: 'Valor pago na emissao em dinheiro (R$)' },
+  { label: '{{valor_pago}}',            desc: 'Valor pago no voo conforme o tipo de emissão: milhas + programa, ou R$ (balcão, dinheiro, dinheiro c/ acúmulo)' },
   { label: '{{pax}}',                   desc: 'Total passageiros' },
   { label: '{{passageiros}}',           desc: 'Nomes dos passageiros (grafia da emissão)' },
   { label: '{{hotel}}',                 desc: 'Nome do hotel' },
@@ -6692,7 +6707,14 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'destino_volta', localDe(res.destinoVolta||res.origem));
     txt = rv(txt, 'classe', res.classe);
     txt = rv(txt, 'pnr', res.pnr);
-    txt = rv(txt, 'programa', res.programa);
+    // Balcao nao tem milhas: os modelos de emissao escritos para milhas
+    // ("{{milhas_total}} milhas {{programa}}") saiam como "Valor pago:  milhas ".
+    // Nesse tipo o trecho vira o valor desembolsado em R$ (mesmo de {{valor_pago}}).
+    var _balcao = (res.tipo==='voo' && res.tipoEmissao==='balcao');
+    var _pago = valorPagoVoo(res);
+    if (_balcao && _pago) txt = txt.split(ob+'milhas_total'+cb+' milhas '+ob+'programa'+cb).join(_pago);
+    txt = rv(txt, 'valor_pago', _pago);
+    txt = rv(txt, 'programa', res.programa || (_balcao ? (res.programaBalcao||'') : ''));
     txt = rv(txt, 'milhas', res.milhas);
     txt = rv(txt, 'milhas_total', res.milhasTotal||'');
     var _eco = calcularEconomia(res);
@@ -6704,7 +6726,7 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'valor_dinheiro', res.tipo==='voo' ? (res.valorDinheiro||'') : '');
     txt = rv(txt, 'economia',         _eco.valor > 0 ? fmtBRL(_eco.valor) : (res.economiaGerada || ''));
     txt = rv(txt, 'economia_detalhe', _eco.valor > 0 ? _eco.detalhe       : (res.economiaDetalhe || ''));
-    txt = rv(txt, 'pax', res.pax);
+    txt = rv(txt, 'pax', res.pax || (_balcao ? (res.paxBalcao||'') : ''));
     txt = rv(txt, 'hotel', res.hotelNome);
     txt = rv(txt, 'checkin', fmtDate(res.checkin));
     txt = rv(txt, 'checkout', fmtDate(res.checkout));
