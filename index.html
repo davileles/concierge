@@ -2030,6 +2030,9 @@ header{animation:fadeUp .45s ease both}
 (function(){
   var _fetchOrig = window.fetch.bind(window);
   var BASE = 'https://cdv-proxy-production.up.railway.app/concierge/';
+  // Desde 13/10/2026 estas duas rotas fora de /concierge/ tambem exigem a sessao.
+  var EXTRAS = ['https://cdv-proxy-production.up.railway.app/ia/extrair-reserva',
+                'https://cdv-proxy-production.up.railway.app/roteiros/publicar'];
   function tokenAtual(){
     var m = document.cookie.match(/(?:^|; )cdv_conc_sess=([^;]*)/);
     return m ? decodeURIComponent(m[1]) : '';
@@ -2037,7 +2040,8 @@ header{animation:fadeUp .45s ease both}
   var _expirando = false;
   window.fetch = function(input, init){
     var url = typeof input === 'string' ? input : (input && input.url) || '';
-    if (url.indexOf(BASE) !== 0) return _fetchOrig(input, init);
+    var ehExtra = EXTRAS.some(function(e){ return url.indexOf(e) === 0; });
+    if (url.indexOf(BASE) !== 0 && !ehExtra) return _fetchOrig(input, init);
     var tk = tokenAtual();
     var opts = Object.assign({}, init || {});
     var h = new Headers(opts.headers || (typeof input !== 'string' && input.headers) || {});
