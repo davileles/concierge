@@ -27,6 +27,8 @@
 
 const fs   = require('fs');
 const path = require('path');
+// Bom dia diário do roteiro — lógica compartilhada com a prévia do painel (index.html)
+const BomDia = require('./bom-dia.js');
 
 const BAILEYS      = 'https://baileys-server-production-ebfe.up.railway.app';
 const PROXY        = 'https://cdv-proxy-production.up.railway.app';
@@ -234,7 +236,7 @@ function resolverDataHora(gatilho, horaRef, res, viagem) {
     case 'checkin':      return { data: res?.checkin,       hora: ref,                              tipo: 'hotel',  local: res?.destino };
     case 'seguro_inicio':return { data: res?.seguroInicio,  hora: ref,                              tipo: 'seguro', local: null };
     case 'seguro_fim':   return { data: res?.seguroFim,     hora: ref,                              tipo: 'seguro', local: null };
-    case 'viagem':       return { data: viagem?.dataInicio, hora: ref,                              tipo: 'viagem', local: null };
+    case 'viagem':       return { data: viagem?.dataInicio || viagem?.inicio, hora: ref,                              tipo: 'viagem', local: null };
     default:             return { data: null, hora: '00:00', tipo: null, local: null };
   }
 }
@@ -881,6 +883,88 @@ function normalizarModelo(m) {
   return m;
 }
 
+// ── bom dia diário do roteiro ────────────────────────────────────────────────
+// Para cada viagem com `bomDia: true` (liga/desliga no Gerar Roteiro) e dias
+// em `roteiroDias`, manda ao grupo do cliente, entre 08:00 e 11:59 no fuso da
+// cidade onde ele acorda, a previsão do tempo e a programação do dia. O proxy
+// dispara este job a cada 30 min, então na prática sai entre 8h00 e 8h30.
+// Ledger: "BOMDIA|<viagemId>|<data>" — um envio por dia, mesmo com vários grupos.
+// Cidade, fuso e texto vêm de bom-dia.js (o mesmo arquivo da prévia do painel).
+const BOMDIA_ID = 'BOMDIA';
+
+function isoDia(ms) { return new Date(ms).toISOString().slice(0, 10); }
+
+async function enviarBomDia(viagens, clientes, grupoPorCliente, resultados) {
+  const ativas = viagens.filter(v => v && v.bomDia === true && Array.isArray(v.roteiroDias) && v.roteiroDias.length);
+  console.log(`\n[bom dia] ${ativas.length} viagem(ns) com bom dia ligado`);
+  if (!ativas.length) return 0;
+
+  const agora  = Date.now();
+  // Fusos vão de UTC-12 a UTC+14: só datas entre ontem e amanhã (UTC) podem
+  // estar no "hoje" de alguém. Evita geocodificar a viagem inteira a cada hora.
+  const ontem  = isoDia(agora - 86400000);
+  const amanha = isoDia(agora + 86400000);
+  const cache  = {};
+  let enviados = 0;
+
+  for (const viagem of ativas) {
+    const dias = viagem.roteiroDias;
+    for (let i = 0; i < dias.length; i++) {
+      const d = dias[i];
+      if (!d || !d.data || d.data < ontem || d.data > amanha) continue;
+      const alvoId = `${viagem.id}|${d.data}`;
+      if (ledger[ledgerKey(BOMDIA_ID, alvoId)]) continue;
+
+      const prep = await BomDia.prepararDia(viagem, i, { cache });
+      let tz = prep.tz;
+      // Cidade do dia não encontrada: usa o fuso do dia vizinho mais próximo
+      for (let k = 1; !tz && k < dias.length; k++) {
+        for (const j of [i - k, i + k]) {
+          if (tz || j < 0 || j >= dias.length) continue;
+          const c = BomDia.cidadesDoDia(dias, j);
+          const g = c.manha ? await BomDia.geocodificar(c.manha, { cache }).catch(() => null) : null;
+          if (g && g.tz) tz = g.tz;
+        }
+      }
+      if (!tz) {
+        console.log(`  ⚠️ "${viagem.nome}" ${d.data}: ${prep.erro || 'sem cidade'} — bom dia não enviado`);
+        logDebug({ bloco: 'bom_dia', viagem: viagem.nome, data: d.data, erro: prep.erro || 'sem cidade/fuso' });
+        continue;
+      }
+      const local = BomDia.agoraNoFuso(tz, agora);
+      if (!BomDia.naJanela(tz, d.data, agora)) continue;
+
+      const grupos = BomDia.gruposDaViagem(viagem, clientes, grupoPorCliente);
+      if (!grupos.length) {
+        console.log(`  ⚠️ "${viagem.nome}" sem grupo WhatsApp — bom dia de ${d.data} não enviado`);
+        logDebug({ bloco: 'bom_dia', viagem: viagem.nome, data: d.data, erro: 'sem grupo WhatsApp' });
+        resultados.push(`⚠️ [Bom dia] "${viagem.nome}" ${d.data}: sem grupo WhatsApp`);
+        continue;
+      }
+
+      const msg = BomDia.montarMensagem({ viagem, dias, idx: i, previsoes: prep.previsoes });
+      let algum = false;
+      for (const g of grupos) {
+        try {
+          await enviarWhatsApp(g.grupo, msg);
+          algum = true;
+          resultados.push(`✅ [Bom dia] "${viagem.nome}" dia ${i + 1} (${d.data}, ${prep.cidades.manha} ${String(local.hora).padStart(2,'0')}:${String(local.minuto).padStart(2,'0')} ${tz})`);
+          logDebug({ bloco: 'bom_dia', viagem: viagem.nome, data: d.data, cidade: prep.cidades.manha, tz, grupo: g.grupo, previsao: prep.previsoes.some(p => p.prev), tentativa: 'sucesso' });
+        } catch (e) {
+          resultados.push(`❌ [Bom dia] "${viagem.nome}" ${d.data}: ${e.message}`);
+          console.error('  ❌', e.message);
+          logDebug({ bloco: 'bom_dia', viagem: viagem.nome, data: d.data, grupo: g.grupo, tentativa: 'erro', erro: e.message });
+        }
+      }
+      if (algum) {
+        await registrarEnvio(BOMDIA_ID, alvoId);
+        enviados++;
+      }
+    }
+  }
+  return enviados;
+}
+
 // ── main ──────────────────────────────────────────────────────────────────────
 async function main() {
   console.log(`[lembrete] Iniciando — ${new Date().toLocaleString('pt-BR', { timeZone: TZ_SP })}`);
@@ -965,14 +1049,16 @@ async function main() {
         logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, horasRestantes: Number(horas.toFixed(2)), janela, disparar });
         if (!disparar) continue;
 
-        const clientesViagem = Array.isArray(viagem.clientes)
-          ? viagem.clientes
-          : (viagem.clientes ? [viagem.clientes] : []);
+        // viagem.clientes vem como "A, B" (string única): antes virava UM nome
+        // inexistente e ninguém recebia. Casal no mesmo grupo recebe uma vez só.
+        const clientesViagem = BomDia.listaClientes(viagem);
+        const gruposJaEnviados = new Set();
 
         let algum = false;
         for (const nomeCliente of clientesViagem) {
           const cli   = clientes.find(c => c.nome === nomeCliente);
-          const grupo = cli?.grupo || primeiroVoo.reserva?.grupo || grupoPorCliente[nomeCliente];
+          const grupo = viagem.grupo || cli?.grupo || primeiroVoo.reserva?.grupo || grupoPorCliente[nomeCliente];
+          if (grupo && gruposJaEnviados.has(grupo)) continue;
           if (!grupo) {
             console.log(`  ⚠️ Cliente "${nomeCliente}" sem grupo WhatsApp (Apps Script nem reservas)`);
             logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nomeCliente, erro: 'sem grupo WhatsApp' });
@@ -983,6 +1069,7 @@ async function main() {
             const msg = interpolar(mod.texto, cli || { nome: nomeCliente }, primeiroVoo.reserva, viagem, viagens);
             await enviarWhatsApp(grupo, msg);
             algum = true;
+            gruposJaEnviados.add(grupo);
             resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nomeCliente}" (viagem "${viagem.nome}", primeiro voo ${primeiroVoo.data})`);
             logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nomeCliente, grupo, tentativa: 'sucesso' });
           } catch(e) {
@@ -1000,7 +1087,7 @@ async function main() {
     // ── Gatilho: início de viagem ──────────────────────────────────────────
     } else if (mod.gatilho === 'viagem') {
       for (const viagem of viagens) {
-        if (!viagem.dataInicio || jaEnviado(mod.id, viagem)) continue;
+        if (!(viagem.dataInicio || viagem.inicio) || jaEnviado(mod.id, viagem)) continue;
         const { data, hora } = resolverDataHora('viagem', mod.horaRef, null, viagem);
         const horas = horasAte(data, hora);
         console.log(`  "${viagem.nome}" ${data} → ${horas.toFixed(1)}h`);
@@ -1008,13 +1095,14 @@ async function main() {
         logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, horasRestantes: Number(horas.toFixed(2)), janela, disparar });
         if (!disparar) continue;
 
-        const clientesViagem = Array.isArray(viagem.clientes)
-          ? viagem.clientes : (viagem.cliente ? [viagem.cliente] : []);
+        const clientesViagem = BomDia.listaClientes(viagem);
+        const gruposJaEnviados = new Set();
 
         let algum = false;
         for (const nome of clientesViagem) {
           const cli   = clientes.find(c => c.nome === nome);
-          const grupo = cli?.grupo || grupoPorCliente[nome];
+          const grupo = viagem.grupo || cli?.grupo || grupoPorCliente[nome];
+          if (grupo && gruposJaEnviados.has(grupo)) continue;
           if (!grupo) {
             console.log(`  ⚠️ Cliente "${nome}" sem grupo WhatsApp (Apps Script nem reservas)`);
             logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nome, erro: 'sem grupo WhatsApp' });
@@ -1023,6 +1111,7 @@ async function main() {
           try {
             await enviarWhatsApp(grupo, interpolar(mod.texto, cli || { nome }, null, viagem, viagens));
             algum = true;
+            gruposJaEnviados.add(grupo);
             resultados.push(`✅ [${mod.nome}] → "${cli?.nome || nome}" (viagem ${data})`);
             logDebug({ modelo: mod.nome, gatilho: mod.gatilho, viagem: viagem.nome, cliente: nome, grupo, tentativa: 'sucesso' });
           } catch(e) {
@@ -1086,6 +1175,15 @@ async function main() {
 
   // ── Alerta interno de check-in online (independe de modelos) ─────────────
   totalAlteracoes += await alertarCheckinVoo(reservas, grupoAlertas, resultados);
+
+  // ── Bom dia diário do roteiro (independe de modelos) ─────────────────────
+  try {
+    totalAlteracoes += await enviarBomDia(viagens, clientes, grupoPorCliente, resultados);
+  } catch (e) {
+    // Falha aqui (ex.: Open-Meteo fora do ar) nunca derruba os outros lembretes
+    console.error('⚠️ [bom dia] falhou:', e.message);
+    logDebug({ bloco: 'bom_dia', erro: e.message });
+  }
 
   // ── Estado de envio ───────────────────────────────────────────────────────
   // Nada é gravado em reservas.json/viagens.json: o registro já foi persistido

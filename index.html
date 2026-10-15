@@ -410,6 +410,7 @@ header{animation:fadeUp .45s ease both}
 .theme-toggle:hover{border-color:var(--accent)}
 </style>
 <script src="iata.js"></script>
+<script src="bom-dia.js"></script>
 </head>
 <body>
 
@@ -1215,6 +1216,10 @@ header{animation:fadeUp .45s ease both}
       <div class="field"><label>Data de Início</label><input type="date" id="vf-inicio"/></div>
       <div class="field"><label>Data de Fim</label><input type="date" id="vf-fim"/></div>
     </div>
+    <div class="field"><label>Grupo do WhatsApp da viagem <span class="tag">opcional</span></label>
+      <select id="vf-grupo" onchange="vfGrupoChange(this)"><option value="">— Usar o grupo de cada cliente —</option></select>
+      <span id="vf-grupo-info" style="font-size:11px;color:var(--muted);display:block;margin-top:4px">Recebe o bom dia do roteiro e as mensagens da viagem. Em branco, vale o grupo cadastrado em cada cliente.</span>
+    </div>
     <div class="field"><label>Observações <span class="tag">opcional</span></label><textarea id="vf-obs" placeholder="Detalhes da viagem…" style="min-height:60px"></textarea></div>
 
     <div style="margin-top:1rem">
@@ -1834,6 +1839,9 @@ header{animation:fadeUp .45s ease both}
       <a id="rg-link-publicado" href="#" target="_blank" style="display:none;font-size:12px;color:var(--accent);font-weight:700">🔗 Ver roteiro publicado</a>
     </div>
     <div id="rg-status" style="display:none;margin-top:1rem"></div>
+
+    <!-- Bom dia automático (enviado pelo lembrete-voo.js com a lógica de bom-dia.js) -->
+    <div id="rg-bomdia" style="display:none;margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.2rem"></div>
 
     <!-- Campos ocultos mantidos para compatibilidade com rgMontarDataObj -->
     <div style="display:none">
@@ -7301,6 +7309,7 @@ function abrirNovaViagem() {
   document.getElementById('viagem-form-titulo').textContent = 'Nova Viagem';
   ['vf-nome','vf-clientes','vf-inicio','vf-fim','vf-obs'].forEach(function(id){ setVal(id,''); });
   cliReset();
+  vfPreencherGrupo('');
   document.getElementById('vf-ok').textContent = '';
   renderAtividadesTemp();
   document.getElementById('nova-viagem-form').style.display = '';
@@ -7308,6 +7317,44 @@ function abrirNovaViagem() {
   var panel = document.getElementById('panel-viagens');
   if (panel) panel.scrollIntoView({behavior:'smooth', block:'start'});
   window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+// ── Grupo do WhatsApp da viagem ─────────────────────────────────────────
+// viagens[].grupo: quando preenchido, vale para a viagem toda (bom dia do
+// roteiro e gatilhos de viagem do lembrete-voo.js). Vazio = grupo de cada cliente.
+function vfPreencherGrupo(atual) {
+  var sel = document.getElementById('vf-grupo');
+  if (!sel) return;
+  sel.setAttribute('data-atual', atual || '');
+  var montar = function(lista){
+    var h = '<option value="">— Usar o grupo de cada cliente —</option>';
+    var achou = !atual;
+    (lista || []).forEach(function(g){
+      var s = g.id === atual; if (s) achou = true;
+      h += '<option value="' + escHtml(g.id) + '"' + (s ? ' selected' : '') + '>' + escHtml(g.nome) + '</option>';
+    });
+    if (!achou) h += '<option value="' + escHtml(atual) + '" selected>' + escHtml((lista ? '⚠️ Fora da lista · ' : '') + atual) + '</option>';
+    h += '<option value="__manual__">✏️ Informar ID manualmente…</option>';
+    sel.innerHTML = h;
+  };
+  montar(_gruposConciergeCache);
+  if (!_gruposConciergeCache) {
+    Promise.resolve(carregarGruposConcierge()).then(function(lista){
+      if (lista) montar(lista);
+    });
+  }
+}
+function vfGrupoChange(sel) {
+  if (sel.value !== '__manual__') { sel.setAttribute('data-atual', sel.value); return; }
+  var atual = sel.getAttribute('data-atual') || '';
+  var v = (prompt('ID do grupo (termina em @g.us):', atual) || '').trim();
+  vfPreencherGrupo(v || atual);
+}
+function vfGrupoValor() {
+  var sel = document.getElementById('vf-grupo');
+  if (!sel) return '';
+  var v = sel.value === '__manual__' ? (sel.getAttribute('data-atual') || '') : sel.value;
+  return String(v || '').trim();
 }
 
 function fecharNovaViagem() {
@@ -8241,6 +8288,7 @@ function salvarViagem() {
       viagens[idx].inicio = getVal('vf-inicio');
       viagens[idx].fim = getVal('vf-fim');
       viagens[idx].obs = getVal('vf-obs');
+      viagens[idx].grupo = vfGrupoValor();
       atividadesTemp.forEach(function(a) { viagens[idx].atividades.push(a); });
       viagens[idx].atividades = sortAtividades(viagens[idx].atividades);
     }
@@ -8252,6 +8300,7 @@ function salvarViagem() {
       inicio: getVal('vf-inicio'),
       fim: getVal('vf-fim'),
       obs: getVal('vf-obs'),
+      grupo: vfGrupoValor(),
       atividades: sortAtividades(JSON.parse(JSON.stringify(atividadesTemp))),
       cadastro: new Date().toISOString().split('T')[0]
     });
@@ -8270,6 +8319,7 @@ function editarViagem(id) {
   document.getElementById('viagem-form-titulo').textContent = 'Editar Viagem';
   setVal('vf-nome', v.nome); cliPreench(v.clientes||'');
   setVal('vf-inicio', v.inicio||''); setVal('vf-fim', v.fim||''); setVal('vf-obs', v.obs||'');
+  vfPreencherGrupo(v.grupo || '');
   document.getElementById('vf-ok').textContent = '';
   renderAtividadesTemp();
   document.getElementById('nova-viagem-form').style.display = '';
@@ -9419,6 +9469,8 @@ function rgCarregarViagem() {
     if (configEl) configEl.style.display = 'none';
     if (previewEl) previewEl.style.display = 'none';
     if (acoesEl) acoesEl.style.display = 'none';
+    var bdEl0 = document.getElementById('rg-bomdia');
+    if (bdEl0) bdEl0.style.display = 'none';
     return;
   }
   loadViagens(); loadReservas();
@@ -9444,6 +9496,127 @@ function rgCarregarViagem() {
   if (acoesEl) { acoesEl.style.display = 'flex'; }
   try { rgRenderDias(); } catch(e) { console.error('rgRenderDias', e); }
   try { rgGerarPrevia(v); } catch(e) { console.error('rgGerarPrevia', e); }
+  try { rgBomDiaRender(v); } catch(e) { console.error('rgBomDiaRender', e); }
+}
+
+// ── Bom dia automático ────────────────────────────────────────────────────
+// O envio é do lembrete-voo.js (GitHub Actions): todo dia do roteiro, às 8h no
+// fuso da cidade onde o cliente acorda, com previsão do tempo e a programação.
+// Cidade, fuso e texto saem de bom-dia.js — o mesmo arquivo do job, então a
+// prévia daqui é exatamente o que o cliente recebe.
+var _rgBdCache = {};
+
+function _rgViagemAtual() {
+  var vid = (document.getElementById('rg-viagem') || {}).value;
+  return vid ? viagens.find(function(x){ return x.id === vid; }) : null;
+}
+
+function _rgNomeGrupo(id) {
+  var g = (_gruposConciergeCache || []).find(function(x){ return x.id === id; });
+  return g ? g.nome : id;
+}
+
+function rgBomDiaRender(v) {
+  var el = document.getElementById('rg-bomdia');
+  if (!el) return;
+  if (!v || typeof BomDia === 'undefined') { el.style.display = 'none'; return; }
+  el.style.display = '';
+  var dias = Array.isArray(v.roteiroDias) ? v.roteiroDias : [];
+  var grupos = BomDia.gruposDaViagem(v, clientes, {});
+  var h = '<div class="card-title" style="margin-bottom:.6rem">☀️ Bom dia automático</div>';
+  h += '<label style="display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer;margin-bottom:8px">'
+    + '<input type="checkbox" id="rg-bd-ativo"' + (v.bomDia === true ? ' checked' : '') + (dias.length ? '' : ' disabled')
+    + ' onchange="rgBomDiaToggle(this.checked)"/> Enviar todo dia do roteiro às 8h no fuso da cidade, com previsão do tempo e a programação do dia</label>';
+  if (grupos.length) {
+    h += '<div style="font-size:12px;color:var(--muted);margin-bottom:10px">📱 Vai para: <b style="color:var(--text)">'
+      + grupos.map(function(g){ return escHtml(_rgNomeGrupo(g.grupo)); }).join(' · ') + '</b>'
+      + (v.grupo ? ' <span style="color:var(--muted2)">(grupo da viagem)</span>' : ' <span style="color:var(--muted2)">(grupo do cliente)</span>') + '</div>';
+  } else {
+    h += '<div style="font-size:12px;color:var(--yellow);margin-bottom:10px">⚠️ Nenhum grupo encontrado. Defina o grupo na viagem (aba Viagens → editar) ou no cadastro do cliente.</div>';
+  }
+  if (!dias.length) {
+    h += '<div style="font-size:12px;color:var(--muted)">Publique o roteiro com os dias para ativar o bom dia.</div>';
+    el.innerHTML = h;
+    return;
+  }
+  h += '<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 6px">Onde o cliente acorda em cada dia</div>'
+    + '<div style="font-size:11px;color:var(--muted2);margin-bottom:8px">Detectado pelo título do dia. Corrija só o que estiver errado (aceita "Lisboa → Milão": a primeira cidade define o horário, as duas aparecem na previsão).</div>';
+  h += '<div style="display:flex;flex-direction:column;gap:4px;max-height:320px;overflow:auto">';
+  var hoje = new Date().toISOString().slice(0, 10), sugerido = 0;
+  dias.forEach(function(d, i){
+    var auto = BomDia.cidadesDoDia(dias.map(function(x, j){ return j === i ? { titulo: x.titulo } : x; }), i);
+    var autoTxt = auto.manha ? (auto.manha === auto.destino ? auto.manha : auto.manha + ' → ' + auto.destino) : 'sem cidade';
+    if (d.data && d.data <= hoje) sugerido = i;
+    h += '<div style="display:flex;gap:8px;align-items:center;font-size:12px">'
+      + '<span style="width:42px;color:var(--muted);flex-shrink:0">' + (d.data ? d.data.slice(8,10) + '/' + d.data.slice(5,7) : '—') + '</span>'
+      + '<span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="' + escHtml(d.titulo || '') + '">' + escHtml(d.titulo || ('Dia ' + (i + 1))) + '</span>'
+      + '<input type="text" style="width:200px;font-size:12px;padding:3px 8px" value="' + escHtml(d.cidade || '') + '" placeholder="' + escHtml(autoTxt) + '"'
+      + ' data-i="' + i + '" onchange="rgBomDiaCidade(this)"/>'
+      + '</div>';
+  });
+  h += '</div>';
+  h += '<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px">'
+    + '<select id="rg-bd-dia" style="width:auto;font-size:12px">'
+    + dias.map(function(d, i){ return '<option value="' + i + '"' + (i === sugerido ? ' selected' : '') + '>Dia ' + (i + 1) + (d.data ? ' · ' + d.data.slice(8,10) + '/' + d.data.slice(5,7) : '') + '</option>'; }).join('')
+    + '</select>'
+    + '<button class="btn btn-ghost btn-sm" onclick="rgBomDiaPrevia()">👁 Ver prévia da mensagem</button></div>'
+    + '<div id="rg-bd-previa" style="margin-top:10px"></div>';
+  el.innerHTML = h;
+  if (!_gruposConciergeCache && grupos.length) {
+    Promise.resolve(carregarGruposConcierge()).then(function(l){ if (l) rgBomDiaRender(_rgViagemAtual()); });
+  }
+}
+
+function rgBomDiaToggle(ligado) {
+  var v = _rgViagemAtual();
+  if (!v) return;
+  v.bomDia = !!ligado;
+  saveViagens().then(function(){
+    showToast(ligado ? '☀️ Bom dia ligado para esta viagem' : 'Bom dia desligado', 'ok');
+  }).catch(function(){ showToast('⚠️ Não foi possível salvar', 'err'); });
+}
+
+// Cidade manual do dia: grava em viagens[].roteiroDias (o que o job lê) e em
+// rgDias (senão a próxima publicação apagaria a correção).
+function rgBomDiaCidade(inp) {
+  var v = _rgViagemAtual();
+  if (!v || !Array.isArray(v.roteiroDias)) return;
+  var i = parseInt(inp.getAttribute('data-i'), 10);
+  var d = v.roteiroDias[i];
+  if (!d) return;
+  var val = String(inp.value || '').trim();
+  [d].concat(rgDias.filter(function(x){ return x && x.data && x.data === d.data; })).forEach(function(x){
+    if (val) x.cidade = val; else delete x.cidade;
+  });
+  saveViagens();
+  showToast('📍 Cidade do dia salva', 'ok');
+}
+
+async function rgBomDiaPrevia() {
+  var v = _rgViagemAtual();
+  var out = document.getElementById('rg-bd-previa');
+  if (!v || !out || typeof BomDia === 'undefined') return;
+  var i = parseInt((document.getElementById('rg-bd-dia') || {}).value || '0', 10);
+  var d = (v.roteiroDias || [])[i] || {};
+  out.innerHTML = '<div style="font-size:12px;color:var(--muted)">⏳ Buscando cidade e previsão…</div>';
+  try {
+    var prep = await BomDia.prepararDia(v, i, { cache: _rgBdCache });
+    var msg = BomDia.montarMensagem({ viagem: v, dias: v.roteiroDias, idx: i, previsoes: prep.previsoes });
+    var info = [];
+    if (prep.geoManha) {
+      var env = d.data && prep.tz ? BomDia.envioNoFuso(prep.tz, d.data) : null;
+      info.push('📍 ' + escHtml(prep.geoManha.busca) + (prep.geoManha.pais ? ', ' + escHtml(prep.geoManha.pais) : '') + ' · fuso ' + escHtml(prep.tz || '?'));
+      if (env) info.push('🕗 Sai às 08:00 locais = ' + env.hhmm + ' de Brasília' + (env.data !== d.data ? ' (' + env.data.slice(8,10) + '/' + env.data.slice(5,7) + ')' : ''));
+    } else {
+      info.push('<span style="color:var(--yellow)">⚠️ ' + escHtml(prep.erro || 'Cidade não encontrada') + '. Escreva a cidade do dia acima; sem ela o job usa o fuso do dia vizinho.</span>');
+    }
+    if (d.data && !prep.previsoes.some(function(p){ return p.prev; })) info.push('🌡️ Previsão ainda indisponível (sai até ~16 dias antes); a mensagem segue sem ela.');
+    if (v.bomDia !== true) info.push('<span style="color:var(--yellow)">Bom dia desligado para esta viagem.</span>');
+    out.innerHTML = '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;line-height:1.6">' + info.join('<br>') + '</div>'
+      + '<pre style="white-space:pre-wrap;font-family:inherit;font-size:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin:0">' + escHtml(msg) + '</pre>';
+  } catch (e) {
+    out.innerHTML = '<div style="font-size:12px;color:var(--accent)">❌ ' + escHtml(e.message) + '</div>';
+  }
 }
 
 function rgGerarPrevia(v) {
