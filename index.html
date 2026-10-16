@@ -6577,9 +6577,18 @@ function limparLinhasDisp(txt) {
 // ── STATUS DO VOO (preenchimento manual no disparo) ──────────────────────────
 // Nao consulta nenhuma API: o operador informa a situacao e os campos abaixo
 // sao convertidos em frases prontas, evitando condicionais no template.
+// 45 → "45 min" · 60 → "1 hora" · 188 → "3 horas e 8 minutos"
+function fmtDuracaoStatus(m) {
+  if (m < 60) return m + ' min';
+  var h = Math.floor(m / 60), r = m % 60;
+  var txt = h + (h === 1 ? ' hora' : ' horas');
+  if (r) txt += ' e ' + r + (r === 1 ? ' minuto' : ' minutos');
+  return txt;
+}
+
 function montarStatusLinha(sit, min) {
   var m = parseInt(min, 10);
-  var suf = (m > 0) ? ' em ' + m + ' min' : '';
+  var suf = (m > 0) ? ' em ' + fmtDuracaoStatus(m) : '';
   switch (sit) {
     case 'adiantado':       return '🟢 *Adiantado*' + suf;
     case 'atrasado':        return '🟡 *Atrasado*' + suf;
