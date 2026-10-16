@@ -418,6 +418,39 @@ header{animation:fadeUp .45s ease both}
 .subtipo-chip-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important}
 .theme-toggle{margin-left:auto;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background .15s,border-color .15s;flex-shrink:0}
 .theme-toggle:hover{border-color:var(--accent)}
+
+/* ── Aba Seats.aero ── */
+.sa-aviso{background:rgba(18,110,255,.08);border:1px solid rgba(18,110,255,.25);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:1rem}
+.sa-aviso b{color:var(--text)}
+.sa-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:1rem;align-items:start}
+@media(max-width:900px){.sa-grid{grid-template-columns:1fr}}
+.sa-seg{display:inline-flex;flex-wrap:wrap;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content}
+.sa-seg button{background:var(--surface2);color:var(--muted);border:none;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.sa-seg button+button{border-left:1px solid var(--border)}
+.sa-seg button.active{background:var(--blue);color:#fff}
+.sa-chips{display:flex;flex-wrap:wrap;gap:6px;max-height:190px;overflow:auto}
+.sa-chip{background:var(--surface2);color:var(--muted);border:1px solid var(--border);border-radius:16px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:inherit}
+.sa-chip.on{background:rgba(18,110,255,.18);border-color:var(--blue);color:var(--text)}
+.sa-iata-hint{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:10.5px;color:var(--muted)}
+.sa-iata-hint .sa-iata-x{color:var(--accent)}
+.sa-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.sa-card.sa-pendente{border-left:3px solid #f59e0b}
+.sa-card.sa-criado{border-left:3px solid #22c55e}
+.sa-card.sa-cancelado{opacity:.6}
+.sa-card-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.sa-rota{font-size:16px;font-weight:800;letter-spacing:.5px;color:var(--text)}
+.sa-rota span{color:var(--blue)}
+.sa-nome{font-size:12px;font-weight:700;color:var(--muted);margin:2px 0 6px}
+.sa-linha{font-size:12px;color:var(--text);line-height:1.6}
+.sa-progs{color:var(--muted)}
+.sa-obs{color:var(--muted);font-style:italic}
+.sa-erro{color:var(--accent)}
+.sa-acoes{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.sa-st-pendente{background:rgba(245,158,11,.14);color:#f59e0b}
+.sa-st-criado{background:rgba(34,197,94,.14);color:#22c55e}
+.sa-st-cancelado{background:var(--surface2);color:var(--muted)}
+.sa-vazio{font-size:13px;color:var(--muted);padding:2rem 1rem;text-align:center;border:1px dashed var(--border);border-radius:12px}
+.sa-tab-badge{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;line-height:16px;text-align:center}
 </style>
 <script src="iata.js"></script>
 <script src="bom-dia.js"></script>
@@ -481,6 +514,7 @@ header{animation:fadeUp .45s ease both}
   <button class="main-tab active" onclick="switchTab('reservas')">📋 Reservas</button>
   <button class="main-tab" onclick="switchTab('nova')">➕ Nova Reserva</button>
   <button class="main-tab" onclick="switchTab('demandas')">📋 Demandas</button>
+  <button class="main-tab" onclick="switchTab('seats')">✈️ Seats.aero<span class="sa-tab-badge" id="sa-tab-badge" style="display:none"></span></button>
   <button class="main-tab" onclick="switchTab('viagens')">🗺️ Viagens</button>
   <button class="main-tab" onclick="switchTab('clientes')">👤 Clientes</button>
   <button class="main-tab" onclick="switchTab('mensagens')">💬 Mensagens</button>
@@ -1867,6 +1901,129 @@ header{animation:fadeUp .45s ease both}
 <!-- ═══════════════════════════════════════
      ABA: DEMANDAS
 ════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════
+     ABA: SEATS.AERO — fila de alertas para criar no seats.aero
+     Quem cria no site é uma sessão do Claude pelo navegador (ver CLAUDE.md, 4.4).
+══════════════════════════════════════════ -->
+<div class="main-panel" id="panel-seats">
+  <div class="reservas-header" style="margin-bottom:1rem">
+    <span class="reservas-count" id="sa-count-label">0 alertas</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <select id="sa-filtro" onchange="saRender()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px">
+        <option value="cancelado">Cancelados</option>
+        <option value="criado">Criados no seats.aero</option>
+        <option value="pendente">Pendentes</option>
+        <option value="ativos" selected>Pendentes e criados</option>
+        <option value="todos">Todos</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" onclick="saCarregar(true)">🔄 Atualizar</button>
+      <button class="btn btn-ghost btn-sm" onclick="saCopiarPedido()" title="Copia a frase para colar numa conversa com o Claude">📋 Copiar pedido ao Claude</button>
+    </div>
+  </div>
+
+  <div class="sa-aviso">
+    Cadastre aqui os alertas. Depois, numa conversa com o Claude (projeto Github), diga <b>"cria os alertas pendentes do seats.aero"</b>: ele lê esta fila, mostra a lista para você confirmar, preenche cada um no seats.aero pelo navegador e marca como criado. O nome do alerta leva o cliente e a rota, para você reconhecer o e-mail do seats.aero.
+  </div>
+
+  <div class="sa-grid">
+    <!-- FORMULÁRIO -->
+    <div class="card" style="margin-bottom:0">
+      <div class="card-title" style="margin-bottom:1rem">✈️ <span id="sa-form-titulo">Novo alerta</span></div>
+
+      <div class="g2">
+        <div class="field">
+          <label>Cliente <span class="tag">opcional</span></label>
+          <input type="text" id="sa-cliente" list="sa-clientes-list" placeholder="Nome do cliente" oninput="saAtualizarNome()"/>
+          <datalist id="sa-clientes-list"></datalist>
+        </div>
+        <div class="field">
+          <label>Demanda <span class="tag">opcional</span></label>
+          <select id="sa-demanda" onchange="saDemandaChange()"><option value="">— Sem demanda —</option></select>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="field">
+          <label>Origem(ns) <span class="tag required">*</span></label>
+          <input type="text" id="sa-origens" placeholder="Ex: GRU, CNF" oninput="saIataInput(this)" style="text-transform:uppercase"/>
+          <div class="sa-iata-hint" id="sa-origens-hint"></div>
+        </div>
+        <div class="field">
+          <label>Destino(s) <span class="tag required">*</span></label>
+          <input type="text" id="sa-destinos" placeholder="Ex: LIS, OPO, MAD" oninput="saIataInput(this)" style="text-transform:uppercase"/>
+          <div class="sa-iata-hint" id="sa-destinos-hint"></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Data de partida <span class="tag required">*</span></label>
+        <div class="sa-seg" id="sa-data-tipo">
+          <button type="button" data-v="fixa" class="active" onclick="saDataTipo('fixa')">Data fixa</button>
+          <button type="button" data-v="intervalo" onclick="saDataTipo('intervalo')">Intervalo</button>
+          <button type="button" data-v="qualquer" onclick="saDataTipo('qualquer')">Qualquer data</button>
+        </div>
+        <div class="g2" id="sa-datas" style="margin-top:8px">
+          <div><label style="font-size:11px">🛫 <span id="sa-data-rotulo">Data</span></label><input type="date" id="sa-data"/></div>
+          <div id="sa-data-fim-wrap" style="display:none"><label style="font-size:11px">🛫 Até</label><input type="date" id="sa-data-fim"/></div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Programas <span class="tag required">*</span> <span class="tag" id="sa-prog-cont">0 selecionados</span></label>
+        <input type="text" id="sa-prog-busca" placeholder="🔍 Filtrar programas…" oninput="saRenderProgramas()" style="margin-bottom:6px"/>
+        <div class="sa-chips" id="sa-programas"></div>
+      </div>
+
+      <div class="field">
+        <label>Cabine(s) <span class="tag required">*</span></label>
+        <div class="sa-chips" id="sa-cabines"></div>
+      </div>
+
+      <div class="field">
+        <label>Tipo de alerta</label>
+        <div class="sa-seg" id="sa-tipo">
+          <button type="button" data-v="unico" class="active" onclick="saSeg('sa-tipo','unico')">Único (avisa uma vez)</button>
+          <button type="button" data-v="continuo" onclick="saSeg('sa-tipo','continuo')">Contínuo (até excluir)</button>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="field"><label>Assentos mínimos</label><input type="number" id="sa-assentos" min="1" max="9" placeholder="1"/></div>
+        <div class="field">
+          <label>Máximo de paradas</label>
+          <select id="sa-paradas">
+            <option value="1">Até 1 parada</option>
+            <option value="2">Até 2 paradas</option>
+            <option value="0">Direto</option>
+            <option value="" selected>Qualquer</option>
+          </select>
+        </div>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Máx. pontos <span class="tag">por trecho</span></label><input type="number" id="sa-max-pontos" min="0" step="1000" placeholder="Ex: 90000"/></div>
+        <div class="field"><label>Taxas máximas <span class="tag">USD</span></label><input type="number" id="sa-max-taxas" min="0" placeholder="Ex: 300"/></div>
+      </div>
+
+      <div class="field">
+        <label>Nome do alerta <span class="tag">gerado sozinho; pode editar</span></label>
+        <input type="text" id="sa-nome" oninput="this.dataset.editado='1'" maxlength="80"/>
+      </div>
+      <div class="field">
+        <label>Observações <span class="tag">para quem cria o alerta</span></label>
+        <textarea id="sa-obs" rows="2" placeholder="Ex: só voos operados pela TAP; partida depois das 18h"></textarea>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:.5rem">
+        <button class="btn btn-accent" id="sa-btn-salvar" onclick="saSalvarForm()" style="flex:1">💾 Salvar na fila</button>
+        <button class="btn btn-ghost" onclick="saLimparForm()">Limpar</button>
+      </div>
+    </div>
+
+    <!-- LISTA -->
+    <div id="sa-lista"><div class="sa-vazio">Carregando…</div></div>
+  </div>
+</div>
+
 <div class="main-panel" id="panel-demandas">
   <div style="padding:.9rem 1.5rem .8rem;border-bottom:1px solid var(--border)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
@@ -2000,6 +2157,7 @@ header{animation:fadeUp .45s ease both}
     <div style="display:flex;gap:8px;margin-top:1rem">
       <button class="btn btn-accent" id="df-btn-salvar" onclick="salvarDemanda()" style="flex:1">💾 Salvar Demanda</button>
       <button class="btn btn-blue" id="df-btn-avisar" onclick="salvarDemanda(true)" title="Salva a demanda e já abre a prévia da mensagem para o grupo da equipe">📢 Salvar e Avisar Grupo</button>
+      <button class="btn btn-ghost" onclick="saNovoDaDemanda()" title="Abre a aba Seats.aero com o cliente e a demanda já preenchidos">✈️ Alerta seats.aero</button>
       <button class="btn btn-ghost" onclick="fecharNovaDemanda()">Cancelar</button>
     </div>
   </div>
@@ -5658,6 +5816,398 @@ function switchTab(name) {
   if (name==='reservas') renderReservas();
   if (name==='roteiro-gen') rgPopularSelect();
   if (name==='demandas') renderDemandas();
+  if (name==='seats') saAbrirAba();
+}
+
+// ══════════════════════════════════════════
+//  SEATS.AERO — fila de alertas
+//  Dados: dados/concierge/seats-alertas.json via /concierge/seats-alertas.
+//  O painel só cadastra; quem cria no seats.aero é o Claude pelo navegador
+//  e marca status "criado" (procedimento no CLAUDE.md, seção 4.4).
+// ══════════════════════════════════════════
+var SA_URL = 'https://cdv-proxy-production.up.railway.app/concierge/seats-alertas';
+// Nomes exatamente como aparecem no seletor "Programas de Milhagem" do seats.aero (ordem alfabética)
+var SA_PROGRAMAS = [
+  'Aeromexico (AM)', 'Air Canada Aeroplan (AC)', 'Air France/KLM Flying Blue (AF/KL)',
+  'Alaska Atmos Rewards (AS)', 'American AAdvantage (AA)', 'Avianca LifeMiles (AV)',
+  'Azul Fidelidade (AD)', 'Cathay Pacific Asia Miles (CX)', 'Delta SkyMiles (DL)',
+  'Emirates Skywards (EK)', 'Ethiopian ShebaMiles (ET)', 'Etihad Guest (EY)', 'Finnair Plus (AY)',
+  'Frontier Airlines (F9)', 'GOL Smiles (G3)', 'JetBlue TrueBlue (B6)', 'Livelo',
+  'Lufthansa Miles & More (LH)', 'Qantas Frequent Flyer (QF)', 'Qatar Airways Privilege Club (QR)',
+  'SAS EuroBonus (SK)', 'Saudia AlFursan (SV)', 'Singapore Airlines KrisFlyer (SQ)',
+  'Turkish Miles&Smiles (TK)', 'United MileagePlus (UA)', 'Virgin Atlantic (VS)',
+  'Virgin Australia Velocity (VA)'
+];
+var SA_CABINES = [
+  { v: 'economica', l: 'Econômica' },
+  { v: 'executiva', l: 'Executiva' },
+  { v: 'premium', l: 'Premium Economy' },
+  { v: 'primeira', l: 'Primeira' }
+];
+var SA_CAB_CURTO = { economica: 'Eco', premium: 'Premium', executiva: 'Executiva', primeira: 'Primeira' };
+var saAlertas = [];
+var saEditandoId = null;
+var saSel = { programas: [], cabines: [] };
+var saCarregado = false;
+
+function saEsc(s) { return (typeof escHtml === 'function') ? escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function(ch){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]; }); }
+
+function saCodigos(txt) {
+  return String(txt || '').toUpperCase().split(/[^A-Z]+/).filter(function(x){ return x.length === 3; })
+    .filter(function(x, i, a){ return a.indexOf(x) === i; });
+}
+
+function saNomeAeroporto(cod) {
+  if (typeof IATA_AIRPORTS === 'undefined') return '';
+  var a = IATA_AIRPORTS.find(function(x){ return x.code === cod; });
+  return a ? a.label : '';
+}
+
+function saIataInput(el) {
+  var hint = document.getElementById(el.id + '-hint');
+  var cods = saCodigos(el.value);
+  if (hint) hint.innerHTML = cods.map(function(c){
+    var n = saNomeAeroporto(c);
+    return '<span class="' + (n ? '' : 'sa-iata-x') + '">' + c + (n ? ' · ' + saEsc(n.split(' – ')[0]) : ' · não encontrado') + '</span>';
+  }).join('');
+  saAtualizarNome();
+}
+
+function saSeg(id, v) {
+  document.querySelectorAll('#' + id + ' button').forEach(function(b){ b.classList.toggle('active', b.dataset.v === v); });
+}
+function saSegVal(id) {
+  var b = document.querySelector('#' + id + ' button.active');
+  return b ? b.dataset.v : '';
+}
+
+function saDataTipo(v) {
+  saSeg('sa-data-tipo', v);
+  document.getElementById('sa-datas').style.display = v === 'qualquer' ? 'none' : '';
+  document.getElementById('sa-data-fim-wrap').style.display = v === 'intervalo' ? '' : 'none';
+  document.getElementById('sa-data-rotulo').textContent = v === 'intervalo' ? 'De' : 'Data';
+}
+
+function saRenderProgramas() {
+  var busca = (document.getElementById('sa-prog-busca').value || '').toLowerCase();
+  document.getElementById('sa-programas').innerHTML = SA_PROGRAMAS.filter(function(p){
+    return !busca || p.toLowerCase().indexOf(busca) >= 0 || saSel.programas.indexOf(p) >= 0;
+  }).map(function(p){
+    var on = saSel.programas.indexOf(p) >= 0;
+    return '<button type="button" class="sa-chip' + (on ? ' on' : '') + '" data-p="' + saEsc(p) + '" onclick="saToggle(\'programas\', this.dataset.p)">' + saEsc(p) + '</button>';
+  }).join('');
+  document.getElementById('sa-prog-cont').textContent = saSel.programas.length + ' selecionado' + (saSel.programas.length === 1 ? '' : 's');
+}
+
+function saRenderCabines() {
+  document.getElementById('sa-cabines').innerHTML = SA_CABINES.map(function(c){
+    var on = saSel.cabines.indexOf(c.v) >= 0;
+    return '<button type="button" class="sa-chip' + (on ? ' on' : '') + '" onclick="saToggle(\'cabines\', \'' + c.v + '\')">' + c.l + '</button>';
+  }).join('');
+}
+
+function saToggle(campo, v) {
+  var arr = saSel[campo];
+  var i = arr.indexOf(v);
+  if (i >= 0) arr.splice(i, 1); else arr.push(v);
+  if (campo === 'programas') { arr.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); }); saRenderProgramas(); }
+  else { saRenderCabines(); saAtualizarNome(); }
+}
+
+function saPopularVinculos() {
+  var dl = document.getElementById('sa-clientes-list');
+  if (dl) dl.innerHTML = (clientes || []).map(function(c){ return toTitleCase(String(c.nome || '')); })
+    .filter(Boolean).sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); })
+    .map(function(n){ return '<option value="' + saEsc(n) + '"></option>'; }).join('');
+  var sel = document.getElementById('sa-demanda');
+  if (!sel) return;
+  var cur = sel.value;
+  var lista = (demandas || []).filter(function(d){ return d && d.status !== 'concluida'; })
+    .map(function(d){ return { id: d.id, l: (d.numero ? '#' + d.numero + ' · ' : '') + (d.titulo || 'Demanda') + (d.clientes ? ' — ' + d.clientes : '') }; })
+    .sort(function(a,b){ return a.l.localeCompare(b.l, 'pt-BR'); });
+  sel.innerHTML = '<option value="">— Sem demanda —</option>' + lista.map(function(d){
+    return '<option value="' + saEsc(d.id) + '">' + saEsc(d.l.length > 90 ? d.l.slice(0, 87) + '…' : d.l) + '</option>';
+  }).join('');
+  if (cur) sel.value = cur;
+}
+
+function saDemandaChange() {
+  var id = document.getElementById('sa-demanda').value;
+  var d = (demandas || []).find(function(x){ return x.id === id; });
+  var cli = document.getElementById('sa-cliente');
+  if (d && d.clientes && !cli.value.trim()) cli.value = String(d.clientes).split(',')[0].trim();
+  saAtualizarNome();
+}
+
+function saNomeSugerido() {
+  var cli = document.getElementById('sa-cliente').value.trim();
+  var o = saCodigos(document.getElementById('sa-origens').value).join('/');
+  var d = saCodigos(document.getElementById('sa-destinos').value).join('/');
+  var cab = saSel.cabines.map(function(c){ return SA_CAB_CURTO[c]; }).join('/');
+  var partes = [];
+  if (cli) partes.push(cli.split(/\s+/).slice(0, 2).join(' '));
+  if (o || d) partes.push((o || '?') + '→' + (d || '?'));
+  if (cab) partes.push(cab);
+  return partes.join(' · ').slice(0, 80);
+}
+
+function saAtualizarNome() {
+  var el = document.getElementById('sa-nome');
+  if (el && el.dataset.editado !== '1') el.value = saNomeSugerido();
+}
+
+function saLimparForm() {
+  saEditandoId = null;
+  saSel = { programas: [], cabines: [] };
+  ['sa-cliente','sa-origens','sa-destinos','sa-data','sa-data-fim','sa-assentos','sa-max-pontos','sa-max-taxas','sa-nome','sa-obs','sa-prog-busca'].forEach(function(id){
+    var el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('sa-nome').dataset.editado = '';
+  document.getElementById('sa-demanda').value = '';
+  document.getElementById('sa-paradas').value = '';
+  document.getElementById('sa-origens-hint').innerHTML = '';
+  document.getElementById('sa-destinos-hint').innerHTML = '';
+  saDataTipo('fixa');
+  saSeg('sa-tipo', 'unico');
+  document.getElementById('sa-form-titulo').textContent = 'Novo alerta';
+  document.getElementById('sa-btn-salvar').textContent = '💾 Salvar na fila';
+  saRenderProgramas(); saRenderCabines();
+}
+
+function saLerForm() {
+  var dataTipo = saSegVal('sa-data-tipo');
+  var a = {
+    nome: document.getElementById('sa-nome').value.trim() || saNomeSugerido(),
+    cliente: document.getElementById('sa-cliente').value.trim(),
+    demandaId: document.getElementById('sa-demanda').value || '',
+    origens: saCodigos(document.getElementById('sa-origens').value),
+    destinos: saCodigos(document.getElementById('sa-destinos').value),
+    dataTipo: dataTipo,
+    data: dataTipo === 'qualquer' ? '' : document.getElementById('sa-data').value,
+    dataFim: dataTipo === 'intervalo' ? document.getElementById('sa-data-fim').value : '',
+    programas: saSel.programas.slice(),
+    cabines: saSel.cabines.slice(),
+    tipo: saSegVal('sa-tipo') || 'unico',
+    assentosMin: document.getElementById('sa-assentos').value ? Number(document.getElementById('sa-assentos').value) : null,
+    maxParadas: document.getElementById('sa-paradas').value,
+    maxPontos: document.getElementById('sa-max-pontos').value ? Number(document.getElementById('sa-max-pontos').value) : null,
+    maxTaxas: document.getElementById('sa-max-taxas').value ? Number(document.getElementById('sa-max-taxas').value) : null,
+    obs: document.getElementById('sa-obs').value.trim()
+  };
+  var dem = (demandas || []).find(function(x){ return x.id === a.demandaId; });
+  a.demandaNumero = dem && dem.numero ? dem.numero : null;
+  return a;
+}
+
+function saValidar(a) {
+  if (!a.origens.length) return 'Informe ao menos uma origem (código IATA, ex: GRU).';
+  if (!a.destinos.length) return 'Informe ao menos um destino (código IATA, ex: LIS).';
+  if (a.dataTipo !== 'qualquer' && !a.data) return 'Informe a data de partida.';
+  if (a.dataTipo === 'intervalo' && (!a.dataFim || a.dataFim < a.data)) return 'Informe o fim do intervalo (depois da data inicial).';
+  var hoje = new Date(Date.now() - 3 * 3600 * 1000).toISOString().slice(0, 10);
+  if (a.data && (a.dataFim || a.data) < hoje) return 'A data já passou.';
+  if (!a.programas.length) return 'Escolha ao menos um programa.';
+  if (!a.cabines.length) return 'Escolha ao menos uma cabine.';
+  return '';
+}
+
+// Lê a fila fresca do servidor, aplica a mudança e grava (evita apagar o que
+// o Claude marcou como criado enquanto a aba estava aberta).
+function saGravar(aplicar) {
+  return fetch(SA_URL, { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha ao ler a fila');
+      var lista = Array.isArray(d.data) ? d.data : [];
+      lista = aplicar(lista) || lista;
+      return fetch(SA_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: lista }) })
+        .then(function(r){ return r.json(); })
+        .then(function(res){ if (!res.ok) throw new Error(res.erro || 'falha ao gravar'); saAlertas = lista; saRender(); return lista; });
+    });
+}
+
+function saSalvarForm() {
+  var a = saLerForm();
+  var erro = saValidar(a);
+  if (erro) { showToast('⚠️ ' + erro, 'err'); return; }
+  var btn = document.getElementById('sa-btn-salvar');
+  btn.disabled = true;
+  var editId = saEditandoId;
+  saGravar(function(lista){
+    if (editId) {
+      var x = lista.find(function(i){ return i.id === editId; });
+      if (!x) throw new Error('o alerta não está mais na fila');
+      if (x.status !== 'pendente') throw new Error('o alerta já foi criado no seats.aero; cancele e cadastre outro');
+      Object.assign(x, a, { atualizadoEm: new Date().toISOString() });
+    } else {
+      lista.push(Object.assign({ id: 'SA-' + Date.now(), status: 'pendente', criadoEm: new Date().toISOString() }, a));
+    }
+    return lista;
+  }).then(function(){
+    showToast(editId ? '✅ Alerta atualizado' : '✅ Alerta na fila', 'ok');
+    saLimparForm();
+  }).catch(function(e){ showToast('❌ ' + e.message, 'err'); })
+    .then(function(){ btn.disabled = false; });
+}
+
+function saEditar(id) {
+  var a = saAlertas.find(function(x){ return x.id === id; });
+  if (!a || a.status !== 'pendente') return;
+  saLimparForm();
+  saEditandoId = id;
+  document.getElementById('sa-cliente').value = a.cliente || '';
+  document.getElementById('sa-demanda').value = a.demandaId || '';
+  document.getElementById('sa-origens').value = (a.origens || []).join(', ');
+  document.getElementById('sa-destinos').value = (a.destinos || []).join(', ');
+  saDataTipo(a.dataTipo || 'fixa');
+  document.getElementById('sa-data').value = a.data || '';
+  document.getElementById('sa-data-fim').value = a.dataFim || '';
+  saSel.programas = (a.programas || []).slice();
+  saSel.cabines = (a.cabines || []).slice();
+  saSeg('sa-tipo', a.tipo || 'unico');
+  document.getElementById('sa-assentos').value = a.assentosMin || '';
+  document.getElementById('sa-paradas').value = a.maxParadas || '';
+  document.getElementById('sa-max-pontos').value = a.maxPontos || '';
+  document.getElementById('sa-max-taxas').value = a.maxTaxas || '';
+  document.getElementById('sa-obs').value = a.obs || '';
+  var nome = document.getElementById('sa-nome');
+  nome.value = a.nome || '';
+  nome.dataset.editado = '1';
+  saIataInput(document.getElementById('sa-origens'));
+  saIataInput(document.getElementById('sa-destinos'));
+  saRenderProgramas(); saRenderCabines();
+  document.getElementById('sa-form-titulo').textContent = 'Editar alerta';
+  document.getElementById('sa-btn-salvar').textContent = '💾 Salvar alterações';
+  document.getElementById('panel-seats').scrollIntoView({ behavior: 'smooth' });
+}
+
+function saMudarStatus(id, status) {
+  var msg = status === 'cancelado' ? 'Cancelar este alerta na fila?\n\nSe ele já foi criado no seats.aero, exclua lá também.'
+          : status === 'criado' ? 'Marcar como criado no seats.aero?' : 'Voltar o alerta para pendente?';
+  if (!confirm(msg)) return;
+  saGravar(function(lista){
+    var x = lista.find(function(i){ return i.id === id; });
+    if (!x) throw new Error('o alerta não está mais na fila');
+    x.status = status;
+    if (status === 'criado' && !x.criadoNoSiteEm) x.criadoNoSiteEm = new Date().toISOString();
+    if (status === 'cancelado') x.canceladoEm = new Date().toISOString();
+    if (status === 'pendente') { delete x.criadoNoSiteEm; delete x.canceladoEm; delete x.erro; }
+    return lista;
+  }).then(function(){ showToast('✅ Atualizado', 'ok'); })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
+}
+
+function saExcluir(id) {
+  if (!confirm('Excluir este alerta da fila? (não mexe no seats.aero)')) return;
+  saGravar(function(lista){ return lista.filter(function(i){ return i.id !== id; }); })
+    .then(function(){ showToast('🗑️ Excluído', 'ok'); })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
+}
+
+function saFmtData(iso) { if (!iso) return ''; var p = iso.split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso; }
+
+function saResumoDatas(a) {
+  if (a.dataTipo === 'qualquer') return 'qualquer data';
+  if (a.dataTipo === 'intervalo') return saFmtData(a.data) + ' a ' + saFmtData(a.dataFim);
+  return saFmtData(a.data);
+}
+
+function saRender() {
+  var el = document.getElementById('sa-lista');
+  if (!el) return;
+  var filtro = document.getElementById('sa-filtro').value;
+  var lista = saAlertas.filter(function(a){
+    if (filtro === 'todos') return true;
+    if (filtro === 'ativos') return a.status !== 'cancelado';
+    return a.status === filtro;
+  }).sort(function(a, b){
+    var ord = { pendente: 0, criado: 1, cancelado: 2 };
+    return (ord[a.status] - ord[b.status]) || String(b.criadoEm || '').localeCompare(String(a.criadoEm || ''));
+  });
+  var pend = saAlertas.filter(function(a){ return a.status === 'pendente'; }).length;
+  document.getElementById('sa-count-label').textContent = saAlertas.length + ' alerta' + (saAlertas.length === 1 ? '' : 's') + (pend ? ' · ' + pend + ' pendente' + (pend === 1 ? '' : 's') : '');
+  var badge = document.getElementById('sa-tab-badge');
+  if (badge) { badge.textContent = pend; badge.style.display = pend ? '' : 'none'; }
+  if (!lista.length) { el.innerHTML = '<div class="sa-vazio">Nenhum alerta aqui.</div>'; return; }
+  var cabL = {}; SA_CABINES.forEach(function(c){ cabL[c.v] = c.l; });
+  el.innerHTML = lista.map(function(a){
+    var st = a.status === 'criado' ? '<span class="badge sa-st-criado">✅ Criado' + (a.criadoNoSiteEm ? ' em ' + saFmtData(a.criadoNoSiteEm.slice(0, 10)) : '') + '</span>'
+           : a.status === 'cancelado' ? '<span class="badge sa-st-cancelado">Cancelado</span>'
+           : '<span class="badge sa-st-pendente">⏳ Pendente</span>';
+    var filtros = [];
+    if (a.assentosMin) filtros.push(a.assentosMin + '+ assentos');
+    if (a.maxParadas !== '' && a.maxParadas != null) filtros.push(a.maxParadas === '0' ? 'direto' : 'até ' + a.maxParadas + ' parada' + (a.maxParadas === '1' ? '' : 's'));
+    if (a.maxPontos) filtros.push('máx ' + Number(a.maxPontos).toLocaleString('pt-BR') + ' pts');
+    if (a.maxTaxas) filtros.push('taxas até US$ ' + a.maxTaxas);
+    var acoes = [];
+    if (a.status === 'pendente') {
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saEditar(\'' + a.id + '\')">✏️ Editar</button>');
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saMudarStatus(\'' + a.id + '\',\'criado\')">Marcar criado</button>');
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saMudarStatus(\'' + a.id + '\',\'cancelado\')">Cancelar</button>');
+    } else if (a.status === 'criado') {
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saMudarStatus(\'' + a.id + '\',\'cancelado\')">Cancelar</button>');
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saMudarStatus(\'' + a.id + '\',\'pendente\')">Recriar</button>');
+    } else {
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saMudarStatus(\'' + a.id + '\',\'pendente\')">Reativar</button>');
+      acoes.push('<button class="btn btn-ghost btn-sm" onclick="saExcluir(\'' + a.id + '\')">🗑️ Excluir</button>');
+    }
+    return '<div class="sa-card sa-' + a.status + '">'
+      + '<div class="sa-card-top"><div class="sa-rota">' + saEsc((a.origens || []).join(' / ')) + ' <span>→</span> ' + saEsc((a.destinos || []).join(' / ')) + '</div>' + st + '</div>'
+      + '<div class="sa-nome">' + saEsc(a.nome || '') + '</div>'
+      + '<div class="sa-linha">🛫 ' + saEsc(saResumoDatas(a)) + ' · ' + saEsc((a.cabines || []).map(function(c){ return cabL[c] || c; }).join(', ')) + ' · ' + (a.tipo === 'continuo' ? 'contínuo' : 'único') + '</div>'
+      + '<div class="sa-linha sa-progs">' + saEsc((a.programas || []).join(' · ')) + '</div>'
+      + (filtros.length ? '<div class="sa-linha">' + saEsc(filtros.join(' · ')) + '</div>' : '')
+      + ((a.cliente || a.demandaNumero) ? '<div class="sa-linha">👤 ' + saEsc(a.cliente || '') + (a.demandaNumero ? ' · demanda #' + a.demandaNumero : '') + '</div>' : '')
+      + (a.obs ? '<div class="sa-linha sa-obs">📝 ' + saEsc(a.obs) + '</div>' : '')
+      + (a.erro ? '<div class="sa-linha sa-erro">⚠️ ' + saEsc(a.erro) + '</div>' : '')
+      + '<div class="sa-acoes">' + acoes.join('') + '</div>'
+      + '</div>';
+  }).join('');
+}
+
+function saCarregar(forcar) {
+  if (saCarregado && !forcar) { saRender(); return Promise.resolve(); }
+  return fetch(SA_URL, { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha ao ler a fila');
+      saAlertas = Array.isArray(d.data) ? d.data : [];
+      saCarregado = true;
+      saRender();
+    })
+    .catch(function(e){
+      var el = document.getElementById('sa-lista');
+      if (el) el.innerHTML = '<div class="sa-vazio">❌ Não consegui ler a fila: ' + saEsc(e.message) + '</div>';
+    });
+}
+
+function saAbrirAba() {
+  saPopularVinculos();
+  if (!document.getElementById('sa-programas').innerHTML) { saRenderProgramas(); saRenderCabines(); }
+  saCarregar(false);
+}
+
+function saCopiarPedido() {
+  var pend = saAlertas.filter(function(a){ return a.status === 'pendente'; }).length;
+  var txt = 'Cria os alertas pendentes do seats.aero (aba Seats.aero do concierge' + (pend ? ', ' + pend + ' pendente' + (pend === 1 ? '' : 's') : '') + ').';
+  (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+    .then(function(){ showToast('📋 Pedido copiado', 'ok'); })
+    .catch(function(){ prompt('Copie o pedido:', txt); });
+}
+
+// Chamado pelo botão do modal de demanda: abre a aba já vinculada à demanda
+function saNovoDaDemanda() {
+  var titulo = document.getElementById('df-titulo').value.trim();
+  var clis = document.getElementById('df-clientes').value.trim();
+  var demId = typeof demandaEditandoId !== 'undefined' ? demandaEditandoId : null;
+  fecharNovaDemanda();
+  switchTab('seats');
+  saLimparForm();
+  if (demId) document.getElementById('sa-demanda').value = demId;
+  if (clis) document.getElementById('sa-cliente').value = clis.split(',')[0].trim();
+  if (titulo) document.getElementById('sa-obs').value = 'Demanda: ' + titulo;
+  saAtualizarNome();
+  document.getElementById('sa-origens').focus();
 }
 
 // ══════════════════════════════════════════
