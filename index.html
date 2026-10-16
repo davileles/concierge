@@ -6231,14 +6231,45 @@ function populateDispararClientes() {
       opt.value = nome; opt.textContent = nome;
       csel.appendChild(opt);
     });
-  if (ccur) { csel.value = ccur; populateDispararReservas(ccur); }
+  if (ccur) { csel.value = ccur; populateDispararReservas(ccur, modelos.find(function(m){ return m.id === getVal('d-modelo'); })); }
 }
 
-function populateDispararReservas(nome) {
+// Tipos de reserva que um modelo atende, deduzidos do gatilho e das variaveis
+// do texto. Chaves: voo, hotel, seguro, passeio e, para tipo 'carro', o subtipo
+// (locacao, trem, ferry, transfer, onibus). null = modelo generico (sem filtro).
+function tiposReservaDoModelo(mod) {
+  if (!mod) return null;
+  var g = mod.gatilho || '', t = String(mod.texto || ''), s = {};
+  if (/^voo_/.test(g) || g === 'primeiro_voo_viagem') s.voo = 1;
+  if (g === 'checkin') s.hotel = 1;
+  if (/^seguro_/.test(g)) s.seguro = 1;
+  if (/\{\{(status_[a-z_]+|nvoo_[a-z]+|cia|cia_volta|hora_partida|hora_chegada|hora_partida_volta|hora_chegada_volta|data_ida|data_volta|data_chegada_ida|data_chegada_volta|origem_volta|destino_volta|classe)\}\}/.test(t)) s.voo = 1;
+  if (/\{\{(hotel|hotel_[a-z_]+|checkin|checkout)\}\}/.test(t)) s.hotel = 1;
+  if (/\{\{(seguradora|seguro_[a-z_]+)\}\}/.test(t)) s.seguro = 1;
+  if (/\{\{loc_[a-z_]+\}\}/.test(t)) s.locacao = 1;
+  if (/\{\{trem_[a-z_]+\}\}/.test(t)) s.trem = 1;
+  if (/\{\{ferry_[a-z_]+\}\}/.test(t)) s.ferry = 1;
+  return Object.keys(s).length ? s : null;
+}
+
+function tipoChaveReserva(r) {
+  return r.tipo === 'carro' ? (r.subtipo || 'transfer') : r.tipo;
+}
+
+function populateDispararReservas(nome, mod) {
   var sel = document.getElementById('d-reserva');
   var cur = sel.value;
+  var tipos = tiposReservaDoModelo(mod);
   sel.innerHTML = '<option value="">Nenhuma</option>';
-  var list = reservas.filter(function(r){ return !nome || mesmoCliente(r.cliente, nome); });
+  var list = reservas.filter(function(r){
+    if (nome && !mesmoCliente(r.cliente, nome)) return false;
+    return !tipos || !!tipos[tipoChaveReserva(r)];
+  });
+  // Ordem pela data da reserva (inicio); sem data vai para o fim.
+  list.sort(function(a, b){
+    var da = resDatas(a).inicio || '9999', db = resDatas(b).inicio || '9999';
+    return da < db ? -1 : da > db ? 1 : 0;
+  });
   list.forEach(function(r){
     var opt = document.createElement('option');
     opt.value = r.id;
@@ -6250,7 +6281,11 @@ function populateDispararReservas(nome) {
     opt.textContent = '['+r.tipo.toUpperCase()+'] ' + label;
     sel.appendChild(opt);
   });
-  if (cur) sel.value = cur;
+  // Mantem a escolha so se ela continua na lista filtrada; com cliente e uma
+  // unica reserva compativel, ja deixa selecionada.
+  if (cur && list.some(function(r){ return r.id === cur; })) sel.value = cur;
+  else if (nome && tipos && list.length === 1) sel.value = list[0].id;
+  else sel.value = '';
 }
 
 // ══════════════════════════════════════
@@ -6432,15 +6467,16 @@ function cancelarAgendamento(id) {
 
 function onDispararChange() {
   var clienteNome = getVal('d-cliente');
-  var reservaId   = getVal('d-reserva');
   var modeloId    = getVal('d-modelo');
+  var mod = modelos.find(function(m){ return m.id===modeloId; });
 
-  // update reserva list when client changes
-  populateDispararReservas(clienteNome);
+  // Lista de reservas filtrada pelo cliente e pelo tipo do modelo (antes de
+  // ler a reserva escolhida, que pode ter saido da lista).
+  populateDispararReservas(clienteNome, mod);
+  var reservaId   = getVal('d-reserva');
 
   var cli = clientes.find(function(c){ return c.nome===clienteNome; });
   var res = reservas.find(function(r){ return r.id===reservaId; });
-  var mod = modelos.find(function(m){ return m.id===modeloId; });
 
   // Set grupo conforme o destino escolhido (cliente ou equipe)
   aplicarDestinoDisparo();
