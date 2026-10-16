@@ -6085,11 +6085,8 @@ function saSalvarForm() {
     .then(function(){ btn.disabled = false; });
 }
 
-function saEditar(id) {
-  var a = saAlertas.find(function(x){ return x.id === id; });
-  if (!a || a.status !== 'pendente') return;
-  saLimparForm();
-  saEditandoId = id;
+// Preenche o formulário com os campos de um alerta (usado por Editar e Duplicar).
+function saPreencherForm(a) {
   document.getElementById('sa-cliente').value = a.cliente || '';
   document.getElementById('sa-demanda').value = a.demandaId || '';
   document.getElementById('sa-origens').value = (a.origens || []).join(', ');
@@ -6111,9 +6108,40 @@ function saEditar(id) {
   saIataInput(document.getElementById('sa-origens'));
   saIataInput(document.getElementById('sa-destinos'));
   saRenderProgramas(); saRenderCabines();
+}
+
+function saEditar(id) {
+  var a = saAlertas.find(function(x){ return x.id === id; });
+  if (!a || a.status !== 'pendente') return;
+  saLimparForm();
+  saEditandoId = id;
+  saPreencherForm(a);
   document.getElementById('sa-form-titulo').textContent = 'Editar alerta';
   document.getElementById('sa-btn-salvar').textContent = '💾 Salvar alterações';
   document.getElementById('panel-seats').scrollIntoView({ behavior: 'smooth' });
+}
+
+// Nome da cópia: soma 1 ao número do fim ("... IDA 1" -> "... IDA 2");
+// sem número no fim, acrescenta " (cópia)".
+function saNomeCopia(nome) {
+  nome = String(nome || '').trim();
+  var m = nome.match(/^(.*?)(\d+)$/);
+  if (m) return m[1] + (Number(m[2]) + 1);
+  return nome ? nome + ' (cópia)' : '';
+}
+
+// Duplicar: abre o formulário como alerta NOVO com os mesmos campos; nada é
+// gravado até clicar em "Salvar na fila".
+function saDuplicar(id) {
+  var a = saAlertas.find(function(x){ return x.id === id; });
+  if (!a) return;
+  saLimparForm();
+  saPreencherForm(Object.assign({}, a, { nome: saNomeCopia(a.nome) }));
+  document.getElementById('sa-form-titulo').textContent = 'Novo alerta (cópia de ' + (a.nome || 'alerta') + ')';
+  document.getElementById('panel-seats').scrollIntoView({ behavior: 'smooth' });
+  var nome = document.getElementById('sa-nome');
+  if (nome) { nome.focus(); nome.select(); }
+  showToast('📄 Cópia no formulário: ajuste e salve na fila', 'ok');
 }
 
 function saMudarStatus(id, status) {
@@ -6174,7 +6202,7 @@ function saRender() {
     if (a.maxParadas !== '' && a.maxParadas != null) filtros.push(a.maxParadas === '0' ? 'direto' : 'até ' + a.maxParadas + ' parada' + (a.maxParadas === '1' ? '' : 's'));
     if (a.maxPontos) filtros.push('máx ' + Number(a.maxPontos).toLocaleString('pt-BR') + ' pts');
     if (a.maxTaxas) filtros.push('taxas até US$ ' + a.maxTaxas);
-    var acoes = [];
+    var acoes = ['<button class="btn btn-ghost btn-sm" onclick="saDuplicar(\'' + a.id + '\')">📄 Duplicar</button>'];
     if (a.status === 'pendente') {
       acoes.push('<button class="btn btn-ghost btn-sm" onclick="saEditar(\'' + a.id + '\')">✏️ Editar</button>');
       acoes.push('<button class="btn btn-ghost btn-sm" onclick="saMudarStatus(\'' + a.id + '\',\'criado\')">Marcar criado</button>');
