@@ -450,6 +450,13 @@ header{animation:fadeUp .45s ease both}
 .sa-st-criado{background:rgba(34,197,94,.14);color:#22c55e}
 .sa-st-cancelado{background:var(--surface2);color:var(--muted)}
 .sa-vazio{font-size:13px;color:var(--muted);padding:2rem 1rem;text-align:center;border:1px dashed var(--border);border-radius:12px}
+.sa-modelos-box{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px}
+.sa-mod{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:16px;background:var(--surface);overflow:hidden}
+.sa-mod button{background:none;border:none;color:var(--text);font-family:inherit;font-size:12px;font-weight:700;padding:5px 10px;cursor:pointer}
+.sa-mod .sa-mod-x{color:var(--muted);font-size:11px;padding:5px 8px 5px 2px}
+.sa-mod .sa-mod-x:hover{color:var(--accent)}
+.sa-mod.on{border-color:var(--accent);background:rgba(255,88,94,.12)}
+.sa-mod-vazio{font-size:11.5px;color:var(--muted);line-height:1.6}
 .sa-tab-badge{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;line-height:16px;text-align:center}
 </style>
 <script src="iata.js"></script>
@@ -1930,6 +1937,11 @@ header{animation:fadeUp .45s ease both}
     <div class="card" style="margin-bottom:0">
       <div class="card-title" style="margin-bottom:1rem">✈️ <span id="sa-form-titulo">Novo alerta</span></div>
 
+      <div class="field sa-modelos-box">
+        <label>Modelos <span class="tag">clique para preencher; depois só cliente e data</span></label>
+        <div class="sa-chips" id="sa-modelos"><span class="sa-mod-vazio">Carregando…</span></div>
+      </div>
+
       <div class="g2">
         <div class="field">
           <label>Cliente <span class="tag">opcional</span></label>
@@ -2015,6 +2027,7 @@ header{animation:fadeUp .45s ease both}
 
       <div style="display:flex;gap:8px;margin-top:.5rem">
         <button class="btn btn-accent" id="sa-btn-salvar" onclick="saSalvarForm()" style="flex:1">💾 Salvar na fila</button>
+        <button class="btn btn-ghost" onclick="saSalvarModelo()" title="Guarda destinos, programas, cabine e filtros para reaproveitar">⭐ Salvar como modelo</button>
         <button class="btn btn-ghost" onclick="saLimparForm()">Limpar</button>
       </div>
     </div>
@@ -5958,6 +5971,8 @@ function saAtualizarNome() {
 
 function saLimparForm() {
   saEditandoId = null;
+  saModeloAtivo = null;
+  if (typeof saRenderModelos === 'function' && saModelos.length) saRenderModelos();
   saSel = { programas: [], cabines: [] };
   ['sa-cliente','sa-origens','sa-destinos','sa-data','sa-data-fim','sa-assentos','sa-max-pontos','sa-max-taxas','sa-nome','sa-obs','sa-prog-busca'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = '';
@@ -5977,7 +5992,7 @@ function saLimparForm() {
 function saLerForm() {
   var dataTipo = saSegVal('sa-data-tipo');
   var a = {
-    nome: document.getElementById('sa-nome').value.trim() || saNomeSugerido(),
+    nome: (document.getElementById('sa-nome').dataset.editado === '1' && document.getElementById('sa-nome').value.trim()) || saNomeSugerido(),
     cliente: document.getElementById('sa-cliente').value.trim(),
     demandaId: document.getElementById('sa-demanda').value || '',
     origens: saCodigos(document.getElementById('sa-origens').value),
@@ -6184,6 +6199,7 @@ function saCarregar(forcar) {
 function saAbrirAba() {
   saPopularVinculos();
   if (!document.getElementById('sa-programas').innerHTML) { saRenderProgramas(); saRenderCabines(); }
+  saCarregarModelos();
   saCarregar(false);
 }
 
@@ -6208,6 +6224,128 @@ function saNovoDaDemanda() {
   if (titulo) document.getElementById('sa-obs').value = 'Demanda: ' + titulo;
   saAtualizarNome();
   document.getElementById('sa-origens').focus();
+}
+
+// ── Modelos de alerta (seats.aero) ──
+// Combinações que se repetem (destinos, programas, cabine, pontos, filtros).
+// Aplicar preenche só o que o modelo define; cliente, demanda e data ficam.
+var SA_MOD_URL = 'https://cdv-proxy-production.up.railway.app/concierge/seats-modelos';
+var saModelos = [];
+var saModeloAtivo = null;
+
+function saCarregarModelos() {
+  return fetch(SA_MOD_URL, { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){ if (!d.ok) throw new Error(d.erro || 'falha'); saModelos = Array.isArray(d.data) ? d.data : []; saRenderModelos(); })
+    .catch(function(e){ var el = document.getElementById('sa-modelos'); if (el) el.innerHTML = '<span class="sa-mod-vazio">❌ Não consegui ler os modelos: ' + saEsc(e.message) + '</span>'; });
+}
+
+function saResumoModelo(m) {
+  var cabL = {}; SA_CABINES.forEach(function(c){ cabL[c.v] = c.l; });
+  var p = [];
+  if ((m.origens || []).length || (m.destinos || []).length) p.push(((m.origens || []).join('/') || 'qualquer origem') + ' → ' + ((m.destinos || []).join('/') || '?'));
+  if ((m.cabines || []).length) p.push(m.cabines.map(function(c){ return cabL[c] || c; }).join(', '));
+  if ((m.programas || []).length) p.push(m.programas.join(', '));
+  if (m.maxPontos) p.push('máx ' + Number(m.maxPontos).toLocaleString('pt-BR') + ' pts');
+  if (m.maxParadas !== '' && m.maxParadas != null) p.push(m.maxParadas === '0' ? 'direto' : 'até ' + m.maxParadas + ' parada(s)');
+  if (m.assentosMin) p.push(m.assentosMin + '+ assentos');
+  if (m.maxTaxas) p.push('taxas até US$ ' + m.maxTaxas);
+  if (m.tipo === 'continuo') p.push('contínuo');
+  return p.join(' · ');
+}
+
+function saRenderModelos() {
+  var el = document.getElementById('sa-modelos');
+  if (!el) return;
+  if (!saModelos.length) {
+    el.innerHTML = '<span class="sa-mod-vazio">Nenhum modelo ainda. Preencha os campos que se repetem (destinos, programas, cabine, pontos) e clique em <b>⭐ Salvar como modelo</b>.</span>';
+    return;
+  }
+  el.innerHTML = saModelos.slice().sort(function(a,b){ return String(a.nome).localeCompare(String(b.nome), 'pt-BR'); }).map(function(m){
+    return '<span class="sa-mod' + (saModeloAtivo === m.id ? ' on' : '') + '" title="' + saEsc(saResumoModelo(m)) + '">'
+      + '<button type="button" onclick="saAplicarModelo(\'' + m.id + '\')">' + saEsc(m.nome) + '</button>'
+      + '<button type="button" class="sa-mod-x" title="Excluir modelo" onclick="saExcluirModelo(\'' + m.id + '\')">✕</button></span>';
+  }).join('');
+}
+
+function saAplicarModelo(id) {
+  var m = saModelos.find(function(x){ return x.id === id; });
+  if (!m) return;
+  var set = function(elId, v){ document.getElementById(elId).value = v == null ? '' : v; };
+  if ((m.origens || []).length) set('sa-origens', m.origens.join(', '));
+  if ((m.destinos || []).length) set('sa-destinos', m.destinos.join(', '));
+  if ((m.programas || []).length) saSel.programas = m.programas.slice();
+  if ((m.cabines || []).length) saSel.cabines = m.cabines.slice();
+  saSeg('sa-tipo', m.tipo || 'unico');
+  set('sa-assentos', m.assentosMin || '');
+  set('sa-paradas', m.maxParadas || '');
+  set('sa-max-pontos', m.maxPontos || '');
+  set('sa-max-taxas', m.maxTaxas || '');
+  if (m.dataTipo === 'qualquer') saDataTipo('qualquer');
+  if (m.obs) {
+    var obs = document.getElementById('sa-obs');
+    if (obs.value.indexOf(m.obs) < 0) obs.value = (obs.value ? obs.value + '\n' : '') + m.obs;
+  }
+  saModeloAtivo = id;
+  document.getElementById('sa-nome').dataset.editado = '';
+  saIataInput(document.getElementById('sa-origens'));
+  saIataInput(document.getElementById('sa-destinos'));
+  saRenderProgramas(); saRenderCabines(); saRenderModelos();
+  showToast('Modelo "' + m.nome + '" aplicado. Falta cliente e data.', 'ok');
+  var alvo = !document.getElementById('sa-cliente').value.trim() ? 'sa-cliente'
+           : (saSegVal('sa-data-tipo') !== 'qualquer' ? 'sa-data' : 'sa-origens');
+  document.getElementById(alvo).focus();
+}
+
+function saGravarModelos(aplicar) {
+  return fetch(SA_MOD_URL, { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha ao ler os modelos');
+      var lista = Array.isArray(d.data) ? d.data : [];
+      lista = aplicar(lista) || lista;
+      return fetch(SA_MOD_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: lista }) })
+        .then(function(r){ return r.json(); })
+        .then(function(res){ if (!res.ok) throw new Error(res.erro || 'falha ao gravar'); saModelos = lista; saRenderModelos(); return lista; });
+    });
+}
+
+function saSalvarModelo() {
+  var a = saLerForm();
+  if (!a.destinos.length && !a.programas.length && !a.cabines.length) {
+    showToast('⚠️ Preencha ao menos destinos, programas ou cabine para salvar um modelo', 'err'); return;
+  }
+  var atual = saModelos.find(function(x){ return x.id === saModeloAtivo; });
+  var cabL = {}; SA_CABINES.forEach(function(c){ cabL[c.v] = c.l; });
+  var sugestao = atual ? atual.nome : [a.destinos.slice(0, 3).join('/'), a.cabines.map(function(c){ return cabL[c]; }).join('/'),
+    a.programas.map(function(p){ return p.replace(/\s*\(.*\)$/, ''); }).slice(0, 2).join('/')].filter(Boolean).join(' · ');
+  var nome = prompt('Nome do modelo (ex: EUA executiva Smiles):', sugestao);
+  if (!nome || !nome.trim()) return;
+  nome = nome.trim().slice(0, 60);
+  var modelo = {
+    nome: nome, origens: a.origens, destinos: a.destinos, programas: a.programas, cabines: a.cabines,
+    tipo: a.tipo, assentosMin: a.assentosMin, maxParadas: a.maxParadas, maxPontos: a.maxPontos, maxTaxas: a.maxTaxas,
+    dataTipo: a.dataTipo === 'qualquer' ? 'qualquer' : '',
+    obs: a.obs.split('\n').filter(function(l){ return l.indexOf('Demanda: ') !== 0; }).join('\n').trim()
+  };
+  var mesmo = saModelos.find(function(x){ return String(x.nome).toLowerCase() === nome.toLowerCase(); });
+  if (mesmo && !confirm('Já existe o modelo "' + mesmo.nome + '". Substituir pelos campos atuais?')) return;
+  saGravarModelos(function(lista){
+    var x = lista.find(function(i){ return String(i.nome).toLowerCase() === nome.toLowerCase(); });
+    if (x) Object.assign(x, modelo, { atualizadoEm: new Date().toISOString() });
+    else { x = Object.assign({ id: 'SM-' + Date.now(), criadoEm: new Date().toISOString() }, modelo); lista.push(x); }
+    saModeloAtivo = x.id;
+    return lista;
+  }).then(function(){ showToast('⭐ Modelo "' + nome + '" salvo', 'ok'); })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
+}
+
+function saExcluirModelo(id) {
+  var m = saModelos.find(function(x){ return x.id === id; });
+  if (!m || !confirm('Excluir o modelo "' + m.nome + '"? Os alertas já cadastrados não mudam.')) return;
+  saGravarModelos(function(lista){ return lista.filter(function(i){ return i.id !== id; }); })
+    .then(function(){ if (saModeloAtivo === id) saModeloAtivo = null; saRenderModelos(); showToast('🗑️ Modelo excluído', 'ok'); })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
 }
 
 // ══════════════════════════════════════════
