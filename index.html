@@ -5954,11 +5954,16 @@ function saDemandaChange() {
 
 function saNomeSugerido() {
   var cli = document.getElementById('sa-cliente').value.trim();
+  var primeiro = cli ? cli.split(/[\s,]+/)[0] : '';
+  // Com modelo aplicado, o nome segue o modelo + primeiro nome do cliente
+  // (ex.: "EUA SMILES AA EXECUTIVA IDA 1 MARIA").
+  var mod = (typeof saModelos !== 'undefined' && saModeloAtivo) ? saModelos.find(function(x){ return x.id === saModeloAtivo; }) : null;
+  if (mod) return (mod.nome + (primeiro ? ' ' + primeiro.toUpperCase() : '')).slice(0, 80);
   var o = saCodigos(document.getElementById('sa-origens').value).join('/');
   var d = saCodigos(document.getElementById('sa-destinos').value).join('/');
   var cab = saSel.cabines.map(function(c){ return SA_CAB_CURTO[c]; }).join('/');
   var partes = [];
-  if (cli) partes.push(cli.split(/\s+/).slice(0, 2).join(' '));
+  if (primeiro) partes.push(primeiro);
   if (o || d) partes.push((o || '?') + '→' + (d || '?'));
   if (cab) partes.push(cab);
   return partes.join(' · ').slice(0, 80);
