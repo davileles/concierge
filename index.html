@@ -6264,6 +6264,7 @@ function saRenderModelos() {
   el.innerHTML = saModelos.slice().sort(function(a,b){ return String(a.nome).localeCompare(String(b.nome), 'pt-BR'); }).map(function(m){
     return '<span class="sa-mod' + (saModeloAtivo === m.id ? ' on' : '') + '" title="' + saEsc(saResumoModelo(m)) + '">'
       + '<button type="button" onclick="saAplicarModelo(\'' + m.id + '\')">' + saEsc(m.nome) + '</button>'
+      + '<button type="button" class="sa-mod-x" title="Renomear modelo" onclick="saRenomearModelo(\'' + m.id + '\')">✏️</button>'
       + '<button type="button" class="sa-mod-x" title="Excluir modelo" onclick="saExcluirModelo(\'' + m.id + '\')">✕</button></span>';
   }).join('');
 }
@@ -6337,6 +6338,24 @@ function saSalvarModelo() {
     saModeloAtivo = x.id;
     return lista;
   }).then(function(){ showToast('⭐ Modelo "' + nome + '" salvo', 'ok'); })
+    .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
+}
+
+function saRenomearModelo(id) {
+  var m = saModelos.find(function(x){ return x.id === id; });
+  if (!m) return;
+  var nome = prompt('Novo nome do modelo:', m.nome);
+  if (!nome || !nome.trim() || nome.trim() === m.nome) return;
+  nome = nome.trim().slice(0, 60);
+  if (saModelos.some(function(x){ return x.id !== id && String(x.nome).toLowerCase() === nome.toLowerCase(); })) {
+    showToast('⚠️ Já existe um modelo com esse nome', 'err'); return;
+  }
+  saGravarModelos(function(lista){
+    var x = lista.find(function(i){ return i.id === id; });
+    if (!x) throw new Error('o modelo não está mais salvo');
+    x.nome = nome; x.atualizadoEm = new Date().toISOString();
+    return lista;
+  }).then(function(){ showToast('✏️ Modelo renomeado', 'ok'); })
     .catch(function(e){ showToast('❌ ' + e.message, 'err'); });
 }
 
