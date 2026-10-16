@@ -244,7 +244,10 @@
   }
 
   // ── mensagem ─────────────────────────────────────────────────────────────
-  var DIAS_SEMANA = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+  // Segue o padrão dos modelos do concierge (modelos.json): título em negrito
+  // com um emoji, blocos separados por linha em branco, cada bloco com um
+  // cabeçalho "emoji + *Título*" e linhas "Rótulo: *valor*", fecho em negrito.
+  var DIAS_SEMANA = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
   function dataExtenso(iso) {
     var p = String(iso || '').split('-');
     if (p.length !== 3) return '';
@@ -252,22 +255,26 @@
     return DIAS_SEMANA[d.getUTCDay()] + ', ' + p[2] + '/' + p[1];
   }
 
+  function frasaChuva(pct) {
+    if (pct == null) return '';
+    if (pct < 20) return 'sem chuva prevista';
+    if (pct < 60) return pct + '% de chance de chuva';
+    return 'chuva provável (' + pct + '%)';
+  }
+
   function linhaTempo(cidade, prev) {
     if (!prev) return '';
-    var c = condicao(prev.codigo);
-    var partes = [];
-    if (c[1]) partes.push(c[1]);
-    partes.push(prev.min + '° a ' + prev.max + '°');
-    if (prev.chuva != null) partes.push(prev.chuva + '% de chance de chuva');
-    return c[0] + ' *' + cidade + ':* ' + partes.join(' · ');
+    var desc = condicao(prev.codigo)[1];
+    var extra = [desc, frasaChuva(prev.chuva)].filter(Boolean).join(', ');
+    return cidade + ': *' + prev.min + '° a ' + prev.max + '°*' + (extra ? ' · ' + extra : '');
   }
 
   function linhaAtividade(a) {
-    var nome = limpar(a && a.nome);
+    var nome = limpar(a && a.nome).replace(/\s*[☀-➿\uD83C-􏰀-\uDFFF️]+\s*/g, ' ').trim();
     if (!nome) return '';
     if (nome.length > 90) nome = nome.slice(0, 87).trim() + '…';
     var h = limpar(a.horario);
-    return '▫️ ' + (h ? h + ' — ' : '') + nome;
+    return (h ? '*' + h + '* · ' : '') + nome;
   }
 
   // ctx = { viagem, dias, idx, previsoes: [{cidade, prev}] }
@@ -276,31 +283,47 @@
     var dias = ctx.dias || [];
     var d = dias[ctx.idx] || {};
     var quem = saudacaoNomes(viagem);
-    var linhas = [];
-    linhas.push('☀️ *Bom dia, ' + quem.texto + '!*');
-    linhas.push('_Dia ' + (ctx.idx + 1) + ' de ' + dias.length + (d.data ? ' · ' + dataExtenso(d.data) : '') + '_');
+    var pl = quem.plural;
+    var ultimo = ctx.idx === dias.length - 1;
+    var L = [];
+
+    L.push('☀️ *Bom dia, ' + quem.texto + '!*');
+    L.push('');
     var titulo = limpar(d.titulo);
-    if (titulo) linhas.push('📍 *' + titulo + '*');
+    var abertura = 'Hoje é o *dia ' + (ctx.idx + 1) + '* da viagem' + (d.data ? ' (' + dataExtenso(d.data) + ')' : '');
+    if (titulo) abertura += /→|->/.test(titulo) ? ' e o trajeto é *' + titulo + '*.' : ' e o destino é *' + titulo + '*.';
+    else abertura += '.';
+    L.push(abertura);
 
-    var tempo = (ctx.previsoes || []).map(function (p) { return linhaTempo(p.cidade, p.prev); }).filter(Boolean);
-    if (tempo.length) { linhas.push(''); tempo.forEach(function (t) { linhas.push(t); }); }
-
-    linhas.push('');
-    var ativs = (d.atividades || []).map(linhaAtividade).filter(Boolean);
-    if (ativs.length) {
-      linhas.push('*Programação de hoje*');
-      ativs.slice(0, 8).forEach(function (t) { linhas.push(t); });
-      if (ativs.length > 8) linhas.push('▫️ …e mais ' + (ativs.length - 8) + ' no roteiro');
-    } else {
-      linhas.push('Hoje é dia livre: ' + (quem.plural ? 'aproveitem' : 'aproveite') + ' no seu ritmo.');
+    var prevs = (ctx.previsoes || []).filter(function (p) { return p.prev; });
+    if (prevs.length) {
+      L.push('');
+      L.push('🌤️ *Previsão do tempo*');
+      prevs.forEach(function (p) { L.push(linhaTempo(p.cidade, p.prev)); });
+      if (prevs.some(function (p) { return p.prev.chuva != null && p.prev.chuva >= 60; })) {
+        L.push('Vale ' + (pl ? 'levarem' : 'levar') + ' um guarda-chuva.');
+      }
     }
 
-    if (viagem.slugRoteiro) { linhas.push(''); linhas.push('🗺️ Roteiro completo: ' + LINK_ROTEIRO + viagem.slugRoteiro + '/'); }
+    L.push('');
+    var ativs = (d.atividades || []).map(linhaAtividade).filter(Boolean);
+    if (ativs.length) {
+      L.push('📍 *Programação do dia*');
+      ativs.slice(0, 8).forEach(function (t) { L.push(t); });
+      if (ativs.length > 8) L.push('E mais ' + (ativs.length - 8) + ' no roteiro.');
+    } else {
+      L.push('Hoje não há atividades programadas. ' + (pl ? 'Aproveitem' : 'Aproveite') + ' para conhecer a cidade no ' + (pl ? 'ritmo de vocês' : 'seu ritmo') + '.');
+    }
 
-    linhas.push('');
-    var ultimo = ctx.idx === dias.length - 1;
-    linhas.push(ultimo ? 'Boa volta para casa! ✈️' : (quem.plural ? 'Aproveitem o dia! 🧡' : 'Aproveite o dia! 🧡'));
-    return linhas.join('\n');
+    if (viagem.slugRoteiro) {
+      L.push('');
+      L.push('O roteiro completo está aqui:');
+      L.push(LINK_ROTEIRO + viagem.slugRoteiro + '/');
+    }
+
+    L.push('');
+    L.push(ultimo ? '*Boa volta para casa e conte conosco!* ✈️' : '*' + (pl ? 'Aproveitem' : 'Aproveite') + ' o dia e conte conosco!* ✈️');
+    return L.join('\n');
   }
 
   // Resolve cidades, fuso e previsão de um dia. Usado pelo job e pela prévia.
