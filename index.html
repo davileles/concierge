@@ -1966,6 +1966,9 @@ header{animation:fadeUp .45s ease both}
           <div class="sa-iata-hint" id="sa-destinos-hint"></div>
         </div>
       </div>
+      <div style="margin:-6px 0 12px">
+        <button type="button" class="btn btn-ghost btn-sm" onclick="saInverterRota()" title="Troca origem e destino (ida ↔ volta)">⇄ Inverter origem e destino</button>
+      </div>
 
       <div class="field">
         <label>Data de partida <span class="tag required">*</span></label>
@@ -5927,6 +5930,13 @@ function saToggle(campo, v) {
   else { saRenderCabines(); saAtualizarNome(); }
 }
 
+function saInverterRota() {
+  var o = document.getElementById('sa-origens'), d = document.getElementById('sa-destinos');
+  var tmp = o.value; o.value = d.value; d.value = tmp;
+  saRotaInvertida = !saRotaInvertida;
+  saIataInput(o); saIataInput(d);
+}
+
 function saPopularVinculos() {
   var dl = document.getElementById('sa-clientes-list');
   if (dl) dl.innerHTML = (clientes || []).map(function(c){ return toTitleCase(String(c.nome || '')); })
@@ -5958,7 +5968,11 @@ function saNomeSugerido() {
   // Com modelo aplicado, o nome segue o modelo + primeiro nome do cliente
   // (ex.: "EUA SMILES AA EXECUTIVA IDA 1 MARIA").
   var mod = (typeof saModelos !== 'undefined' && saModeloAtivo) ? saModelos.find(function(x){ return x.id === saModeloAtivo; }) : null;
-  if (mod) return (mod.nome + (primeiro ? ' ' + primeiro.toUpperCase() : '')).slice(0, 80);
+  if (mod) {
+    var nomeMod = mod.nome;
+    if (saRotaInvertida) nomeMod = nomeMod.replace(/\b(IDA|VOLTA)\b/gi, function(w){ return /^ida$/i.test(w) ? 'VOLTA' : 'IDA'; });
+    return (nomeMod + (primeiro ? ' ' + primeiro.toUpperCase() : '')).slice(0, 80);
+  }
   var o = saCodigos(document.getElementById('sa-origens').value).join('/');
   var d = saCodigos(document.getElementById('sa-destinos').value).join('/');
   var cab = saSel.cabines.map(function(c){ return SA_CAB_CURTO[c]; }).join('/');
@@ -5977,6 +5991,7 @@ function saAtualizarNome() {
 function saLimparForm() {
   saEditandoId = null;
   saModeloAtivo = null;
+  saRotaInvertida = false;
   if (typeof saRenderModelos === 'function' && saModelos.length) saRenderModelos();
   saSel = { programas: [], cabines: [] };
   ['sa-cliente','sa-origens','sa-destinos','sa-data','sa-data-fim','sa-assentos','sa-max-pontos','sa-max-taxas','sa-nome','sa-obs','sa-prog-busca'].forEach(function(id){
@@ -6237,6 +6252,7 @@ function saNovoDaDemanda() {
 var SA_MOD_URL = 'https://cdv-proxy-production.up.railway.app/concierge/seats-modelos';
 var saModelos = [];
 var saModeloAtivo = null;
+var saRotaInvertida = false;
 
 function saCarregarModelos() {
   return fetch(SA_MOD_URL, { cache: 'no-store' })
@@ -6293,6 +6309,7 @@ function saAplicarModelo(id) {
     if (obs.value.indexOf(m.obs) < 0) obs.value = (obs.value ? obs.value + '\n' : '') + m.obs;
   }
   saModeloAtivo = id;
+  saRotaInvertida = false;
   document.getElementById('sa-nome').dataset.editado = '';
   saIataInput(document.getElementById('sa-origens'));
   saIataInput(document.getElementById('sa-destinos'));
