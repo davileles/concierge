@@ -5402,6 +5402,7 @@ function renderClientes() {
         + '<tr class="dem-linha-det' + (editando ? ' open' : '') + '"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
     + '</tbody></table></div>';
+  if (cliEditando) _autoAlturaTodas(grid);
   // Lista de grupos do WhatsApp para o seletor da gestao (uma vez por sessao)
   if (_gruposConciergeCache) _preencherSelectsGrupo(); else carregarGruposConcierge();
 }
@@ -5440,7 +5441,18 @@ function _edSelect(campo, label, val, opcoes) {
 }
 function _edArea(campo, label, val, rows) {
   return '<div class="field" style="margin:0"><label>' + label + '</label>'
-    + '<textarea id="ed-' + campo + '" rows="' + (rows || 3) + '">' + escHtml(val || '') + '</textarea></div>';
+    + '<textarea id="ed-' + campo + '" class="ed-area" rows="' + (rows || 3) + '" oninput="_autoAltura(this)">' + escHtml(val || '') + '</textarea></div>';
+}
+// Textarea da edicao cresce com o conteudo: com altura fixa o texto longo
+// (objetivos, como gosta de viajar) ficava cortado, sobretudo no celular.
+function _autoAltura(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = (el.scrollHeight + 2) + 'px';
+}
+function _autoAlturaTodas(raiz) {
+  var els = (raiz || document).querySelectorAll('textarea.ed-area');
+  for (var i = 0; i < els.length; i++) _autoAltura(els[i]);
 }
 
 function _edLinhaSenha(it) {
