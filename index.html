@@ -325,6 +325,33 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .cli-copy:hover{color:var(--text)}
 .cli-reservas-link{font-size:11px;font-weight:700;color:var(--blue);cursor:pointer;margin-top:12px;display:inline-flex;align-items:center;gap:4px}
 .cli-reservas-link:hover{color:#60a5fa}
+.cli-sn-prog{flex:0 0 150px}
+.cli-gest-grid{display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:end}
+@media(max-width:680px){
+  /* Aba Clientes: tabela vira lista de cartões */
+  .cli-tabela-wrap{overflow:visible}
+  .cli-tabela{min-width:0}
+  .cli-tabela,.cli-tabela tbody{display:block}
+  .cli-tabela thead{display:none}
+  .cli-tabela tr.dem-linha{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;padding:11px 12px}
+  .cli-tabela tr.dem-linha>td{display:block;padding:0;max-width:none}
+  .cli-tabela .cli-c-nome{flex:1 1 calc(100% - 130px);min-width:0;order:1}
+  .cli-tabela .cli-c-nome .dem-td-sub{-webkit-line-clamp:2}
+  .cli-tabela .cli-c-status{order:2;flex:0 0 auto}
+  .cli-tabela .cli-c-abrir{order:3;flex:0 0 auto}
+  .cli-tabela .cli-c-tel,.cli-tabela .cli-c-cidade,.cli-tabela .cli-c-res{order:4;flex:0 1 auto;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cli-tabela .cli-c-tel::before{content:"📞 "}
+  .cli-tabela .cli-c-cidade::before{content:"📍 "}
+  .cli-tabela .cli-c-res::before{content:"🧾 ";}
+  .cli-tabela .cli-c-cpf,.cli-tabela .cli-c-email,.cli-tabela .cli-vazio{display:none!important}
+  .cli-tabela tr.dem-linha-det.open{display:block}
+  .cli-tabela tr.dem-linha-det>td{display:block;padding:12px}
+  .cli-tabela .cli-grid{grid-template-columns:1fr}
+  .cli-sn-linha{flex-wrap:wrap;gap:4px 10px!important}
+  .cli-sn-prog{flex:1 0 100%}
+  .cli-gest-grid{grid-template-columns:1fr}
+  .ed-sn-row{grid-template-columns:1fr 1fr!important}
+}
 
 /* STATS BAR */
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.4rem}
@@ -2718,9 +2745,9 @@ function _blocoSenhas(perfil) {
 
   var linhas = itens.map(function(it){
     var safe = String(it.senha).split("'").join('&#39;');
-    return '<div style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border)">'
-      + '<span style="flex:0 0 150px;font-size:12px;font-weight:700">' + escHtml(it.programa) + '</span>'
-      + '<span style="flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all">' + escHtml(it.senha) + '</span>'
+    return '<div class="cli-sn-linha" style="display:flex;align-items:center;gap:10px;padding:7px 12px;border-bottom:1px solid var(--border)">'
+      + '<span class="cli-sn-prog" style="font-size:12px;font-weight:700">' + escHtml(it.programa) + '</span>'
+      + '<span class="cli-sn-senha" style="flex:1;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;word-break:break-all">' + escHtml(it.senha) + '</span>'
       + (it.rotulo ? '<span class="tag" style="flex:0 0 auto">' + escHtml(it.rotulo) + '</span>' : '')
       + (it.inferida ? '<span class="tag" style="flex:0 0 auto;color:var(--yellow);border-color:var(--yellow)" title="Deduzida do padrão do cliente — confirme no primeiro uso">inferida</span>' : '')
       + '<button class="cli-copy" onclick="copiarTexto(this)" data-val="' + safe + '" title="Copiar senha">📋</button>'
@@ -2806,8 +2833,8 @@ function renderPendentes() {
     + (n ? '' : '<div style="font-size:12px;color:var(--muted);margin-top:8px">Nenhum cadastro aguardando aprovação.</div>')
     + pendentes.map(function(p){
         var c = p.cadastro || {};
-        return '<div id="pend-row-' + p.id + '" style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">'
-          + '<div style="flex:1">'
+        return '<div id="pend-row-' + p.id + '" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">'
+          + '<div style="flex:1;min-width:200px">'
           +   '<div style="font-size:13px;font-weight:700">' + escHtml(c.nome || '—') + '</div>'
           +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(c.email || '') + ' · ' + escHtml(c.tel || '') + (c.aparelho ? ' (' + escHtml(c.aparelho) + ')' : '') + ' · ' + escHtml(c.cidade || '') + '</div>'
           + '</div>'
@@ -5314,7 +5341,7 @@ function renderClientes() {
     return;
   }
 
-  grid.innerHTML = '<div class="dem-tabela-wrap"><table class="dem-tabela">'
+  grid.innerHTML = '<div class="dem-tabela-wrap cli-tabela-wrap"><table class="dem-tabela cli-tabela">'
     + '<thead><tr>'
     + '<th>Cliente</th>'
     + '<th style="width:130px">CPF</th>'
@@ -5353,24 +5380,24 @@ function renderClientes() {
         + _blocoGestaoCliente(c);
 
       return '<tr class="dem-linha' + (editando ? ' aberto' : '') + '" onclick="toggleLinha(this)">'
-        + '<td><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
+        + '<td class="cli-c-nome"><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
         +   (c.acompanhantes ? '<div class="dem-td-sub">👨‍👩‍👧 ' + escHtml(String(c.acompanhantes).replace(/\s*\n\s*/g, ' · ')) + '</div>' : '')
         + '</td>'
-        + '<td class="dem-td-sec">' + escHtml(c.cpf || '—') + '</td>'
-        + '<td class="dem-td-sec">' + escHtml(c.tel || '—') + '</td>'
-        + '<td class="dem-td-sec">' + escHtml(c.email || '—') + '</td>'
-        + '<td class="dem-td-sec">' + escHtml(c.cidade || '—') + '</td>'
-        + '<td class="dem-td-sec" onclick="event.stopPropagation()">'
+        + '<td class="dem-td-sec cli-c-cpf">' + escHtml(c.cpf || '—') + '</td>'
+        + '<td class="dem-td-sec cli-c-tel' + (c.tel ? '' : ' cli-vazio') + '">' + escHtml(c.tel || '—') + '</td>'
+        + '<td class="dem-td-sec cli-c-email">' + escHtml(c.email || '—') + '</td>'
+        + '<td class="dem-td-sec cli-c-cidade' + (c.cidade ? '' : ' cli-vazio') + '">' + escHtml(c.cidade || '—') + '</td>'
+        + '<td class="dem-td-sec cli-c-res' + (resCount ? '' : ' cli-vazio') + '" onclick="event.stopPropagation()">'
         +   (resCount
               ? '<span class="cli-reservas-link" style="cursor:pointer;color:var(--accent);font-weight:700" onclick="verReservasCliente(\'' + String(c.nome).split("'").join("\\'") + '\')">' + resCount + '</span>'
               : '—')
         + '</td>'
-        + '<td class="dem-td-sec">'
+        + '<td class="dem-td-sec cli-c-status">'
         +   (c.ativo
               ? '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35)">ATIVO</span>'
               : '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:var(--surface2);color:var(--muted2);border:1px solid var(--border)">INATIVO</span>')
         + '</td>'
-        + '<td style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
+        + '<td class="cli-c-abrir" style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
         + '</tr>'
         + '<tr class="dem-linha-det' + (editando ? ' open' : '') + '"><td colspan="8">' + detalhe + '</td></tr>';
     }).join('')
@@ -5586,7 +5613,7 @@ function salvarEdicaoCliente(id) {
 function _blocoGestaoCliente(c) {
   var id = String(c.id || '').split("'").join("\\'");
   return _tituloSecao('⚙️ Gestão do cliente')
-    + '<div style="display:grid;grid-template-columns:1fr 150px;gap:10px;align-items:end">'
+    + '<div class="cli-gest-grid">'
     +   '<div class="field" style="margin:0">'
     +     '<label>Grupo WhatsApp <span class="tag">destino das mensagens automáticas</span></label>'
     +     '<div style="display:flex;gap:6px">'
