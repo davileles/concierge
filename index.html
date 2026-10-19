@@ -1863,6 +1863,9 @@ header{animation:fadeUp .45s ease both}
       </select>
     </div>
 
+    <!-- Roteiro feito fora do concierge (gerador de roteiros): vincula à viagem -->
+    <div id="rg-externo" style="display:none;margin-bottom:1.2rem;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 14px"></div>
+
     <!-- Configurações do roteiro -->
     <div id="rg-config" style="display:none">
       <!-- Destino e Viajantes -->
@@ -10322,6 +10325,8 @@ function rgCarregarViagem() {
     if (acoesEl) acoesEl.style.display = 'none';
     var bdEl0 = document.getElementById('rg-bomdia');
     if (bdEl0) bdEl0.style.display = 'none';
+    var exEl0 = document.getElementById('rg-externo');
+    if (exEl0) exEl0.style.display = 'none';
     return;
   }
   loadViagens(); loadReservas();
@@ -10348,6 +10353,170 @@ function rgCarregarViagem() {
   try { rgRenderDias(); } catch(e) { console.error('rgRenderDias', e); }
   try { rgGerarPrevia(v); } catch(e) { console.error('rgGerarPrevia', e); }
   try { rgBomDiaRender(v); } catch(e) { console.error('rgBomDiaRender', e); }
+  try { rgExternoRender(v); } catch(e) { console.error('rgExternoRender', e); }
+}
+
+// ── Roteiro externo (feito no gerador de roteiros, fora do concierge) ─────
+// Lê o ROTEIRO_DATA da página publicada em roteiros.clubedoviajante.com.br e
+// grava na viagem slugRoteiro/urlRoteiro/roteiroDias + roteiroExterno. Com isso
+// o bom dia, o {{link_roteiro}} e os gatilhos de viagem passam a valer. O
+// "Publicar" do concierge pede confirmação para não sobrescrever a página.
+var RG_MESES = {janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+
+function rgExternoRender(v) {
+  var el = document.getElementById('rg-externo');
+  if (!el) return;
+  if (!v) { el.style.display = 'none'; return; }
+  el.style.display = '';
+  var ex = v.roteiroExterno;
+  var h = '<div style="font-size:12px;font-weight:700;margin-bottom:6px">🔗 Roteiro feito no gerador de roteiros</div>';
+  if (ex) {
+    var url = ex.url || ('https://roteiros.clubedoviajante.com.br/' + v.slugRoteiro + '/');
+    h += '<div style="font-size:12px;color:var(--muted);line-height:1.6">Vinculado a <a href="' + escHtml(url) + '" target="_blank" style="color:var(--accent);font-weight:700">' + escHtml(ex.titulo || url) + '</a>'
+      + ' · ' + ((v.roteiroDias || []).length) + ' dias'
+      + (ex.importadoEm ? ' · importado em ' + escHtml(new Date(ex.importadoEm).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })) : '') + '</div>'
+      + '<div style="font-size:11px;color:var(--muted2);margin:4px 0 8px">Mudou o roteiro no gerador? Reimporte para o bom dia seguir a página. As cidades corrigidas abaixo são mantidas.</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost btn-sm" onclick="rgExternoImportar(true)">🔄 Reimportar</button>'
+      + '<button class="btn btn-ghost btn-sm" onclick="rgExternoDesvincular()">Desvincular</button></div>';
+  } else {
+    h += '<div style="font-size:11px;color:var(--muted2);margin-bottom:8px">Cole o link do roteiro publicado (ou a pasta, ex. <code>roteiros/madrid-paris-2026</code>) para usar os dias dele nesta viagem: bom dia automático, {{link_roteiro}} e lembretes.</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap"><input type="text" id="rg-ext-link" style="flex:1;min-width:220px;font-size:12px" placeholder="https://roteiros.clubedoviajante.com.br/…/"/>'
+      + '<button class="btn btn-accent btn-sm" onclick="rgExternoImportar(false)">🔗 Vincular</button></div>';
+  }
+  h += '<div id="rg-ext-status" style="font-size:12px;margin-top:8px"></div>';
+  el.innerHTML = h;
+}
+
+function rgSlugDoLink(txt) {
+  var s = String(txt || '').trim();
+  s = s.replace(/^https?:\/\//i, '')
+       .replace(/^roteiros\.clubedoviajante\.com\.br\/?/i, '')
+       .replace(/^davileles\.github\.io\/roteiros\/?/i, '')
+       .replace(/[?#].*$/, '').replace(/\/?index\.html$/i, '')
+       .replace(/^\/+|\/+$/g, '');
+  return /^[a-z0-9][a-z0-9\/_-]*$/i.test(s) ? s : '';
+}
+
+// Recorta o literal do objeto atribuído a ROTEIRO_DATA (andando pelas chaves,
+// respeitando strings) e faz JSON.parse — nunca executa código da página.
+function rgExtrairRoteiroData(html) {
+  var i = html.indexOf('const ROTEIRO_DATA = ');
+  if (i < 0) i = html.search(/ROTEIRO_DATA\s*=\s*\{/);
+  if (i < 0) throw new Error('A página não tem ROTEIRO_DATA (não é do modelo de roteiro).');
+  var j = html.indexOf('{', i), prof = 0, str = null, esc = false;
+  for (var k = j; k < html.length; k++) {
+    var ch = html[k];
+    if (str) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === str) str = null; continue; }
+    if (ch === '"' || ch === "'") { str = ch; continue; }
+    if (ch === '{') prof++;
+    else if (ch === '}') { prof--; if (prof === 0) return JSON.parse(html.slice(j, k + 1)); }
+  }
+  throw new Error('ROTEIRO_DATA incompleto na página.');
+}
+
+// Data do dia em AAAA-MM-DD: aceita ISO, "14/07", "14/07/2026" e "14 de julho".
+function rgDataIsoDia(txt, anoBase) {
+  var s = String(txt || '').trim();
+  var m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return m[0];
+  var p2 = function(n){ return ('0' + n).slice(-2); };
+  m = s.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+  if (m) { var a = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : anoBase; return a ? a + '-' + p2(m[2]) + '-' + p2(m[1]) : ''; }
+  var n = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  m = n.match(/(\d{1,2})\s*(?:de\s+)?([a-z]+)(?:\s*(?:de\s+)?(\d{4}))?/);
+  if (m && RG_MESES[m[2]]) { var a2 = m[3] || anoBase; return a2 ? a2 + '-' + p2(RG_MESES[m[2]]) + '-' + p2(m[1]) : ''; }
+  return '';
+}
+
+function rgSomarDias(iso, n) {
+  var d = new Date(iso + 'T12:00:00Z');
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+}
+
+// Títulos do gerador costumam ser criativos ("¡Hola, Madrid!") e não servem
+// para achar a cidade. Infere pela hospedagem (onde dormiu na noite anterior e
+// onde faz check-in no dia) e, sem hotel, pela origem do primeiro voo do dia.
+function rgCidadePorRoteiro(data, iso) {
+  if (!iso) return '';
+  var limpa = function(s){ return String(s || '').split('·')[0].split(',')[0].trim(); };
+  var hs = Array.isArray(data.hospedagem) ? data.hospedagem : [];
+  var acorda = '', chega = '';
+  hs.forEach(function(h){
+    if (!h || !h.cidade) return;
+    if (h.checkin && h.checkout && h.checkin < iso && iso <= h.checkout) acorda = limpa(h.cidade);
+    if (h.checkin === iso) chega = limpa(h.cidade);
+  });
+  if (!acorda) {
+    var voo = (Array.isArray(data.voos) ? data.voos : []).filter(function(x){ return x && x.data === iso; })
+      .sort(function(a, b){ return String(a.horaPartida || '').localeCompare(String(b.horaPartida || '')); })[0];
+    if (voo && voo.origemNome) acorda = limpa(voo.origemNome);
+  }
+  if (!acorda) return chega;
+  return chega && chega !== acorda ? acorda + ' → ' + chega : acorda;
+}
+
+async function rgExternoImportar(reimportar) {
+  var v = _rgViagemAtual();
+  var st = document.getElementById('rg-ext-status');
+  var msg = function(t, cor){ if (st) st.innerHTML = '<span style="color:' + (cor || 'var(--muted)') + '">' + t + '</span>'; };
+  if (!v) return;
+  var slug = reimportar ? (v.slugRoteiro || '') : rgSlugDoLink((document.getElementById('rg-ext-link') || {}).value);
+  if (!slug) return msg('⚠️ Link inválido. Use o endereço de roteiros.clubedoviajante.com.br ou o nome da pasta.', 'var(--yellow)');
+  msg('⏳ Lendo o roteiro…');
+  try {
+    // raw do GitHub primeiro (atualiza em minutos); a página do Pages é o plano B.
+    var fontes = ['https://raw.githubusercontent.com/davileles/roteiros/main/' + slug + '/index.html?t=' + Date.now(),
+                  'https://roteiros.clubedoviajante.com.br/' + slug + '/?t=' + Date.now()];
+    var html = '', ultimoErro = null;
+    for (var f = 0; f < fontes.length && !html; f++) {
+      try { var r = await fetch(fontes[f], { cache: 'no-store' }); if (r.ok) html = await r.text(); else ultimoErro = new Error('HTTP ' + r.status); }
+      catch (e) { ultimoErro = e; }
+    }
+    if (!html) throw new Error('Roteiro não encontrado (' + (ultimoErro ? ultimoErro.message : '?') + '). Confira o link.');
+    var data = rgExtrairRoteiroData(html);
+    var origem = Array.isArray(data.dias) ? data.dias : [];
+    if (!origem.length) throw new Error('O roteiro não tem dias.');
+    var anoBase = (v.inicio || '').slice(0, 4) || ((data.voos || [])[0] && String(data.voos[0].data || '').slice(0, 4)) || String(new Date().getFullYear());
+    var cidadesAntes = {};
+    (v.roteiroDias || []).forEach(function(d){ if (d && d.data && d.cidade) cidadesAntes[d.data] = d.cidade; });
+    var semData = 0;
+    var dias = origem.map(function(d, idx){
+      var x = JSON.parse(JSON.stringify(d || {}));
+      var iso = rgDataIsoDia(x.data, anoBase);
+      if (!iso && v.inicio) { iso = rgSomarDias(v.inicio, idx); }
+      if (!iso) semData++;
+      x.data = iso;
+      if (!Array.isArray(x.atividades)) x.atividades = [];
+      if (!x.cidade && iso && cidadesAntes[iso]) x.cidade = cidadesAntes[iso];
+      if (!x.cidade) { var cid = rgCidadePorRoteiro(data, iso); if (cid) x.cidade = cid; }
+      return x;
+    });
+    v.slugRoteiro = slug;
+    v.urlRoteiro = 'https://roteiros.clubedoviajante.com.br/' + slug + '/';
+    v.roteiroDias = dias;
+    v.roteiroExterno = { url: v.urlRoteiro, titulo: data.titulo || slug, importadoEm: new Date().toISOString() };
+    rgDias = JSON.parse(JSON.stringify(dias));
+    await saveViagens();
+    var slugEl = document.getElementById('rg-slug');
+    if (slugEl) { slugEl.value = slug; var pv = document.getElementById('rg-slug-preview'); if (pv) pv.textContent = slug; }
+    try { rgRenderDias(); } catch(e) {}
+    rgBomDiaRender(v);
+    rgExternoRender(v);
+    msg('✅ ' + dias.length + ' dias importados' + (semData ? ' — ' + semData + ' sem data (o bom dia pula esses dias)' : '') + '. Confira as cidades no bloco do bom dia e ligue o envio.', 'var(--green)');
+    showToast(reimportar ? '🔄 Roteiro reimportado' : '🔗 Roteiro vinculado à viagem', 'ok');
+  } catch (e) {
+    msg('❌ ' + escHtml(e.message), 'var(--accent)');
+  }
+}
+
+function rgExternoDesvincular() {
+  var v = _rgViagemAtual();
+  if (!v || !v.roteiroExterno) return;
+  if (!confirm('Desvincular o roteiro do gerador? O link e os dias continuam na viagem, mas o "Publicar" daqui deixa de pedir confirmação.')) return;
+  delete v.roteiroExterno;
+  saveViagens().then(function(){ rgExternoRender(v); showToast('Roteiro desvinculado', 'ok'); })
+    .catch(function(){ showToast('⚠️ Não foi possível salvar', 'err'); });
 }
 
 // ── Bom dia automático ────────────────────────────────────────────────────
@@ -10864,7 +11033,9 @@ async function rgPublicar() {
   if (!slug) return rgSetStatus('⚠️ Informe o slug/pasta do roteiro.','err');
   loadViagens();
   var v = viagens.find(function(x){ return x.id===vid; });
+  if (v && v.roteiroExterno && !confirm('Esta viagem usa o roteiro feito no gerador de roteiros (' + (v.roteiroExterno.titulo || v.slugRoteiro) + ').\n\nPublicar daqui SUBSTITUI aquela página pela versão do concierge' + (slug === v.slugRoteiro ? '' : ' (em outra pasta: ' + slug + ')') + '. Continuar?')) return;
   if (v) {
+    if (v.roteiroExterno && slug === v.slugRoteiro) delete v.roteiroExterno;
     v.slugRoteiro = slug;
     v.heroImageRoteiro = document.getElementById('rg-hero').value.trim();
     v.subtituloRoteiro = document.getElementById('rg-subtitulo').value.trim();
