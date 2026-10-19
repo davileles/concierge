@@ -1856,11 +1856,19 @@ header{animation:fadeUp .45s ease both}
     <div class="card-title" style="margin-bottom:1.2rem">🗺️ Gerar Roteiro do Cliente</div>
 
     <!-- Seleção de viagem -->
-    <div class="field" style="margin-bottom:1rem">
-      <label>Viagem <span style="color:var(--accent)">*</span></label>
-      <select id="rg-viagem" onchange="rgCarregarViagem()">
-        <option value="">— Selecionar viagem —</option>
-      </select>
+    <div class="g2" style="margin-bottom:1rem">
+      <div class="field">
+        <label>Cliente <span style="color:var(--accent)">*</span></label>
+        <select id="rg-cliente" onchange="rgClienteChange()">
+          <option value="">— Selecionar cliente —</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Viagem <span style="color:var(--accent)">*</span></label>
+        <select id="rg-viagem" onchange="rgCarregarViagem()" disabled>
+          <option value="">— Selecione o cliente primeiro —</option>
+        </select>
+      </div>
     </div>
 
     <!-- Roteiro feito fora do concierge (gerador de roteiros): vincula à viagem -->
@@ -3384,7 +3392,19 @@ function inserirVarDemanda(el) {
 }
 
 // Atualiza o painel de dados do cliente no formulário de demanda
+// Select "Vincular à viagem" da demanda: filtra pelos clientes da demanda.
+// disparar=true (troca de cliente) atualiza o campo de atividade se o vínculo caiu.
+function popularViagemDemanda(manterId, disparar) {
+  var sel = document.getElementById('df-viagem-assoc');
+  if (!sel) return;
+  var antes = sel.value;
+  var cur = (manterId === undefined || manterId === null) ? antes : manterId;
+  preencherSelectViagem(sel, getClientesDemanda(), cur, '— Não vincular a nenhuma viagem —');
+  if (disparar && sel.value !== antes) demandaViagemChange();
+}
+
 function demandaClienteChange() {
+  popularViagemDemanda(null, true);
   var nomeStr = document.getElementById('df-clientes').value;
   renderVarsDemanda(nomeStr);
   var _avCli = document.getElementById('df-avisar-cli');
@@ -3599,33 +3619,64 @@ function _listaClientesViagem(v) {
   var arr = Array.isArray(v.clientes) ? v.clientes : String(v.clientes).split(',');
   return arr.map(function(c){ return String(c).trim(); }).filter(Boolean);
 }
+// ── Seletores de viagem (Nova Reserva, Demanda, Gerar Roteiro) ──
+// Regras: (1) primeiro o cliente, depois a viagem — só aparecem as viagens dele;
+// (2) viagem concluída (viagemPassada: última data já passou) não aparece.
+// Exceção: a viagem já vinculada (manterId) sempre aparece, marcada "concluída".
+function viagensParaSelect(nomesClientes, manterId) {
+  var nomes = (nomesClientes || []).filter(Boolean);
+  return viagens.filter(function(v) {
+    if (manterId && v.id === manterId) return true;
+    if (viagemPassada(v)) return false;
+    if (!nomes.length) return true;
+    return _listaClientesViagem(v).some(function(c) {
+      return nomes.some(function(n){ return mesmoCliente(c, n); });
+    });
+  }).sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); });
+}
+function rotuloViagemSelect(v) {
+  var clientes = _listaClientesViagem(v).map(toTitleCase).join(', ');
+  var label = (v.nome || 'Sem nome') + (clientes ? ' — ' + clientes : '');
+  if (v.inicio) label += ' (🛫 ' + fmtDate(v.inicio) + ')';
+  if (viagemPassada(v)) label += ' · concluída';
+  return label;
+}
+// Preenche um <select> de viagem. Sem cliente: fica travado pedindo o cliente.
+function preencherSelectViagem(sel, nomesClientes, manterId, textoVazio) {
+  var nomes = (nomesClientes || []).filter(Boolean);
+  sel.innerHTML = '';
+  if (!nomes.length && !manterId) {
+    sel.innerHTML = '<option value="">— Selecione o cliente primeiro —</option>';
+    sel.disabled = true;
+    return;
+  }
+  sel.disabled = false;
+  var opt0 = document.createElement('option');
+  opt0.value = '';
+  opt0.textContent = textoVazio;
+  sel.appendChild(opt0);
+  var lista = viagensParaSelect(nomes, manterId);
+  if (!lista.length) {
+    var optN = document.createElement('option');
+    optN.disabled = true;
+    optN.textContent = 'Nenhuma viagem em aberto para ' + nomes.map(toTitleCase).join(', ');
+    sel.appendChild(optN);
+  }
+  lista.forEach(function(v) {
+    var opt = document.createElement('option');
+    opt.value = v.id;
+    opt.textContent = rotuloViagemSelect(v);
+    sel.appendChild(opt);
+  });
+  sel.value = (manterId && lista.some(function(v){ return v.id === manterId; })) ? manterId : '';
+}
+
 // Popula o select de associação de viagem no form de nova reserva
 function populateViagemAssocSelect(reservadoParaId) {
   var sel = document.getElementById('f-viagem-assoc');
   if (!sel) return;
-  sel.innerHTML = '<option value="">Não associar a nenhuma viagem</option>';
   var clienteSel = toTitleCase((getVal('f-cliente') || '').trim());
-  var viagensFiltradas = viagens.filter(function(v) {
-    if (!clienteSel) return true;
-    var lista = _listaClientesViagem(v).map(function(c){ return toTitleCase(c).toLowerCase(); });
-    return lista.some(function(c){ return mesmoCliente(c, clienteSel); });
-  });
-  if (viagensFiltradas.length === 0 && clienteSel) {
-    var opt0 = document.createElement('option');
-    opt0.disabled = true;
-    opt0.textContent = 'Nenhuma viagem encontrada para ' + clienteSel;
-    sel.appendChild(opt0);
-  }
-  viagensFiltradas.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
-    var clientes = _listaClientesViagem(v).map(toTitleCase).join(', ');
-    var label = v.nome + (clientes ? ' — ' + clientes : '');
-    if (v.inicio) label += ' (' + fmtDate(v.inicio) + ')';
-    var opt = document.createElement('option');
-    opt.value = v.id;
-    opt.textContent = label;
-    sel.appendChild(opt);
-  });
-  if (reservadoParaId) sel.value = reservadoParaId;
+  preencherSelectViagem(sel, clienteSel ? [clienteSel] : [], reservadoParaId || '', 'Não associar a nenhuma viagem');
   onViagemAssocChange();
 }
 // Exibe até 3 palavras do nome (2 espaços) — 2 palavras cortava nomes como
@@ -10305,13 +10356,78 @@ var rgDias = [];
 // Token GitHub vem da configuração do usuário (aba Configuração → GitHub Token)
 // Publicação de roteiros usa o endpoint /roteiros/publicar do proxy (sem token no front)
 
+// Gerar Roteiro: cliente primeiro (só clientes com viagem em aberto), depois a
+// viagem dele. Viagem concluída não aparece; a já selecionada é mantida.
+var RG_SEM_CLIENTE = '__sem_cliente__';
 function rgPopularSelect() {
   loadViagens();
-  var sel = document.getElementById('rg-viagem');
-  sel.innerHTML = '<option value="">— Selecionar viagem —</option>' +
-    viagens.map(function(v) {
-      return '<option value="'+v.id+'">'+v.nome+(v.clientes?' · '+v.clientes:'')+'</option>';
-    }).join('');
+  var selC = document.getElementById('rg-cliente');
+  var selV = document.getElementById('rg-viagem');
+  if (!selC || !selV) return;
+  var curV = selV.value, curC = selC.value;
+  var mapa = {}, temSemCliente = false;
+  viagens.forEach(function(v) {
+    if (viagemPassada(v) && v.id !== curV) return;
+    var lista = _listaClientesViagem(v);
+    if (!lista.length) { temSemCliente = true; return; }
+    lista.forEach(function(c) {
+      var n = toTitleCase(c), k = _normNome(n);
+      if (k && !mapa[k]) mapa[k] = n;
+    });
+  });
+  var nomes = Object.keys(mapa).map(function(k){ return mapa[k]; })
+    .sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+  selC.innerHTML = '<option value="">— Selecionar cliente —</option>';
+  nomes.forEach(function(n) {
+    var o = document.createElement('option'); o.value = n; o.textContent = n; selC.appendChild(o);
+  });
+  if (temSemCliente) {
+    var o2 = document.createElement('option'); o2.value = RG_SEM_CLIENTE; o2.textContent = '(viagens sem cliente)'; selC.appendChild(o2);
+  }
+  if (curC === RG_SEM_CLIENTE && temSemCliente) selC.value = curC;
+  else if (curC && mapa[_normNome(curC)]) selC.value = mapa[_normNome(curC)];
+  else if (curV) {
+    var vAtual = viagens.find(function(x){ return x.id === curV; });
+    var c1 = vAtual ? _listaClientesViagem(vAtual)[0] : '';
+    selC.value = c1 ? (mapa[_normNome(toTitleCase(c1))] || '') : (vAtual && temSemCliente ? RG_SEM_CLIENTE : '');
+  }
+  rgPopularViagens(curV);
+}
+
+function rgPopularViagens(manterId) {
+  var selC = document.getElementById('rg-cliente');
+  var selV = document.getElementById('rg-viagem');
+  if (!selC || !selV) return;
+  var antes = selV.value;
+  var cli = selC.value;
+  // Trocou o cliente: a viagem selecionada só fica se for desse cliente
+  if (manterId && cli && cli !== RG_SEM_CLIENTE) {
+    var vM = viagens.find(function(x){ return x.id === manterId; });
+    if (!vM || !_listaClientesViagem(vM).some(function(c){ return mesmoCliente(c, cli); })) manterId = '';
+  }
+  if (cli === RG_SEM_CLIENTE) {
+    selV.disabled = false;
+    selV.innerHTML = '<option value="">— Selecionar viagem —</option>';
+    viagens.filter(function(v){
+      return !_listaClientesViagem(v).length && (!viagemPassada(v) || v.id === manterId);
+    }).sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
+      var o = document.createElement('option'); o.value = v.id; o.textContent = rotuloViagemSelect(v); selV.appendChild(o);
+    });
+    selV.value = (manterId && Array.prototype.some.call(selV.options, function(o){ return o.value === manterId; })) ? manterId : '';
+  } else {
+    preencherSelectViagem(selV, cli ? [cli] : [], cli ? (manterId || '') : '', '— Selecionar viagem —');
+  }
+  // Uma única viagem em aberto para o cliente: já seleciona
+  if (!selV.value && cli) {
+    var reais = Array.prototype.filter.call(selV.options, function(o){ return o.value && !o.disabled; });
+    if (reais.length === 1) selV.value = reais[0].value;
+  }
+  if (selV.value !== antes) rgCarregarViagem();
+}
+
+function rgClienteChange() {
+  var selV = document.getElementById('rg-viagem');
+  rgPopularViagens(selV ? selV.value : '');
 }
 
 function rgCarregarViagem() {
@@ -11390,15 +11506,8 @@ function abrirNovaDemanda() {
   document.getElementById('df-tipo').value = '✈️ Passagem Doméstica';
   preencherAgendaForm(null);
   preencherAvisoCliForm(null);
-  // Popular viagens
-  var sel = document.getElementById('df-viagem-assoc');
-  sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
-  viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
-    var opt = document.createElement('option');
-    opt.value = v.id;
-    opt.textContent = v.nome + (v.clientes ? ' · ' + v.clientes : '');
-    sel.appendChild(opt);
-  });
+  // Popular viagens (filtradas pelos clientes; reabre em demandaClienteChange)
+  popularViagemDemanda('', false);
   document.getElementById('df-field-atividade').style.display = 'none';
   // Alerta só depois que a demanda existe (precisa de um vínculo para acompanhar)
   var secAl = document.getElementById('dfa-alerta-section');
@@ -11634,15 +11743,7 @@ function editarDemanda(id) {
   document.getElementById('df-tipo').value = d.tipo || '✈️ Passagem Doméstica';
   preencherAgendaForm(d);
   preencherAvisoCliForm(d);
-  var sel = document.getElementById('df-viagem-assoc');
-  sel.innerHTML = '<option value="">— Não vincular a nenhuma viagem —</option>';
-  viagens.slice().sort(function(a,b){ return (a.nome||'').localeCompare((b.nome||''),'pt-BR'); }).forEach(function(v) {
-    var opt = document.createElement('option');
-    opt.value = v.id;
-    opt.textContent = v.nome + (v.clientes ? ' · ' + v.clientes : '');
-    sel.appendChild(opt);
-  });
-  sel.value = d.viagemId || '';
+  popularViagemDemanda(d.viagemId || '', false);
   document.getElementById('df-field-atividade').style.display = 'none';
 
   // Seção de alerta/lembrete da demanda. Demanda espelhada de atividade grava o
