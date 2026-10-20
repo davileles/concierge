@@ -485,6 +485,27 @@ header{animation:fadeUp .45s ease both}
 .sa-mod.on{border-color:var(--accent);background:rgba(255,88,94,.12)}
 .sa-mod-vazio{font-size:11.5px;color:var(--muted);line-height:1.6}
 .sa-tab-badge{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;line-height:16px;text-align:center}
+/* ══ BUSCAR VOOS ══ */
+.bv-linha{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
+.bv-linha>.field{flex:1 1 120px;margin-bottom:0}
+.bv-iata input{text-transform:uppercase;font-weight:800;letter-spacing:2px;font-size:18px}
+.bv-aero{font-size:11px;color:var(--muted2);min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bv-trocar{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);width:44px;height:44px;font-size:18px;cursor:pointer;flex:0 0 auto;margin-bottom:19px}
+.bv-trocar:hover{border-color:var(--accent)}
+.bv-chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.bv-chip{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:7px 14px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer}
+.bv-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bv-aviso{font-size:13px;color:var(--muted);padding:14px 16px;border:1px dashed var(--border2);border-radius:var(--r)}
+.bv-prog{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--bv-cor,var(--accent));border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.bv-prog-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.bv-prog-nome{font-weight:800;font-size:15px}
+.bv-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:var(--surface2);border-radius:6px;padding:3px 7px;margin-left:6px}
+.bv-url{font-size:11px;color:var(--muted2);word-break:break-all;font-family:ui-monospace,Menlo,monospace;margin-bottom:10px;user-select:all}
+.bv-acoes{display:flex;gap:8px;flex-wrap:wrap}
+.bv-acoes a,.bv-acoes button{font-family:var(--font);font-size:12px;font-weight:800;padding:8px 14px;border-radius:8px;cursor:pointer;text-decoration:none;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
+.bv-acoes a.bv-abrir{background:var(--bv-cor,var(--accent));border-color:var(--bv-cor,var(--accent));color:#fff}
+.bv-copiar-tudo{display:flex;justify-content:flex-end;margin-bottom:10px}
+.bv-copiar-tudo button{font-family:var(--font);font-size:12px;font-weight:800;padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
 </style>
 <script src="iata.js"></script>
 <script src="bom-dia.js"></script>
@@ -549,6 +570,7 @@ header{animation:fadeUp .45s ease both}
   <button class="main-tab" onclick="switchTab('nova')">➕ Nova Reserva</button>
   <button class="main-tab" onclick="switchTab('demandas')">📋 Demandas</button>
   <button class="main-tab" onclick="switchTab('seats')">✈️ Seats.aero<span class="sa-tab-badge" id="sa-tab-badge" style="display:none"></span></button>
+  <button class="main-tab" onclick="switchTab('buscavoos')">🔎 Buscar voos</button>
   <button class="main-tab" onclick="switchTab('viagens')">🗺️ Viagens</button>
   <button class="main-tab" onclick="switchTab('clientes')">👤 Clientes</button>
   <button class="main-tab" onclick="switchTab('mensagens')">💬 Mensagens</button>
@@ -2076,6 +2098,39 @@ header{animation:fadeUp .45s ease both}
     <!-- LISTA -->
     <div id="sa-lista"><div class="sa-vazio">Carregando…</div></div>
   </div>
+</div>
+
+<!-- ══ PAINEL BUSCAR VOOS (links de pesquisa Azul / LATAM Pass / Smiles) — espelhado em gestor-cdv e concierge ══ -->
+<div class="main-panel" id="panel-buscavoos">
+  <div class="card">
+    <div class="bv-linha">
+      <div class="field bv-iata"><label>Origem</label><input type="text" id="bv-origem" maxlength="3" placeholder="CGH" autocomplete="off"/><span class="bv-aero" id="bv-origem-nome"></span></div>
+      <button type="button" class="bv-trocar" onclick="bvTrocar()" title="Inverter origem e destino">⇄</button>
+      <div class="field bv-iata"><label>Destino</label><input type="text" id="bv-destino" maxlength="3" placeholder="CNF" autocomplete="off"/><span class="bv-aero" id="bv-destino-nome"></span></div>
+    </div>
+    <div class="bv-chips" id="bv-tipo">
+      <button type="button" class="bv-chip" data-v="ida-volta" onclick="bvTipo('ida-volta')">Ida e volta</button>
+      <button type="button" class="bv-chip on" data-v="ida" onclick="bvTipo('ida')">Só ida</button>
+    </div>
+    <div class="bv-linha">
+      <div class="field"><label>🛫 Ida</label><input type="date" id="bv-ida"/></div>
+      <div class="field" id="bv-volta-campo" style="display:none"><label>🛬 Volta</label><input type="date" id="bv-volta"/></div>
+    </div>
+    <div class="bv-linha">
+      <div class="field"><label>Adultos</label><input type="number" id="bv-adt" min="1" max="9" value="1"/></div>
+      <div class="field"><label>Crianças</label><input type="number" id="bv-chd" min="0" max="8" value="0"/></div>
+      <div class="field"><label>Bebês</label><input type="number" id="bv-inf" min="0" max="8" value="0"/></div>
+    </div>
+    <div class="bv-linha">
+      <div class="field"><label>Cabine</label>
+        <select id="bv-cabine"><option value="economica">Econômica</option><option value="executiva">Executiva</option></select>
+      </div>
+      <div class="field"><label>Pagamento</label>
+        <select id="bv-pagamento"><option value="dinheiro">Dinheiro</option><option value="pontos" selected>Pontos</option></select>
+      </div>
+    </div>
+  </div>
+  <div id="bv-resultado"></div>
 </div>
 
 <div class="main-panel" id="panel-demandas">
@@ -12086,6 +12141,181 @@ function toggleDemanda(id) {
   }, 200);
 }
 
+</script>
+
+<script>
+// ══ BUSCAR VOOS — monta links de pesquisa de Azul, LATAM Pass e Smiles ══
+// Espelhado em gestor-cdv/index.html e concierge/index.html (mudou um, muda o outro).
+// Azul: formato confirmado com links reais (out/2026). LATAM e Smiles: formato público
+// conhecido dos sites, conferir com um link real se o site mudar.
+var bvEstado = { tipo: 'ida' };
+
+var BV_PROGRAMAS = [
+  { id: 'azul',   nome: 'Azul Fidelidade', cor: '#1b5bd6', link: bvLinkAzul },
+  { id: 'latam',  nome: 'LATAM Pass',      cor: '#e8114b', link: bvLinkLatam },
+  { id: 'smiles', nome: 'Smiles',          cor: '#ff7020', link: bvLinkSmiles, soMilhas: true }
+];
+
+function bvPartes(iso) { var p = String(iso).split('-'); return { a: p[0], m: p[1], d: p[2] }; }
+function bvDataBR(iso) { var x = bvPartes(iso); return x.d + '/' + x.m + '/' + x.a; }
+
+// Azul: c[i].std = MM/DD/AAAA; passageiros p[i].t = ADT/CHD/INF; cc = PTS (pontos) ou BRL (dinheiro)
+function bvLinkAzul(b) {
+  var q = [];
+  function trecho(i, de, data, para) {
+    var x = bvPartes(data);
+    q.push('c[' + i + '].ds=' + de, 'c[' + i + '].std=' + x.m + '/' + x.d + '/' + x.a, 'c[' + i + '].as=' + para);
+  }
+  trecho(0, b.origem, b.ida, b.destino);
+  if (b.volta) trecho(1, b.destino, b.volta, b.origem);
+  var i = 0;
+  [['ADT', b.adt], ['CHD', b.chd], ['INF', b.inf]].forEach(function(p) {
+    if (p[1] > 0) { q.push('p[' + i + '].t=' + p[0], 'p[' + i + '].c=' + p[1], 'p[' + i + '].cp=false'); i++; }
+  });
+  q.push('f.dl=3', 'f.dr=3', 'cc=' + (b.pagamento === 'dinheiro' ? 'BRL' : 'PTS'));
+  return 'https://www.voeazul.com.br/br/pt/home/selecao-voo?' + q.join('&');
+}
+
+// LATAM: datas ISO ao meio-dia (UTC 15h = 12h de Brasília); redemption=true é busca em pontos
+function bvLinkLatam(b) {
+  function dt(d) { return encodeURIComponent(d + 'T15:00:00.000Z'); }
+  return 'https://www.latamairlines.com/br/pt/oferta-voos?' + [
+    'origin=' + b.origem,
+    'outbound=' + dt(b.ida),
+    'destination=' + b.destino,
+    'inbound=' + (b.volta ? dt(b.volta) : 'null'),
+    'adt=' + b.adt, 'chd=' + b.chd, 'inf=' + b.inf,
+    'trip=' + (b.volta ? 'RT' : 'OW'),
+    'cabin=' + (b.cabine === 'executiva' ? 'Business' : 'Economy'),
+    'redemption=' + (b.pagamento === 'pontos' ? 'true' : 'false'),
+    'sort=RECOMMENDED'
+  ].join('&');
+}
+
+// Smiles: datas em milissegundos (meia-noite de Brasília); tripType 1 = ida e volta, 2 = só ida
+function bvLinkSmiles(b) {
+  function ms(d) { return String(Date.parse(d + 'T00:00:00-03:00')); }
+  return 'https://www.smiles.com.br/mfe/emissao-passagem/?' + [
+    'adults=' + b.adt,
+    'cabin=' + (b.cabine === 'executiva' ? 'BUSINESS' : 'ALL'),
+    'children=' + b.chd,
+    'departureDate=' + ms(b.ida),
+    'infants=' + b.inf,
+    'isElegible=false', 'isFlexibleDateChecked=false',
+    'returnDate=' + (b.volta ? ms(b.volta) : ''),
+    'searchType=g3', 'segments=1',
+    'tripType=' + (b.volta ? '1' : '2'),
+    'originAirport=' + b.origem, 'originCity=', 'originCountry=', 'originAirportIsAny=false',
+    'destinationAirport=' + b.destino, 'destinCity=', 'destinCountry=', 'destinAirportIsAny=false',
+    'novo-resultado-voos=true'
+  ].join('&');
+}
+
+function bvNum(id, min) {
+  var n = parseInt(document.getElementById(id).value, 10);
+  return isNaN(n) || n < min ? min : Math.min(n, 9);
+}
+
+function bvLer() {
+  return {
+    origem: document.getElementById('bv-origem').value.trim().toUpperCase(),
+    destino: document.getElementById('bv-destino').value.trim().toUpperCase(),
+    ida: document.getElementById('bv-ida').value,
+    volta: bvEstado.tipo === 'ida-volta' ? document.getElementById('bv-volta').value : '',
+    adt: bvNum('bv-adt', 1), chd: bvNum('bv-chd', 0), inf: bvNum('bv-inf', 0),
+    cabine: document.getElementById('bv-cabine').value,
+    pagamento: document.getElementById('bv-pagamento').value
+  };
+}
+
+function bvNomeAeroporto(cod) {
+  if (cod.length !== 3 || typeof IATA_AIRPORTS === 'undefined') return '';
+  var a = IATA_AIRPORTS.find(function(x) { return String(x.code).toUpperCase() === cod; });
+  return a ? (a.label || '') : '';
+}
+
+function bvTipo(t) {
+  bvEstado.tipo = t;
+  document.querySelectorAll('#bv-tipo .bv-chip').forEach(function(c) { c.classList.toggle('on', c.getAttribute('data-v') === t); });
+  document.getElementById('bv-volta-campo').style.display = t === 'ida-volta' ? '' : 'none';
+  bvRender();
+}
+
+function bvTrocar() {
+  var o = document.getElementById('bv-origem'), d = document.getElementById('bv-destino');
+  var tmp = o.value; o.value = d.value; d.value = tmp;
+  bvRender();
+}
+
+function bvEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+
+function bvProblema(b) {
+  if (!/^[A-Z]{3}$/.test(b.origem) || !/^[A-Z]{3}$/.test(b.destino)) return 'Informe origem e destino com o código de 3 letras do aeroporto (ex.: CGH, CNF, GRU).';
+  if (b.origem === b.destino) return 'Origem e destino estão iguais.';
+  if (!b.ida) return 'Informe a data de ida 🛫.';
+  if (bvEstado.tipo === 'ida-volta' && !b.volta) return 'Informe a data de volta 🛬.';
+  if (b.volta && b.volta < b.ida) return 'A volta 🛬 está antes da ida 🛫.';
+  if (b.inf > b.adt) return 'Cada bebê precisa de um adulto.';
+  return '';
+}
+
+var bvLinksAtuais = [];
+
+function bvRender() {
+  var el = document.getElementById('bv-resultado');
+  if (!el) return;
+  ['origem', 'destino'].forEach(function(k) {
+    var cod = document.getElementById('bv-' + k).value.trim().toUpperCase();
+    document.getElementById('bv-' + k + '-nome').textContent = bvNomeAeroporto(cod);
+  });
+  var b = bvLer();
+  var erro = bvProblema(b);
+  bvLinksAtuais = [];
+  if (erro) { el.innerHTML = '<div class="bv-aviso">' + erro + '</div>'; return; }
+  var html = '<div class="bv-copiar-tudo"><button type="button" onclick="bvCopiarTudo(this)">📋 Copiar todos os links</button></div>';
+  BV_PROGRAMAS.forEach(function(p, i) {
+    var url = p.link(b);
+    bvLinksAtuais.push({ nome: p.nome, url: url });
+    var tag = (p.soMilhas || b.pagamento === 'pontos') ? 'pontos' : 'dinheiro';
+    var obs = (p.soMilhas && b.pagamento === 'dinheiro') ? '<span class="bv-tag">só busca em milhas</span>' : '';
+    html += '<div class="bv-prog" style="--bv-cor:' + p.cor + '">' +
+      '<div class="bv-prog-topo"><div><span class="bv-prog-nome">' + p.nome + '</span><span class="bv-tag">' + tag + '</span>' + obs + '</div></div>' +
+      '<div class="bv-url">' + bvEsc(url) + '</div>' +
+      '<div class="bv-acoes"><a class="bv-abrir" href="' + bvEsc(url) + '" target="_blank" rel="noopener">Abrir pesquisa ↗</a>' +
+      '<button type="button" onclick="bvCopiar(' + i + ', this)">📋 Copiar link</button></div></div>';
+  });
+  el.innerHTML = html;
+}
+
+function bvCopiarTexto(txt, btn) {
+  var ok = function() { if (!btn) return; var t = btn.textContent; btn.textContent = '✅ Copiado'; setTimeout(function() { btn.textContent = t; }, 1500); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(txt).then(ok, function() { prompt('Copie o texto:', txt); });
+  } else { prompt('Copie o texto:', txt); }
+}
+
+function bvCopiar(i, btn) { if (bvLinksAtuais[i]) bvCopiarTexto(bvLinksAtuais[i].url, btn); }
+
+function bvCopiarTudo(btn) {
+  var b = bvLer();
+  var cab = '✈️ ' + b.origem + ' → ' + b.destino + '\n🛫 ' + bvDataBR(b.ida) + (b.volta ? '  🛬 ' + bvDataBR(b.volta) : '');
+  var txt = cab + '\n\n' + bvLinksAtuais.map(function(l) { return l.nome + ':\n' + l.url; }).join('\n\n');
+  bvCopiarTexto(txt, btn);
+}
+
+(function bvIniciar() {
+  function ligar() {
+    var painel = document.getElementById('panel-buscavoos');
+    if (!painel) return;
+    ['bv-origem', 'bv-destino', 'bv-ida', 'bv-volta', 'bv-adt', 'bv-chd', 'bv-inf', 'bv-cabine', 'bv-pagamento'].forEach(function(id) {
+      var e = document.getElementById(id);
+      e.addEventListener('input', bvRender);
+      e.addEventListener('change', bvRender);
+    });
+    bvRender();
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
+})();
 </script>
 </body>
 </html>
