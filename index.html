@@ -12146,14 +12146,16 @@ function toggleDemanda(id) {
 <script>
 // ══ BUSCAR VOOS — monta links de pesquisa de Azul, LATAM Pass e Smiles ══
 // Espelhado em gestor-cdv/index.html e concierge/index.html (mudou um, muda o outro).
-// Azul: formato confirmado com links reais (out/2026). LATAM e Smiles: formato público
-// conhecido dos sites, conferir com um link real se o site mudar.
+// Azul, Smiles e GOL: formato confirmado com links reais (out/2026). LATAM: formato público
+// conhecido do site, conferir com um link real se o site mudar.
+// Em dinheiro, a Smiles (só milhas) dá lugar à busca da GOL.
 var bvEstado = { tipo: 'ida' };
 
 var BV_PROGRAMAS = [
   { id: 'azul',   nome: 'Azul Fidelidade', cor: '#1b5bd6', link: bvLinkAzul },
   { id: 'latam',  nome: 'LATAM Pass',      cor: '#e8114b', link: bvLinkLatam },
-  { id: 'smiles', nome: 'Smiles',          cor: '#ff7020', link: bvLinkSmiles, soMilhas: true }
+  { id: 'smiles', nome: 'Smiles',          cor: '#ff7020', link: bvLinkSmiles,
+    dinheiro: { id: 'gol', nome: 'GOL',     cor: '#ff7020', link: bvLinkGol } }
 ];
 
 function bvPartes(iso) { var p = String(iso).split('-'); return { a: p[0], m: p[1], d: p[2] }; }
@@ -12197,7 +12199,7 @@ function bvLinkSmiles(b) {
   function ms(d) { return String(Date.parse(d + 'T00:00:00-03:00')); }
   return 'https://www.smiles.com.br/mfe/emissao-passagem/?' + [
     'adults=' + b.adt,
-    'cabin=' + (b.cabine === 'executiva' ? 'BUSINESS' : 'ALL'),
+    'cabin=' + (b.cabine === 'executiva' ? 'BUSINESS' : 'ECONOMIC'),
     'children=' + b.chd,
     'departureDate=' + ms(b.ida),
     'infants=' + b.inf,
@@ -12209,6 +12211,18 @@ function bvLinkSmiles(b) {
     'destinationAirport=' + b.destino, 'destinCity=', 'destinCountry=', 'destinAirportIsAny=false',
     'novo-resultado-voos=true'
   ].join('&');
+}
+
+// GOL (dinheiro): datas DD-MM-AAAA; ADL=0 e voebiz=0 como no site
+function bvLinkGol(b) {
+  function dt(d) { var x = bvPartes(d); return x.d + '-' + x.m + '-' + x.a; }
+  return 'https://b2c.voegol.com.br/compra/busca-parceiros?' + [
+    'pv=br', 'tipo=DF', 'lang=pt-BR',
+    'de=' + b.origem, 'para=' + b.destino,
+    'ida=' + dt(b.ida)
+  ].concat(b.volta ? ['volta=' + dt(b.volta)] : []).concat([
+    'ADT=' + b.adt, 'ADL=0', 'CHD=' + b.chd, 'INF=' + b.inf, 'voebiz=0'
+  ]).join('&');
 }
 
 function bvNum(id, min) {
@@ -12273,11 +12287,12 @@ function bvRender() {
   bvLinksAtuais = [];
   if (erro) { el.innerHTML = '<div class="bv-aviso">' + erro + '</div>'; return; }
   var html = '<div class="bv-copiar-tudo"><button type="button" onclick="bvCopiarTudo(this)">📋 Copiar todos os links</button></div>';
-  BV_PROGRAMAS.forEach(function(p, i) {
+  BV_PROGRAMAS.forEach(function(base, i) {
+    var p = (b.pagamento === 'dinheiro' && base.dinheiro) ? base.dinheiro : base;
     var url = p.link(b);
     bvLinksAtuais.push({ nome: p.nome, url: url });
-    var tag = (p.soMilhas || b.pagamento === 'pontos') ? 'pontos' : 'dinheiro';
-    var obs = (p.soMilhas && b.pagamento === 'dinheiro') ? '<span class="bv-tag">só busca em milhas</span>' : '';
+    var tag = b.pagamento === 'pontos' ? 'pontos' : 'dinheiro';
+    var obs = '';
     html += '<div class="bv-prog" style="--bv-cor:' + p.cor + '">' +
       '<div class="bv-prog-topo"><div><span class="bv-prog-nome">' + p.nome + '</span><span class="bv-tag">' + tag + '</span>' + obs + '</div></div>' +
       '<div class="bv-url">' + bvEsc(url) + '</div>' +
