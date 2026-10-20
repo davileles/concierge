@@ -12146,8 +12146,7 @@ function toggleDemanda(id) {
 <script>
 // ══ BUSCAR VOOS — monta links de pesquisa de Azul, LATAM Pass e Smiles ══
 // Espelhado em gestor-cdv/index.html e concierge/index.html (mudou um, muda o outro).
-// Azul, Smiles e GOL: formato confirmado com links reais (out/2026). LATAM: formato público
-// conhecido do site, conferir com um link real se o site mudar.
+// Azul, LATAM, Smiles e GOL: formato confirmado com links reais (out/2026).
 // Em dinheiro, a Smiles (só milhas) dá lugar à busca da GOL.
 var bvEstado = { tipo: 'ida' };
 
@@ -12178,14 +12177,13 @@ function bvLinkAzul(b) {
   return 'https://www.voeazul.com.br/br/pt/home/selecao-voo?' + q.join('&');
 }
 
-// LATAM: datas ISO ao meio-dia (UTC 15h = 12h de Brasília); redemption=true é busca em pontos
+// LATAM: datas AAAA-MM-DD, inbound=null em só ida; redemption=true é busca em pontos
 function bvLinkLatam(b) {
-  function dt(d) { return encodeURIComponent(d + 'T15:00:00.000Z'); }
-  return 'https://www.latamairlines.com/br/pt/oferta-voos?' + [
+  return 'https://www.latamairlines.com/br/pt/oferta-voos/?' + [
     'origin=' + b.origem,
-    'outbound=' + dt(b.ida),
+    'outbound=' + b.ida,
     'destination=' + b.destino,
-    'inbound=' + (b.volta ? dt(b.volta) : 'null'),
+    'inbound=' + (b.volta || 'null'),
     'adt=' + b.adt, 'chd=' + b.chd, 'inf=' + b.inf,
     'trip=' + (b.volta ? 'RT' : 'OW'),
     'cabin=' + (b.cabine === 'executiva' ? 'Business' : 'Economy'),
