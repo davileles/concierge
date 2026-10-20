@@ -486,8 +486,16 @@ header{animation:fadeUp .45s ease both}
 .sa-mod-vazio{font-size:11.5px;color:var(--muted);line-height:1.6}
 .sa-tab-badge{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;line-height:16px;text-align:center}
 /* ══ BUSCAR VOOS ══ */
-.bv-linha{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
-.bv-linha>.field{flex:1 1 120px;margin-bottom:0}
+.bv-form{padding:1rem 1.1rem}
+.bv-linha{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px}
+.bv-linha:last-child{margin-bottom:0}
+.bv-linha>.field{flex:1 1 140px;margin-bottom:0;gap:4px}
+.bv-linha>.bv-iata{flex:1.4 1 170px}
+.bv-linha>.bv-data{flex:1 1 140px}
+.bv-linha>.bv-num{flex:0 1 84px;min-width:70px}
+.bv-linha>.bv-tipo-campo{flex:0 0 auto}
+.bv-tipo-campo .bv-chips{margin:0}
+.bv-tipo-campo .bv-chip{padding:10px 12px}
 .bv-iata{position:relative}
 .bv-iata input{font-weight:800;font-size:17px}
 .bv-ac{display:none;position:absolute;left:0;right:0;top:calc(100% - 14px);z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.35);max-height:300px;overflow-y:auto;min-width:260px}
@@ -497,23 +505,23 @@ header{animation:fadeUp .45s ease both}
 .bv-ac-item.sel,.bv-ac-item:hover{background:var(--surface2)}
 .bv-ac-cod{font-weight:800;letter-spacing:1px;min-width:38px;color:var(--text)}
 .bv-ac-nome{font-size:12px;color:var(--muted);line-height:1.35}
-.bv-secao{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:14px 0 8px}
+.bv-secao{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:10px 0 6px}
+.bv-grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
 .bv-aero{font-size:11px;color:var(--muted2);min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.bv-trocar{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);width:44px;height:44px;font-size:18px;cursor:pointer;flex:0 0 auto;margin-bottom:19px}
+.bv-trocar{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);width:40px;height:42px;font-size:17px;cursor:pointer;flex:0 0 auto;margin-bottom:18px}
 .bv-trocar:hover{border-color:var(--accent)}
 .bv-chips{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .bv-chip{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:999px;padding:7px 14px;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer}
 .bv-chip.on{background:var(--accent);border-color:var(--accent);color:#fff}
 .bv-aviso{font-size:13px;color:var(--muted);padding:14px 16px;border:1px dashed var(--border2);border-radius:var(--r)}
-.bv-prog{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--bv-cor,var(--accent));border-radius:12px;padding:14px 16px;margin-bottom:10px}
-.bv-prog-topo{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px}
-.bv-prog-nome{font-weight:800;font-size:15px}
+.bv-prog{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--bv-cor,var(--accent));border-radius:10px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.bv-prog-topo{display:flex;align-items:center;gap:4px;min-width:0}
+.bv-prog-nome{font-weight:800;font-size:14px;white-space:nowrap}
 .bv-tag{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);background:var(--surface2);border-radius:6px;padding:3px 7px;margin-left:6px}
-.bv-url{font-size:11px;color:var(--muted2);word-break:break-all;font-family:ui-monospace,Menlo,monospace;margin-bottom:10px;user-select:all}
-.bv-acoes{display:flex;gap:8px;flex-wrap:wrap}
-.bv-acoes a,.bv-acoes button{font-family:var(--font);font-size:12px;font-weight:800;padding:8px 14px;border-radius:8px;cursor:pointer;text-decoration:none;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
+.bv-acoes{display:flex;gap:6px;flex:0 0 auto}
+.bv-acoes a,.bv-acoes button{font-family:var(--font);font-size:12px;font-weight:800;padding:7px 10px;border-radius:8px;cursor:pointer;text-decoration:none;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
 .bv-acoes a.bv-abrir{background:var(--bv-cor,var(--accent));border-color:var(--bv-cor,var(--accent));color:#fff}
-.bv-copiar-tudo{display:flex;justify-content:flex-end;margin-bottom:10px}
+.bv-copiar-tudo{display:flex;justify-content:flex-end;margin-bottom:4px}
 .bv-copiar-tudo button{font-family:var(--font);font-size:12px;font-weight:800;padding:8px 14px;border-radius:8px;cursor:pointer;border:1px solid var(--border2);background:var(--surface2);color:var(--text)}
 </style>
 <script src="iata.js"></script>
@@ -2111,26 +2119,24 @@ header{animation:fadeUp .45s ease both}
 
 <!-- ══ PAINEL BUSCAR VOOS (links de pesquisa Azul / LATAM Pass / Smiles) — espelhado em gestor-cdv e concierge ══ -->
 <div class="main-panel" id="panel-buscavoos">
-  <div class="card">
+  <div class="card bv-form">
     <div class="bv-linha">
       <div class="field bv-iata"><label>Origem</label><input type="text" id="bv-origem" placeholder="Código ou cidade" autocomplete="off" spellcheck="false"/><div class="bv-ac" id="bv-origem-ac"></div><span class="bv-aero" id="bv-origem-nome"></span></div>
       <button type="button" class="bv-trocar" onclick="bvTrocar()" title="Inverter origem e destino">⇄</button>
       <div class="field bv-iata"><label>Destino</label><input type="text" id="bv-destino" placeholder="Código ou cidade" autocomplete="off" spellcheck="false"/><div class="bv-ac" id="bv-destino-ac"></div><span class="bv-aero" id="bv-destino-nome"></span></div>
-    </div>
-    <div class="bv-chips" id="bv-tipo">
-      <button type="button" class="bv-chip" data-v="ida-volta" onclick="bvTipo('ida-volta')">Ida e volta</button>
-      <button type="button" class="bv-chip on" data-v="ida" onclick="bvTipo('ida')">Só ida</button>
+      <div class="field bv-data"><label>🛫 Ida</label><input type="date" id="bv-ida"/><span class="bv-aero"></span></div>
+      <div class="field bv-data" id="bv-volta-campo" style="display:none"><label>🛬 Volta</label><input type="date" id="bv-volta"/><span class="bv-aero"></span></div>
     </div>
     <div class="bv-linha">
-      <div class="field"><label>🛫 Ida</label><input type="date" id="bv-ida"/></div>
-      <div class="field" id="bv-volta-campo" style="display:none"><label>🛬 Volta</label><input type="date" id="bv-volta"/></div>
-    </div>
-    <div class="bv-linha">
-      <div class="field"><label>Adultos</label><input type="number" id="bv-adt" min="1" max="9" value="1"/></div>
-      <div class="field"><label>Crianças</label><input type="number" id="bv-chd" min="0" max="8" value="0"/></div>
-      <div class="field"><label>Bebês</label><input type="number" id="bv-inf" min="0" max="8" value="0"/></div>
-    </div>
-    <div class="bv-linha">
+      <div class="field bv-tipo-campo"><label>Tipo</label>
+        <div class="bv-chips" id="bv-tipo">
+          <button type="button" class="bv-chip" data-v="ida-volta" onclick="bvTipo('ida-volta')">Ida e volta</button>
+          <button type="button" class="bv-chip on" data-v="ida" onclick="bvTipo('ida')">Só ida</button>
+        </div>
+      </div>
+      <div class="field bv-num"><label>Adultos</label><input type="number" id="bv-adt" min="1" max="9" value="1"/></div>
+      <div class="field bv-num"><label>Crianças</label><input type="number" id="bv-chd" min="0" max="8" value="0"/></div>
+      <div class="field bv-num"><label>Bebês</label><input type="number" id="bv-inf" min="0" max="8" value="0"/></div>
       <div class="field"><label>Cabine</label>
         <select id="bv-cabine"><option value="economica">Econômica</option><option value="executiva">Executiva</option></select>
       </div>
@@ -12387,24 +12393,24 @@ function bvRender() {
   var modos = b.pagamento === 'ambos' ? ['pontos', 'dinheiro'] : [b.pagamento];
   modos.forEach(function(modo) {
     var bm = Object.assign({}, b, { pagamento: modo });
-    if (modos.length > 1) html += '<div class="bv-secao">' + (modo === 'pontos' ? 'Em pontos' : 'Em dinheiro') + '</div>';
+    html += '<div class="bv-secao">' + (modo === 'pontos' ? 'Em pontos' : 'Em dinheiro') + '</div><div class="bv-grade">';
     BV_PROGRAMAS.forEach(function(base) {
       var p = (modo === 'dinheiro' && base.dinheiro) ? base.dinheiro : base;
       var url = p.link(bm);
       var i = bvLinksAtuais.length;
       bvLinksAtuais.push({ nome: p.nome + (modos.length > 1 ? ' (' + modo + ')' : ''), url: url });
       html += '<div class="bv-prog" style="--bv-cor:' + p.cor + '">' +
-        '<div class="bv-prog-topo"><div><span class="bv-prog-nome">' + p.nome + '</span><span class="bv-tag">' + modo + '</span></div></div>' +
-        '<div class="bv-url">' + bvEsc(url) + '</div>' +
-        '<div class="bv-acoes"><a class="bv-abrir" href="' + bvEsc(url) + '" target="_blank" rel="noopener">Abrir pesquisa ↗</a>' +
-        '<button type="button" onclick="bvCopiar(' + i + ', this)">📋 Copiar link</button></div></div>';
+        '<div class="bv-prog-topo"><span class="bv-prog-nome">' + p.nome + '</span></div>' +
+        '<div class="bv-acoes"><a class="bv-abrir" href="' + bvEsc(url) + '" target="_blank" rel="noopener" title="Abrir pesquisa">Abrir ↗</a>' +
+        '<button type="button" onclick="bvCopiar(' + i + ', this)" title="Copiar link">📋</button></div></div>';
     });
+    html += '</div>';
   });
   el.innerHTML = html;
 }
 
 function bvCopiarTexto(txt, btn) {
-  var ok = function() { if (!btn) return; var t = btn.textContent; btn.textContent = '✅ Copiado'; setTimeout(function() { btn.textContent = t; }, 1500); };
+  var ok = function() { if (!btn) return; var t = btn.textContent; btn.textContent = t.length <= 2 ? '✅' : '✅ Copiado'; setTimeout(function() { btn.textContent = t; }, 1500); };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(txt).then(ok, function() { prompt('Copie o texto:', txt); });
   } else { prompt('Copie o texto:', txt); }
