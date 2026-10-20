@@ -12270,14 +12270,41 @@ var BV_APELIDOS = {
 };
 function bvSemAcento(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
 function bvNorm(s) { return ' ' + bvSemAcento(s).replace(/[^a-z0-9]+/g, ' ').trim() + ' '; }
+// Códigos de cidade (agrupam todos os aeroportos): não estão no iata.js
+var BV_AERO_CIDADES = [
+  ['BHZ', 'Belo Horizonte – Todos os aeroportos (Brasil)', 'confins pampulha'],
+  ['BJS', 'Pequim – Todos os aeroportos (China)', 'beijing'],
+  ['BUE', 'Buenos Aires – Todos os aeroportos (Argentina)', ''],
+  ['CHI', 'Chicago – Todos os aeroportos (Estados Unidos)', ''],
+  ['JKT', 'Jacarta – Todos os aeroportos (Indonésia)', 'jakarta'],
+  ['LON', 'Londres – Todos os aeroportos (Reino Unido)', 'london'],
+  ['MIL', 'Milão – Todos os aeroportos (Itália)', 'milan milano'],
+  ['MOW', 'Moscou – Todos os aeroportos (Rússia)', 'moscow'],
+  ['NYC', 'Nova York – Todos os aeroportos (Estados Unidos)', 'new york'],
+  ['OSA', 'Osaka – Todos os aeroportos (Japão)', ''],
+  ['PAR', 'Paris – Todos os aeroportos (França)', ''],
+  ['REK', 'Reykjavik – Todos os aeroportos (Islândia)', ''],
+  ['RIO', 'Rio de Janeiro – Todos os aeroportos (Brasil)', 'galeao santos dumont'],
+  ['ROM', 'Roma – Todos os aeroportos (Itália)', 'rome'],
+  ['SAO', 'São Paulo – Todos os aeroportos (Brasil)', 'guarulhos congonhas viracopos'],
+  ['SEL', 'Seul – Todos os aeroportos (Coreia do Sul)', 'seoul'],
+  ['STO', 'Estocolmo – Todos os aeroportos (Suécia)', 'stockholm'],
+  ['TYO', 'Tóquio – Todos os aeroportos (Japão)', 'tokyo'],
+  ['WAS', 'Washington – Todos os aeroportos (Estados Unidos)', ''],
+  ['YMQ', 'Montreal – Todos os aeroportos (Canadá)', ''],
+  ['YTO', 'Toronto – Todos os aeroportos (Canadá)', '']
+];
 function bvAeroportos() {
   if (bvAeroBase) return bvAeroBase;
   if (typeof IATA_AIRPORTS === 'undefined') return [];
-  bvAeroBase = IATA_AIRPORTS.map(function(a) {
+  var cidades = BV_AERO_CIDADES.map(function(x) {
+    return { code: x[0], label: x[1], norm: bvNorm(x[1] + ' ' + x[2]), br: /\(Brasil\)$/.test(x[1]), principal: true, cidade: true };
+  });
+  bvAeroBase = cidades.concat(IATA_AIRPORTS.map(function(a) {
     var label = String(a.label || '').replace(/\(Brazil\)\s*$/, '(Brasil)');
     var code = String(a.code).toUpperCase();
     return { code: code, label: label, norm: bvNorm(label + ' ' + (BV_APELIDOS[code] || '')), br: /\(Brasil\)\s*$/.test(label), principal: BV_AERO_PRINCIPAIS.indexOf(code) >= 0 };
-  });
+  }));
   return bvAeroBase;
 }
 function bvNomeAeroporto(cod) {
@@ -12297,8 +12324,11 @@ function bvSugestoes(texto) {
     else if (a.norm.indexOf(' ' + q) > 0) s = 3;
     else if (q.length >= 3 && a.norm.indexOf(q) >= 0) s = 4;
     else return;
-    lista.push({ a: a, s: s + (a.br ? 0 : 0.5) - (a.principal ? 0.6 : 0) });
+    lista.push({ a: a, s: s + (a.br ? 0 : 0.5) - (a.principal ? 0.6 : 0) - (a.cidade ? 0.3 : 0) });
   });
+  // Três letras que formam um código existente: só ele aparece
+  var exato = lista.filter(function(x) { return x.a.code === qc; });
+  if (exato.length) return [exato[0].a];
   lista.sort(function(x, y) { return x.s - y.s || x.a.label.localeCompare(y.a.label, 'pt'); });
   return lista.slice(0, 8).map(function(x) { return x.a; });
 }
@@ -12307,7 +12337,7 @@ function bvAcAbrir(k) {
   var inp = document.getElementById('bv-' + k), box = document.getElementById('bv-' + k + '-ac');
   var itens = bvSugestoes(inp.value);
   bvAcEstado[k] = { itens: itens, sel: itens.length ? 0 : -1 };
-  if (!itens.length || (itens.length === 1 && itens[0].code === inp.value.trim().toUpperCase())) { box.classList.remove('on'); box.innerHTML = ''; return; }
+  if (!itens.length) { box.classList.remove('on'); box.innerHTML = ''; return; }
   box.innerHTML = itens.map(function(a, i) {
     return '<div class="bv-ac-item' + (i === 0 ? ' sel' : '') + '" data-i="' + i + '"><span class="bv-ac-cod">' + a.code + '</span><span class="bv-ac-nome">' + bvEsc(a.label) + '</span></div>';
   }).join('');
