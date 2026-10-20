@@ -488,7 +488,16 @@ header{animation:fadeUp .45s ease both}
 /* ══ BUSCAR VOOS ══ */
 .bv-linha{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:12px}
 .bv-linha>.field{flex:1 1 120px;margin-bottom:0}
-.bv-iata input{text-transform:uppercase;font-weight:800;letter-spacing:2px;font-size:18px}
+.bv-iata{position:relative}
+.bv-iata input{font-weight:800;font-size:17px}
+.bv-ac{display:none;position:absolute;left:0;right:0;top:calc(100% - 14px);z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);box-shadow:0 10px 30px rgba(0,0,0,.35);max-height:300px;overflow-y:auto;min-width:260px}
+.bv-ac.on{display:block}
+.bv-ac-item{display:flex;gap:10px;align-items:baseline;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--border)}
+.bv-ac-item:last-child{border-bottom:none}
+.bv-ac-item.sel,.bv-ac-item:hover{background:var(--surface2)}
+.bv-ac-cod{font-weight:800;letter-spacing:1px;min-width:38px;color:var(--text)}
+.bv-ac-nome{font-size:12px;color:var(--muted);line-height:1.35}
+.bv-secao{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin:14px 0 8px}
 .bv-aero{font-size:11px;color:var(--muted2);min-height:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bv-trocar{background:var(--surface2);border:1px solid var(--border);color:var(--text);border-radius:var(--r);width:44px;height:44px;font-size:18px;cursor:pointer;flex:0 0 auto;margin-bottom:19px}
 .bv-trocar:hover{border-color:var(--accent)}
@@ -2104,9 +2113,9 @@ header{animation:fadeUp .45s ease both}
 <div class="main-panel" id="panel-buscavoos">
   <div class="card">
     <div class="bv-linha">
-      <div class="field bv-iata"><label>Origem</label><input type="text" id="bv-origem" maxlength="3" placeholder="CGH" autocomplete="off"/><span class="bv-aero" id="bv-origem-nome"></span></div>
+      <div class="field bv-iata"><label>Origem</label><input type="text" id="bv-origem" placeholder="Código ou cidade" autocomplete="off" spellcheck="false"/><div class="bv-ac" id="bv-origem-ac"></div><span class="bv-aero" id="bv-origem-nome"></span></div>
       <button type="button" class="bv-trocar" onclick="bvTrocar()" title="Inverter origem e destino">⇄</button>
-      <div class="field bv-iata"><label>Destino</label><input type="text" id="bv-destino" maxlength="3" placeholder="CNF" autocomplete="off"/><span class="bv-aero" id="bv-destino-nome"></span></div>
+      <div class="field bv-iata"><label>Destino</label><input type="text" id="bv-destino" placeholder="Código ou cidade" autocomplete="off" spellcheck="false"/><div class="bv-ac" id="bv-destino-ac"></div><span class="bv-aero" id="bv-destino-nome"></span></div>
     </div>
     <div class="bv-chips" id="bv-tipo">
       <button type="button" class="bv-chip" data-v="ida-volta" onclick="bvTipo('ida-volta')">Ida e volta</button>
@@ -2126,7 +2135,7 @@ header{animation:fadeUp .45s ease both}
         <select id="bv-cabine"><option value="economica">Econômica</option><option value="executiva">Executiva</option></select>
       </div>
       <div class="field"><label>Pagamento</label>
-        <select id="bv-pagamento"><option value="dinheiro">Dinheiro</option><option value="pontos" selected>Pontos</option></select>
+        <select id="bv-pagamento"><option value="ambos">Ambos</option><option value="dinheiro">Dinheiro</option><option value="pontos" selected>Pontos</option></select>
       </div>
     </div>
   </div>
@@ -12240,10 +12249,100 @@ function bvLer() {
   };
 }
 
+// ── Aeroportos (iata.js) e autocomplete de origem/destino ──
+var bvAeroBase = null;
+// Aeroportos comerciais principais sobem na lista; apelidos em português entram na busca
+var BV_AERO_PRINCIPAIS = 'AEP AJU AMS ATL BCN BEL BOG BOS BPS BSB BVB CDG CGB CGH CGR CNF CUN CWB DFW DOH DXB EWR EZE FCO FLN FOR FRA GIG GRU GYN HND IAD IAH IGU IOS IST JFK JPA LAX LGW LHR LIM LIS MAD MAO MCO MCP MCZ MEX MIA MUC MXP NAT NRT NVT OPO ORD ORY PMW POA PTY PVH RBR REC SCL SDU SFO SLZ SSA THE VCP VIX YYZ ZRH'.split(' ');
+var BV_APELIDOS = {
+  AEP: 'buenos aires aeroparque', AMS: 'amsterda holanda', BCN: 'barcelona espanha', CDG: 'paris franca', CGH: 'congonhas',
+  CNF: 'confins', CUN: 'cancun mexico', DXB: 'dubai emirados', EWR: 'nova york newark', EZE: 'buenos aires ezeiza argentina',
+  FCO: 'roma italia', FRA: 'frankfurt alemanha', GIG: 'galeao', GRU: 'guarulhos cumbica', HND: 'toquio japao',
+  IST: 'istambul turquia', JFK: 'nova york', LGW: 'londres', LHR: 'londres inglaterra', LIS: 'lisboa portugal',
+  MAD: 'madri espanha', MCO: 'orlando disney', MIA: 'miami', MUC: 'munique alemanha', MXP: 'milao italia',
+  NRT: 'toquio japao', OPO: 'porto portugal', ORY: 'paris', SCL: 'santiago chile', SDU: 'santos dumont',
+  VCP: 'viracopos campinas', ZRH: 'zurique suica'
+};
+function bvSemAcento(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+function bvNorm(s) { return ' ' + bvSemAcento(s).replace(/[^a-z0-9]+/g, ' ').trim() + ' '; }
+function bvAeroportos() {
+  if (bvAeroBase) return bvAeroBase;
+  if (typeof IATA_AIRPORTS === 'undefined') return [];
+  bvAeroBase = IATA_AIRPORTS.map(function(a) {
+    var label = String(a.label || '').replace(/\(Brazil\)\s*$/, '(Brasil)');
+    var code = String(a.code).toUpperCase();
+    return { code: code, label: label, norm: bvNorm(label + ' ' + (BV_APELIDOS[code] || '')), br: /\(Brasil\)\s*$/.test(label), principal: BV_AERO_PRINCIPAIS.indexOf(code) >= 0 };
+  });
+  return bvAeroBase;
+}
 function bvNomeAeroporto(cod) {
-  if (cod.length !== 3 || typeof IATA_AIRPORTS === 'undefined') return '';
-  var a = IATA_AIRPORTS.find(function(x) { return String(x.code).toUpperCase() === cod; });
-  return a ? (a.label || '') : '';
+  if (!/^[A-Z]{3}$/.test(cod)) return '';
+  var a = bvAeroportos().find(function(x) { return x.code === cod; });
+  return a ? a.label : '';
+}
+function bvSugestoes(texto) {
+  var q = bvNorm(texto).trim();
+  if (!q) return [];
+  var qc = q.toUpperCase(), lista = [];
+  bvAeroportos().forEach(function(a) {
+    var s;
+    if (a.code === qc) s = 0;
+    else if (q.length <= 3 && q.indexOf(' ') < 0 && a.code.indexOf(qc) === 0) s = 2;
+    else if (a.norm.indexOf(' ' + q) === 0) s = 1;
+    else if (a.norm.indexOf(' ' + q) > 0) s = 3;
+    else if (q.length >= 3 && a.norm.indexOf(q) >= 0) s = 4;
+    else return;
+    lista.push({ a: a, s: s + (a.br ? 0 : 0.5) - (a.principal ? 0.6 : 0) });
+  });
+  lista.sort(function(x, y) { return x.s - y.s || x.a.label.localeCompare(y.a.label, 'pt'); });
+  return lista.slice(0, 8).map(function(x) { return x.a; });
+}
+var bvAcEstado = {};
+function bvAcAbrir(k) {
+  var inp = document.getElementById('bv-' + k), box = document.getElementById('bv-' + k + '-ac');
+  var itens = bvSugestoes(inp.value);
+  bvAcEstado[k] = { itens: itens, sel: itens.length ? 0 : -1 };
+  if (!itens.length || (itens.length === 1 && itens[0].code === inp.value.trim().toUpperCase())) { box.classList.remove('on'); box.innerHTML = ''; return; }
+  box.innerHTML = itens.map(function(a, i) {
+    return '<div class="bv-ac-item' + (i === 0 ? ' sel' : '') + '" data-i="' + i + '"><span class="bv-ac-cod">' + a.code + '</span><span class="bv-ac-nome">' + bvEsc(a.label) + '</span></div>';
+  }).join('');
+  box.classList.add('on');
+}
+function bvAcFechar(k) { var box = document.getElementById('bv-' + k + '-ac'); if (box) { box.classList.remove('on'); box.innerHTML = ''; } }
+function bvAcEscolher(k, i) {
+  var st = bvAcEstado[k]; if (!st || !st.itens[i]) return;
+  document.getElementById('bv-' + k).value = st.itens[i].code;
+  bvAcFechar(k);
+  bvRender();
+}
+function bvAcMarcar(k) {
+  var st = bvAcEstado[k], box = document.getElementById('bv-' + k + '-ac');
+  box.querySelectorAll('.bv-ac-item').forEach(function(el, i) { el.classList.toggle('sel', i === st.sel); if (i === st.sel) el.scrollIntoView({ block: 'nearest' }); });
+}
+function bvAcLigar(k) {
+  var inp = document.getElementById('bv-' + k), box = document.getElementById('bv-' + k + '-ac');
+  inp.addEventListener('input', function() { bvAcAbrir(k); });
+  inp.addEventListener('focus', function() { if (inp.value.trim() && !/^[A-Za-z]{3}$/.test(inp.value.trim())) bvAcAbrir(k); });
+  inp.addEventListener('keydown', function(e) {
+    var st = bvAcEstado[k];
+    if (!box.classList.contains('on') || !st) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); st.sel = Math.min(st.sel + 1, st.itens.length - 1); bvAcMarcar(k); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); st.sel = Math.max(st.sel - 1, 0); bvAcMarcar(k); }
+    else if (e.key === 'Enter' || e.key === 'Tab') { if (st.sel >= 0) { if (e.key === 'Enter') e.preventDefault(); bvAcEscolher(k, st.sel); } }
+    else if (e.key === 'Escape') { bvAcFechar(k); }
+  });
+  inp.addEventListener('blur', function() {
+    setTimeout(function() {
+      bvAcFechar(k);
+      var v = inp.value.trim();
+      if (/^[A-Za-z]{3}$/.test(v)) { inp.value = v.toUpperCase(); bvRender(); return; }
+      var sug = v ? bvSugestoes(v) : [];
+      if (sug.length) { inp.value = sug[0].code; bvRender(); }
+    }, 150);
+  });
+  box.addEventListener('mousedown', function(e) {
+    var it = e.target.closest('.bv-ac-item');
+    if (it) { e.preventDefault(); bvAcEscolher(k, +it.getAttribute('data-i')); }
+  });
 }
 
 function bvTipo(t) {
@@ -12262,7 +12361,7 @@ function bvTrocar() {
 function bvEsc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
 
 function bvProblema(b) {
-  if (!/^[A-Z]{3}$/.test(b.origem) || !/^[A-Z]{3}$/.test(b.destino)) return 'Informe origem e destino com o código de 3 letras do aeroporto (ex.: CGH, CNF, GRU).';
+  if (!/^[A-Z]{3}$/.test(b.origem) || !/^[A-Z]{3}$/.test(b.destino)) return 'Escolha origem e destino: digite o código (CGH, CNF, GRU) ou o nome da cidade e escolha o aeroporto na lista.';
   if (b.origem === b.destino) return 'Origem e destino estão iguais.';
   if (!b.ida) return 'Informe a data de ida 🛫.';
   if (bvEstado.tipo === 'ida-volta' && !b.volta) return 'Informe a data de volta 🛬.';
@@ -12285,17 +12384,21 @@ function bvRender() {
   bvLinksAtuais = [];
   if (erro) { el.innerHTML = '<div class="bv-aviso">' + erro + '</div>'; return; }
   var html = '<div class="bv-copiar-tudo"><button type="button" onclick="bvCopiarTudo(this)">📋 Copiar todos os links</button></div>';
-  BV_PROGRAMAS.forEach(function(base, i) {
-    var p = (b.pagamento === 'dinheiro' && base.dinheiro) ? base.dinheiro : base;
-    var url = p.link(b);
-    bvLinksAtuais.push({ nome: p.nome, url: url });
-    var tag = b.pagamento === 'pontos' ? 'pontos' : 'dinheiro';
-    var obs = '';
-    html += '<div class="bv-prog" style="--bv-cor:' + p.cor + '">' +
-      '<div class="bv-prog-topo"><div><span class="bv-prog-nome">' + p.nome + '</span><span class="bv-tag">' + tag + '</span>' + obs + '</div></div>' +
-      '<div class="bv-url">' + bvEsc(url) + '</div>' +
-      '<div class="bv-acoes"><a class="bv-abrir" href="' + bvEsc(url) + '" target="_blank" rel="noopener">Abrir pesquisa ↗</a>' +
-      '<button type="button" onclick="bvCopiar(' + i + ', this)">📋 Copiar link</button></div></div>';
+  var modos = b.pagamento === 'ambos' ? ['pontos', 'dinheiro'] : [b.pagamento];
+  modos.forEach(function(modo) {
+    var bm = Object.assign({}, b, { pagamento: modo });
+    if (modos.length > 1) html += '<div class="bv-secao">' + (modo === 'pontos' ? 'Em pontos' : 'Em dinheiro') + '</div>';
+    BV_PROGRAMAS.forEach(function(base) {
+      var p = (modo === 'dinheiro' && base.dinheiro) ? base.dinheiro : base;
+      var url = p.link(bm);
+      var i = bvLinksAtuais.length;
+      bvLinksAtuais.push({ nome: p.nome + (modos.length > 1 ? ' (' + modo + ')' : ''), url: url });
+      html += '<div class="bv-prog" style="--bv-cor:' + p.cor + '">' +
+        '<div class="bv-prog-topo"><div><span class="bv-prog-nome">' + p.nome + '</span><span class="bv-tag">' + modo + '</span></div></div>' +
+        '<div class="bv-url">' + bvEsc(url) + '</div>' +
+        '<div class="bv-acoes"><a class="bv-abrir" href="' + bvEsc(url) + '" target="_blank" rel="noopener">Abrir pesquisa ↗</a>' +
+        '<button type="button" onclick="bvCopiar(' + i + ', this)">📋 Copiar link</button></div></div>';
+    });
   });
   el.innerHTML = html;
 }
@@ -12325,6 +12428,8 @@ function bvCopiarTudo(btn) {
       e.addEventListener('input', bvRender);
       e.addEventListener('change', bvRender);
     });
+    bvAcLigar('origem');
+    bvAcLigar('destino');
     bvRender();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
