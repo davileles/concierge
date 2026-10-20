@@ -2159,6 +2159,14 @@ header{animation:fadeUp .45s ease both}
     </div>
   </div>
   <div id="bv-resultado"></div>
+  <div class="card bvs-card" id="bvp-card">
+    <div class="bvs-topo">
+      <div><div class="bvs-titulo">💲 Preços ao vivo (teste com ZenRows)</div>
+      <div class="bvs-sub">Abre a busca de cada programa num navegador de verdade, pelo ZenRows, e lê os voos com pontos, taxas e preço. Usa a rota, as datas e o pagamento preenchidos acima. Leva de 1 a 3 minutos e gasta créditos do ZenRows (mesma busca em 15 min sai do que já foi guardado).</div></div>
+      <button type="button" class="bvs-btn" id="bvp-btn" onclick="bvpBuscar(false)">Buscar preços</button>
+    </div>
+    <div id="bvp-saida"></div>
+  </div>
   <div class="card bvs-card">
     <div class="bvs-topo">
       <div><div class="bvs-titulo">🧪 Sonda: busca pelo servidor</div>
@@ -2351,9 +2359,10 @@ header{animation:fadeUp .45s ease both}
 (function(){
   var _fetchOrig = window.fetch.bind(window);
   var BASE = 'https://cdv-proxy-production.up.railway.app/concierge/';
-  // Desde 13/10/2026 estas duas rotas fora de /concierge/ tambem exigem a sessao.
+  // Desde 13/10/2026 estas rotas fora de /concierge/ tambem exigem a sessao (/voos/precos desde 20/10/2026).
   var EXTRAS = ['https://cdv-proxy-production.up.railway.app/ia/extrair-reserva',
-                'https://cdv-proxy-production.up.railway.app/roteiros/publicar'];
+                'https://cdv-proxy-production.up.railway.app/roteiros/publicar',
+                'https://cdv-proxy-production.up.railway.app/voos/precos'];
   function tokenAtual(){
     var m = document.cookie.match(/(?:^|; )cdv_conc_sess=([^;]*)/);
     return m ? decodeURIComponent(m[1]) : '';
@@ -12231,6 +12240,89 @@ function bvsRodar() {
 function bvsCopiar(a) {
   if (!bvsUltimo) return;
   var txt = JSON.stringify(bvsUltimo, null, 2);
+  if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function() { a.textContent = 'copiado ✅'; }, function() { prompt('Copie:', txt); });
+  else prompt('Copie:', txt);
+}
+</script>
+<script>
+// ══ BUSCAR VOOS — PREÇOS AO VIVO VIA ZENROWS (etapa de teste; gestor-cdv e concierge, mesmo bloco) ══
+// Chama GET /voos/precos do proxy (painel-cdv/busca-voos-precos.js) com o que está no formulário (bvLer).
+// O proxy responde na hora com o estado e busca em segundo plano; aqui repete a consulta até ficar pronta.
+var bvpTimer = null, bvpUltimo = null;
+var BVP_PROXY = 'https://cdv-proxy-production.up.railway.app';
+function bvpFmtPts(n) { return n ? Math.round(n).toLocaleString('pt-BR') : '—'; }
+function bvpFmtR$(n) { return n ? 'R$ ' + Number(n).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—'; }
+function bvpEscalas(n) { return n == null ? '—' : (n === 0 ? 'direto' : n + (n === 1 ? ' parada' : ' paradas')); }
+function bvpDur(m) { return m ? Math.floor(m / 60) + 'h' + String(m % 60).padStart(2, '0') : ''; }
+function bvpMostrar(d) {
+  var el = document.getElementById('bvp-saida');
+  if (!d.ok) { el.innerHTML = '<div class="bv-aviso" style="margin-top:10px">' + bvsEsc(d.erro || 'Falhou.') + '</div>'; return; }
+  bvpUltimo = d;
+  var p = d.pedido || {};
+  var fontes = d.fontes || [];
+  var rodando = d.estado !== 'pronta';
+  var html = '<div class="bvs-sub" style="margin-top:10px">' + bvsEsc(p.origem + ' → ' + p.destino) + ' · 🛫 ' + bvsEsc(bvDataBR(p.ida)) +
+    (p.volta ? ' · 🛬 ' + bvsEsc(bvDataBR(p.volta)) : '') + ' · ' + (rodando ? '<b>buscando…</b> atualiza sozinho' : 'pronta') +
+    (d.uso ? ' · hoje: ' + d.uso.paginas + '/' + d.uso.limitePaginas + ' páginas' + (d.uso.creditos ? ', ' + d.uso.creditos + ' créditos' : '') : '') +
+    (rodando ? '' : ' · <a href="#" onclick="bvpBuscar(true);return false">buscar de novo</a>') +
+    ' · <a href="#" onclick="bvpCopiar(this);return false">copiar resultado</a></div>';
+  html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + fontes.map(function(f) {
+    var cls = f.estado === 'ok' ? 'bvs-ok' : (f.estado === 'rodando' ? 'bvs-meio' : 'bvs-ruim');
+    var txt = f.estado === 'ok' ? f.qtd + ' voo' + (f.qtd === 1 ? '' : 's') + (f.leituraGenerica ? ' (leitura aproximada)' : '') :
+      (f.estado === 'rodando' ? 'buscando…' : (f.erro || 'sem voos'));
+    return '<span style="font-size:11px;border:1px solid var(--border);border-radius:999px;padding:4px 10px" title="' + bvEsc(f.erro || '') + '">' +
+      (p.volta ? (f.sentido === 'volta' ? '🛬 ' : '🛫 ') : '') + '<b>' + bvsEsc(f.programa) + '</b> · <span class="' + cls + '">' + bvsEsc(txt) + '</span>' +
+      (f.link ? ' · <a href="' + bvEsc(f.link) + '" target="_blank" rel="noopener">abrir ↗</a>' : '') + '</span>';
+  }).join('') + '</div>';
+  var voos = d.voos || [];
+  ['ida', 'volta'].forEach(function(sent) {
+    var lista = voos.filter(function(v) { return v.sentido === sent; });
+    if (!lista.length) return;
+    if (p.volta) html += '<div class="bv-secao" style="margin-top:14px">' + (sent === 'ida' ? '🛫 Ida · ' + bvsEsc(p.origem + ' → ' + p.destino) : '🛬 Volta · ' + bvsEsc(p.destino + ' → ' + p.origem)) + '</div>';
+    html += '<div style="overflow-x:auto"><table class="bvs-tab"><thead><tr><th>Programa</th><th>Voo</th><th>Saída</th><th>Chegada</th><th>Escalas</th><th>Pontos</th><th>Taxas</th><th>Dinheiro</th></tr></thead><tbody>' +
+      lista.map(function(v) {
+        var chegOutroDia = v.chegadaData && v.data && v.chegadaData !== v.data ? ' <span style="color:var(--muted)">+1</span>' : '';
+        return '<tr><td><b>' + bvsEsc(v.programa) + '</b>' + (v.leituraGenerica ? ' <span title="Leitura aproximada: confira no site" style="color:var(--muted)">≈</span>' : '') + '</td>' +
+          '<td>' + bvsEsc(v.voo || v.cia || '—') + '</td>' +
+          '<td>' + bvsEsc(v.saida || '—') + '</td>' +
+          '<td>' + bvsEsc(v.chegada || '—') + chegOutroDia + (v.duracaoMin ? ' <span style="color:var(--muted)">(' + bvpDur(v.duracaoMin) + ')</span>' : '') + '</td>' +
+          '<td>' + bvpEscalas(v.escalas) + '</td>' +
+          '<td>' + (v.modo === 'pontos' ? '<b>' + bvpFmtPts(v.pontos) + '</b>' : '') + '</td>' +
+          '<td>' + (v.modo === 'pontos' ? (v.taxas ? bvpFmtR$(v.taxas) : '<span style="color:var(--muted)">no site</span>') : '') + '</td>' +
+          '<td>' + (v.modo === 'dinheiro' ? '<b>' + bvpFmtR$(v.dinheiro) + '</b>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>';
+  });
+  if (!rodando && !voos.length) html += '<div class="bv-aviso" style="margin-top:10px">Nenhum voo lido nesta busca. Veja o motivo em cada programa acima.</div>';
+  el.innerHTML = html;
+}
+function bvpConsultar(qs, tentativa) {
+  fetch(BVP_PROXY + '/voos/precos?' + qs + '&_=' + Date.now())
+    .then(function(r) { return r.json(); })
+    .then(function(d) {
+      bvpMostrar(d);
+      if (d.ok && d.estado !== 'pronta' && tentativa < 60) bvpTimer = setTimeout(function() { bvpConsultar(qs.replace(/&novo=1/, ''), tentativa + 1); }, 5000);
+      else document.getElementById('bvp-btn').disabled = false;
+    })
+    .catch(function(e) {
+      document.getElementById('bvp-saida').innerHTML = '<div class="bv-aviso" style="margin-top:10px">Não consegui falar com o servidor: ' + bvsEsc(e.message) + '</div>';
+      document.getElementById('bvp-btn').disabled = false;
+    });
+}
+function bvpBuscar(novo) {
+  var b = bvLer();
+  var erro = bvProblema(b);
+  if (erro) { document.getElementById('bvp-saida').innerHTML = '<div class="bv-aviso" style="margin-top:10px">' + erro + '</div>'; return; }
+  clearTimeout(bvpTimer);
+  document.getElementById('bvp-btn').disabled = true;
+  document.getElementById('bvp-saida').innerHTML = '<div class="bv-aviso" style="margin-top:10px">Buscando… leva de 1 a 3 minutos.</div>';
+  var qs = ['origem', 'destino', 'ida', 'volta', 'adt', 'chd', 'inf', 'cabine', 'pagamento'].map(function(k) {
+    return k + '=' + encodeURIComponent(b[k] == null ? '' : b[k]);
+  }).join('&') + (novo ? '&novo=1' : '');
+  bvpConsultar(qs, 0);
+}
+function bvpCopiar(a) {
+  if (!bvpUltimo) return;
+  var txt = JSON.stringify(bvpUltimo, null, 2);
   if (navigator.clipboard) navigator.clipboard.writeText(txt).then(function() { a.textContent = 'copiado ✅'; }, function() { prompt('Copie:', txt); });
   else prompt('Copie:', txt);
 }
