@@ -485,7 +485,7 @@ header{animation:fadeUp .45s ease both}
 .sa-mod.on{border-color:var(--accent);background:rgba(255,88,94,.12)}
 .sa-mod-vazio{font-size:11.5px;color:var(--muted);line-height:1.6}
 .sa-tab-badge{display:inline-block;min-width:16px;padding:0 5px;margin-left:4px;border-radius:8px;background:var(--accent);color:#fff;font-size:10px;line-height:16px;text-align:center}
-/* ══ BUSCAR VOOS — TESTE PELO SERVIDOR (só gestor e concierge) ══ */
+/* ══ BUSCAR VOOS — SONDA PELO SERVIDOR (gestor e concierge) ══ */
 .bvs-card{margin-top:14px;padding:1rem 1.1rem}
 .bvs-topo{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .bvs-titulo{font-weight:800;font-size:14px}
@@ -2161,9 +2161,9 @@ header{animation:fadeUp .45s ease both}
   <div id="bv-resultado"></div>
   <div class="card bvs-card">
     <div class="bvs-topo">
-      <div><div class="bvs-titulo">🧪 Teste: busca de preços pelo servidor</div>
-      <div class="bvs-sub">Só aqui no gestor e no concierge. Confere se Azul, LATAM, Smiles e GOL respondem quando a busca sai do nosso servidor (CNF → GRU, ida daqui a 30 dias). Ainda não traz preços.</div></div>
-      <button type="button" class="bvs-btn" id="bvs-btn" onclick="bvsRodar()">Rodar teste</button>
+      <div><div class="bvs-titulo">🧪 Sonda: busca pelo servidor</div>
+      <div class="bvs-sub">Mostra como Azul, LATAM, Smiles e GOL respondem a uma busca feita a partir do nosso servidor (CNF → GRU, ida daqui a 30 dias).</div></div>
+      <button type="button" class="bvs-btn" id="bvs-btn" onclick="bvsRodar()">Rodar sonda</button>
     </div>
     <div id="bvs-saida"></div>
   </div>
@@ -12180,14 +12180,14 @@ function toggleDemanda(id) {
 </script>
 
 <script>
-// ══ BUSCAR VOOS — TESTE PELO SERVIDOR (só gestor-cdv e concierge; NÃO vai para o painel do membro) ══
+// ══ BUSCAR VOOS — SONDA PELO SERVIDOR (gestor-cdv e concierge) ══
 // Chama GET /voos/sonda do proxy (painel-cdv/busca-voos.js). A sonda responde na hora com o último
 // resultado e roda uma rodada nova em segundo plano; aqui a página repete a consulta até chegar.
 var bvsTimer = null, bvsUltimo = null;
 function bvsEsc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
 function bvsVeredito(r) {
   if (r.erro) return ['bvs-ruim', 'falhou'];
-  if (r.bloqueio && r.bloqueio.length) return ['bvs-ruim', 'bloqueado'];
+  if (r.protecao && r.protecao.length) return ['bvs-ruim', 'protegido'];
   if (r.status >= 200 && r.status < 300) return ['bvs-ok', 'respondeu'];
   if (r.status >= 300 && r.status < 400) return ['bvs-meio', 'redirecionou'];
   return ['bvs-ruim', 'recusou'];
@@ -12200,11 +12200,11 @@ function bvsMostrar(d) {
   el.innerHTML = '<div class="bvs-sub" style="margin-top:10px">Teste de ' + bvsEsc(quando) + ' · ' + bvsEsc(d.rota) + ' · ida ' + bvsEsc(d.ida) +
     (d.rodandoNovamente ? ' · rodando de novo, atualiza sozinho' : '') +
     ' · <a href="#" onclick="bvsCopiar(this);return false">copiar resultado completo</a></div>' +
-    '<div style="overflow-x:auto"><table class="bvs-tab"><thead><tr><th>Teste</th><th>Resultado</th><th>HTTP</th><th>Tempo</th><th>Bloqueio</th><th>Início da resposta</th></tr></thead><tbody>' +
+    '<div style="overflow-x:auto"><table class="bvs-tab"><thead><tr><th>Teste</th><th>Resultado</th><th>HTTP</th><th>Tempo</th><th>Proteção</th><th>Início da resposta</th></tr></thead><tbody>' +
     d.resultados.map(function(r) {
       var v = bvsVeredito(r);
       return '<tr><td><b>' + bvsEsc(r.teste) + '</b></td><td class="' + v[0] + '">' + v[1] + '</td><td>' + bvsEsc(r.status || '—') + '</td><td>' +
-        (r.ms ? (r.ms / 1000).toFixed(1) + ' s' : '—') + '</td><td>' + bvsEsc((r.bloqueio || []).join(', ') || '—') + '</td><td class="bvs-trecho">' +
+        (r.ms ? (r.ms / 1000).toFixed(1) + ' s' : '—') + '</td><td>' + bvsEsc((r.protecao || []).join(', ') || '—') + '</td><td class="bvs-trecho">' +
         bvsEsc(r.erro || r.trecho || '') + '</td></tr>';
     }).join('') + '</tbody></table></div>';
 }
