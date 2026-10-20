@@ -12160,7 +12160,7 @@ function toggleDemanda(id) {
 
 <script>
 // ══ BUSCAR VOOS — monta links de pesquisa de Azul, LATAM Pass e Smiles ══
-// Espelhado em gestor-cdv/index.html e concierge/index.html (mudou um, muda o outro).
+// Espelhado em gestor-cdv/index.html, concierge/index.html e painel-cdv/index.html (mudou um, muda os outros).
 // Azul, LATAM, Smiles e GOL: formato confirmado com links reais (out/2026).
 // Em dinheiro, a Smiles (só milhas) dá lugar à busca da GOL.
 var bvEstado = { tipo: 'ida' };
@@ -12440,7 +12440,12 @@ function bvRender() {
 }
 
 function bvCopiarTexto(txt, btn) {
-  var ok = function() { if (!btn) return; var t = btn.textContent; btn.textContent = t.length <= 2 ? '✅' : '✅ Copiado'; setTimeout(function() { btn.textContent = t; }, 1500); };
+  var ok = function() {
+    if (!btn) return;
+    var antes = btn.innerHTML, curto = btn.textContent.trim().length <= 2;
+    btn.textContent = curto ? '✅' : '✅ Copiado';
+    setTimeout(function() { btn.innerHTML = antes; }, 1500);
+  };
   if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(txt).then(ok, function() { prompt('Copie o texto:', txt); });
   } else { prompt('Copie o texto:', txt); }
@@ -12457,8 +12462,7 @@ function bvCopiarTudo(btn) {
 
 (function bvIniciar() {
   function ligar() {
-    var painel = document.getElementById('panel-buscavoos');
-    if (!painel) return;
+    if (!document.getElementById('bv-origem')) return;
     ['bv-origem', 'bv-destino', 'bv-ida', 'bv-volta', 'bv-adt', 'bv-chd', 'bv-inf', 'bv-cabine', 'bv-pagamento'].forEach(function(id) {
       var e = document.getElementById(id);
       e.addEventListener('input', bvRender);
