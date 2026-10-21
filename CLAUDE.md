@@ -330,7 +330,8 @@ Cron do GitHub está degradado (atrasa 2–4 h): disparo real vem do Railway; cr
 - Publicação só pelo proxy (`POST /roteiros/publicar {slug, html}`), que injeta OG, sobe a capa e comita com o token do servidor.
   - Concierge: com `viagemId`, grava `slugRoteiro`, `urlRoteiro`, `roteiroPubEm` em `viagens.json` (origem do `{{link_roteiro}}`).
   - Membros: pastas `membro-<cidade>-<id5>`, registro em `roteiros-membros.json` (repo dados).
-- Pages leva até ~10 min para atualizar. Visual: Barlow Condensed + Plus Jakarta Sans no tema escuro CDV.
+- Pages leva até ~10 min para atualizar.
+- **Modelo único** (desde 21/10/2026): `roteiros/template/index.html` (o painel-cdv busca pelo raw e troca a âncora `// ROTEIRO_DATA será injetado aqui pelo gerador:` + `// const ROTEIRO_DATA = { ... };`) e a **cópia embutida** em `concierge/index.html` → `rgGetTemplate()` (template literal com `// __ROTEIRO_DATA_PLACEHOLDER__`; `\`, crase, `${` e `</` escapados). **Mudou um, muda o outro.** Visual da identidade do concierge: Instrument Serif + Manrope, capa escura com a foto escurecida, conteúdo em creme (#F4EFE7), dourado #C8A45C/#9A7B36, coluna única pensada para celular, tema escuro automático. Funções mantidas: dias recolhíveis (o de hoje abre sozinho, "Abrir todos", `#day-N` abre o dia), barra com seções + dias, rotas Maps/Waze por atividade (coordenadas `lat/lng` se houver, senão nome + cidade do dia; origem = atividade anterior), localizador/confirmação com botão copiar, pasta de documentos (mesmas rotas `/roteiros/doc-upload` e `/roteiros/doc-meta`, confirmações dentro do cartão em vez de alert/confirm/prompt), marca por `marcaTexto/marcaHTML` (padrão Travel Concierge), seções vazias escondidas. Páginas já publicadas não mudam.
 
 ### 4.6 `tudo-sobre-promos` (painel Tica Promos/TSP — `gestao.ticapromos.com.br`)
 - `index.html` (~14,7k linhas) é o painel; `gestao.html` e `painel.html` só redirecionam para `./` (manter por links antigos).
