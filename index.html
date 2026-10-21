@@ -12280,7 +12280,7 @@ function bvpMostrar(d) {
   var rodando = d.estado !== 'pronta';
   var html = '<div class="bvs-sub" style="margin-top:10px">' + bvsEsc(p.origem + ' → ' + p.destino) + ' · 🛫 ' + bvsEsc(bvDataBR(p.ida)) +
     (p.volta ? ' · 🛬 ' + bvsEsc(bvDataBR(p.volta)) : '') + ' · ' + (rodando ? '<b>buscando…</b> atualiza sozinho' : 'pronta') +
-    (d.uso ? ' · hoje: ' + d.uso.paginas + '/' + d.uso.limitePaginas + ' páginas' + (d.uso.creditos ? ', ' + d.uso.creditos + ' créditos' : '') : '') +
+    (d.uso ? ' · hoje: ' + d.uso.paginas + '/' + d.uso.limitePaginas + ' páginas' + (d.uso.creditos ? ', custo US$ ' + Number(d.uso.creditos).toFixed(3) : '') : '') +
     (rodando ? '' : ' · <a href="#" onclick="bvpBuscar(true);return false">buscar de novo</a>') +
     ' · <a href="#" onclick="bvpCopiar(this);return false">copiar resultado</a></div>';
   html += '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">' + fontes.map(function(f) {
