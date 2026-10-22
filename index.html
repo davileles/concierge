@@ -2127,12 +2127,22 @@ header{animation:fadeUp .45s ease both}
       </div>
 
       <div class="field">
+        <label>Operadora aérea <span class="tag">opcional</span> <span class="tag" id="sa-cia-cont">qualquer</span></label>
+        <div class="sa-seg" id="sa-cia-modo" style="margin-bottom:6px">
+          <button type="button" data-v="incluir" class="active" onclick="saSeg('sa-cia-modo','incluir');saRenderOperadoras()">Só estas</button>
+          <button type="button" data-v="excluir" onclick="saSeg('sa-cia-modo','excluir');saRenderOperadoras()">Todas menos estas</button>
+        </div>
+        <input type="text" id="sa-cia-busca" placeholder="🔍 Filtrar companhias (nome ou código, ex: AA)…" oninput="saRenderOperadoras()" style="margin-bottom:6px"/>
+        <div class="sa-chips" id="sa-operadoras"></div>
+      </div>
+
+      <div class="field">
         <label>Nome do alerta <span class="tag">gerado sozinho; pode editar</span></label>
         <input type="text" id="sa-nome" oninput="this.dataset.editado='1'" maxlength="80"/>
       </div>
       <div class="field">
         <label>Observações <span class="tag">para quem cria o alerta</span></label>
-        <textarea id="sa-obs" rows="2" placeholder="Ex: só voos operados pela TAP; partida depois das 18h"></textarea>
+        <textarea id="sa-obs" rows="2" placeholder="Ex: partida depois das 18h"></textarea>
       </div>
 
       <div style="display:flex;gap:8px;margin-top:.5rem">
@@ -6064,6 +6074,30 @@ var SA_PROGRAMAS = [
   'Turkish Miles&Smiles (TK)', 'United MileagePlus (UA)', 'Virgin Atlantic (VS)',
   'Virgin Australia Velocity (VA)'
 ];
+// Nomes exatamente como aparecem no filtro "Operadora Aeronáutica" do seats.aero
+// (Filtros Avançados), lista lida do site em 22/10/2026; ordem alfabética.
+var SA_OPERADORAS = [
+  'Aegean Airlines (A3)', 'Aer Lingus (EI)', 'Aerolíneas Argentinas (AR)', 'Aeromexico (AM)', 'Air Canada (AC)',
+  'Air China (CA)', 'Air Dolomiti (EN)', 'Air Europa (UX)', 'Air France (AF)', 'Air India (AI)', 'Air Mauritius (MK)',
+  'Air New Zealand (NZ)', 'Air Serbia (JU)', 'Air Tahiti Nui (TN)', 'airBaltic (BT)', 'Airlink (4Z)',
+  'Alaska Airlines (AS)', 'American Airlines (AA)', 'ANA (NH)', 'Asiana Airlines (OZ)', 'Austrian Airlines (OS)',
+  'Avianca (AV)', 'Azul (AD)', 'Bangkok Airways (PG)', 'British Airways (BA)', 'Brussels Airlines (SN)',
+  'Canadian North (5T)', 'Cape Air (9K)', 'Cathay Pacific (CX)', 'China Airlines (CI)', 'China Eastern (MU)',
+  'China Southern (CZ)', 'Condor (DE)', 'Copa Airlines (CM)', 'Croatia Airlines (OU)', 'Delta (DL)',
+  'Edelweiss Air (WK)', 'Egyptair (MS)', 'El Al (LY)', 'Emirates (EK)', 'Ethiopian (ET)', 'Etihad Airways (EY)',
+  'Eurowings (EW)', 'Eurowings Discover (4Y)', 'EVA Airways (BR)', 'Fiji Airways (FJ)', 'Finnair (AY)',
+  'flydubai (FZ)', 'Frontier Airlines (F9)', 'Garuda Indonesia (GA)', 'Gol (G3)', 'Gulf Air (GF)',
+  'Hainan Airlines (HU)', 'Hawaiian (HA)', 'Helvetic Airways (2L)', 'Hong Kong Airlines (HX)', 'Iberia (IB)',
+  'Icelandair (FI)', 'ITA Airways (AZ)', 'Japan Airlines (JL)', 'JetBlue (B6)', 'Jetstar (JQ)', 'Juneyao Air (HO)',
+  'Kenya Airways (KQ)', 'KLM (KL)', 'Korean Air (KE)', 'LATAM (LA)', 'LOT Polish Airlines (LO)', 'Lufthansa (LH)',
+  'Lufthansa City (VL)', 'Luxair (LG)', 'Malaysia Airlines (MH)', 'Middle East Airlines (ME)', 'Olympic Air (OA)',
+  'Oman Air (WY)', 'PAL Airlines (PB)', 'Philippine Airlines (PR)', 'Porter Airlines (PD)', 'Qantas Airways (QF)',
+  'Qatar Airways (QR)', 'Royal Air Maroc (AT)', 'Royal Jordanian (RJ)', 'S7 Airlines (S7)', 'Saudia (SV)',
+  'Scandinavian Airlines (SK)', 'Shenzhen Airlines (ZH)', 'Singapore Airlines (SQ)', 'South African Airways (SA)',
+  'SriLankan Airlines (UL)', 'Starlux Airlines (JX)', 'SunExpress (XQ)', 'Swiss (LX)', 'TAP Air Portugal (TP)',
+  'Tarom (RO)', 'Thai Airways (TG)', 'Turkish Airlines (TK)', 'United Airlines (UA)', 'Vietnam Airlines (VN)',
+  'Virgin Atlantic (VS)', 'Virgin Australia (VA)', 'WestJet (WS)', 'XiamenAir (MF)'
+].sort(function(a, b){ return a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }); });
 var SA_CABINES = [
   { v: 'economica', l: 'Econômica' },
   { v: 'executiva', l: 'Executiva' },
@@ -6073,7 +6107,7 @@ var SA_CABINES = [
 var SA_CAB_CURTO = { economica: 'Eco', premium: 'Premium', executiva: 'Executiva', primeira: 'Primeira' };
 var saAlertas = [];
 var saEditandoId = null;
-var saSel = { programas: [], cabines: [] };
+var saSel = { programas: [], cabines: [], operadoras: [] };
 var saCarregado = false;
 
 function saEsc(s) { return (typeof escHtml === 'function') ? escHtml(s) : String(s == null ? '' : s).replace(/[&<>"']/g, function(ch){ return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[ch]; }); }
@@ -6125,6 +6159,29 @@ function saRenderProgramas() {
   document.getElementById('sa-prog-cont').textContent = saSel.programas.length + ' selecionado' + (saSel.programas.length === 1 ? '' : 's');
 }
 
+function saRenderOperadoras() {
+  var el = document.getElementById('sa-operadoras');
+  if (!el) return;
+  var busca = (document.getElementById('sa-cia-busca').value || '').toLowerCase().trim();
+  el.innerHTML = SA_OPERADORAS.filter(function(p){
+    return !busca || p.toLowerCase().indexOf(busca) >= 0 || saSel.operadoras.indexOf(p) >= 0;
+  }).map(function(p){
+    var on = saSel.operadoras.indexOf(p) >= 0;
+    return '<button type="button" class="sa-chip' + (on ? ' on' : '') + '" data-p="' + saEsc(p) + '" onclick="saToggle(\'operadoras\', this.dataset.p)">' + saEsc(p) + '</button>';
+  }).join('');
+  var n = saSel.operadoras.length;
+  document.getElementById('sa-cia-cont').textContent = !n ? 'qualquer'
+    : (saSegVal('sa-cia-modo') === 'excluir' ? 'exclui ' : 'só ') + n + ' companhia' + (n === 1 ? '' : 's');
+}
+
+// Texto curto do filtro de operadora para a lista e os modelos.
+function saResumoOperadoras(a) {
+  var ops = a.operadoras || [];
+  if (!ops.length) return '';
+  var cods = ops.map(function(p){ var m = p.match(/\(([A-Z0-9]{2})\)$/); return m ? m[1] : p; }).join('/');
+  return (a.operadorasModo === 'excluir' ? 'exceto ' : 'só ') + cods;
+}
+
 function saRenderCabines() {
   document.getElementById('sa-cabines').innerHTML = SA_CABINES.map(function(c){
     var on = saSel.cabines.indexOf(c.v) >= 0;
@@ -6137,6 +6194,7 @@ function saToggle(campo, v) {
   var i = arr.indexOf(v);
   if (i >= 0) arr.splice(i, 1); else arr.push(v);
   if (campo === 'programas') { arr.sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); }); saRenderProgramas(); }
+  else if (campo === 'operadoras') { arr.sort(function(a,b){ return a.localeCompare(b, 'pt-BR', { sensitivity: 'base' }); }); saRenderOperadoras(); }
   else { saRenderCabines(); saAtualizarNome(); }
 }
 
@@ -6203,8 +6261,8 @@ function saLimparForm() {
   saModeloAtivo = null;
   saRotaInvertida = false;
   if (typeof saRenderModelos === 'function' && saModelos.length) saRenderModelos();
-  saSel = { programas: [], cabines: [] };
-  ['sa-cliente','sa-origens','sa-destinos','sa-data','sa-data-fim','sa-assentos','sa-max-pontos','sa-max-taxas','sa-nome','sa-obs','sa-prog-busca'].forEach(function(id){
+  saSel = { programas: [], cabines: [], operadoras: [] };
+  ['sa-cliente','sa-origens','sa-destinos','sa-data','sa-data-fim','sa-assentos','sa-max-pontos','sa-max-taxas','sa-nome','sa-obs','sa-prog-busca','sa-cia-busca'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('sa-nome').dataset.editado = '';
@@ -6214,9 +6272,10 @@ function saLimparForm() {
   document.getElementById('sa-destinos-hint').innerHTML = '';
   saDataTipo('fixa');
   saSeg('sa-tipo', 'unico');
+  saSeg('sa-cia-modo', 'incluir');
   document.getElementById('sa-form-titulo').textContent = 'Novo alerta';
   document.getElementById('sa-btn-salvar').textContent = '💾 Salvar na fila';
-  saRenderProgramas(); saRenderCabines();
+  saRenderProgramas(); saRenderCabines(); saRenderOperadoras();
 }
 
 function saLerForm() {
@@ -6237,6 +6296,8 @@ function saLerForm() {
     maxParadas: document.getElementById('sa-paradas').value,
     maxPontos: document.getElementById('sa-max-pontos').value ? Number(document.getElementById('sa-max-pontos').value) : null,
     maxTaxas: document.getElementById('sa-max-taxas').value ? Number(document.getElementById('sa-max-taxas').value) : null,
+    operadoras: saSel.operadoras.slice(),
+    operadorasModo: saSel.operadoras.length && saSegVal('sa-cia-modo') === 'excluir' ? 'excluir' : 'incluir',
     obs: document.getElementById('sa-obs').value.trim()
   };
   var dem = (demandas || []).find(function(x){ return x.id === a.demandaId; });
@@ -6306,6 +6367,8 @@ function saPreencherForm(a) {
   document.getElementById('sa-data-fim').value = a.dataFim || '';
   saSel.programas = (a.programas || []).slice();
   saSel.cabines = (a.cabines || []).slice();
+  saSel.operadoras = (a.operadoras || []).slice();
+  saSeg('sa-cia-modo', a.operadorasModo === 'excluir' ? 'excluir' : 'incluir');
   saSeg('sa-tipo', a.tipo || 'unico');
   document.getElementById('sa-assentos').value = a.assentosMin || '';
   document.getElementById('sa-paradas').value = a.maxParadas || '';
@@ -6317,7 +6380,7 @@ function saPreencherForm(a) {
   nome.dataset.editado = '1';
   saIataInput(document.getElementById('sa-origens'));
   saIataInput(document.getElementById('sa-destinos'));
-  saRenderProgramas(); saRenderCabines();
+  saRenderProgramas(); saRenderCabines(); saRenderOperadoras();
 }
 
 function saEditar(id) {
@@ -6412,6 +6475,7 @@ function saRender() {
     if (a.maxParadas !== '' && a.maxParadas != null) filtros.push(a.maxParadas === '0' ? 'direto' : 'até ' + a.maxParadas + ' parada' + (a.maxParadas === '1' ? '' : 's'));
     if (a.maxPontos) filtros.push('máx ' + Number(a.maxPontos).toLocaleString('pt-BR') + ' pts');
     if (a.maxTaxas) filtros.push('taxas até US$ ' + a.maxTaxas);
+    if ((a.operadoras || []).length) filtros.push('operadora: ' + saResumoOperadoras(a));
     var acoes = ['<button class="btn btn-ghost btn-sm" onclick="saDuplicar(\'' + a.id + '\')">📄 Duplicar</button>'];
     if (a.status === 'pendente') {
       acoes.push('<button class="btn btn-ghost btn-sm" onclick="saEditar(\'' + a.id + '\')">✏️ Editar</button>');
@@ -6456,7 +6520,7 @@ function saCarregar(forcar) {
 
 function saAbrirAba() {
   saPopularVinculos();
-  if (!document.getElementById('sa-programas').innerHTML) { saRenderProgramas(); saRenderCabines(); }
+  if (!document.getElementById('sa-programas').innerHTML) { saRenderProgramas(); saRenderCabines(); saRenderOperadoras(); }
   saCarregarModelos();
   saCarregar(false);
 }
@@ -6509,6 +6573,7 @@ function saResumoModelo(m) {
   if (m.maxParadas !== '' && m.maxParadas != null) p.push(m.maxParadas === '0' ? 'direto' : 'até ' + m.maxParadas + ' parada(s)');
   if (m.assentosMin) p.push(m.assentosMin + '+ assentos');
   if (m.maxTaxas) p.push('taxas até US$ ' + m.maxTaxas);
+  if ((m.operadoras || []).length) p.push('operadora: ' + saResumoOperadoras(m));
   if (m.tipo === 'continuo') p.push('contínuo');
   return p.join(' · ');
 }
@@ -6536,6 +6601,8 @@ function saAplicarModelo(id) {
   if ((m.destinos || []).length) set('sa-destinos', m.destinos.join(', '));
   if ((m.programas || []).length) saSel.programas = m.programas.slice();
   if ((m.cabines || []).length) saSel.cabines = m.cabines.slice();
+  saSel.operadoras = (m.operadoras || []).slice();
+  saSeg('sa-cia-modo', m.operadorasModo === 'excluir' ? 'excluir' : 'incluir');
   saSeg('sa-tipo', m.tipo || 'unico');
   set('sa-assentos', m.assentosMin || '');
   set('sa-paradas', m.maxParadas || '');
@@ -6551,7 +6618,7 @@ function saAplicarModelo(id) {
   document.getElementById('sa-nome').dataset.editado = '';
   saIataInput(document.getElementById('sa-origens'));
   saIataInput(document.getElementById('sa-destinos'));
-  saRenderProgramas(); saRenderCabines(); saRenderModelos();
+  saRenderProgramas(); saRenderCabines(); saRenderOperadoras(); saRenderModelos();
   showToast('Modelo "' + m.nome + '" aplicado. Falta cliente e data.', 'ok');
   var alvo = !document.getElementById('sa-cliente').value.trim() ? 'sa-cliente'
            : (saSegVal('sa-data-tipo') !== 'qualquer' ? 'sa-data' : 'sa-origens');
@@ -6586,6 +6653,7 @@ function saSalvarModelo() {
   var modelo = {
     nome: nome, origens: a.origens, destinos: a.destinos, programas: a.programas, cabines: a.cabines,
     tipo: a.tipo, assentosMin: a.assentosMin, maxParadas: a.maxParadas, maxPontos: a.maxPontos, maxTaxas: a.maxTaxas,
+    operadoras: a.operadoras, operadorasModo: a.operadorasModo,
     dataTipo: a.dataTipo === 'qualquer' ? 'qualquer' : '',
     obs: a.obs.split('\n').filter(function(l){ return l.indexOf('Demanda: ') !== 0; }).join('\n').trim()
   };
