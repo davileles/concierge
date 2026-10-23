@@ -354,6 +354,7 @@ function localDe(valor) {
 // Espelha VALORES_PONTOS_PADRAO do index.html; cfg.valoresPontos sobrescreve.
 const VALORES_PONTOS_PADRAO = {
   'AAdvantage':      100,
+  'ALL Accor':        90,
   'Azul Fidelidade':  13,
   'Esfera':           30,
   'Executive Club':   60.90,
