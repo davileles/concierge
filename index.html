@@ -4147,6 +4147,15 @@ function aplicarDadosAtivo(d) {
         el.selectedIndex = i; return;
       }
     }
+    // Nome mais longo que a opcao (ex.: "South African Airways" → "South African"):
+    // escolhe a opcao mais longa contida no valor como palavra inteira.
+    var alvo = ' ' + String(val).toLowerCase().replace(/[^a-z0-9à-ú]+/g, ' ') + ' ';
+    var melhor = -1, tam = 0;
+    for (var j = 0; j < el.options.length; j++) {
+      var t = String(el.options[j].text || '').toLowerCase().replace(/[^a-z0-9à-ú]+/g, ' ').trim();
+      if (t.length >= 3 && t.length > tam && alvo.indexOf(' ' + t + ' ') !== -1) { melhor = j; tam = t.length; }
+    }
+    if (melhor !== -1) { el.selectedIndex = melhor; return; }
     el.value = val;
   }
 
