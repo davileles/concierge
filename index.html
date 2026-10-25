@@ -737,7 +737,7 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Horário de Partida — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-partida" onchange="autoDataChegada('ida')"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-chegada-ida" onchange="marcarDataChegadaManual(this)"/></div>
+        <div class="field"><label>Data Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="date" id="f-data-chegada-ida" data-data-de="f-data-ida" onchange="marcarDataChegadaManual(this)"/></div>
         <div class="field"><label>Horário de Chegada — Ida <span style="color:var(--accent)">*</span></label><input type="time" id="f-hora-chegada" onchange="autoDataChegada('ida')"/></div>
       </div>
       <div class="g2">
@@ -764,11 +764,11 @@ header{animation:fadeUp .45s ease both}
         <div class="field"><label>Conexão <span class="tag">opcional</span></label><div class="iata-wrap"><input type="text" id="f-conexao-volta" placeholder="Ex: AMS ou Amsterdam" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Partida — Volta</label><input type="date" id="f-data-volta" onchange="autoDataChegada('volta')"/></div>
+        <div class="field"><label>Data Partida — Volta</label><input type="date" id="f-data-volta" data-data-de="f-data-chegada-ida,f-data-ida" onchange="autoDataChegada('volta')"/></div>
         <div class="field"><label>Horário de Partida — Volta</label><input type="time" id="f-hora-partida-volta" onchange="autoDataChegada('volta')"/></div>
       </div>
       <div class="g2">
-        <div class="field"><label>Data Chegada — Volta</label><input type="date" id="f-data-chegada-volta" onchange="marcarDataChegadaManual(this)"/></div>
+        <div class="field"><label>Data Chegada — Volta</label><input type="date" id="f-data-chegada-volta" data-data-de="f-data-volta" onchange="marcarDataChegadaManual(this)"/></div>
         <div class="field"><label>Horário de Chegada — Volta</label><input type="time" id="f-hora-chegada-volta" onchange="autoDataChegada('volta')"/></div>
       </div>
       <div class="g2">
@@ -905,7 +905,7 @@ header{animation:fadeUp .45s ease both}
       <div class="field"><label>Destino <span style="color:var(--accent)">*</span></label><div class="iata-wrap"><input type="text" id="f-hotel-destino" placeholder="Ex: LIS ou Lisboa" autocomplete="off" oninput="iataAutocomplete(this,this.nextElementSibling)" onkeydown="iataKeydown(event,this,this.nextElementSibling)"/><div class="iata-dropdown"></div></div></div>
       <div class="g3">
         <div class="field"><label>Check-in <span style="color:var(--accent)">*</span></label><input type="date" id="f-checkin"/></div>
-        <div class="field"><label>Check-out <span style="color:var(--accent)">*</span></label><input type="date" id="f-checkout"/></div>
+        <div class="field"><label>Check-out <span style="color:var(--accent)">*</span></label><input type="date" id="f-checkout" data-data-de="f-checkin"/></div>
         <div class="field"><label>Nº de Noites</label><input type="number" id="f-noites" min="1" placeholder="Ex: 5"/></div>
       </div>
       <div class="g2">
@@ -1028,7 +1028,7 @@ header{animation:fadeUp .45s ease both}
             <div class="field"><label id="lbl-volta-destino">Destino (volta)</label><input type="text" id="f-volta-destino" placeholder="Vazio = origem da ida" autocomplete="off"/></div>
           </div>
           <div class="g3">
-            <div class="field"><label id="lbl-volta-data">Data (volta)</label><input type="date" id="f-volta-data"/></div>
+            <div class="field"><label id="lbl-volta-data">Data (volta)</label><input type="date" id="f-volta-data" data-data-de="f-ret-data"/></div>
             <div class="field"><label id="lbl-volta-hora">Horário de Partida (volta)</label><input type="time" id="f-volta-hora"/></div>
             <div class="field"><label>Horário de Chegada (volta)</label><input type="time" id="f-volta-hora-chegada"/></div>
           </div>
@@ -1047,7 +1047,7 @@ header{animation:fadeUp .45s ease both}
           <div class="field"><label>Horário de Retirada</label><input type="time" id="f-loc-hora-ret"/></div>
         </div>
         <div class="g2">
-          <div class="field"><label>Data de Devolução</label><input type="date" id="f-dev-data"/></div>
+          <div class="field"><label>Data de Devolução</label><input type="date" id="f-dev-data" data-data-de="f-ret-data-loc,f-ret-data"/></div>
           <div class="field"><label>Horário de Devolução</label><input type="time" id="f-loc-hora-dev"/></div>
         </div>
         <!-- Confirmação / Categoria / Seguro -->
@@ -1170,7 +1170,7 @@ header{animation:fadeUp .45s ease both}
       </div>
       <div class="g3">
         <div class="field"><label>&#128747; Inicio da Vigencia <span style="color:var(--accent)">*</span></label><input type="date" id="f-seguro-inicio"/></div>
-        <div class="field"><label>Fim da Vigencia <span style="color:var(--accent)">*</span></label><input type="date" id="f-seguro-fim"/></div>
+        <div class="field"><label>Fim da Vigencia <span style="color:var(--accent)">*</span></label><input type="date" id="f-seguro-fim" data-data-de="f-seguro-inicio"/></div>
         <div class="field"><label>N&ordm; de Segurados</label><input type="number" id="f-seguro-pax" min="1" placeholder="Ex: 2"/></div>
       </div>
       <div class="g3">
@@ -1361,7 +1361,7 @@ header{animation:fadeUp .45s ease both}
     </div>
     <div class="g2">
       <div class="field"><label>Data de Início</label><input type="date" id="vf-inicio"/></div>
-      <div class="field"><label>Data de Fim</label><input type="date" id="vf-fim"/></div>
+      <div class="field"><label>Data de Fim</label><input type="date" id="vf-fim" data-data-de="vf-inicio"/></div>
     </div>
     <div class="field"><label>Grupo do WhatsApp da viagem <span class="tag">opcional</span></label>
       <select id="vf-grupo" onchange="vfGrupoChange(this)"><option value="">— Usar o grupo de cada cliente —</option></select>
@@ -1739,7 +1739,7 @@ header{animation:fadeUp .45s ease both}
           </div>
           <div class="g2">
             <div class="field"><label>🛫 Data de ida</label><input type="date" id="dp-data-ida" onchange="onDispChange()"/></div>
-            <div class="field"><label>🛬 Data de volta <span class="tag">opcional</span></label><input type="date" id="dp-data-volta" onchange="onDispChange()"/></div>
+            <div class="field"><label>🛬 Data de volta <span class="tag">opcional</span></label><input type="date" id="dp-data-volta" data-data-de="dp-data-ida" onchange="onDispChange()"/></div>
           </div>
           <div class="g2">
             <div class="field"><label>Cia aérea</label><select id="dp-cia" onchange="onDispChange()"></select></div>
@@ -2086,7 +2086,7 @@ header{animation:fadeUp .45s ease both}
         </div>
         <div class="g2" id="sa-datas" style="margin-top:8px">
           <div><label style="font-size:11px">🛫 <span id="sa-data-rotulo">Data</span></label><input type="date" id="sa-data"/></div>
-          <div id="sa-data-fim-wrap" style="display:none"><label style="font-size:11px">🛫 Até</label><input type="date" id="sa-data-fim"/></div>
+          <div id="sa-data-fim-wrap" style="display:none"><label style="font-size:11px">🛫 Até</label><input type="date" id="sa-data-fim" data-data-de="sa-data"/></div>
         </div>
       </div>
 
@@ -2165,7 +2165,7 @@ header{animation:fadeUp .45s ease both}
       <button type="button" class="bv-trocar" onclick="bvTrocar()" title="Inverter origem e destino">⇄</button>
       <div class="field bv-iata"><label>Destino</label><div class="bv-caixa"><input type="text" id="bv-destino" placeholder="Código ou cidade" autocomplete="off" spellcheck="false"/><span class="bv-aero" id="bv-destino-nome"></span></div><div class="bv-ac" id="bv-destino-ac"></div></div>
       <div class="field bv-data"><label>🛫 Ida</label><input type="date" id="bv-ida"/></div>
-      <div class="field bv-data" id="bv-volta-campo" style="display:none"><label>🛬 Volta</label><input type="date" id="bv-volta"/></div>
+      <div class="field bv-data" id="bv-volta-campo" style="display:none"><label>🛬 Volta</label><input type="date" id="bv-volta" data-data-de="bv-ida"/></div>
     </div>
     <div class="bv-linha">
       <div class="field bv-tipo-campo"><label>Tipo</label>
@@ -12856,6 +12856,55 @@ function bvCopiarTudo(btn) {
     bvRender();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', ligar); else ligar();
+})();
+</script>
+<script>
+/* Par de datas (regra de todos os projetos): o 2º campo de um intervalo abre no mês da 1ª data.
+   Marque o 2º campo com data-data-de="id-do-1º" (vários: "a,b" → usa o 1º preenchido; ".classe" → busca no contêiner mais próximo).
+   Ao abrir o 2º campo vazio, ele recebe a 1ª data só para o calendário abrir naquele mês; se nada for escolhido, volta a ficar vazio. */
+(function(){
+  if (window.__parDatas) return; window.__parDatas = 1;
+  var TIPOS = {'date':1, 'datetime-local':1, 'month':1};
+  function origem(el){
+    var refs = (el.getAttribute('data-data-de') || '').split(',');
+    for (var i = 0; i < refs.length; i++){
+      var r = refs[i].trim(), a = null;
+      if (!r) continue;
+      if (/^[.\[]/.test(r)) { for (var p = el.parentElement; p && !a; p = p.parentElement) a = p.querySelector(r); }
+      else a = document.getElementById(r.replace(/^#/, ''));
+      if (a && a !== el && a.value) return a;
+    }
+    return null;
+  }
+  function adaptar(v, tipo){
+    if (tipo === 'month') return v.slice(0, 7);
+    var d = v.length === 7 ? v + '-01' : v.slice(0, 10);
+    return tipo === 'datetime-local' ? (v.length > 10 ? v.slice(0, 16) : d + 'T00:00') : d;
+  }
+  function preparar(e){
+    var el = e.target;
+    if (!el || el.tagName !== 'INPUT' || !TIPOS[el.type] || !el.hasAttribute('data-data-de')) return;
+    if (el.value || el.readOnly || el.disabled || el.__parAuto !== undefined) return;
+    var a = origem(el); if (!a) return;
+    var v = adaptar(a.value, el.type);
+    // Mesmo mês do atual: o calendário já abre certo, não precisa preencher
+    var hoje = new Date(), mesAtual = hoje.getFullYear() + '-' + String(hoje.getMonth() + 1).padStart(2, '0');
+    if (v.slice(0, 7) === mesAtual) return;
+    el.value = v;
+    if (el.value !== v) return;
+    el.__parAuto = v; el.__parMexeu = false;
+  }
+  function mexeu(e){ var el = e.target; if (el && el.__parAuto !== undefined) el.__parMexeu = true; }
+  function soltar(e){
+    var el = e.target; if (!el || el.__parAuto === undefined) return;
+    if (!el.__parMexeu && el.value === el.__parAuto) el.value = '';
+    delete el.__parAuto; delete el.__parMexeu;
+  }
+  document.addEventListener('pointerdown', preparar, true);
+  document.addEventListener('focusin', preparar, true);
+  document.addEventListener('input', mexeu, true);
+  document.addEventListener('change', mexeu, true);
+  document.addEventListener('focusout', soltar, true);
 })();
 </script>
 </body>
