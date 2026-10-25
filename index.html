@@ -2052,8 +2052,11 @@ header{animation:fadeUp .45s ease both}
       <div class="g2">
         <div class="field">
           <label>Cliente <span class="tag">opcional</span></label>
-          <input type="text" id="sa-cliente" list="sa-clientes-list" placeholder="Nome do cliente" oninput="saAtualizarNome()"/>
-          <datalist id="sa-clientes-list"></datalist>
+          <div class="cli-multi-wrap">
+            <input type="text" id="sa-cliente" autocomplete="off" placeholder="🔍 Digite para buscar o cliente"
+                   oninput="saCliBusca();saAtualizarNome()" onfocus="saCliBusca()" onkeydown="saCliTecla(event)" onblur="saCliFecharLento()"/>
+            <div class="cli-multi-drop" id="sa-cliente-drop" style="display:none"></div>
+          </div>
         </div>
         <div class="field">
           <label>Demanda <span class="tag">opcional</span></label>
@@ -6215,11 +6218,66 @@ function saInverterRota() {
   saIataInput(o); saIataInput(d);
 }
 
+// Campo Cliente: lista própria (o <datalist> não abria em todo navegador),
+// igual ao seletor de clientes das Demandas. Aceita nome fora do cadastro.
+var _saCliIdx = -1, _saCliTimer = null;
+function saCliNomes(termo) {
+  var t = String(termo || '').trim().toLowerCase(), vistos = {};
+  return (clientes || []).map(function(c){ return toTitleCase(String(c.nome || '')); })
+    .filter(function(n){
+      if (!n) return false;
+      var k = n.toLowerCase();
+      if (vistos[k]) return false;
+      vistos[k] = 1;
+      return !t || k.indexOf(t) !== -1;
+    })
+    .sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); });
+}
+function saCliBusca() {
+  clearTimeout(_saCliTimer);
+  var inp = document.getElementById('sa-cliente'), drop = document.getElementById('sa-cliente-drop');
+  if (!inp || !drop) return;
+  var termo = inp.value.trim();
+  var lista = saCliNomes(termo);
+  if (lista.length === 1 && lista[0].toLowerCase() === termo.toLowerCase()) { saCliFechar(); return; }
+  drop.innerHTML = lista.length ? lista.slice(0, 80).map(function(n){
+    return '<div class="cli-multi-opt" data-nome="' + saEsc(n) + '" onmousedown="event.preventDefault()" onclick="saCliEscolher(this.getAttribute(\'data-nome\'))">' + saEsc(n) + '</div>';
+  }).join('') : '<div class="cli-multi-vazio">' + ((clientes || []).length ? 'Nenhum cliente com esse nome (vale digitar assim mesmo)' : 'Base de clientes ainda carregando…') + '</div>';
+  drop.style.display = 'block';
+  _saCliIdx = -1;
+}
+function saCliEscolher(nome) {
+  var inp = document.getElementById('sa-cliente');
+  if (inp) inp.value = nome || '';
+  saCliFechar();
+  saAtualizarNome();
+}
+function saCliFechar() {
+  var drop = document.getElementById('sa-cliente-drop');
+  if (drop) { drop.style.display = 'none'; drop.innerHTML = ''; }
+  _saCliIdx = -1;
+}
+function saCliFecharLento() { clearTimeout(_saCliTimer); _saCliTimer = setTimeout(saCliFechar, 180); }
+function saCliTecla(ev) {
+  var drop = document.getElementById('sa-cliente-drop');
+  if (!drop || drop.style.display === 'none') return;
+  var opts = drop.querySelectorAll('.cli-multi-opt');
+  if (ev.key === 'Escape') { saCliFechar(); return; }
+  if (!opts.length) return;
+  if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+    ev.preventDefault();
+    _saCliIdx += (ev.key === 'ArrowDown' ? 1 : -1);
+    if (_saCliIdx < 0) _saCliIdx = opts.length - 1;
+    if (_saCliIdx >= opts.length) _saCliIdx = 0;
+    for (var i = 0; i < opts.length; i++) opts[i].classList.toggle('ativa', i === _saCliIdx);
+    opts[_saCliIdx].scrollIntoView({ block: 'nearest' });
+  } else if (ev.key === 'Enter') {
+    ev.preventDefault();
+    saCliEscolher(opts[_saCliIdx >= 0 ? _saCliIdx : 0].getAttribute('data-nome'));
+  }
+}
+
 function saPopularVinculos() {
-  var dl = document.getElementById('sa-clientes-list');
-  if (dl) dl.innerHTML = (clientes || []).map(function(c){ return toTitleCase(String(c.nome || '')); })
-    .filter(Boolean).sort(function(a,b){ return a.localeCompare(b, 'pt-BR'); })
-    .map(function(n){ return '<option value="' + saEsc(n) + '"></option>'; }).join('');
   var sel = document.getElementById('sa-demanda');
   if (!sel) return;
   var cur = sel.value;
