@@ -1,6 +1,17 @@
 {
   "limiarRemocao": 150,
   "arquivos": {
+    "bom-dia.js": {
+      "minLinhas": 200,
+      "obrigatorio": [
+        "function cidadesDoDia(",
+        "function geocodificar(",
+        "function gruposDaViagem(",
+        "function montarMensagem(",
+        "function prepararDia(",
+        "function previsaoDia("
+      ]
+    },
     "extensao/content.js": {
       "minLinhas": 150,
       "obrigatorio": [
@@ -52,23 +63,10 @@
         "function _setAuthCookie(",
         "function abreviarLocal(",
         "function abrirDetalheAtiv(",
-        "function abrirEnvioDemanda("
-      ]
-    },
-    "portal.html": {
-      "minLinhas": 848,
-      "obrigatorio": [
-        "function aplicarTema(",
-        "function entrar(",
-        "function fmtDate(",
-        "function renderPortal(",
-        "function resCols(",
-        "function sair(",
-        "function sortAtivs(",
-        "function statusLabel(",
-        "function toTitleCase(",
-        "function toggleTema(",
-        "function toggleViagem("
+        "function abrirEnvioDemanda(",
+        "function abrirPdfReserva(",
+        "function pdfrEnviar(",
+        "function pdfrDoExtraido("
       ]
     },
     "lembrete-voo.js": {
@@ -97,15 +95,29 @@
         "function normalizarModelo"
       ]
     },
-    "bom-dia.js": {
-      "minLinhas": 200,
+    "pdf-reserva.js": {
+      "minLinhas": 600,
       "obrigatorio": [
-        "function cidadesDoDia(",
-        "function geocodificar(",
-        "function gruposDaViagem(",
-        "function montarMensagem(",
-        "function prepararDia(",
-        "function previsaoDia("
+        "function montarHTML(",
+        "function montarVoo(",
+        "function montarOutro(",
+        "function gerarPDF("
+      ]
+    },
+    "portal.html": {
+      "minLinhas": 848,
+      "obrigatorio": [
+        "function aplicarTema(",
+        "function entrar(",
+        "function fmtDate(",
+        "function renderPortal(",
+        "function resCols(",
+        "function sair(",
+        "function sortAtivs(",
+        "function statusLabel(",
+        "function toTitleCase(",
+        "function toggleTema(",
+        "function toggleViagem("
       ]
     }
   }

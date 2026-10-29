@@ -109,6 +109,23 @@ select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/
 .btn-danger:hover{background:rgba(255,88,94,.22)}
 .btn-sm{padding:7px 14px;font-size:11px;border-radius:7px}
 .btn-row{display:flex;gap:10px;align-items:center;margin-top:4px}
+/* PDF da reserva: formulário à esquerda, prévia à direita */
+#modal-pdf-res .modal{max-width:1180px;padding:20px}
+.pdfr-grade{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:20px;align-items:start}
+.pdfr-form .field{margin-bottom:10px}
+.pdfr-form textarea{min-height:64px;resize:vertical;font-size:13px}
+.pdfr-form input,.pdfr-form select{font-size:13px;padding:8px 10px}
+.pdfr-bloco{border:1px solid var(--border);border-radius:12px;padding:12px 12px 4px;margin-bottom:12px;background:var(--surface2)}
+.pdfr-bloco>.pdfr-tit{font-size:11px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px}
+.pdfr-bloco .bd-toggle{background:var(--surface);padding:9px 12px;font-size:13px;margin-bottom:8px}
+.pdfr-previa{position:sticky;top:0;background:#d9d4ca;border-radius:12px;padding:14px;overflow-x:hidden;overflow-y:auto;max-height:calc(85vh - 110px)}
+#pdfr-folha{overflow:hidden}
+.pdfr-previa iframe{border:0;width:794px;background:#fff;transform-origin:0 0;box-shadow:0 6px 24px rgba(0,0,0,.25);display:block}
+.pdfr-acoes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.pdfr-acoes .btn{padding:11px 14px;font-size:12px}
+.pdfr-acoes .btn:first-child{grid-column:1/-1}
+.pdfr-acoes .btn:disabled{opacity:.5;cursor:not-allowed}
+@media (max-width:900px){.pdfr-grade{grid-template-columns:1fr}.pdfr-previa{position:static}}
 
 /* BADGE */
 .badge{display:inline-flex;align-items:center;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.3px}
@@ -556,6 +573,7 @@ header{animation:fadeUp .45s ease both}
 </style>
 <script src="iata.js"></script>
 <script src="bom-dia.js"></script>
+<script src="pdf-reserva.js"></script>
 <style>
 /* ══════════════════════════════════════════════════════════════════════
    LAYOUT COM MENU LATERAL (29/10/2026) — mesmo padrão do painel-cdv e do
@@ -1991,6 +2009,20 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
     <div class="btn-row">
       <button class="btn btn-danger" style="flex:1" onclick="confirmarDelete()">Sim, excluir</button>
       <button class="btn btn-ghost" onclick="closeModal('modal-delete')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PDF DA RESERVA — conteúdo montado por abrirPdfReserva() -->
+<div class="modal-overlay" id="modal-pdf-res" onclick="if(event.target===this) closeModal('modal-pdf-res')">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="pdfr-titulo">🧾 PDF da reserva</span>
+      <button class="modal-close" onclick="closeModal('modal-pdf-res')">×</button>
+    </div>
+    <div class="pdfr-grade">
+      <div class="pdfr-form" id="pdfr-form"></div>
+      <div class="pdfr-previa" id="pdfr-previa"><div id="pdfr-folha"><iframe id="pdfr-iframe" title="Prévia do PDF"></iframe></div></div>
     </div>
   </div>
 </div>
@@ -3685,6 +3717,7 @@ function onTipoChange(reprocessar) {
 }
 
 function limparForm() {
+  window._pdfExtraido = null;
   ['f-tipo','f-cliente','f-origem','f-destino','f-data-ida','f-data-chegada-ida','f-data-volta','f-data-chegada-volta','f-hora-partida','f-hora-chegada','f-hora-partida-volta','f-hora-chegada-volta','f-conexao','f-conexao-volta','f-origem-volta','f-destino-volta','f-cia-ida','f-cia-volta','f-nvoo-ida','f-nvoo-volta','f-classe','f-pnr','f-tipo-emissao',
    'f-programa','f-milhas-total','f-milhas','f-pax','f-passageiros',
    'f-valor-dinheiro',
@@ -4282,6 +4315,10 @@ function aplicarDadosAtivo(d) {
     el.value = val;
   }
 
+  // Detalhes que o formulário não tem (assento, bilhetes, bagagem, regras…)
+  // vão para reserva.pdf ao salvar e preenchem o painel do PDF da reserva.
+  window._pdfExtraido = pdfrDoExtraido(d);
+
   if (d.tipo) { ssv('f-tipo', d.tipo); onTipoChange(false); }
 
   // Setar campo IATA com exibição "GRU – São Paulo"
@@ -4709,6 +4746,17 @@ function coletarReservaDoForm(id) {
   }
   var _cliG = clientes.find(function(c){ return c.nome === cliente; });
   if (_cliG && _cliG.grupo) res.grupo = _cliG.grupo;
+  // Ajustes do PDF: mantém os da reserva em edição e completa com o que a IA leu
+  var _origPdf = window._reservaEditandoOriginal && window._reservaEditandoOriginal.pdf;
+  if (_origPdf) res.pdf = JSON.parse(JSON.stringify(_origPdf));
+  if (window._pdfExtraido) {
+    res.pdf = res.pdf || {};
+    Object.keys(window._pdfExtraido).forEach(function(k){
+      var atual = res.pdf[k];
+      var vazio = atual === undefined || atual === '' || (k === 'bagagem' && !(atual && atual.ativo));
+      if (vazio) res.pdf[k] = window._pdfExtraido[k];
+    });
+  }
   // Economia gerada — congelada na reserva com as premissas vigentes no cadastro
   var _eco = calcularEconomia(res);
   res.economiaGerada  = _eco.valor > 0 ? fmtBRL(_eco.valor) : '';
@@ -5298,6 +5346,7 @@ function renderReservas() {
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()">'
         +   (r.msgPendente ? '<button class="dem-acao" title="Mensagem não enviada — clique para reenviar" style="color:#f59e0b" data-vid="'+r.id+'" onclick="reenviarMsgPendente(this.dataset.vid)">↻</button>' : '')
         +   ((r.temArquivo || (r.arquivoAnexo && r.arquivoAnexo.nome)) ? '<button class="dem-acao" title="Ver bilhete" data-vid="'+r.id+'" onclick="verArquivoAnexo(this.dataset.vid)">📎</button>' : '')
+        +   '<button class="dem-acao" title="PDF da reserva" data-vid="'+r.id+'" onclick="abrirPdfReserva(this.dataset.vid)">🧾</button>'
         +   '<button class="dem-acao" title="Editar" data-vid="'+r.id+'" onclick="editarReserva(this.dataset.vid)">✏️</button>'
         +   '<button class="dem-acao" title="Duplicar" data-vid="'+r.id+'" onclick="duplicarReserva(this.dataset.vid)">📄</button>'
         +   '<button class="dem-acao del" title="Excluir" data-vid="'+r.id+'" onclick="pedirDelete(this.dataset.vid)">🗑️</button>'
@@ -10050,6 +10099,258 @@ function removerMsgImg(px) {
 // anexo (opcional): { base64, mime, nome, ehImagem } — quando presente vai por
 // /enviar-imagem (image/*) ou /enviar-arquivo (PDF, DOCX, XLSX...), sempre com o
 // texto como legenda (caption), em um unico disparo.
+// ── PDF DA RESERVA ──────────────────────────────────────────────────────────
+// O layout mora em pdf-reserva.js (window.PdfReserva). Aqui fica o painel de
+// ajustes: o que a reserva não tem (assento, bagagem, taxas, regras…) o
+// concierge completa ou desliga antes de gerar. Os ajustes ficam salvos em
+// reserva.pdf e voltam preenchidos na próxima vez.
+var _pdfr = { id: null, r: null, op: null, timer: null, ocupado: false };
+
+function pdfrCtx() {
+  var img = document.querySelector('.brand-icon-wrap img');
+  var h = new Date();
+  return {
+    logo: img ? img.src : '',
+    nomeAeroporto: typeof bvNomeAeroporto === 'function' ? bvNomeAeroporto : null,
+    hoje: String(h.getDate()).padStart(2, '0') + '/' + String(h.getMonth() + 1).padStart(2, '0') + '/' + h.getFullYear()
+  };
+}
+function pdfrGrupo(r) {
+  if (r.grupo) return r.grupo;
+  var c = (clientes || []).find(function (x) { return x.nome === r.cliente; });
+  return (c && c.grupo) || '';
+}
+function _pdfrCampo(id, rot, val, ph, tipo) {
+  return '<div class="field"><label for="' + id + '">' + rot + '</label>'
+    + (tipo === 'area'
+      ? '<textarea id="' + id + '" rows="3" placeholder="' + escHtml(ph || '') + '">' + escHtml(val || '') + '</textarea>'
+      : '<input type="text" id="' + id + '" value="' + escHtml(val || '') + '" placeholder="' + escHtml(ph || '') + '"/>')
+    + '</div>';
+}
+function _pdfrChave(id, rot, marcado, dica) {
+  return '<label class="bd-toggle"><input type="checkbox" id="' + id + '"' + (marcado ? ' checked' : '') + '/>'
+    + '<span class="bd-switch"></span><span class="bd-toggle-txt">' + rot + (dica ? '<small>' + dica + '</small>' : '') + '</span></label>';
+}
+
+function abrirPdfReserva(resId) {
+  if (!window.PdfReserva) { showToast('❌ Gerador de PDF não carregou — recarregue a página', 'err'); return; }
+  var r = reservas.find(function (x) { return x.id === resId; });
+  if (!r) return;
+  var op = PdfReserva.opcoesPadrao(r);
+  _pdfr.id = resId; _pdfr.r = r; _pdfr.op = op;
+  var ehVoo = r.tipo === 'voo', ehHotel = r.tipo === 'hotel', ehPasseio = r.tipo === 'passeio';
+  var temVolta = ehVoo && !!r.dataVolta;
+  var rotPessoas = ehHotel ? 'Hóspedes' : (r.tipo === 'seguro' ? 'Segurados' : (r.tipo === 'carro' && r.subtipo === 'locacao' ? 'Condutor' : 'Passageiros'));
+  var b = op.bagagem || {};
+  var h = '';
+
+  h += '<div class="pdfr-bloco"><div class="pdfr-tit">' + rotPessoas + '</div>'
+    + _pdfrCampo('pdfr-pax', 'Nomes <span class="tag">um por linha · vazio = cliente + nº de pessoas</span>', (op.passageiros || []).join('\n'), 'Ex: Maria Silva', 'area')
+    + (ehVoo ? _pdfrCampo('pdfr-bilhetes', 'Nº dos bilhetes <span class="tag">na mesma ordem dos nomes</span>', op.bilhetes, '957 2307025216', 'area') : '')
+    + '</div>';
+
+  if (ehVoo) {
+    h += '<div class="pdfr-bloco"><div class="pdfr-tit">Voo</div>'
+      + '<div class="g2">' + _pdfrCampo('pdfr-tarifa', 'Tarifa', op.tarifa, 'Ex: Light, Plus, Flex')
+      + _pdfrCampo('pdfr-taxas', 'Taxas de embarque (R$)', op.taxas, 'Ex: 62,14') + '</div>'
+      + '<div class="g2">' + _pdfrCampo('pdfr-assento-ida', 'Assento ida', op.assentoIda, 'Ex: 3D, 3E')
+      + (temVolta ? _pdfrCampo('pdfr-assento-volta', 'Assento volta', op.assentoVolta, 'Ex: 14A') : '<div></div>') + '</div>'
+      + '</div>';
+    h += '<div class="pdfr-bloco"><div class="pdfr-tit">Bagagem</div>'
+      + _pdfrChave('pdfr-bag-on', 'Mostrar bagagem incluída', b.ativo, 'Só aparece o que estiver preenchido. "Não incluída" sai apagada.')
+      + _pdfrCampo('pdfr-bag-pessoal', 'Item pessoal', b.pessoal, 'Ex: Até 10 kg · 45 × 35 × 20 cm')
+      + _pdfrCampo('pdfr-bag-mao', 'Mala de mão', b.mao, 'Ex: Até 12 kg · 55 × 35 × 25 cm')
+      + _pdfrCampo('pdfr-bag-desp', 'Despachada', b.despachada, 'Ex: 1 peça de 23 kg  ou  Não incluída')
+      + '</div>';
+  }
+  if (ehHotel) {
+    h += '<div class="pdfr-bloco"><div class="pdfr-tit">Hotel</div>'
+      + '<div class="g2">' + _pdfrCampo('pdfr-quarto', 'Quarto', op.quarto, 'Ex: King Deluxe')
+      + _pdfrCampo('pdfr-regime', 'Regime', op.regime, 'Ex: Café da manhã incluso') + '</div>'
+      + '<div class="g2">' + _pdfrCampo('pdfr-hora-in', 'Horário de check-in', op.horaCheckin, 'Ex: 15:00')
+      + _pdfrCampo('pdfr-hora-out', 'Horário de check-out', op.horaCheckout, 'Ex: 12:00') + '</div>'
+      + _pdfrCampo('pdfr-endereco', 'Endereço', op.endereco, 'Rua, número, cidade')
+      + '</div>';
+  }
+  if (ehPasseio) {
+    h += '<div class="pdfr-bloco"><div class="pdfr-tit">Passeio</div>'
+      + _pdfrCampo('pdfr-endereco', 'Ponto de encontro', op.endereco, 'Endereço ou referência') + '</div>';
+  }
+
+  h += '<div class="pdfr-bloco"><div class="pdfr-tit">Textos</div>'
+    + _pdfrCampo('pdfr-regras', (ehVoo ? 'Regras da tarifa' : r.tipo === 'seguro' ? 'Condições importantes' : 'Política de cancelamento') + ' <span class="tag">uma por linha · "Título: texto"</span>', op.regras,
+        ehVoo ? 'Remarcação: sem multa antes do voo\nCancelamento: taxas de embarque reembolsáveis' : 'Cancelamento: grátis até 48 h antes', 'area')
+    + _pdfrCampo('pdfr-obs', 'Recado ao cliente', op.obs, 'Opcional — aparece em destaque no fim', 'area')
+    + '</div>';
+
+  h += '<div class="pdfr-bloco"><div class="pdfr-tit">Mostrar</div>'
+    + _pdfrChave('pdfr-mostra-pag', 'Pagamento', op.mostrarPagamento, 'Milhas, valores e acúmulo')
+    + _pdfrChave('pdfr-mostra-eco', 'Economia com a estratégia', op.mostrarEconomia, r.economiaGerada ? 'R$ ' + escHtml(String(r.economiaGerada).replace(/^R\$\s*/, '')) : 'Esta reserva não tem economia calculada')
+    + _pdfrChave('pdfr-mostra-dicas', 'Dicas', op.dicas, ehVoo ? '"Antes de embarcar": check-in e documentos' : 'Orientações práticas para o cliente')
+    + '</div>';
+
+  var grupo = pdfrGrupo(r);
+  h += '<div class="pdfr-bloco"><div class="pdfr-tit">Envio pelo WhatsApp</div>'
+    + _pdfrCampo('pdfr-legenda', 'Mensagem junto do PDF', '📄 Segue o comprovante da sua reserva com todos os detalhes. Qualquer dúvida, é só chamar por aqui!', '', 'area')
+    + '<div style="font-size:11px;color:var(--muted);margin:-4px 0 10px">' + (grupo ? 'Grupo: <span style="font-family:monospace">' + escHtml(grupo) + '</span>' : '⚠️ Cliente sem grupo cadastrado — dá para baixar, não para enviar.') + '</div>'
+    + '</div>';
+
+  h += '<div class="pdfr-acoes">'
+    + '<button class="btn btn-accent" id="pdfr-btn-enviar"' + (grupo ? '' : ' disabled') + ' onclick="pdfrEnviar()">💬 Enviar ao grupo</button>'
+    + '<button class="btn btn-ghost" id="pdfr-btn-baixar" onclick="pdfrBaixar()">📥 Baixar PDF</button>'
+    + '<button class="btn btn-ghost" id="pdfr-btn-salvar" onclick="pdfrSalvar(true)">💾 Salvar ajustes</button>'
+    + '</div><div id="pdfr-status" style="font-size:12px;font-weight:700;min-height:16px;margin-top:8px;text-align:center"></div>';
+
+  var form = document.getElementById('pdfr-form');
+  form.innerHTML = h;
+  form.oninput = form.onchange = function () { clearTimeout(_pdfr.timer); _pdfr.timer = setTimeout(pdfrAtualizarPrevia, 250); };
+  document.getElementById('pdfr-titulo').textContent = '🧾 PDF · ' + (r.cliente || '') + ' · ' + (r.pnr || r.conf || r.id);
+  var _mod = document.getElementById('modal-pdf-res');
+  _mod.classList.add('open');
+  var _caixaMod = _mod.querySelector('.modal'); if (_caixaMod) _caixaMod.scrollTop = 0;
+  document.getElementById('pdfr-previa').scrollTop = 0;
+
+  // Prévia: o iframe recebe o CSS uma vez e só o corpo é trocado a cada ajuste
+  var ifr = document.getElementById('pdfr-iframe');
+  var m = PdfReserva.montarHTML(r, op, pdfrCtx());
+  ifr.onload = function () { pdfrAtualizarPrevia(); };
+  ifr.srcdoc = m.documento.replace(/<body>[\s\S]*<\/body>/, '<body></body>');
+}
+
+function pdfrColetar() {
+  var v = function (id) { var el = document.getElementById(id); return el ? el.value.trim() : undefined; };
+  var c = function (id) { var el = document.getElementById(id); return el ? el.checked : undefined; };
+  var op = Object.assign({}, _pdfr.op);
+  op.passageiros = (v('pdfr-pax') || '').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean);
+  [['pdfr-bilhetes', 'bilhetes'], ['pdfr-tarifa', 'tarifa'], ['pdfr-taxas', 'taxas'], ['pdfr-assento-ida', 'assentoIda'], ['pdfr-assento-volta', 'assentoVolta'],
+   ['pdfr-quarto', 'quarto'], ['pdfr-regime', 'regime'], ['pdfr-hora-in', 'horaCheckin'], ['pdfr-hora-out', 'horaCheckout'], ['pdfr-endereco', 'endereco'],
+   ['pdfr-regras', 'regras'], ['pdfr-obs', 'obs']].forEach(function (x) { var val = v(x[0]); if (val !== undefined) op[x[1]] = val; });
+  if (document.getElementById('pdfr-bag-on')) {
+    op.bagagem = { ativo: c('pdfr-bag-on'), pessoal: v('pdfr-bag-pessoal'), mao: v('pdfr-bag-mao'), despachada: v('pdfr-bag-desp') };
+  }
+  op.mostrarPagamento = c('pdfr-mostra-pag');
+  op.mostrarEconomia = c('pdfr-mostra-eco');
+  op.dicas = c('pdfr-mostra-dicas');
+  return op;
+}
+
+function pdfrAtualizarPrevia() {
+  var ifr = document.getElementById('pdfr-iframe');
+  if (!ifr || !_pdfr.r) return;
+  var doc = ifr.contentDocument;
+  if (!doc || !doc.body) return;
+  var m = PdfReserva.montarHTML(_pdfr.r, pdfrColetar(), pdfrCtx());
+  doc.body.innerHTML = m.corpo;
+  // Encaixa a folha A4 (794 px) na largura da coluna
+  var caixa = document.getElementById('pdfr-previa'), folha = document.getElementById('pdfr-folha');
+  var esc = Math.min(1, (caixa.clientWidth - 28) / 794);
+  var alt = Math.max(1123, doc.body.scrollHeight);
+  ifr.style.height = alt + 'px';
+  ifr.style.transform = 'scale(' + esc + ')';
+  folha.style.height = Math.ceil(alt * esc) + 'px';
+}
+
+// Grava os ajustes na reserva (relê a lista antes para não sobrescrever o que
+// outra aba ou o job tenha gravado).
+function pdfrSalvar(avisar, extra) {
+  var op = pdfrColetar();
+  var id = _pdfr.id;
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/reservas', { cache: 'no-store' })
+    .then(function (x) { return x.json(); })
+    .then(function (d) {
+      var lista = Array.isArray(d) ? d : (d && Array.isArray(d.data) ? d.data : null);
+      if (lista) reservas = lista;
+      var i = reservas.findIndex(function (x) { return x.id === id; });
+      if (i === -1) throw new Error('reserva não encontrada');
+      reservas[i].pdf = Object.assign({}, op, extra || {}, { atualizadoEm: new Date().toISOString() });
+      _pdfr.r = reservas[i];
+      return saveReservas();
+    })
+    .then(function () { if (avisar) showToast('💾 Ajustes do PDF salvos', 'ok'); renderReservas(); return true; })
+    .catch(function (e) { showToast('❌ Não salvou os ajustes: ' + (e && e.message || e), 'err'); return false; });
+}
+
+function _pdfrStatus(cor, txt) { var el = document.getElementById('pdfr-status'); if (el) { el.style.color = cor; el.textContent = txt; } }
+function _pdfrTravar(on) {
+  _pdfr.ocupado = on;
+  ['pdfr-btn-enviar', 'pdfr-btn-baixar', 'pdfr-btn-salvar'].forEach(function (id) {
+    var b = document.getElementById(id); if (b) { if (on) { b.dataset.estava = b.disabled ? '1' : ''; b.disabled = true; } else b.disabled = b.dataset.estava === '1'; }
+  });
+}
+function pdfrGerar() {
+  _pdfrStatus('#f59e0b', '⏳ Gerando o PDF…');
+  return PdfReserva.gerarPDF(_pdfr.r, pdfrColetar(), pdfrCtx());
+}
+
+function pdfrBaixar() {
+  if (_pdfr.ocupado) return;
+  _pdfrTravar(true);
+  pdfrGerar().then(function (arq) {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(arq.blob); a.download = arq.nome;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
+    _pdfrStatus('#22c55e', '✅ PDF baixado');
+    pdfrSalvar(false);
+  }).catch(function (e) {
+    _pdfrStatus('#ff585e', '❌ ' + (e && e.message || e));
+  }).then(function () { _pdfrTravar(false); });
+}
+
+function pdfrEnviar() {
+  if (_pdfr.ocupado) return;
+  var r = _pdfr.r, grupo = pdfrGrupo(r);
+  if (!grupo) { showToast('⚠️ Cliente sem grupo cadastrado', 'err'); return; }
+  var legenda = (document.getElementById('pdfr-legenda') || { value: '' }).value.trim();
+  _pdfrTravar(true);
+  pdfrGerar().then(function (arq) {
+    _pdfrStatus('#f59e0b', '⏳ Enviando ao grupo…');
+    return new Promise(function (ok, falha) {
+      enviarWhatsApp(grupo, legenda, null, { base64: arq.base64, mime: 'application/pdf', nome: arq.nome, ehImagem: false }, {
+        ok: function () { ok(arq); },
+        falha: function (m) { falha(new Error(m)); }
+      });
+    });
+  }).then(function () {
+    _pdfrStatus('#22c55e', '✅ PDF enviado ao grupo');
+    pdfrSalvar(false, { enviadoEm: new Date().toISOString() });
+  }).catch(function (e) {
+    _pdfrStatus('#ff585e', '❌ ' + (e && e.message || e));
+  }).then(function () { _pdfrTravar(false); });
+}
+
+// Converte o JSON da IA (/ia/extrair-reserva) nos campos do painel do PDF.
+// Só leva o que veio preenchido; o resto o concierge completa no painel.
+function pdfrDoExtraido(d) {
+  if (!d || typeof d !== 'object') return null;
+  var t = function (v) { return String(v == null ? '' : v).trim(); };
+  var o = {};
+  if (t(d.assentoIda)) o.assentoIda = t(d.assentoIda);
+  if (t(d.assentoVolta)) o.assentoVolta = t(d.assentoVolta);
+  if (Array.isArray(d.bilhetes) && d.bilhetes.filter(Boolean).length) o.bilhetes = d.bilhetes.map(t).filter(Boolean).join('\n');
+  if (t(d.tarifa)) o.tarifa = t(d.tarifa);
+  if (t(d.taxas) && t(d.taxas) !== '0') o.taxas = t(d.taxas);
+  var b = d.bagagem || {};
+  if (t(b.pessoal) || t(b.mao) || t(b.despachada)) o.bagagem = { ativo: true, pessoal: t(b.pessoal), mao: t(b.mao), despachada: t(b.despachada) };
+  var regras = t(d.regrasTarifa) || t(d.cancelamento);
+  if (regras) o.regras = regras;
+  if (t(d.hotelQuarto)) o.quarto = t(d.hotelQuarto);
+  if (t(d.regime)) o.regime = t(d.regime);
+  if (t(d.hotelEndereco)) o.endereco = t(d.hotelEndereco);
+  if (t(d.horaCheckin)) o.horaCheckin = t(d.horaCheckin);
+  if (t(d.horaCheckout)) o.horaCheckout = t(d.horaCheckout);
+  return Object.keys(o).length ? o : null;
+}
+
+// "Salvar Reserva e Enviar" com a opção de mandar o PDF logo depois da mensagem
+function enviarPdfReservaAuto(resId, grupo) {
+  var r = reservas.find(function (x) { return x.id === resId; });
+  if (!r || !window.PdfReserva || !grupo) return;
+  PdfReserva.gerarPDF(r, PdfReserva.opcoesPadrao(r), pdfrCtx()).then(function (arq) {
+    enviarWhatsApp(grupo, '📄 Comprovante da reserva com todos os detalhes.', null, { base64: arq.base64, mime: 'application/pdf', nome: arq.nome, ehImagem: false });
+  }).catch(function (e) { showToast('❌ PDF não enviado — ' + (e && e.message || e), 'err'); });
+}
+
 function enviarWhatsApp(grupo, texto, statusEl, imagem, cbs) {
   var url = getBaileysUrl();
   // Falha SEMPRE avisa por toast. Quando statusEl e nulo (fluxo "Salvar Reserva
@@ -10424,6 +10725,7 @@ function htmlSecaoMensagem(px) {
   +     '<div id="' + px + '-msg-info" style="font-size:11px;color:var(--muted);margin-top:5px;line-height:1.6"></div>'
   +   '</div>'
   +   htmlAnexoImagem(px)
+  +   (px === 'nf' ? '<label class="bd-toggle" style="margin:0"><input type="checkbox" id="nf-msg-pdf"/><span class="bd-switch"></span><span class="bd-toggle-txt">🧾 Enviar também o PDF da reserva<small>Sai logo depois da mensagem, com o que a reserva tem. Para ajustar antes, use o botão 🧾 na lista de reservas.</small></span></label>' : '')
   +   '<div style="display:flex;gap:8px;flex-wrap:wrap">'
   +     '<button onclick="enviarMsgCtx(' + q(px) + ')" style="flex:1;min-width:150px;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.4);border-radius:8px;padding:10px 16px;font-size:12px;font-weight:700;cursor:pointer">' + (px === 'nf' ? '💾 Salvar Reserva e Enviar' : '📤 Enviar Agora') + '</button>'
   +     '<button onclick="onMsgCtxChange(' + q(px) + ')" title="Regerar a partir dos dados atuais" style="background:none;color:var(--muted);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;font-weight:700;cursor:pointer">🔄 Atualizar</button>'
@@ -10535,6 +10837,8 @@ function enviarMsgCtx(px) {
   // O texto/grupo sao capturados antes porque salvarReserva() chama
   // limparForm() -> resetSecaoMensagem('nf'), que zera os campos.
   if (px === 'nf') {
+    var _chkPdf = document.getElementById('nf-msg-pdf');
+    var comPdf = !!(_chkPdf && _chkPdf.checked);
     if (!texto && !img) { showToast('⚠️ A mensagem está vazia', 'err'); return; }
     if (!grupo) { showToast('⚠️ Selecione um cliente com grupo cadastrado', 'err'); return; }
     // Baileys fora do ar (tipico durante o redeploy manual do Railway) fazia a
@@ -10551,6 +10855,7 @@ function enviarMsgCtx(px) {
         if (!ok) return;                          // validacao ou falha no salvamento
         if (!okWA) { guardarMsgPendente(resId, grupo, texto, motivo); return; }
         enviarWhatsApp(grupo, texto, null, img, { // status elemento ja foi resetado
+          ok: function(){ if (comPdf) enviarPdfReservaAuto(resId, grupo); },
           falha: function(m){ guardarMsgPendente(resId, grupo, texto, m); }
         });
       });
