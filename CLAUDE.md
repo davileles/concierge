@@ -46,7 +46,7 @@ Presentes em painel-cdv, baileys-server, gestor-cdv, concierge, tudo-sobre-promo
 - 🛫 para data de ida, 🛬 para data de volta.
 - Dois campos de data em sequência (de/até, ida/volta, check-in/check-out): o 2º abre no mês da 1ª data escolhida, não no mês corrente. Marcar o 2º com `data-data-de="id-do-1º"` (vários: `"a,b"`; classe: `".x"`) e incluir o bloco "Par de datas" (`window.__parDatas`) no fim do `<body>` — mesmo código em todos os projetos.
 - Cards de revisão no Telegram: **sem blocos expansíveis/colapsáveis**.
-- Painel do membro CDV: ícones **Phosphor** (sprite SVG `#i-*`) em vez de emoji de interface.
+- Painel do membro CDV, gestor-cdv e concierge: ícones **Phosphor** (sprite SVG `#i-*`) em vez de emoji de interface; menu lateral à esquerda com grupos (gaveta "☰ Menu" abaixo de 900 px).
 - Preferir soluções **sem novo serviço externo**.
 - Horário: sempre `America/Sao_Paulo` (`-03:00` fixo, sem horário de verão).
 
@@ -295,6 +295,7 @@ Cron do GitHub está degradado (atrasa 2–4 h): disparo real vem do Railway; cr
 ---
 
 ### 4.4 `concierge` (Concierge Estratégico)
+- **Layout (desde 29/10/2026):** mesmo padrão do painel do membro e do gestor-cdv — cabeçalho fixo (`header.topo`: logo, botão de tema `#theme-toggle` com "Claro/Escuro") + menu lateral `#main-tabs` (`<nav>`, 228 px) com grupos Atendimento (Reservas, Nova reserva, Demandas) / Viagens (Viagens, Gerar roteiro) / Voos (Buscar voos, Alertas seats.aero) / Relacionamento (Clientes, Mensagens) / Administração (Configurações); abaixo de 900 px vira gaveta (`toggleSidebar`, botão `#side-toggle` mostra a seção atual). `switchTab` e os ids `panel-*` não mudaram. Ícones Phosphor no sprite `#i-*` (de `@phosphor-icons/core`, regular) trocados pelo script do `<head>` **só** em menu, cabeçalho, botões e `.mode-tab`; textos de mensagem e modelos mantêm o emoji. Emoji novo de interface: acrescentar ao mapa `M` e o `<symbol>`; `[data-emoji]` força manter emoji.
 - Arquivos: `index.html` (~10,5k linhas, painel), `portal.html` (portal do cliente), `cadastro.html` (formulário público com ViaCEP), `ds160.html` (formulário público do visto americano), `iata.js`, `lembrete-voo.js`, `bom-dia.js` (lógica do bom dia, compartilhada entre o job e o painel), `tc.html` (página empacotada avulsa, sem ligação). Deploy por `.github/workflows/pages.yml`.
 - Dados em **`davileles/dados/concierge/`** (escritos pelo proxy e pelo `lembrete-voo.js`, migrados em 25/09/2026): `reservas.json`, `viagens.json`, `demandas.json`, `modelos.json`, `agendamentos.json`, `cfg.json`, `msgs-enviadas.json`, `debug-log.json`, `alertas-concierge.json`, `seats-alertas.json`, `seats-modelos.json`, `arquivos/RES-<ts>_<n>.json` (anexos base64), `clientes*.json`, `ds160.json`. O repo `concierge` só tem código.
 - Aba **🔎 Buscar voos** (desde 20/10/2026): gerador de links de pesquisa Azul/LATAM Pass/Smiles (GOL em dinheiro; opção Ambos), com autocomplete de aeroporto, bloco `bv*` espelhado do `gestor-cdv/index.html` (detalhe na seção 4.3); mostra o nome do aeroporto pelo `iata.js`.
