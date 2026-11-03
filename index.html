@@ -6972,7 +6972,8 @@ function closeModal(id) {
 
 // ── Manuais (POPs): lista de páginas públicas do repo concierge ──
 var POPS = [
-  { arquivo: 'pop-nova-reserva.html', titulo: 'Criar uma nova reserva', desc: 'Cadastro de passagem, hospedagem, transporte, passeio ou seguro na aba ➕ Nova reserva, com o que conferir e erros comuns.' }
+  { arquivo: 'pop-nova-reserva.html', titulo: 'Criar uma nova reserva', desc: 'Cadastro de passagem, hospedagem, transporte, passeio ou seguro na aba ➕ Nova reserva, com o que conferir e erros comuns.' },
+  { arquivo: 'pop-checkin-voo.html', titulo: 'Fazer o check-in de um voo', desc: 'Do alerta no grupo de gestão ao check-in na companhia, envio do modelo "Check-in realizado" com o cartão de embarque e registro na reserva.' }
 ];
 function popUrl(p) { return new URL(p.arquivo, location.href).href; }
 function renderPops() {
