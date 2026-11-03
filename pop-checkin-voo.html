@@ -39,6 +39,18 @@ ul.check input{margin-top:5px;accent-color:var(--gold);width:16px;height:16px;fl
 @media (max-width:600px){h1{font-size:23px} section{padding:18px 14px} td:first-child{white-space:normal}}
 @media print{html,body{background:#fff;color:#000} section{border-color:#ccc;background:#fff} p,li,td{color:#222} .toc{display:none}}
 pre.msg{white-space:pre-wrap;font-family:var(--font);font-size:13px;line-height:1.6;background:#0b141a;border:1px solid var(--border);border-left:3px solid #25d366;border-radius:8px;padding:12px 14px;margin:10px 0 12px;color:var(--text)}
+.wa{max-width:420px;margin:14px auto 6px;border-radius:14px;overflow:hidden;border:1px solid var(--border);background:#0b141a;font-family:-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif}
+.wa-top{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#202c33;color:#e9edef}
+.wa-av{width:34px;height:34px;border-radius:50%;background:#2a3942;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.wa-nome{font-size:14px;font-weight:600;line-height:1.2}.wa-sub{font-size:11.5px;color:#8696a0}
+.wa-chat{padding:14px 10px 16px;display:flex;flex-direction:column;gap:6px;background:#0b141a}
+.wa-b{align-self:flex-end;max-width:88%;background:#005c4b;color:#e9edef;border-radius:8px 0 8px 8px;padding:7px 9px 5px;font-size:13.6px;line-height:1.42;white-space:pre-wrap;word-wrap:break-word}
+.wa-b b{font-weight:700;color:#e9edef}
+.wa-h{display:block;text-align:right;font-size:10.5px;color:rgba(233,237,239,.6);margin-top:2px}
+.wa-doc{display:flex;align-items:center;gap:10px;background:#025144;border-radius:6px;padding:9px 10px;white-space:normal}
+.wa-pdf{width:30px;height:36px;border-radius:3px;background:#e44d3a;color:#fff;font-size:9px;font-weight:800;display:flex;align-items:flex-end;justify-content:center;padding-bottom:4px;flex-shrink:0}
+.wa-dn{font-size:13px;color:#e9edef}.wa-dm{font-size:11px;color:rgba(233,237,239,.6)}
+.wa-leg{text-align:center;font-size:12px;color:var(--muted);margin:4px 0 6px}
 </style>
 </head>
 <body>
@@ -110,7 +122,32 @@ Fazer o check-in online desta reserva.</pre>
   <ul>
   <li>O disparo leva <b>um</b> arquivo por vez. Com mais de um passageiro, envie o primeiro cartão junto com o modelo e os demais em seguida, ou junte todos num único PDF.</li>
   </ul></li>
-<li><b>Confira no grupo do cliente</b> que a mensagem e o cartão chegaram e abrem.</li>
+<li><b>Confira no grupo do cliente</b> que a mensagem e o cartão chegaram e abrem. Deve ficar assim:
+  <div class="wa" role="img" aria-label="Exemplo da mensagem de check-in realizado no grupo do cliente">
+    <div class="wa-top"><div class="wa-av">✈️</div><div><div class="wa-nome">Travel Concierge · Maria Silva</div><div class="wa-sub">Você, Maria</div></div></div>
+    <div class="wa-chat">
+      <div class="wa-b"><b>✅ Check-in realizado!</b>
+
+O check-in do voo do seu voo já está feito — não é preciso se preocupar com isso.
+
+🛫 <b>Detalhes do voo</b>
+Trecho: <b>Belo Horizonte (CNF) ➔ Lisboa (LIS)</b>
+Partida: <b>05/11/2026</b> às <b>17:25</b>
+Chegada: <b>06/11/2026</b> às <b>06:40</b>
+Cia aérea: <b>TAP</b> · Voo <b>TP 102</b>
+Classe: <b>Econômica</b>
+
+🎫 Localizador: <b>ABC123</b>
+
+O cartão de embarque será enviado por aqui. Se planeje para chegar ao aeroporto com antecedência, especialmente se for despachar bagagem.
+
+Qualquer dúvida ou necessidade, estamos à disposição.
+
+<b>Boa viagem e conte conosco!</b> ✈️<span class="wa-h">08:12 ✓✓</span></div>
+      <div class="wa-b"><div class="wa-doc"><div class="wa-pdf">PDF</div><div><div class="wa-dn">Cartão de embarque - SILVA MARIA.pdf</div><div class="wa-dm">1 página · PDF · 84 kB</div></div></div><span class="wa-h">08:12 ✓✓</span></div>
+    </div>
+  </div>
+  <p class="wa-leg">Exemplo do que o cliente vê no grupo (dados fictícios): a mensagem do modelo e, junto, o cartão de embarque.</p></li>
 <li><b>Responda o alerta no grupo de gestão com "✅ Check-in feito".</b></li>
 </ol>
 </section>
