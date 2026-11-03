@@ -757,6 +757,8 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
   <div class="side-group">Relacionamento</div>
   <button class="main-tab" onclick="switchTab('clientes')">👤 Clientes</button>
   <button class="main-tab" onclick="switchTab('mensagens')">💬 Mensagens</button>
+  <div class="side-group">Equipe</div>
+  <button class="main-tab" onclick="switchTab('pops')">📘 Manuais (POPs)</button>
   <div class="side-group">Administração</div>
   <button class="main-tab" onclick="switchTab('config')">⚙️ Configurações</button>
 </nav>
@@ -1574,6 +1576,19 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
 <!-- ══════════════════════════════════════════
      ABA: CONFIGURAÇÃO
 ══════════════════════════════════════════ -->
+<!-- ══════════════════════════════════════════
+     ABA: MANUAIS (POPs) — páginas públicas, sem login, para enviar à equipe
+══════════════════════════════════════════ -->
+<div class="main-panel" id="panel-pops">
+  <div class="card">
+    <div class="card-title">📘 Manuais (POPs)</div>
+    <p style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+      Procedimentos operacionais padrão da equipe. Cada manual tem um link próprio que abre sem login: copie e envie direto para quem vai executar.
+    </p>
+    <div id="pops-lista"></div>
+  </div>
+</div>
+
 <div class="main-panel" id="panel-config">
   <div class="sync-bar" style="margin-bottom:1rem" id="baileys-bar">
     <div class="sync-dot" id="baileys-dot"></div>
@@ -6250,6 +6265,7 @@ function switchTab(name) {
   if (name==='roteiro-gen') rgPopularSelect();
   if (name==='demandas') renderDemandas();
   if (name==='seats') saAbrirAba();
+  if (name==='pops') renderPops();
 }
 
 // ══════════════════════════════════════════
@@ -6952,6 +6968,36 @@ function saExcluirModelo(id) {
 // ══════════════════════════════════════════
 function closeModal(id) {
   document.getElementById(id).classList.remove('open');
+}
+
+// ── Manuais (POPs): lista de páginas públicas do repo concierge ──
+var POPS = [
+  { arquivo: 'pop-nova-reserva.html', titulo: 'Criar uma nova reserva', desc: 'Cadastro de passagem, hospedagem, transporte, passeio ou seguro na aba ➕ Nova reserva, com o que conferir e erros comuns.' }
+];
+function popUrl(p) { return new URL(p.arquivo, location.href).href; }
+function renderPops() {
+  var el = document.getElementById('pops-lista');
+  if (!el) return;
+  el.innerHTML = POPS.slice().sort(function(a,b){ return a.titulo.localeCompare(b.titulo,'pt-BR'); }).map(function(p, i){
+    var url = popUrl(p);
+    return '<div style="border:1px solid var(--border);border-radius:var(--r);padding:14px;margin-bottom:10px">'
+      + '<div style="font-weight:800;font-size:14px;margin-bottom:4px">' + p.titulo + '</div>'
+      + '<div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:8px">' + p.desc + '</div>'
+      + '<div style="font-size:11px;color:var(--muted);word-break:break-all;margin-bottom:10px">' + url + '</div>'
+      + '<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      + '<a class="btn btn-ghost btn-sm" href="' + url + '" target="_blank" rel="noopener" style="text-decoration:none">↗ Abrir</a>'
+      + '<button class="btn btn-blue btn-sm" onclick="copiarLinkPop(\'' + p.arquivo + '\')">🔗 Copiar link</button>'
+      + '</div></div>';
+  }).join('');
+}
+function copiarLinkPop(arquivo) {
+  var p = POPS.find(function(x){ return x.arquivo === arquivo; });
+  if (!p) return;
+  var url = popUrl(p);
+  var ok = function(){ showToast('🔗 Link copiado: ' + p.titulo, 'ok'); };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(ok, function(){ prompt('Copie o link:', url); });
+  } else { prompt('Copie o link:', url); }
 }
 
 function showToast(msg, type) {
