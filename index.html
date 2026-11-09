@@ -214,6 +214,39 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-status-em_andamento{background:rgba(250,200,50,.15);color:#fac832}
 .dem-status-aguardando{background:rgba(90,160,255,.15);color:#5aa0ff}
 .dem-status-concluida{background:rgba(50,200,120,.15);color:#32c878}
+/* KANBAN DE DEMANDAS */
+.dem-visao{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0}
+.dem-visao button{background:var(--surface2);color:var(--muted);border:none;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit}
+.dem-visao button+button{border-left:1px solid var(--border)}
+.dem-visao button.ativo{background:var(--accent);color:#fff}
+.dem-kanban{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:8px;scroll-snap-type:x proximity}
+.dem-kcol{flex:1 0 250px;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 230px);scroll-snap-align:start;transition:border-color .15s,background .15s}
+.dem-kcol.over{border-color:var(--accent);background:var(--surface2)}
+.dem-kcol-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text)}
+.dem-kcol-head .qtd{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--muted)}
+.dem-kcol-head.k-pendente{box-shadow:inset 0 3px 0 var(--accent)}
+.dem-kcol-head.k-em_andamento{box-shadow:inset 0 3px 0 #fac832}
+.dem-kcol-head.k-aguardando{box-shadow:inset 0 3px 0 #5aa0ff}
+.dem-kcol-head.k-concluida{box-shadow:inset 0 3px 0 #32c878}
+.dem-kcol-head.k-agendada{box-shadow:inset 0 3px 0 #a078ff}
+.dem-kcol-body{padding:8px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:70px}
+.dem-kcol-vazio{font-size:11px;color:var(--muted);text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:10px}
+.dem-kcard{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 11px;cursor:grab;transition:border-color .15s,transform .15s,opacity .15s}
+.dem-kcard:hover{border-color:rgba(255,88,94,.35)}
+.dem-kcard.prioridade-alta{box-shadow:inset 3px 0 0 var(--accent)}
+.dem-kcard.arrastando{opacity:.4;transform:scale(.98)}
+.dem-kcard.fixo{cursor:pointer}
+.dem-kcard.concluida{opacity:.6}
+.dem-kcard-top{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.dem-kcard-titulo{font-size:13px;font-weight:700;color:var(--text);line-height:1.35;word-break:break-word}
+.dem-kcard-sub{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dem-kcard-meta{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:11px;color:var(--muted);margin-top:7px}
+.dem-kcard-meta .atrasado{color:var(--accent);font-weight:700}
+.dem-kcard-pe{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:7px;padding-top:6px;border-top:1px solid var(--border)}
+.dem-kcard-pe .dem-sel-status{display:none}
+@media(hover:none){.dem-kcard-pe .dem-sel-status{display:inline-block}.dem-kcard{cursor:pointer}}
+.dem-kmais{background:none;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:700;padding:7px;cursor:pointer;font-family:inherit}
+@media(max-width:640px){.dem-kcol{flex-basis:82vw;max-height:none}}
 .demanda-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:rgba(255,255,255,.01)}
 .demanda-body.open{display:block}
 .demanda-descricao{font-size:14.5px;color:var(--text);line-height:1.75;margin-bottom:14px;white-space:pre-wrap;word-break:break-word;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:14px 16px}
@@ -2391,7 +2424,13 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
         <span style="font-size:15px;font-weight:800;color:var(--text)">📋 Demandas</span>
         <span class="reservas-count" id="demandas-count-label">0 demandas</span>
       </div>
-      <button class="btn btn-accent btn-sm" onclick="abrirNovaDemanda()">➕ Nova Demanda</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="dem-visao" id="dem-visao">
+          <button type="button" data-v="kanban" class="ativo" onclick="setVisaoDemandas('kanban')">▦ Kanban</button>
+          <button type="button" data-v="lista" onclick="setVisaoDemandas('lista')">☰ Lista</button>
+        </div>
+        <button class="btn btn-accent btn-sm" onclick="abrirNovaDemanda()">➕ Nova Demanda</button>
+      </div>
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="dem-filtro-status" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex-shrink:0">
@@ -12602,6 +12641,149 @@ function criarReservaParaDemanda(demandaId) {
   }, 300);
 }
 
+// ══ KANBAN DE DEMANDAS ══
+// Visão padrão da aba. Colunas = status; arrastar o cartão muda o status
+// (mesma função do seletor da lista). Agendadas ficam numa coluna própria
+// e não são arrastáveis (só saem dela pela data ou editando a demanda).
+var _demVisao = 'kanban';
+var _demKMostrarConcluidas = false;
+var DEM_K_LIMITE_CONCLUIDAS = 15;
+
+function setVisaoDemandas(v) {
+  _demVisao = v === 'lista' ? 'lista' : 'kanban';
+  document.querySelectorAll('#dem-visao button').forEach(function(b){
+    b.classList.toggle('ativo', b.getAttribute('data-v') === _demVisao);
+  });
+  renderDemandas();
+}
+
+function acoesDemandaHTML(d, alAtivo) {
+  return (alAtivo ? (function(){
+      var todos = alertasDoCtx({ alertaId: d.alertaId || alAtivo.id, demandaId: d.id, atividadeId: d.atividadeRef || '' });
+      if (!todos.length) todos = [alAtivo];
+      return '<span class="dem-acao" title="' + rgEsc(todos.map(resumoAlerta).join(' | ')) + '" style="cursor:default">🔔' + (todos.length > 1 ? todos.length : '') + '</span>';
+    })() : '')
+    + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
+    + (!d.reservaId ? '<button class="dem-acao" title="Criar reserva para esta demanda" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
+    + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
+    + '<button class="dem-acao" title="Disparar no grupo da equipe" onclick="abrirEnvioDemanda(\'' + d.id + '\')">📢</button>'
+    + '<button class="dem-acao" title="Editar" onclick="editarDemanda(\'' + d.id + '\')">✏️</button>'
+    + '<button class="dem-acao del" title="Excluir" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>';
+}
+
+function renderDemandasKanban(grid, lista, filtroStatus) {
+  var colunas = [
+    {st:'agendada',     nome:'⏳ Agendada'},
+    {st:'pendente',     nome:'🔴 Pendente'},
+    {st:'em_andamento', nome:'🟡 Em andamento'},
+    {st:'aguardando',   nome:'🔵 Aguardando'},
+    {st:'concluida',    nome:'✅ Concluída'}
+  ];
+  if (filtroStatus && filtroStatus !== 'todas') colunas = colunas.filter(function(c){ return c.st === filtroStatus; });
+  var porCol = {};
+  colunas.forEach(function(c){ porCol[c.st] = []; });
+  lista.forEach(function(d){
+    var st = demandaEstaAgendada(d) ? 'agendada' : (d.status || 'pendente');
+    if (porCol[st]) porCol[st].push(d);
+  });
+  // Agendada só aparece se tiver algo (evita coluna vazia sem uso)
+  colunas = colunas.filter(function(c){ return c.st !== 'agendada' || porCol.agendada.length || filtroStatus === 'agendada'; });
+  // Concluídas: mais recentes primeiro
+  if (porCol.concluida) porCol.concluida.sort(function(a,b){ return (b.numero||0) - (a.numero||0); });
+
+  var statusLabels = {pendente:'🔴 Pendente', em_andamento:'🟡 Em andamento', aguardando:'🔵 Aguardando', concluida:'✅ Concluída'};
+  var statusClasses = {pendente:'dem-status-pendente', em_andamento:'dem-status-em_andamento', aguardando:'dem-status-aguardando', concluida:'dem-status-concluida'};
+  var hoje = new Date().toISOString().split('T')[0];
+
+  function card(d) {
+    var icon = (d.tipo || '📌').split(' ')[0];
+    var agendada = demandaEstaAgendada(d);
+    var alAtivo = alertaDaDemanda(d);
+    var atrasado = d.prazo && d.status !== 'concluida' && d.prazo < hoje;
+    var sub = d.descricao ? String(d.descricao).replace(/\s*\n\s*/g, ' · ') : (d.viagemNome ? '🗺️ ' + d.viagemNome : '');
+    var meta = [];
+    if (d.clientes) meta.push('<span>👤 ' + escHtml(d.clientes) + '</span>');
+    if (d.prazo) meta.push('<span class="' + (atrasado ? 'atrasado' : '') + '">📅 ' + fmtDate(d.prazo) + (atrasado ? ' · atrasada' : '') + '</span>');
+    if (d.responsavel) meta.push('<span>🧑‍💼 ' + escHtml(d.responsavel) + '</span>');
+    if (agendada) meta.push('<span class="dem-agenda-pill">⏳ ' + fmtAgendaDemanda(d) + '</span>');
+    return '<div class="dem-kcard' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + (d.status === 'concluida' ? ' concluida' : '') + (agendada ? ' fixo' : '') + '"'
+      + ' id="dem-' + d.id + '" data-id="' + d.id + '"'
+      + (agendada ? '' : ' draggable="true" ondragstart="demKDragStart(event)" ondragend="demKDragEnd(event)"')
+      + ' ondblclick="editarDemanda(\'' + d.id + '\')">'
+      + '<div class="dem-kcard-top"><span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>'
+      + '<span style="font-size:15px;line-height:1">' + icon + '</span>'
+      + (d.prioridade === 'alta' ? '<span style="font-size:10px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.4px">Alta</span>' : '')
+      + '</div>'
+      + '<div class="dem-kcard-titulo">' + escHtml(d.titulo || '') + '</div>'
+      + (sub ? '<div class="dem-kcard-sub">' + escHtml(sub) + '</div>' : '')
+      + (meta.length ? '<div class="dem-kcard-meta">' + meta.join('') + '</div>' : '')
+      + '<div class="dem-kcard-pe" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
+      + (agendada ? '<span></span>' : '<select class="dem-sel-status ' + (statusClasses[d.status]||'dem-status-pendente') + '" onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
+        + ['pendente','em_andamento','aguardando','concluida'].map(function(st){
+            return '<option value="' + st + '"' + (d.status===st?' selected':'') + '>' + statusLabels[st] + '</option>';
+          }).join('') + '</select>')
+      + '<div style="display:flex;flex-wrap:wrap;justify-content:flex-end">' + acoesDemandaHTML(d, alAtivo) + '</div>'
+      + '</div></div>';
+  }
+
+  grid.innerHTML = '<div class="dem-kanban">' + colunas.map(function(c){
+    var itens = porCol[c.st] || [];
+    var mostrar = itens;
+    var resto = 0;
+    if (c.st === 'concluida' && !_demKMostrarConcluidas && itens.length > DEM_K_LIMITE_CONCLUIDAS) {
+      mostrar = itens.slice(0, DEM_K_LIMITE_CONCLUIDAS);
+      resto = itens.length - mostrar.length;
+    }
+    var aceita = c.st !== 'agendada';
+    return '<div class="dem-kcol" data-st="' + c.st + '"'
+      + (aceita ? ' ondragover="demKDragOver(event)" ondragleave="demKDragLeave(event)" ondrop="demKDrop(event)"' : '') + '>'
+      + '<div class="dem-kcol-head k-' + c.st + '"><span>' + c.nome + '</span><span class="qtd">' + itens.length + '</span></div>'
+      + '<div class="dem-kcol-body">'
+      + (mostrar.length ? mostrar.map(card).join('') : '<div class="dem-kcol-vazio">' + (aceita ? 'Arraste uma demanda para cá' : 'Nada agendado') + '</div>')
+      + (resto ? '<button type="button" class="dem-kmais" onclick="_demKMostrarConcluidas=true;renderDemandas()">Ver mais ' + resto + ' concluída' + (resto > 1 ? 's' : '') + '</button>' : '')
+      + (c.st === 'concluida' && _demKMostrarConcluidas && itens.length > DEM_K_LIMITE_CONCLUIDAS ? '<button type="button" class="dem-kmais" onclick="_demKMostrarConcluidas=false;renderDemandas()">Mostrar menos</button>' : '')
+      + '</div></div>';
+  }).join('') + '</div>';
+}
+
+var _demKArrastando = null;
+function demKDragStart(ev) {
+  var el = ev.currentTarget;
+  _demKArrastando = el.getAttribute('data-id');
+  el.classList.add('arrastando');
+  try { ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', _demKArrastando); } catch(e) {}
+}
+function demKDragEnd(ev) {
+  ev.currentTarget.classList.remove('arrastando');
+  document.querySelectorAll('.dem-kcol.over').forEach(function(c){ c.classList.remove('over'); });
+  _demKArrastando = null;
+}
+function demKDragOver(ev) {
+  if (!_demKArrastando) return;
+  ev.preventDefault();
+  try { ev.dataTransfer.dropEffect = 'move'; } catch(e) {}
+  ev.currentTarget.classList.add('over');
+}
+function demKDragLeave(ev) {
+  if (ev.currentTarget.contains(ev.relatedTarget)) return;
+  ev.currentTarget.classList.remove('over');
+}
+function demKDrop(ev) {
+  ev.preventDefault();
+  var col = ev.currentTarget;
+  col.classList.remove('over');
+  var id = _demKArrastando;
+  try { id = id || ev.dataTransfer.getData('text/plain'); } catch(e) {}
+  _demKArrastando = null;
+  var st = col.getAttribute('data-st');
+  if (!id || !st || st === 'agendada') return;
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d || d.status === st || demandaEstaAgendada(d)) return;
+  alterarStatusDemanda(id, st);
+  var lbl = {pendente:'Pendente', em_andamento:'Em andamento', aguardando:'Aguardando', concluida:'Concluída'}[st] || st;
+  showToast('Demanda #' + String(d.numero||'').padStart(3,'0') + ' → ' + lbl, 'ok');
+}
+
 function renderDemandas() {
   // Recarregar demandas das viagens (pode ter mudado)
   // Apenas adiciona demandas que ainda não estão na lista
@@ -12682,6 +12864,7 @@ function renderDemandas() {
   document.getElementById('demandas-count-label').textContent = lista.length + ' demanda' + (lista.length !== 1 ? 's' : '');
 
   var grid = document.getElementById('demandas-grid');
+  if (_demVisao === 'kanban') { renderDemandasKanban(grid, lista, filtroStatus); return; }
   if (!lista.length) {
     grid.innerHTML = '<div class="status-box"><div style="font-size:2rem">📋</div><div style="color:var(--muted);font-size:14px;margin-top:8px">Nenhuma demanda encontrada</div><button class="btn btn-accent btn-sm" style="margin-top:12px" onclick="abrirNovaDemanda()">➕ Criar primeira demanda</button></div>';
     return;
@@ -12732,17 +12915,7 @@ function renderDemandas() {
         + '</select>')
         + '</td>'
         + '<td class="dem-td-acoes" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
-        + (alAtivo ? (function(){
-            var todos = alertasDoCtx({ alertaId: d.alertaId || alAtivo.id, demandaId: d.id, atividadeId: d.atividadeRef || '' });
-            if (!todos.length) todos = [alAtivo];
-            return '<span class="dem-acao" title="' + rgEsc(todos.map(resumoAlerta).join(' | ')) + '" style="cursor:default">🔔' + (todos.length > 1 ? todos.length : '') + '</span>';
-          })() : '')
-        + (d.viagemId ? '<button class="dem-acao" title="Ir para a viagem" onclick="irParaViagem(\'' + d.viagemId + '\')">🗺️</button>' : '')
-        + (!d.reservaId ? '<button class="dem-acao" title="Criar reserva para esta demanda" onclick="criarReservaParaDemanda(\'' + d.id + '\')">📋</button>' : '')
-        + (d.reservaId ? '<span class="dem-acao" title="Reserva vinculada: ' + escHtml(d.reservaId) + '" style="cursor:default">✅</span>' : '')
-        + '<button class="dem-acao" title="Disparar no grupo da equipe" onclick="abrirEnvioDemanda(\'' + d.id + '\')">📢</button>'
-        + '<button class="dem-acao" title="Editar" onclick="editarDemanda(\'' + d.id + '\')">✏️</button>'
-        + '<button class="dem-acao del" title="Excluir" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>'
+        + acoesDemandaHTML(d, alAtivo)
         + '</td>'
         + '</tr>';
     }).join('')
