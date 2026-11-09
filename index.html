@@ -12676,11 +12676,13 @@ function acoesDemandaHTML(d, alAtivo) {
 }
 
 // Coluna derivada: backlog = pendente sem prazo; pendente = com prazo;
-// aguardando aparece em "Em andamento" com etiqueta; agendada fica em
-// backlog/pendente (pelo prazo) com a pílula ⏳ e não é arrastável.
+// aguardando aparece em "Em andamento" com etiqueta; agendada fica no
+// Backlog com a pílula ⏳ até o disparo (que a torna Pendente).
 function colunaKanbanDemanda(d) {
   if (d.status === 'concluida') return 'concluida';
   if (d.status === 'em_andamento' || d.status === 'aguardando') return 'em_andamento';
+  // Agendada fica no Backlog até o disparo (que a torna Pendente), mesmo com prazo
+  if (demandaEstaAgendada(d)) return 'backlog';
   return d.prazo ? 'pendente' : 'backlog';
 }
 
@@ -12783,6 +12785,13 @@ function demKMover(id, col) {
     return;
   }
   if (col === 'pendente') {
+    if (demandaEstaAgendada(d)) {
+      if (!confirm('A demanda ' + num + ' está agendada para ir ao grupo da equipe em ' + fmtAgendaDemanda(d) + '.\n\nMover para Pendente agora cancela esse agendamento. Continuar?')) { renderDemandas(); return; }
+      cancelarAgendaDemanda(d);
+      if (d.atividadeRef) saveViagens();
+      saveDemandas();
+      renderDemandas();
+    }
     if (d.status !== 'pendente') alterarStatusDemanda(id, 'pendente');
     if (!d.prazo) {
       // Pendente = tem prazo: abre a demanda para definir a data
