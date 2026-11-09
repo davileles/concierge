@@ -12714,7 +12714,7 @@ function renderDemandasKanban(grid, lista, filtroStatus) {
     if (agendada) meta.push('<span class="dem-agenda-pill">⏳ ' + fmtAgendaDemanda(d) + '</span>');
     return '<div class="dem-kcard' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + (d.status === 'concluida' ? ' concluida' : '') + '"'
       + ' id="dem-' + d.id + '" data-id="' + d.id + '"'
-      + ' draggable="true" ondragstart="demKDragStart(event)" ondragend="demKDragEnd(event)"
+      + ' draggable="true" ondragstart="demKDragStart(event)" ondragend="demKDragEnd(event)"'
       + ' ondblclick="editarDemanda(\'' + d.id + '\')">'
       + '<div class="dem-kcard-top"><span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>'
       + '<span style="font-size:15px;line-height:1">' + icon + '</span>'
