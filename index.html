@@ -12712,9 +12712,9 @@ function renderDemandasKanban(grid, lista, filtroStatus) {
     if (d.prazo) meta.push('<span class="' + (atrasado ? 'atrasado' : '') + '">📅 ' + fmtDate(d.prazo) + (atrasado ? ' · atrasada' : '') + '</span>');
     if (d.responsavel) meta.push('<span>🧑‍💼 ' + escHtml(d.responsavel) + '</span>');
     if (agendada) meta.push('<span class="dem-agenda-pill">⏳ ' + fmtAgendaDemanda(d) + '</span>');
-    return '<div class="dem-kcard' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + (d.status === 'concluida' ? ' concluida' : '') + (agendada ? ' fixo' : '') + '"'
+    return '<div class="dem-kcard' + (d.prioridade === 'alta' ? ' prioridade-alta' : '') + (d.status === 'concluida' ? ' concluida' : '') + '"'
       + ' id="dem-' + d.id + '" data-id="' + d.id + '"'
-      + (agendada ? '' : ' draggable="true" ondragstart="demKDragStart(event)" ondragend="demKDragEnd(event)"')
+      + ' draggable="true" ondragstart="demKDragStart(event)" ondragend="demKDragEnd(event)"
       + ' ondblclick="editarDemanda(\'' + d.id + '\')">'
       + '<div class="dem-kcard-top"><span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>'
       + '<span style="font-size:15px;line-height:1">' + icon + '</span>'
@@ -12725,10 +12725,10 @@ function renderDemandasKanban(grid, lista, filtroStatus) {
       + (sub ? '<div class="dem-kcard-sub">' + escHtml(sub) + '</div>' : '')
       + (meta.length ? '<div class="dem-kcard-meta">' + meta.join('') + '</div>' : '')
       + '<div class="dem-kcard-pe" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
-      + (agendada ? '<span></span>' : '<select class="dem-sel-status dem-status-' + (col === 'backlog' ? 'pendente' : col) + '" onchange="demKMover(\'' + d.id + '\',this.value)">'
+      + '<select class="dem-sel-status dem-status-' + (col === 'backlog' ? 'pendente' : col) + '" onchange="demKMover(\'' + d.id + '\',this.value)">'
         + Object.keys(opcoesCol).map(function(k){
             return '<option value="' + k + '"' + (col===k?' selected':'') + '>' + opcoesCol[k] + '</option>';
-          }).join('') + '</select>')
+          }).join('') + '</select>'
       + '<div style="display:flex;flex-wrap:wrap;justify-content:flex-end">' + acoesDemandaHTML(d, alAtivo) + '</div>'
       + '</div></div>';
   }
@@ -12757,10 +12757,17 @@ function renderDemandasKanban(grid, lista, filtroStatus) {
 // Move a demanda para uma coluna do kanban (arrastar ou seletor no celular)
 function demKMover(id, col) {
   var d = demandas.find(function(x){ return x.id === id; });
-  if (!d || demandaEstaAgendada(d)) { renderDemandas(); return; }
+  if (!d) { renderDemandas(); return; }
   if (colunaKanbanDemanda(d) === col) return;
   var num = '#' + String(d.numero||'').padStart(3,'0');
   if (col === 'em_andamento' || col === 'concluida') {
+    // Agendada: o disparo programado faria a demanda voltar a Pendente,
+    // então mover para Em andamento/Concluída cancela o agendamento.
+    if (demandaEstaAgendada(d)) {
+      if (!confirm('A demanda ' + num + ' está agendada para ir ao grupo da equipe em ' + fmtAgendaDemanda(d) + '.\n\nMover para ' + (col === 'concluida' ? 'Concluída' : 'Em andamento') + ' cancela esse agendamento. Continuar?')) { renderDemandas(); return; }
+      cancelarAgendaDemanda(d);
+      if (d.atividadeRef) saveViagens();
+    }
     alterarStatusDemanda(id, col);
     showToast('Demanda ' + num + ' → ' + (col === 'concluida' ? 'Concluída' : 'Em andamento'), 'ok');
     return;
