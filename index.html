@@ -219,8 +219,8 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-visao button{background:var(--surface2);color:var(--muted);border:none;font-size:12px;font-weight:700;padding:5px 12px;cursor:pointer;font-family:inherit}
 .dem-visao button+button{border-left:1px solid var(--border)}
 .dem-visao button.ativo{background:var(--accent);color:#fff}
-.dem-kanban{display:flex;gap:12px;overflow-x:auto;align-items:flex-start;padding-bottom:8px;scroll-snap-type:x proximity}
-.dem-kcol{flex:1 0 250px;max-width:340px;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 230px);scroll-snap-align:start;transition:border-color .15s,background .15s}
+.dem-kanban{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:start;padding-bottom:8px}
+.dem-kcol{min-width:0;background:var(--surface);border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;max-height:calc(100vh - 230px);transition:border-color .15s,background .15s}
 .dem-kcol.over{border-color:var(--accent);background:var(--surface2)}
 .dem-kcol-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--border);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:var(--text)}
 .dem-kcol-head .qtd{font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:var(--surface2);color:var(--muted)}
@@ -228,7 +228,9 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-kcol-head.k-em_andamento{box-shadow:inset 0 3px 0 #fac832}
 .dem-kcol-head.k-aguardando{box-shadow:inset 0 3px 0 #5aa0ff}
 .dem-kcol-head.k-concluida{box-shadow:inset 0 3px 0 #32c878}
-.dem-kcol-head.k-agendada{box-shadow:inset 0 3px 0 #a078ff}
+.dem-kcol-head.k-backlog{box-shadow:inset 0 3px 0 var(--muted)}
+.dem-kcol-head small{display:block;font-size:9.5px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--muted);margin-top:2px}
+.dem-ktag{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.4px;padding:2px 6px;border-radius:8px;background:rgba(90,160,255,.15);color:#5aa0ff}
 .dem-kcol-body{padding:8px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;min-height:70px}
 .dem-kcol-vazio{font-size:11px;color:var(--muted);text-align:center;padding:14px 6px;border:1px dashed var(--border);border-radius:10px}
 .dem-kcard{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 11px;cursor:grab;transition:border-color .15s,transform .15s,opacity .15s}
@@ -246,7 +248,8 @@ tr.aberto .dem-td-abrir{transform:rotate(180deg)}
 .dem-kcard-pe .dem-sel-status{display:none}
 @media(hover:none){.dem-kcard-pe .dem-sel-status{display:inline-block}.dem-kcard{cursor:pointer}}
 .dem-kmais{background:none;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:11px;font-weight:700;padding:7px;cursor:pointer;font-family:inherit}
-@media(max-width:640px){.dem-kcol{flex-basis:82vw;max-height:none}}
+@media(max-width:1100px){.dem-kanban{grid-template-columns:repeat(2,minmax(0,1fr))}.dem-kcol{max-height:none}}
+@media(max-width:560px){.dem-kanban{grid-template-columns:1fr}}
 .demanda-body{display:none;padding:14px 16px;border-top:1px solid var(--border);background:rgba(255,255,255,.01)}
 .demanda-body.open{display:block}
 .demanda-descricao{font-size:14.5px;color:var(--text);line-height:1.75;margin-bottom:14px;white-space:pre-wrap;word-break:break-word;background:var(--surface2);border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:0 10px 10px 0;padding:14px 16px}
@@ -2435,6 +2438,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
       <select id="dem-filtro-status" onchange="renderDemandas()" style="font-size:12px;padding:5px 10px;background:var(--surface2);color:var(--text);border:1px solid var(--border);border-radius:8px;flex-shrink:0">
         <option value="todas">Todos os status</option>
+        <option value="backlog">📥 Backlog (sem prazo)</option>
         <option value="pendente">🔴 Pendente</option>
         <option value="em_andamento">🟡 Em andamento</option>
         <option value="aguardando">🔵 Aguardando</option>
@@ -12671,34 +12675,36 @@ function acoesDemandaHTML(d, alAtivo) {
     + '<button class="dem-acao del" title="Excluir" onclick="excluirDemanda(\'' + d.id + '\')">🗑️</button>';
 }
 
+// Coluna derivada: backlog = pendente sem prazo; pendente = com prazo;
+// aguardando aparece em "Em andamento" com etiqueta; agendada fica em
+// backlog/pendente (pelo prazo) com a pílula ⏳ e não é arrastável.
+function colunaKanbanDemanda(d) {
+  if (d.status === 'concluida') return 'concluida';
+  if (d.status === 'em_andamento' || d.status === 'aguardando') return 'em_andamento';
+  return d.prazo ? 'pendente' : 'backlog';
+}
+
 function renderDemandasKanban(grid, lista, filtroStatus) {
   var colunas = [
-    {st:'agendada',     nome:'⏳ Agendada'},
-    {st:'pendente',     nome:'🔴 Pendente'},
-    {st:'em_andamento', nome:'🟡 Em andamento'},
-    {st:'aguardando',   nome:'🔵 Aguardando'},
-    {st:'concluida',    nome:'✅ Concluída'}
+    {st:'backlog',      nome:'📥 Backlog',      dica:'Registrada, ainda sem prazo'},
+    {st:'pendente',     nome:'🔴 Pendente',     dica:'Já tem prazo'},
+    {st:'em_andamento', nome:'🟡 Em andamento', dica:'Alguém está fazendo'},
+    {st:'concluida',    nome:'✅ Concluída',    dica:'Finalizada'}
   ];
-  if (filtroStatus && filtroStatus !== 'todas') colunas = colunas.filter(function(c){ return c.st === filtroStatus; });
-  var porCol = {};
-  colunas.forEach(function(c){ porCol[c.st] = []; });
-  lista.forEach(function(d){
-    var st = demandaEstaAgendada(d) ? 'agendada' : (d.status || 'pendente');
-    if (porCol[st]) porCol[st].push(d);
-  });
-  // Agendada só aparece se tiver algo (evita coluna vazia sem uso)
-  colunas = colunas.filter(function(c){ return c.st !== 'agendada' || porCol.agendada.length || filtroStatus === 'agendada'; });
-  // Concluídas: mais recentes primeiro
-  if (porCol.concluida) porCol.concluida.sort(function(a,b){ return (b.numero||0) - (a.numero||0); });
+  var porCol = {backlog:[], pendente:[], em_andamento:[], concluida:[]};
+  lista.forEach(function(d){ porCol[colunaKanbanDemanda(d)].push(d); });
+  // Pendente: prazo mais próximo primeiro
+  porCol.pendente.sort(function(a,b){ return String(a.prazo).localeCompare(String(b.prazo)); });
+  porCol.concluida.sort(function(a,b){ return (b.numero||0) - (a.numero||0); });
 
-  var statusLabels = {pendente:'🔴 Pendente', em_andamento:'🟡 Em andamento', aguardando:'🔵 Aguardando', concluida:'✅ Concluída'};
-  var statusClasses = {pendente:'dem-status-pendente', em_andamento:'dem-status-em_andamento', aguardando:'dem-status-aguardando', concluida:'dem-status-concluida'};
+  var opcoesCol = {backlog:'📥 Backlog', pendente:'🔴 Pendente', em_andamento:'🟡 Em andamento', concluida:'✅ Concluída'};
   var hoje = new Date().toISOString().split('T')[0];
 
   function card(d) {
     var icon = (d.tipo || '📌').split(' ')[0];
     var agendada = demandaEstaAgendada(d);
     var alAtivo = alertaDaDemanda(d);
+    var col = colunaKanbanDemanda(d);
     var atrasado = d.prazo && d.status !== 'concluida' && d.prazo < hoje;
     var sub = d.descricao ? String(d.descricao).replace(/\s*\n\s*/g, ' · ') : (d.viagemNome ? '🗺️ ' + d.viagemNome : '');
     var meta = [];
@@ -12713,37 +12719,76 @@ function renderDemandasKanban(grid, lista, filtroStatus) {
       + '<div class="dem-kcard-top"><span class="demanda-numero">#' + String(d.numero||'').padStart(3,'0') + '</span>'
       + '<span style="font-size:15px;line-height:1">' + icon + '</span>'
       + (d.prioridade === 'alta' ? '<span style="font-size:10px;font-weight:800;color:var(--accent);text-transform:uppercase;letter-spacing:.4px">Alta</span>' : '')
+      + (d.status === 'aguardando' ? '<span class="dem-ktag">Aguardando</span>' : '')
       + '</div>'
       + '<div class="dem-kcard-titulo">' + escHtml(d.titulo || '') + '</div>'
       + (sub ? '<div class="dem-kcard-sub">' + escHtml(sub) + '</div>' : '')
       + (meta.length ? '<div class="dem-kcard-meta">' + meta.join('') + '</div>' : '')
       + '<div class="dem-kcard-pe" onclick="event.stopPropagation()" ondblclick="event.stopPropagation()">'
-      + (agendada ? '<span></span>' : '<select class="dem-sel-status ' + (statusClasses[d.status]||'dem-status-pendente') + '" onchange="alterarStatusDemanda(\'' + d.id + '\',this.value)">'
-        + ['pendente','em_andamento','aguardando','concluida'].map(function(st){
-            return '<option value="' + st + '"' + (d.status===st?' selected':'') + '>' + statusLabels[st] + '</option>';
+      + (agendada ? '<span></span>' : '<select class="dem-sel-status dem-status-' + (col === 'backlog' ? 'pendente' : col) + '" onchange="demKMover(\'' + d.id + '\',this.value)">'
+        + Object.keys(opcoesCol).map(function(k){
+            return '<option value="' + k + '"' + (col===k?' selected':'') + '>' + opcoesCol[k] + '</option>';
           }).join('') + '</select>')
       + '<div style="display:flex;flex-wrap:wrap;justify-content:flex-end">' + acoesDemandaHTML(d, alAtivo) + '</div>'
       + '</div></div>';
   }
 
-  grid.innerHTML = '<div class="dem-kanban">' + colunas.map(function(c){
-    var itens = porCol[c.st] || [];
-    var mostrar = itens;
-    var resto = 0;
+  var filtrando = filtroStatus && filtroStatus !== 'todas';
+  var visiveis = filtrando ? colunas.filter(function(c){ return porCol[c.st].length; }) : colunas;
+  if (!visiveis.length) visiveis = colunas;
+
+  grid.innerHTML = '<div class="dem-kanban"' + (visiveis.length < 4 ? ' style="grid-template-columns:repeat(' + visiveis.length + ',minmax(0,1fr))"' : '') + '>' + visiveis.map(function(c){
+    var itens = porCol[c.st];
+    var mostrar = itens, resto = 0;
     if (c.st === 'concluida' && !_demKMostrarConcluidas && itens.length > DEM_K_LIMITE_CONCLUIDAS) {
       mostrar = itens.slice(0, DEM_K_LIMITE_CONCLUIDAS);
       resto = itens.length - mostrar.length;
     }
-    var aceita = c.st !== 'agendada';
-    return '<div class="dem-kcol" data-st="' + c.st + '"'
-      + (aceita ? ' ondragover="demKDragOver(event)" ondragleave="demKDragLeave(event)" ondrop="demKDrop(event)"' : '') + '>'
-      + '<div class="dem-kcol-head k-' + c.st + '"><span>' + c.nome + '</span><span class="qtd">' + itens.length + '</span></div>'
+    return '<div class="dem-kcol" data-st="' + c.st + '" ondragover="demKDragOver(event)" ondragleave="demKDragLeave(event)" ondrop="demKDrop(event)">'
+      + '<div class="dem-kcol-head k-' + c.st + '"><span>' + c.nome + '<small>' + c.dica + '</small></span><span class="qtd">' + itens.length + '</span></div>'
       + '<div class="dem-kcol-body">'
-      + (mostrar.length ? mostrar.map(card).join('') : '<div class="dem-kcol-vazio">' + (aceita ? 'Arraste uma demanda para cá' : 'Nada agendado') + '</div>')
+      + (mostrar.length ? mostrar.map(card).join('') : '<div class="dem-kcol-vazio">Arraste uma demanda para cá</div>')
       + (resto ? '<button type="button" class="dem-kmais" onclick="_demKMostrarConcluidas=true;renderDemandas()">Ver mais ' + resto + ' concluída' + (resto > 1 ? 's' : '') + '</button>' : '')
       + (c.st === 'concluida' && _demKMostrarConcluidas && itens.length > DEM_K_LIMITE_CONCLUIDAS ? '<button type="button" class="dem-kmais" onclick="_demKMostrarConcluidas=false;renderDemandas()">Mostrar menos</button>' : '')
       + '</div></div>';
   }).join('') + '</div>';
+}
+
+// Move a demanda para uma coluna do kanban (arrastar ou seletor no celular)
+function demKMover(id, col) {
+  var d = demandas.find(function(x){ return x.id === id; });
+  if (!d || demandaEstaAgendada(d)) { renderDemandas(); return; }
+  if (colunaKanbanDemanda(d) === col) return;
+  var num = '#' + String(d.numero||'').padStart(3,'0');
+  if (col === 'em_andamento' || col === 'concluida') {
+    alterarStatusDemanda(id, col);
+    showToast('Demanda ' + num + ' → ' + (col === 'concluida' ? 'Concluída' : 'Em andamento'), 'ok');
+    return;
+  }
+  if (col === 'backlog') {
+    if (d.prazo && !confirm('Voltar a demanda ' + num + ' para o Backlog remove o prazo (' + fmtDate(d.prazo) + '). Continuar?')) { renderDemandas(); return; }
+    if (d.prazo) {
+      d.prazo = '';
+      if (aplicarNaAtividade(d, { prazo: '' })) saveViagens();
+    }
+    alterarStatusDemanda(id, 'pendente'); // grava e redesenha
+    showToast('Demanda ' + num + ' → Backlog', 'ok');
+    return;
+  }
+  if (col === 'pendente') {
+    if (d.status !== 'pendente') alterarStatusDemanda(id, 'pendente');
+    if (!d.prazo) {
+      // Pendente = tem prazo: abre a demanda para definir a data
+      editarDemanda(id);
+      setTimeout(function(){
+        var el = document.getElementById('df-prazo');
+        if (el) { el.focus(); try { el.showPicker && el.showPicker(); } catch(e) {} }
+      }, 150);
+      showToast('Defina o prazo para a demanda ' + num + ' ir para Pendente', 'ok');
+    } else {
+      showToast('Demanda ' + num + ' → Pendente', 'ok');
+    }
+  }
 }
 
 var _demKArrastando = null;
@@ -12776,12 +12821,7 @@ function demKDrop(ev) {
   try { id = id || ev.dataTransfer.getData('text/plain'); } catch(e) {}
   _demKArrastando = null;
   var st = col.getAttribute('data-st');
-  if (!id || !st || st === 'agendada') return;
-  var d = demandas.find(function(x){ return x.id === id; });
-  if (!d || d.status === st || demandaEstaAgendada(d)) return;
-  alterarStatusDemanda(id, st);
-  var lbl = {pendente:'Pendente', em_andamento:'Em andamento', aguardando:'Aguardando', concluida:'Concluída'}[st] || st;
-  showToast('Demanda #' + String(d.numero||'').padStart(3,'0') + ' → ' + lbl, 'ok');
+  if (id && st) demKMover(id, st);
 }
 
 function renderDemandas() {
@@ -12839,6 +12879,7 @@ function renderDemandas() {
   var lista = demandas.filter(function(d) {
     var agd = demandaEstaAgendada(d);
     if (filtroStatus === 'agendada') { if (!agd) return false; }
+    else if (filtroStatus === 'backlog') { if (colunaKanbanDemanda(d) !== 'backlog') return false; }
     else if (filtroStatus !== 'todas' && (agd || d.status !== filtroStatus)) return false;
     if (filtroTipo !== 'todos' && d.tipo.indexOf(filtroTipo) === -1) return false;
     if (busca) {
