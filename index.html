@@ -7132,6 +7132,7 @@ var VARS_RESERVA = [
   { label: '{{loc_acumulo_valor}}',      desc: 'Valor pago na locação com acúmulo de pontos (R$)' },
   { label: '{{hotel_milhas}}',           desc: 'Quantidade total de milhas gastas (hotel)' },
   { label: '{{hotel_valor_tarifa}}',     desc: 'Valor da tarifa pagante do hotel (R$)' },
+  { label: '{{hotel_valor_dinheiro}}',   desc: 'Valor pago no hotel em dinheiro, sem acúmulo (R$)' },
   { label: '{{loc_milhas}}',             desc: 'Quantidade total de milhas gastas (locação de carro)' },
   { label: '{{loc_valor_tarifa}}',       desc: 'Valor da tarifa pagante da locação de carro (R$)' },
   { label: '{{loc_local_retirada}}',     desc: 'Local de retirada do carro' },
@@ -8196,6 +8197,7 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'loc_acumulo_valor',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorAcumulo||'') : '');
     txt = rv(txt, 'hotel_milhas',       res.tipo==='hotel' ? (res.valorMilhas||'') : '');
     txt = rv(txt, 'hotel_valor_tarifa', res.tipo==='hotel' ? (res.valorTarifaPagante||res.valorAcumulo||'') : '');
+    txt = rv(txt, 'hotel_valor_dinheiro', res.tipo==='hotel' ? (res.valorDinheiro||'') : '');
     txt = rv(txt, 'loc_milhas',         (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorMilhas||'') : '');
     txt = rv(txt, 'loc_valor_tarifa',   (res.tipo==='carro' && res.subtipo==='locacao') ? (res.valorTarifaPagante||res.valorAcumulo||'') : '');
     txt = rv(txt, 'loc_local_retirada',  (res.tipo==='carro' && res.subtipo==='locacao') ? (res.retLocal||'') : '');
