@@ -304,6 +304,20 @@
       if (mt) linhas.push([nPax > 1 ? 'Milhas no total' : 'Milhas utilizadas', mt]);
       if (taxas) linhas.push(['Taxas de embarque', taxas]);
       if (mt) total = mt + ' milhas' + (taxas ? ' + ' + taxas : '');
+    } else if (tipo === 'pontos_dinheiro') {
+      var progPD = txt(r.programa);
+      var mtPD = milhas(r.milhasTotal) || milhas(r.milhas);
+      var dinPD = reais(r.valorParteDinheiro);
+      if (progPD) linhas.push(['Programa', progPD]);
+      if (milhas(r.milhas) && nPax > 1) linhas.push(['Milhas por passageiro', milhas(r.milhas)]);
+      if (mtPD) linhas.push([nPax > 1 ? 'Milhas no total' : 'Milhas utilizadas', mtPD]);
+      if (dinPD) linhas.push(['Parte em dinheiro', dinPD]);
+      if (taxas) linhas.push(['Taxas de embarque', taxas]);
+      var partesPD = [];
+      if (mtPD) partesPD.push(mtPD + ' milhas');
+      if (dinPD) partesPD.push(dinPD);
+      if (taxas) partesPD.push(taxas);
+      total = partesPD.join(' + ');
     } else if (tipo === 'balcao') {
       var tot = reais(r.valorTotalBalcao);
       if (txt(r.programaBalcao || r.programa)) linhas.push(['Emitido via', r.programaBalcao || r.programa]);

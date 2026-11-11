@@ -399,6 +399,20 @@ function calcularEconomia(r) {
   if (r.tipo !== 'voo' && r.tipo !== 'hotel' && r.tipo !== 'seguro' && !isLoc) return vazio;
   const te = r.tipoEmissao || '';
 
+  // Pontos + Dinheiro (voo): resgate com a parte em R$ somada ao custo (igual ao painel)
+  if (te === 'pontos_dinheiro' && r.tipo === 'voo') {
+    const progPD = r.programa || '';
+    const ptsPD  = parseValorBR(r.milhasTotal) || (parseValorBR(r.milhas) * (parseInt(r.pax, 10) || 1));
+    const tarPD  = parseValorBR(r.valor);
+    const refPD  = (r.tarifaBase === 'total') ? tarPD : tarPD * (parseInt(r.pax, 10) || 1);
+    const dinPD  = parseValorBR(r.valorParteDinheiro);
+    const vmPD   = valorMilheiro(progPD);
+    if (!refPD || !ptsPD || !vmPD) return vazio;
+    const custoPtsPD = ptsPD / 1000 * vmPD;
+    return { valor: refPD - custoPtsPD - dinPD, modo: 'resgate',
+      detalhe: `Tarifa pagante R$ ${fmtBRL(refPD)} − ${fmtPontos(ptsPD)} ${progPD} a R$ ${fmtBRL(vmPD)}/mil (R$ ${fmtBRL(custoPtsPD)}) − R$ ${fmtBRL(dinPD)} em dinheiro` };
+  }
+
   if (te === 'milhas') {
     let prog, pontos, ref;
     if (r.tipo === 'voo') {
@@ -472,6 +486,8 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'pnr',                 res.pnr      || '');
     t = rv(t, 'programa',            res.programa || '');
     t = rv(t, 'milhas',              res.milhas   || '');
+    t = rv(t, 'milhas_total',        res.milhasTotal || '');
+    t = rv(t, 'parte_dinheiro',      (res.tipo === 'voo' && res.tipoEmissao === 'pontos_dinheiro') ? (res.valorParteDinheiro || '') : '');
     t = rv(t, 'pax',                 res.pax      || '');
     t = rv(t, 'passageiros',         nomesPassageiros(res).join(', '));
     t = rv(t, 'hotel',               res.hotelNome || '');
