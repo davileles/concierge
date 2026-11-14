@@ -128,11 +128,20 @@
     return base;
   }
 
-  var ICONE_AVIAO = '<svg viewBox="0 0 256 256"><path fill="#9A7B36" transform="rotate(90 128 128)" d="M235.58 128.84 160 91.06V48a32 32 0 0 0-64 0v43.06l-75.58 37.78A8 8 0 0 0 16 136v32a8 8 0 0 0 9.57 7.84L96 161.76v18.93L82.34 194.34A8 8 0 0 0 80 200v32a8 8 0 0 0 11 7.43l37-14.81 37 14.81a8 8 0 0 0 11-7.43v-32a8 8 0 0 0-2.34-5.66L160 180.69v-18.93l70.43 14.08A8 8 0 0 0 240 168v-32a8 8 0 0 0-4.42-7.16Z"/></svg>';
+  var ICONE_AVIAO = '<svg width="22" height="22" viewBox="0 0 256 256"><path fill="#9A7B36" transform="rotate(90 128 128)" d="M235.58 128.84 160 91.06V48a32 32 0 0 0-64 0v43.06l-75.58 37.78A8 8 0 0 0 16 136v32a8 8 0 0 0 9.57 7.84L96 161.76v18.93L82.34 194.34A8 8 0 0 0 80 200v32a8 8 0 0 0 11 7.43l37-14.81 37 14.81a8 8 0 0 0 11-7.43v-32a8 8 0 0 0-2.34-5.66L160 180.69v-18.93l70.43 14.08A8 8 0 0 0 240 168v-32a8 8 0 0 0-4.42-7.16Z"/></svg>';
+  // Ícone como <img> de SVG (data URI) com tamanho fixo. SVG inline sai gigante,
+  // fora do lugar ou some no html2canvas do Safari/iPhone (e às vezes no Chrome),
+  // e pode levar junto o resto da linha da rota.
+  function imgIcone(svg, px) {
+    var s = svg.replace(/^<svg([^>]*)>/, function (_, a) {
+      return '<svg xmlns="http://www.w3.org/2000/svg" width="' + px + '" height="' + px + '"' + a.replace(/\s(width|height|style)="[^"]*"/g, '') + '>';
+    }).replace(/currentColor/g, '#9A7B36');
+    return '<img class="ico" width="' + px + '" height="' + px + '" alt="" src="data:image/svg+xml;charset=utf-8,' + encodeURIComponent(s) + '">';
+  }
   var ICONES_MALA = {
-    pessoal: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M216 56h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a16 16 0 0 0-16 16v128a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V72a16 16 0 0 0-16-16ZM96 48a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm120 152H40V72h176v128Z"/></svg>',
-    mao: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M184 64h-24V40a24 24 0 0 0-24-24h-16a24 24 0 0 0-24 24v24H72a24 24 0 0 0-24 24v104a24 24 0 0 0 24 24 16 16 0 0 0 32 0h48a16 16 0 0 0 32 0 24 24 0 0 0 24-24V88a24 24 0 0 0-24-24Zm-72-24a8 8 0 0 1 8-8h16a8 8 0 0 1 8 8v24h-32Zm80 152a8 8 0 0 1-8 8H72a8 8 0 0 1-8-8V88a8 8 0 0 1 8-8h112a8 8 0 0 1 8 8Z"/></svg>',
-    despachada: '<svg viewBox="0 0 256 256" fill="currentColor"><path d="M200 40H56a16 16 0 0 0-16 16v152a16 16 0 0 0 16 16 16 16 0 0 0 32 0h80a16 16 0 0 0 32 0 16 16 0 0 0 16-16V56a16 16 0 0 0-16-16Zm0 168H56V56h144Zm-96-128v96a8 8 0 0 1-16 0V80a8 8 0 0 1 16 0Zm64 0v96a8 8 0 0 1-16 0V80a8 8 0 0 1 16 0Z"/></svg>'
+    pessoal: '<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M216 56h-40v-8a24 24 0 0 0-24-24h-48a24 24 0 0 0-24 24v8H40a16 16 0 0 0-16 16v128a16 16 0 0 0 16 16h176a16 16 0 0 0 16-16V72a16 16 0 0 0-16-16ZM96 48a8 8 0 0 1 8-8h48a8 8 0 0 1 8 8v8H96Zm120 152H40V72h176v128Z"/></svg>',
+    mao: '<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M184 64h-24V40a24 24 0 0 0-24-24h-16a24 24 0 0 0-24 24v24H72a24 24 0 0 0-24 24v104a24 24 0 0 0 24 24 16 16 0 0 0 32 0h48a16 16 0 0 0 32 0 24 24 0 0 0 24-24V88a24 24 0 0 0-24-24Zm-72-24a8 8 0 0 1 8-8h16a8 8 0 0 1 8 8v24h-32Zm80 152a8 8 0 0 1-8 8H72a8 8 0 0 1-8-8V88a8 8 0 0 1 8-8h112a8 8 0 0 1 8 8Z"/></svg>',
+    despachada: '<svg width="20" height="20" viewBox="0 0 256 256" fill="currentColor"><path d="M200 40H56a16 16 0 0 0-16 16v152a16 16 0 0 0 16 16 16 16 0 0 0 32 0h80a16 16 0 0 0 32 0 16 16 0 0 0 16-16V56a16 16 0 0 0-16-16Zm0 168H56V56h144Zm-96-128v96a8 8 0 0 1-16 0V80a8 8 0 0 1 16 0Zm64 0v96a8 8 0 0 1-16 0V80a8 8 0 0 1 16 0Z"/></svg>'
   };
 
   var CSS = [
@@ -177,7 +186,7 @@
     '.pdf-res .linha .arco:before,.pdf-res .linha .arco:after{content:"";position:absolute;top:-3.5px;width:6px;height:6px;border-radius:50%;background:var(--gold)}',
     '.pdf-res .linha .arco:before{left:-3px}.pdf-res .linha .arco:after{right:-3px}',
     '.pdf-res .linha .esc{position:absolute;top:9mm;transform:translate(-50%,-50%);background:#fff;border:1.2px solid var(--gold);border-radius:6px;padding:0 4px;font-size:7pt;font-weight:700;color:var(--gold2);letter-spacing:.06em}',
-    '.pdf-res .linha svg{position:absolute;left:50%;top:9mm;transform:translate(-50%,-50%);width:22px;height:22px;background:#fff;padding:2px}',
+    '.pdf-res .linha .ico{position:absolute;left:50%;top:9mm;margin:-13px 0 0 -13px;width:26px;height:26px;background:#fff;padding:2px;display:block}',
     '.pdf-res .linha .dur{position:absolute;left:0;right:0;top:12.5mm;text-align:center;font-size:8pt;color:var(--muted)}',
     '.pdf-res .detalhes{display:flex;border-top:1px solid var(--line)}',
     '.pdf-res.compacto .capa{padding:9mm 15mm 7mm}',
@@ -193,7 +202,7 @@
     '.pdf-res.compacto .ponto .iata{font-size:26pt}',
     '.pdf-res.compacto .ponto .hora{font-size:13pt;margin-top:1mm}',
     '.pdf-res.compacto .linha{height:15mm}',
-    '.pdf-res.compacto .linha .arco,.pdf-res.compacto .linha .esc,.pdf-res.compacto .linha svg{top:7.5mm}',
+    '.pdf-res.compacto .linha .arco,.pdf-res.compacto .linha .esc,.pdf-res.compacto .linha .ico{top:7.5mm}',
     '.pdf-res.compacto .linha .dur{top:10.5mm}',
     '.pdf-res.compacto .detalhes div{padding:2.2mm 4.5mm}',
     '.pdf-res.compacto .trecho-top{padding:2.2mm 6mm}',
@@ -218,7 +227,7 @@
     '.pdf-res .eco b{color:var(--gold);font-weight:600}',
     '.pdf-res .malas{display:flex;gap:4mm}',
     '.pdf-res .mala{flex:1 1 0;background:#fff;border:1px solid var(--line);border-radius:4mm;padding:3mm 5mm;display:grid;grid-template-columns:24px 1fr;column-gap:3mm;align-items:center}',
-    '.pdf-res .mala svg{width:20px;height:20px;color:var(--gold2);grid-row:span 2}',
+    '.pdf-res .mala .ico{width:20px;height:20px;grid-row:span 2;display:block}',
     '.pdf-res .mala.nao{opacity:.55}',
     '.pdf-res .mala b{display:block;font-size:9.5pt;font-weight:600}',
     '.pdf-res .mala span{font-size:8pt;color:var(--ink2)}',
@@ -246,7 +255,7 @@
       meio = escalas.map(function (c, i) {
         return '<span class="esc" style="left:' + Math.round(100 * (i + 1) / (escalas.length + 1)) + '%">' + esc(c) + '</span>';
       }).join('');
-    } else meio = ICONE_AVIAO;
+    } else meio = imgIcone(ICONE_AVIAO, 22);
     var mais = difDias(t.data, t.dataCheg);
     var local = function (a) { return esc(a.cidade) + (a.nome ? ' · ' + esc(a.nome) : ''); };
 
@@ -362,7 +371,7 @@
     return '<section><div class="rotulo">Bagagem incluída</div><div class="malas">' + itens.map(function (x) {
       var v = txt(b[x[0]]);
       var nao = /^(n[ãa]o|nenhum|sem)\b/i.test(v);
-      return '<div class="mala' + (nao ? ' nao' : '') + '">' + ICONES_MALA[x[0]] + '<b>' + esc(x[1]) + '</b><span>' + esc(v) + '</span></div>';
+      return '<div class="mala' + (nao ? ' nao' : '') + '">' + imgIcone(ICONES_MALA[x[0]], 20) + '<b>' + esc(x[1]) + '</b><span>' + esc(v) + '</span></div>';
     }).join('') + '</div></section>';
   }
 
@@ -520,11 +529,11 @@
       (dicas ? '<div><div class="rotulo">' + esc(rotDicas) + '</div>' + dicas + '</div>' : '<div></div>') + '</section>';
   }
 
-  var ICONE_CAMA = '<svg viewBox="0 0 256 256"><path fill="#9A7B36" d="M208 72H24V48a8 8 0 0 0-16 0v160a8 8 0 0 0 16 0v-32h208v32a8 8 0 0 0 16 0v-96a40 40 0 0 0-40-40Zm-96 88H24V88h88Zm16 0V88h80a24 24 0 0 1 24 24v48Z"/></svg>';
-  var ICONE_TREM = '<svg viewBox="0 0 256 256"><path fill="#9A7B36" d="M184 24H72a32 32 0 0 0-32 32v120a32 32 0 0 0 32 32h4l-14.4 19.2a8 8 0 1 0 12.8 9.6L96 208h64l21.6 28.8a8 8 0 1 0 12.8-9.6L180 208h4a32 32 0 0 0 32-32V56a32 32 0 0 0-32-32ZM56 120V80h64v40Zm80-40h64v40h-64ZM72 40h112a16 16 0 0 1 16 16v8H56v-8a16 16 0 0 1 16-16Zm112 152H72a16 16 0 0 1-16-16v-40h144v40a16 16 0 0 1-16 16Zm-84-28a12 12 0 1 1-12-12 12 12 0 0 1 12 12Zm80 0a12 12 0 1 1-12-12 12 12 0 0 1 12 12Z"/></svg>';
-  var ICONE_CARRO = '<svg viewBox="0 0 256 256"><path fill="#9A7B36" d="M240 112h-10.8l-27.78-62.5A16 16 0 0 0 186.8 40H69.2a16 16 0 0 0-14.62 9.5L26.8 112H16a8 8 0 0 0 0 16h8v80a16 16 0 0 0 16 16h24a16 16 0 0 0 16-16v-16h96v16a16 16 0 0 0 16 16h24a16 16 0 0 0 16-16v-80h8a8 8 0 0 0 0-16ZM69.2 56h117.6l24.89 56H44.31ZM64 208H40v-16h24Zm128 0v-16h24v16Zm24-32H40v-48h176ZM56 152a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16H64a8 8 0 0 1-8-8Zm112 0a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16h-16a8 8 0 0 1-8-8Z"/></svg>';
-  var ICONE_ESCUDO = '<svg viewBox="0 0 256 256"><path fill="#9A7B36" d="M208 40H48a16 16 0 0 0-16 16v56c0 52.72 25.52 84.67 46.93 102.19 23.06 18.86 46 25.26 47 25.53a8 8 0 0 0 4.2 0c1-.27 23.91-6.67 47-25.53C198.48 196.67 224 164.72 224 112V56a16 16 0 0 0-16-16Zm0 72c0 37.07-13.66 67.16-40.6 89.42a129.3 129.3 0 0 1-39.4 22.2 128.25 128.25 0 0 1-38.92-21.81C61.82 179.51 48 149.3 48 112V56h160ZM82.34 141.66a8 8 0 0 1 11.32-11.32L112 148.69l50.34-50.35a8 8 0 0 1 11.32 11.32l-56 56a8 8 0 0 1-11.32 0Z"/></svg>';
-  var ICONE_PASSEIO = '<svg viewBox="0 0 256 256"><path fill="#9A7B36" d="M128 64a40 40 0 1 0 40 40 40 40 0 0 0-40-40Zm0 64a24 24 0 1 1 24-24 24 24 0 0 1-24 24Zm0-112a88.1 88.1 0 0 0-88 88c0 31.4 14.51 64.68 42 96.25a254.19 254.19 0 0 0 41.45 38.3 8 8 0 0 0 9.18 0 254.19 254.19 0 0 0 41.37-38.3c27.45-31.57 42-64.85 42-96.25a88.1 88.1 0 0 0-88-88Zm0 206c-16.53-13-72-60.75-72-118a72 72 0 0 1 144 0c0 57.23-55.47 105-72 118Z"/></svg>';
+  var ICONE_CAMA = '<svg width="22" height="22" viewBox="0 0 256 256"><path fill="#9A7B36" d="M208 72H24V48a8 8 0 0 0-16 0v160a8 8 0 0 0 16 0v-32h208v32a8 8 0 0 0 16 0v-96a40 40 0 0 0-40-40Zm-96 88H24V88h88Zm16 0V88h80a24 24 0 0 1 24 24v48Z"/></svg>';
+  var ICONE_TREM = '<svg width="22" height="22" viewBox="0 0 256 256"><path fill="#9A7B36" d="M184 24H72a32 32 0 0 0-32 32v120a32 32 0 0 0 32 32h4l-14.4 19.2a8 8 0 1 0 12.8 9.6L96 208h64l21.6 28.8a8 8 0 1 0 12.8-9.6L180 208h4a32 32 0 0 0 32-32V56a32 32 0 0 0-32-32ZM56 120V80h64v40Zm80-40h64v40h-64ZM72 40h112a16 16 0 0 1 16 16v8H56v-8a16 16 0 0 1 16-16Zm112 152H72a16 16 0 0 1-16-16v-40h144v40a16 16 0 0 1-16 16Zm-84-28a12 12 0 1 1-12-12 12 12 0 0 1 12 12Zm80 0a12 12 0 1 1-12-12 12 12 0 0 1 12 12Z"/></svg>';
+  var ICONE_CARRO = '<svg width="22" height="22" viewBox="0 0 256 256"><path fill="#9A7B36" d="M240 112h-10.8l-27.78-62.5A16 16 0 0 0 186.8 40H69.2a16 16 0 0 0-14.62 9.5L26.8 112H16a8 8 0 0 0 0 16h8v80a16 16 0 0 0 16 16h24a16 16 0 0 0 16-16v-16h96v16a16 16 0 0 0 16 16h24a16 16 0 0 0 16-16v-80h8a8 8 0 0 0 0-16ZM69.2 56h117.6l24.89 56H44.31ZM64 208H40v-16h24Zm128 0v-16h24v16Zm24-32H40v-48h176ZM56 152a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16H64a8 8 0 0 1-8-8Zm112 0a8 8 0 0 1 8-8h16a8 8 0 0 1 0 16h-16a8 8 0 0 1-8-8Z"/></svg>';
+  var ICONE_ESCUDO = '<svg width="22" height="22" viewBox="0 0 256 256"><path fill="#9A7B36" d="M208 40H48a16 16 0 0 0-16 16v56c0 52.72 25.52 84.67 46.93 102.19 23.06 18.86 46 25.26 47 25.53a8 8 0 0 0 4.2 0c1-.27 23.91-6.67 47-25.53C198.48 196.67 224 164.72 224 112V56a16 16 0 0 0-16-16Zm0 72c0 37.07-13.66 67.16-40.6 89.42a129.3 129.3 0 0 1-39.4 22.2 128.25 128.25 0 0 1-38.92-21.81C61.82 179.51 48 149.3 48 112V56h160ZM82.34 141.66a8 8 0 0 1 11.32-11.32L112 148.69l50.34-50.35a8 8 0 0 1 11.32 11.32l-56 56a8 8 0 0 1-11.32 0Z"/></svg>';
+  var ICONE_PASSEIO = '<svg width="22" height="22" viewBox="0 0 256 256"><path fill="#9A7B36" d="M128 64a40 40 0 1 0 40 40 40 40 0 0 0-40-40Zm0 64a24 24 0 1 1 24-24 24 24 0 0 1-24 24Zm0-112a88.1 88.1 0 0 0-88 88c0 31.4 14.51 64.68 42 96.25a254.19 254.19 0 0 0 41.45 38.3 8 8 0 0 0 9.18 0 254.19 254.19 0 0 0 41.37-38.3c27.45-31.57 42-64.85 42-96.25a88.1 88.1 0 0 0-88-88Zm0 206c-16.53-13-72-60.75-72-118a72 72 0 0 1 144 0c0 57.23-55.47 105-72 118Z"/></svg>';
 
   var NOME_SUB = { trem: 'Trem', onibus: 'Ônibus', ferry: 'Ferry', transfer: 'Transfer', locacao: 'Locação de carro' };
 
@@ -548,7 +557,7 @@
       if (noites) det.push(['Noites', String(noites)]);
       if (n) det.push(['Hóspedes', String(n)]);
       cartao = cartaoReserva('<b>' + esc(r.hotelNome || 'Hotel') + '</b>', esc(cid),
-        dataBloco(r.checkin, op.horaCheckin, 'Check-in'), { icone: ICONE_CAMA.replace('<svg', '<svg style="width:22px;height:22px"'), texto: noites ? noites + (noites > 1 ? ' noites' : ' noite') : '' },
+        dataBloco(r.checkin, op.horaCheckin, 'Check-in'), { icone: imgIcone(ICONE_CAMA, 22), texto: noites ? noites + (noites > 1 ? ' noites' : ' noite') : '' },
         dataBloco(r.checkout, op.horaCheckout, 'Check-out', true), det);
       if (txt(op.endereco)) blocoExtra = '<section><div class="rotulo">Endereço</div><div class="card">' + esc(op.endereco) + '</div></section>';
       rotPessoas = n > 1 ? 'Hóspedes' : 'Hóspede';
@@ -562,7 +571,7 @@
       if (txt(r.categoria)) det.push(['Categoria', r.categoria]);
       if (txt(r.seguro)) det.push(['Proteção', r.seguro]);
       cartao = cartaoReserva('<b>' + esc(r.locadora || 'Locadora') + '</b>', '',
-        dataBloco(r.retData, r.horaRetirada, 'Retirada'), { icone: ICONE_CARRO.replace('<svg', '<svg style="width:22px;height:22px"'), texto: dias > 0 ? dias + (dias > 1 ? ' diárias' : ' diária') : '' },
+        dataBloco(r.retData, r.horaRetirada, 'Retirada'), { icone: imgIcone(ICONE_CARRO, 22), texto: dias > 0 ? dias + (dias > 1 ? ' diárias' : ' diária') : '' },
         dataBloco(r.devData, r.horaDevolucao, 'Devolução', true), det);
       blocoExtra = '<section><div class="rotulo">Locais</div><div class="card">' +
         '<div class="kv"><span>Retirada</span><b>' + esc(r.retLocal || '—') + '</b></div>' +
@@ -578,7 +587,7 @@
       chamada = sub === 'transfer' ? 'Seu transfer para' : 'Seu ' + nomeSub.toLowerCase() + ' para';
       destaque = cidadeDe(r.devLocal, ctx);
       subtit = 'Confirmação de ' + nomeSub.toLowerCase() + ' · ' + dataCurta(r.retData) + (txt(r.voltaData) && r.voltaData !== r.retData ? ' e ' + dataCurta(r.voltaData) : (txt(r.voltaData) ? ' · ida e volta' : '')) + (n > 1 ? ' · ' + n + ' passageiros' : '');
-      var icone = (sub === 'transfer' ? ICONE_CARRO : ICONE_TREM).replace('<svg', '<svg style="width:22px;height:22px"');
+      var icone = imgIcone(sub === 'transfer' ? ICONE_CARRO : ICONE_TREM, 22);
       var trechoT = function (rot, emoji, dataT, orig, dest, hp, hc, op_, cat, cf) {
         var d2 = [];
         if (txt(cat) && !/^(ferry|trem|ônibus|onibus)$/i.test(cat)) d2.push([sub === 'transfer' ? 'Veículo' : 'Serviço', cat]);
@@ -601,7 +610,7 @@
       if (txt(r.operadora)) det.push(['Operadora', r.operadora]);
       if (n) det.push(['Pessoas', String(n)]);
       cartao = cartaoReserva('<b>' + esc(r.passeioNome || 'Passeio') + '</b>', '',
-        dataBloco(r.dataPasseio, r.hora, 'Data'), { icone: ICONE_PASSEIO.replace('<svg', '<svg style="width:22px;height:22px"'), texto: '' },
+        dataBloco(r.dataPasseio, r.hora, 'Data'), { icone: imgIcone(ICONE_PASSEIO, 22), texto: '' },
         '<div class="ponto dir"><div class="rot">Local</div><div class="hora" style="font-size:12pt">' + esc(cidadeDe(r.destino, ctx) || '—') + '</div></div>', det);
       if (txt(op.endereco)) blocoExtra = '<section><div class="rotulo">Ponto de encontro</div><div class="card">' + esc(op.endereco) + '</div></section>';
       rotPessoas = 'Participantes';
@@ -615,7 +624,7 @@
       if (txt(r.seguroTerritorio)) det.push(['Território', r.seguroTerritorio]);
       if (txt(r.seguroModalidade) === 'multiviagem' && txt(r.seguroDias)) det.push(['Por viagem', r.seguroDias + ' dias']);
       cartao = cartaoReserva('<b>' + esc(r.seguradora || 'Seguro viagem') + '</b>', '',
-        dataBloco(r.seguroInicio, '', 'Início'), { icone: ICONE_ESCUDO.replace('<svg', '<svg style="width:22px;height:22px"'), texto: nd > 1 ? nd + ' dias de vigência' : '' },
+        dataBloco(r.seguroInicio, '', 'Início'), { icone: imgIcone(ICONE_ESCUDO, 22), texto: nd > 1 ? nd + ' dias de vigência' : '' },
         dataBloco(r.seguroFim, '', 'Fim', true), det);
       if (txt(r.seguroEmergencia) || txt(r.seguroCartao)) blocoExtra = '<section><div class="rotulo">Em caso de emergência</div><div class="eco" style="margin-top:0;font-size:10pt;padding:4mm 5mm">' +
         '<span>Central 24 h' + (txt(r.seguroCartao) ? '<br><small style="opacity:.7">Nº do cartão do segurado: ' + esc(r.seguroCartao) + '</small>' : '') + '</span><b style="font-size:14pt">' + esc(r.seguroEmergencia || '') + '</b></div></section>';
