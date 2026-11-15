@@ -5394,9 +5394,8 @@ function renderReservas() {
     var dataRef = _dt.inicio;
     var dataFim = _dt.fim || dataRef;
     var futura = !dataFim || dataFim >= hoje;
-    // Com busca digitada, mostra também as já passadas (achar pelo localizador)
     var matchData = activeFilter === 'passadas' ? (!futura && dataFim)
-                  : (q ? true : futura);
+                  : futura;
     return matchTipo && matchQ && matchData;
   });
 
