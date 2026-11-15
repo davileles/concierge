@@ -486,10 +486,12 @@
   function pagamentoGenerico(r, op) {
     var linhas = [], total = '';
     var tipo = txt(r.tipoEmissao);
-    if (tipo === 'milhas') {
+    if (tipo === 'milhas' || tipo === 'pontos_dinheiro') {
       var m = milhas(r.valorMilhas);
+      var dinG = tipo === 'pontos_dinheiro' ? reais(r.valorParteDinheiro) : '';
       if (txt(r.programaMilhas)) linhas.push(['Programa', r.programaMilhas]);
-      if (m) total = m + ' ' + (/livelo|esfera|pontos|accor|all/i.test(r.programaMilhas || '') ? 'pontos' : 'milhas');
+      if (dinG) linhas.push(['Parte em dinheiro', dinG]);
+      if (m) total = m + ' ' + (/livelo|esfera|pontos|accor|all/i.test(r.programaMilhas || '') ? 'pontos' : 'milhas') + (dinG ? ' + ' + dinG : '');
     } else if (tipo === 'dinheiro_acumulo') {
       total = valorLivre(r.valorAcumulo);
       if (milhas(r.milhasAcumulo)) linhas.push(['Pontos acumulados', milhas(r.milhasAcumulo) + (txt(r.programaAcumulo) ? ' ' + r.programaAcumulo : '')]);

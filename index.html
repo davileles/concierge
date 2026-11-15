@@ -1109,6 +1109,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
           <option value="dinheiro">Dinheiro</option>
           <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
           <option value="milhas">Milhas</option>
+          <option value="pontos_dinheiro">Pontos + Dinheiro</option>
         </select>
       </div>
 
@@ -1129,6 +1130,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
           </div>
         </div>
         <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-hotel-valor-tarifa" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
+        <div class="field" id="hotel-campo-parte-dinheiro" style="display:none"><label>Parte em Dinheiro <span class="tag">R$</span></label><input type="text" id="f-hotel-valor-parte-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 142,72"/><span style="font-size:11px;color:var(--muted2)">O que saiu do bolso junto com os pontos. Entra no custo do cálculo da economia.</span></div>
       </div>
 
       <!-- HOTEL: DINHEIRO — valor total -->
@@ -1260,6 +1262,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
             <option value="dinheiro">Dinheiro</option>
             <option value="dinheiro_acumulo">Dinheiro c/ acúmulo de milhas</option>
             <option value="milhas">Milhas</option>
+          <option value="pontos_dinheiro">Pontos + Dinheiro</option>
           </select>
         </div>
         <!-- LOCAÇÃO: DINHEIRO -->
@@ -1283,6 +1286,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
             </div>
           </div>
           <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-loc-valor-tarifa" oninput="formatMilhar(this)" placeholder="Ex: 320,00"/></div>
+        <div class="field" id="loc-campo-parte-dinheiro" style="display:none"><label>Parte em Dinheiro <span class="tag">R$</span></label><input type="text" id="f-loc-valor-parte-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 142,72"/><span style="font-size:11px;color:var(--muted2)">O que saiu do bolso junto com os pontos. Entra no custo do cálculo da economia.</span></div>
         </div>
         <!-- LOCAÇÃO: DINHEIRO C/ ACÚMULO -->
         <div id="loc-campos-acumulo" style="display:none">
@@ -1394,6 +1398,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
           <option value="dinheiro">Dinheiro</option>
           <option value="dinheiro_acumulo">Dinheiro c/ acumulo de milhas</option>
           <option value="milhas">Milhas</option>
+          <option value="pontos_dinheiro">Pontos + Dinheiro</option>
         </select>
       </div>
 
@@ -1414,6 +1419,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
           </div>
         </div>
         <div class="field"><label>Valor da Tarifa Pagante <span class="tag">R$</span></label><input type="text" id="f-seguro-valor-tarifa" oninput="formatMilhar(this)" placeholder="Ex: 190,00"/></div>
+        <div class="field" id="seguro-campo-parte-dinheiro" style="display:none"><label>Parte em Dinheiro <span class="tag">R$</span></label><input type="text" id="f-seguro-valor-parte-dinheiro" oninput="formatMilhar(this)" placeholder="Ex: 142,72"/><span style="font-size:11px;color:var(--muted2)">O que saiu do bolso junto com os pontos. Entra no custo do cálculo da economia.</span></div>
       </div>
 
       <!-- SEGURO: DINHEIRO -->
@@ -3798,17 +3804,17 @@ function limparForm() {
    'f-valor-acumulo','f-programa-acumulo-voo','f-fator-acumulo','f-milhas-acumulo','f-pax-acumulo',
    'f-programa-balcao','f-pax-balcao','f-valor-total-balcao','f-valor-pax-balcao','f-valor','f-valor-balcao',
    'f-hotel-nome','f-hotel-destino','f-checkin','f-checkout','f-noites','f-hotel-conf','f-hotel-tipo-emissao','f-hotel-hospedes',
-   'f-hotel-valor','f-hotel-programa-milhas','f-hotel-valor-tarifa',
+   'f-hotel-valor','f-hotel-programa-milhas','f-hotel-valor-tarifa','f-hotel-valor-parte-dinheiro',
    'f-hotel-valor-dinheiro',
    'f-hotel-valor-acumulo','f-hotel-milhas-acumulo','f-hotel-programa-acumulo','f-hotel-parceiro-acumulo',
    'f-locadora','f-carro-cat','f-ret-local','f-dev-local','f-ret-data','f-dev-data','f-carro-valor','f-carro-conf','f-seguro',
    'f-transfer-hora','f-transfer-hora-chegada','f-transfer-pax',
    'f-volta-origem','f-volta-destino','f-volta-data','f-volta-hora','f-volta-hora-chegada','f-volta-op','f-volta-conf','f-volta-cat',
-   'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-tarifa','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
+   'f-ret-data-loc','f-carro-conf-loc','f-loc-hora-ret','f-loc-hora-dev','f-loc-tipo-emissao','f-loc-valor-dinheiro','f-loc-valor-milhas','f-loc-programa-milhas','f-loc-valor-tarifa','f-loc-valor-parte-dinheiro','f-loc-fator-acumulo','f-loc-valor-acumulo','f-loc-milhas-acumulo','f-loc-programa-acumulo','f-loc-parceiro-acumulo',
    'f-hotel-fator-acumulo',
    'f-passeio-nome','f-passeio-dest','f-passeio-op','f-passeio-data','f-passeio-hora','f-passeio-pax','f-passeio-conf','f-passeio-valor',
    'f-seguradora','f-seguro-plano','f-seguro-apolice','f-seguro-cartao','f-seguro-inicio','f-seguro-fim','f-seguro-pax','f-seguro-modalidade','f-seguro-dias','f-seguro-territorio','f-seguro-cobertura','f-seguro-emergencia',
-   'f-seguro-tipo-emissao','f-seguro-valor-dinheiro','f-seguro-valor-milhas','f-seguro-programa-milhas','f-seguro-valor-tarifa','f-seguro-valor-acumulo','f-seguro-programa-acumulo','f-seguro-fator-acumulo','f-seguro-milhas-acumulo','f-seguro-parceiro-acumulo',
+   'f-seguro-tipo-emissao','f-seguro-valor-dinheiro','f-seguro-valor-milhas','f-seguro-programa-milhas','f-seguro-valor-tarifa','f-seguro-valor-parte-dinheiro','f-seguro-valor-acumulo','f-seguro-programa-acumulo','f-seguro-fator-acumulo','f-seguro-milhas-acumulo','f-seguro-parceiro-acumulo',
    'f-obs','f-demanda-assoc','f-viagem-assoc','f-atividade-assoc'].forEach(function(id){
     var el = document.getElementById(id); if (el) el.value='';
   });
@@ -4545,7 +4551,7 @@ function aplicarDadosAtivo(d) {
 // ══════════════════════════════════════════
 var VALORES_PONTOS_PADRAO = {
   'AAdvantage':      100,
-  'ALL Accor':        90,
+  'ALL Accor':        80,
   'Azul Fidelidade':  12,
   'Esfera':           30,
   'Executive Club':   60,
@@ -4604,7 +4610,7 @@ function calcularEconomia(r) {
              + ' − R$ ' + fmtBRL(dinPD) + ' em dinheiro' };
   }
 
-  if (te === 'milhas') {
+  if (te === 'milhas' || te === 'pontos_dinheiro') {
     var prog, pontos, ref;
     if (r.tipo === 'voo') {
       prog   = r.programa || '';
@@ -4618,10 +4624,14 @@ function calcularEconomia(r) {
     }
     var vm = valorMilheiro(prog);
     if (!ref || !pontos || !vm) return vazio;
-    var custo = pontos / 1000 * vm;
+    var custoPts = pontos / 1000 * vm;
+    // Pontos + Dinheiro (hotel, locacao, seguro): a parte em R$ entra no custo
+    var din = (te === 'pontos_dinheiro') ? (parseValorBR(r.valorParteDinheiro) || 0) : 0;
+    var custo = custoPts + din;
     return { valor: ref - custo, ref: ref, custo: custo, modo: 'resgate',
       detalhe: 'Tarifa pagante R$ ' + fmtBRL(ref) + ' − ' + fmtPontos(pontos) + ' ' + prog
-             + ' a R$ ' + fmtBRL(vm) + '/mil (R$ ' + fmtBRL(custo) + ')' };
+             + ' a R$ ' + fmtBRL(vm) + '/mil (R$ ' + fmtBRL(custoPts) + ')'
+             + (din > 0 ? ' − R$ ' + fmtBRL(din) + ' em dinheiro' : '') };
   }
 
   if (te === 'balcao' && r.tipo === 'voo') {
@@ -4779,6 +4789,7 @@ function coletarReservaDoForm(id) {
       valorMilhas: getVal('f-hotel-valor'),
       programaMilhas: getVal('f-hotel-programa-milhas'),
       valorTarifaPagante: getVal('f-hotel-valor-tarifa'),
+      valorParteDinheiro: getVal('f-hotel-tipo-emissao') === 'pontos_dinheiro' ? getVal('f-hotel-valor-parte-dinheiro') : '',
       // Dinheiro
       valorDinheiro: getVal('f-hotel-valor-dinheiro'),
       // Dinheiro c/ acúmulo
@@ -4834,6 +4845,7 @@ function coletarReservaDoForm(id) {
           valorMilhas: getVal('f-loc-valor-milhas'),
           programaMilhas: getVal('f-loc-programa-milhas'),
           valorTarifaPagante: getVal('f-loc-valor-tarifa'),
+      valorParteDinheiro: getVal('f-loc-tipo-emissao') === 'pontos_dinheiro' ? getVal('f-loc-valor-parte-dinheiro') : '',
           valorAcumulo: getVal('f-loc-valor-acumulo'),
           fatorAcumulo: getVal('f-loc-fator-acumulo'),
           milhasAcumulo: getVal('f-loc-milhas-acumulo'),
@@ -4869,6 +4881,7 @@ function coletarReservaDoForm(id) {
       valorMilhas: getVal('f-seguro-valor-milhas'),
       programaMilhas: getVal('f-seguro-programa-milhas'),
       valorTarifaPagante: getVal('f-seguro-valor-tarifa'),
+      valorParteDinheiro: getVal('f-seguro-tipo-emissao') === 'pontos_dinheiro' ? getVal('f-seguro-valor-parte-dinheiro') : '',
       // Dinheiro c/ acumulo
       valorAcumulo: getVal('f-seguro-valor-acumulo'),
       programaAcumulo: getVal('f-seguro-programa-acumulo'),
@@ -4954,6 +4967,11 @@ function salvarReserva(cb) {
     if (!getVal('f-seguro-tipo-emissao')) { showToast('\u26a0\ufe0f Informe o Tipo de Emissao', 'err'); _cb(false); return; }
   }
 
+  var _pfxPD = tipo === 'hotel' ? 'hotel' : tipo === 'seguro' ? 'seguro' : (tipo === 'carro' && getVal('f-subtipo-transp-val') === 'locacao') ? 'loc' : '';
+  if (_pfxPD && getVal('f-' + _pfxPD + '-tipo-emissao') === 'pontos_dinheiro') {
+    if (!getVal('f-' + _pfxPD + '-valor')  && !getVal('f-' + _pfxPD + '-valor-milhas')) { showToast('⚠️ Informe a quantidade de pontos usados', 'err'); _cb(false); return; }
+    if (!getVal('f-' + _pfxPD + '-valor-parte-dinheiro')) { showToast('⚠️ Informe a parte paga em dinheiro', 'err'); _cb(false); return; }
+  }
   var id = 'RES-' + Date.now();
   var res = coletarReservaDoForm(id);
 
@@ -5655,7 +5673,7 @@ function preencherFormReserva(r, modo) {
     // Milhas
     setVal('f-hotel-valor',r.valorMilhas||r.valor||'');
     setVal('f-hotel-programa-milhas',r.programaMilhas||'');
-    setVal('f-hotel-valor-tarifa',r.valorTarifaPagante||'');
+    setVal('f-hotel-valor-tarifa',r.valorTarifaPagante||''); setVal('f-hotel-valor-parte-dinheiro',r.valorParteDinheiro||'');
     // Dinheiro
     setVal('f-hotel-valor-dinheiro',r.valorDinheiro||'');
     // Dinheiro c/ acúmulo
@@ -5692,7 +5710,7 @@ function preencherFormReserva(r, modo) {
       setVal('f-loc-valor-dinheiro',r.valorDinheiro||'');
       setVal('f-loc-valor-milhas',r.valorMilhas||'');
       setVal('f-loc-programa-milhas',r.programaMilhas||'');
-      setVal('f-loc-valor-tarifa',r.valorTarifaPagante||'');
+      setVal('f-loc-valor-tarifa',r.valorTarifaPagante||''); setVal('f-loc-valor-parte-dinheiro',r.valorParteDinheiro||'');
       setVal('f-loc-valor-acumulo',r.valorAcumulo||'');
       setVal('f-loc-fator-acumulo',r.fatorAcumulo||'');
       setVal('f-loc-milhas-acumulo',r.milhasAcumulo||'');
@@ -5723,7 +5741,7 @@ function preencherFormReserva(r, modo) {
     setVal('f-seguro-valor-dinheiro',r.valorDinheiro||'');
     setVal('f-seguro-valor-milhas',r.valorMilhas||'');
     setVal('f-seguro-programa-milhas',r.programaMilhas||'');
-    setVal('f-seguro-valor-tarifa',r.valorTarifaPagante||'');
+    setVal('f-seguro-valor-tarifa',r.valorTarifaPagante||''); setVal('f-seguro-valor-parte-dinheiro',r.valorParteDinheiro||'');
     setVal('f-seguro-valor-acumulo',r.valorAcumulo||'');
     setVal('f-seguro-programa-acumulo',r.programaAcumulo||'');
     setVal('f-seguro-fator-acumulo',r.fatorAcumulo||'');
@@ -8255,7 +8273,13 @@ function resolverVariaveis(texto, cli, res, extras) {
       ? fmtBRL(_eco.ref) : (res.valor||res.valorAcumulo||'');
     txt = rv(txt, 'valor_tarifa', _vt);
     txt = rv(txt, 'valor_dinheiro', res.tipo==='voo' ? (res.valorDinheiro||'') : '');
-    txt = rv(txt, 'parte_dinheiro', (res.tipo==='voo' && res.tipoEmissao==='pontos_dinheiro') ? (res.valorParteDinheiro||'') : '');
+    txt = rv(txt, 'parte_dinheiro', res.tipoEmissao==='pontos_dinheiro' ? (res.valorParteDinheiro||'') : '');
+    // Hotel, locacao e seguro em Pontos + Dinheiro: os modelos escritos para pontos
+    // ("{{hotel_milhas}} pontos") passam a mostrar tambem a parte paga em R$.
+    var _pdNV = (res.tipo!=='voo' && res.tipoEmissao==='pontos_dinheiro') ? parseValorBR(res.valorParteDinheiro) : 0;
+    if (_pdNV > 0) ['hotel_milhas','loc_milhas','seguro_milhas'].forEach(function(k){
+      txt = txt.replace(new RegExp('\\{\\{' + k + '\\}\\}(\\s+(?:pontos|milhas)\\b)?', 'g'), function(m){ return m + ' + R$ ' + fmtBRL(_pdNV); });
+    });
     txt = rv(txt, 'economia',         _eco.valor > 0 ? fmtBRL(_eco.valor) : (res.economiaGerada || ''));
     txt = rv(txt, 'economia_detalhe', _eco.valor > 0 ? _eco.detalhe       : (res.economiaDetalhe || ''));
     txt = rv(txt, 'pax', res.pax || (_balcao ? (res.paxBalcao||'') : ''));
@@ -8522,11 +8546,13 @@ function onLocTipoEmissaoChange() {
     var el = document.getElementById(id); if (el) el.style.display = 'none';
   });
   if (tipo === 'dinheiro')         { var el = document.getElementById('loc-campos-dinheiro'); if (el) el.style.display = ''; }
-  if (tipo === 'milhas')           { var el = document.getElementById('loc-campos-milhas');   if (el) el.style.display = ''; }
+  if (tipo === 'milhas' || tipo === 'pontos_dinheiro') { var el = document.getElementById('loc-campos-milhas');   if (el) el.style.display = ''; }
+  var _lpd = document.getElementById('loc-campo-parte-dinheiro'); if (_lpd) _lpd.style.display = (tipo === 'pontos_dinheiro') ? '' : 'none';
+  if (tipo !== 'pontos_dinheiro')  setVal('f-loc-valor-parte-dinheiro','');
   if (tipo === 'dinheiro_acumulo') { var el = document.getElementById('loc-campos-acumulo');  if (el) el.style.display = ''; }
   // Limpar ao trocar
   if (tipo !== 'dinheiro')         setVal('f-loc-valor-dinheiro','');
-  if (tipo !== 'milhas')           { setVal('f-loc-valor-milhas',''); setVal('f-loc-programa-milhas',''); setVal('f-loc-valor-tarifa',''); }
+  if (tipo !== 'milhas' && tipo !== 'pontos_dinheiro') { setVal('f-loc-valor-milhas',''); setVal('f-loc-programa-milhas',''); setVal('f-loc-valor-tarifa',''); }
   if (tipo !== 'dinheiro_acumulo') { setVal('f-loc-valor-acumulo',''); setVal('f-loc-fator-acumulo',''); setVal('f-loc-milhas-acumulo',''); setVal('f-loc-programa-acumulo',''); setVal('f-loc-parceiro-acumulo',''); }
 }
 
@@ -8536,11 +8562,13 @@ function onHotelTipoEmissaoChange() {
     var el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  if (tipo === 'milhas')           document.getElementById('hotel-campos-milhas').style.display = '';
+  if (tipo === 'milhas' || tipo === 'pontos_dinheiro') document.getElementById('hotel-campos-milhas').style.display = '';
+  var _hpd = document.getElementById('hotel-campo-parte-dinheiro'); if (_hpd) _hpd.style.display = (tipo === 'pontos_dinheiro') ? '' : 'none';
+  if (tipo !== 'pontos_dinheiro')  setVal('f-hotel-valor-parte-dinheiro','');
   if (tipo === 'dinheiro')         document.getElementById('hotel-campos-dinheiro').style.display = '';
   if (tipo === 'dinheiro_acumulo') document.getElementById('hotel-campos-acumulo').style.display = '';
   // Limpar ao trocar
-  if (tipo !== 'milhas')           { setVal('f-hotel-valor',''); setVal('f-hotel-programa-milhas',''); setVal('f-hotel-valor-tarifa',''); }
+  if (tipo !== 'milhas' && tipo !== 'pontos_dinheiro') { setVal('f-hotel-valor',''); setVal('f-hotel-programa-milhas',''); setVal('f-hotel-valor-tarifa',''); }
   if (tipo !== 'dinheiro')         setVal('f-hotel-valor-dinheiro','');
   if (tipo !== 'dinheiro_acumulo') { setVal('f-hotel-valor-acumulo',''); setVal('f-hotel-fator-acumulo',''); setVal('f-hotel-milhas-acumulo',''); setVal('f-hotel-programa-acumulo',''); setVal('f-hotel-parceiro-acumulo',''); }
 }
@@ -8558,11 +8586,13 @@ function onSeguroTipoEmissaoChange() {
     var el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-  if (tipo === 'milhas')           document.getElementById('seguro-campos-milhas').style.display = '';
+  if (tipo === 'milhas' || tipo === 'pontos_dinheiro') document.getElementById('seguro-campos-milhas').style.display = '';
+  var _spd = document.getElementById('seguro-campo-parte-dinheiro'); if (_spd) _spd.style.display = (tipo === 'pontos_dinheiro') ? '' : 'none';
+  if (tipo !== 'pontos_dinheiro')  setVal('f-seguro-valor-parte-dinheiro','');
   if (tipo === 'dinheiro')         document.getElementById('seguro-campos-dinheiro').style.display = '';
   if (tipo === 'dinheiro_acumulo') document.getElementById('seguro-campos-acumulo').style.display = '';
   // Limpar ao trocar
-  if (tipo !== 'milhas')           { setVal('f-seguro-valor-milhas',''); setVal('f-seguro-programa-milhas',''); setVal('f-seguro-valor-tarifa',''); }
+  if (tipo !== 'milhas' && tipo !== 'pontos_dinheiro') { setVal('f-seguro-valor-milhas',''); setVal('f-seguro-programa-milhas',''); setVal('f-seguro-valor-tarifa',''); }
   if (tipo !== 'dinheiro')         setVal('f-seguro-valor-dinheiro','');
   if (tipo !== 'dinheiro_acumulo') { setVal('f-seguro-valor-acumulo',''); setVal('f-seguro-fator-acumulo',''); setVal('f-seguro-milhas-acumulo',''); setVal('f-seguro-programa-acumulo',''); setVal('f-seguro-parceiro-acumulo',''); }
 }

@@ -354,7 +354,7 @@ function localDe(valor) {
 // Espelha VALORES_PONTOS_PADRAO do index.html; cfg.valoresPontos sobrescreve.
 const VALORES_PONTOS_PADRAO = {
   'AAdvantage':      100,
-  'ALL Accor':        90,
+  'ALL Accor':        80,
   'Azul Fidelidade':  13,
   'Esfera':           30,
   'Executive Club':   60.90,
@@ -413,7 +413,7 @@ function calcularEconomia(r) {
       detalhe: `Tarifa pagante R$ ${fmtBRL(refPD)} − ${fmtPontos(ptsPD)} ${progPD} a R$ ${fmtBRL(vmPD)}/mil (R$ ${fmtBRL(custoPtsPD)}) − R$ ${fmtBRL(dinPD)} em dinheiro` };
   }
 
-  if (te === 'milhas') {
+  if (te === 'milhas' || te === 'pontos_dinheiro') {
     let prog, pontos, ref;
     if (r.tipo === 'voo') {
       prog   = r.programa || '';
@@ -428,8 +428,10 @@ function calcularEconomia(r) {
     const vm = valorMilheiro(prog);
     if (!ref || !pontos || !vm) return vazio;
     const custo = pontos / 1000 * vm;
-    return { valor: ref - custo, modo: 'resgate',
-      detalhe: `Tarifa pagante R$ ${fmtBRL(ref)} − ${fmtPontos(pontos)} ${prog} a R$ ${fmtBRL(vm)}/mil (R$ ${fmtBRL(custo)})` };
+    // Pontos + Dinheiro (hotel, locação, seguro): a parte em R$ entra no custo (igual ao painel)
+    const din = (te === 'pontos_dinheiro') ? (parseValorBR(r.valorParteDinheiro) || 0) : 0;
+    return { valor: ref - custo - din, modo: 'resgate',
+      detalhe: `Tarifa pagante R$ ${fmtBRL(ref)} − ${fmtPontos(pontos)} ${prog} a R$ ${fmtBRL(vm)}/mil (R$ ${fmtBRL(custo)})` + (din > 0 ? ` − R$ ${fmtBRL(din)} em dinheiro` : '') };
   }
 
   if (te === 'balcao' && r.tipo === 'voo') {
@@ -487,7 +489,7 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'programa',            res.programa || '');
     t = rv(t, 'milhas',              res.milhas   || '');
     t = rv(t, 'milhas_total',        res.milhasTotal || '');
-    t = rv(t, 'parte_dinheiro',      (res.tipo === 'voo' && res.tipoEmissao === 'pontos_dinheiro') ? (res.valorParteDinheiro || '') : '');
+    t = rv(t, 'parte_dinheiro',      res.tipoEmissao === 'pontos_dinheiro' ? (res.valorParteDinheiro || '') : '');
     t = rv(t, 'pax',                 res.pax      || '');
     t = rv(t, 'passageiros',         nomesPassageiros(res).join(', '));
     t = rv(t, 'hotel',               res.hotelNome || '');
@@ -512,6 +514,8 @@ function interpolar(texto, cli, res, viagem, viagens) {
     t = rv(t, 'seguro_emergencia',    _seg ? (res.seguroEmergencia || '') : '');
     t = rv(t, 'seguro_valor',         _seg ? (res.valorDinheiro || '') : '');
     t = rv(t, 'seguro_acumulo_valor', _seg ? (res.valorAcumulo || '') : '');
+    const _pdSeg = (_seg && res.tipoEmissao === 'pontos_dinheiro') ? parseValorBR(res.valorParteDinheiro) : 0;
+    if (_pdSeg > 0) t = t.replace(/\{\{seguro_milhas\}\}(\s+(?:pontos|milhas)\b)?/g, m => `${m} + R$ ${fmtBRL(_pdSeg)}`);
     t = rv(t, 'seguro_milhas',        _seg ? (res.valorMilhas || '') : '');
     t = rv(t, 'seguro_valor_tarifa',  _seg ? (res.valorTarifaPagante || res.valorAcumulo || '') : '');
     t = rv(t, 'acumulo_programa',     res.programaAcumulo || res.programaAcumuloVoo || '');
