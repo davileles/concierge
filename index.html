@@ -4245,6 +4245,39 @@ function prepararAtivos() {
   });
 }
 
+// A IA às vezes devolve o ano errado (ex.: 2025 em vez de 2026) quando o
+// documento não traz o ano ou ela "chuta". Se a data mais antiga da reserva
+// ficou mais de 60 dias no passado, soma 1 ou 2 anos a TODAS as datas (mesmo
+// deslocamento, para manter ida/volta coerentes). Devolve {de, para} ou null.
+function corrigirAnoExtraido(d) {
+  var RE = /^(\d{4})(-\d{2}-\d{2}.*)$/;
+  var datas = [];
+  (function col(o){
+    if (!o || typeof o !== 'object') return;
+    Object.keys(o).forEach(function(k){
+      var v = o[k];
+      if (typeof v === 'string' && RE.test(v) && !isNaN(new Date(v.slice(0,10) + 'T12:00:00Z'))) datas.push(v.slice(0,10));
+      else if (v && typeof v === 'object') col(v);
+    });
+  })(d);
+  if (!datas.length) return null;
+  datas.sort();
+  var limite = new Date(Date.now() - 60 * 86400000).toISOString().slice(0,10);
+  var menor = datas[0];
+  if (menor >= limite) return null;
+  var ano = parseInt(menor.slice(0,4), 10), k = 0;
+  for (var i = 1; i <= 2; i++) { if ((ano + i) + menor.slice(4) >= limite) { k = i; break; } }
+  if (!k) return null;
+  (function aj(o){
+    Object.keys(o).forEach(function(key){
+      var v = o[key], m;
+      if (typeof v === 'string' && (m = RE.exec(v))) o[key] = (parseInt(m[1],10) + k) + m[2];
+      else if (v && typeof v === 'object') aj(v);
+    });
+  })(d);
+  return { de: ano, para: ano + k };
+}
+
 function enviarAtivoParaIA(payload) {
   document.getElementById('upload-lendo').style.display = 'flex';
   document.getElementById('upload-ok').textContent = '';
@@ -4272,11 +4305,13 @@ function enviarAtivoParaIA(payload) {
     var texto = data.texto || '';
     try {
       var d = JSON.parse(texto);
+      var _anoCorr = corrigirAnoExtraido(d);
       aplicarDadosAtivo(d);
       document.getElementById('upload-ok').style.color = '#22c55e';
       document.getElementById('upload-ok').textContent = ativoArquivos.length > 1
         ? '✅ ' + ativoArquivos.length + ' arquivos lidos e consolidados em uma reserva!'
         : '✅ Dados extraídos e preenchidos automaticamente!';
+      if (_anoCorr) document.getElementById('upload-ok').textContent += ' (ano das datas ajustado de ' + _anoCorr.de + ' para ' + _anoCorr.para + ' — confira)';
     } catch(err) {
       document.getElementById('upload-ok').style.color = 'var(--accent)';
       document.getElementById('upload-ok').textContent = '⚠️ Não foi possível extrair dados automaticamente. Preencha manualmente.';
