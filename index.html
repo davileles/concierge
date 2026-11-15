@@ -5345,14 +5345,14 @@ function resProxData(r) {
 
 function renderReservas() {
   loadReservas();
-  var q = (document.getElementById('search-input')||{value:''}).value.toLowerCase();
+  // Busca sem acento e tolerante a grafias (Matheus/Mateus, Thiago/Tiago, Ysabela/Isabela)
+  var _nb = function(s){ return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/th/g,'t').replace(/ph/g,'f').replace(/y/g,'i'); };
+  var q = _nb((document.getElementById('search-input')||{value:''}).value.trim());
   var hoje = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   var list = reservas.filter(function(r){
     var matchTipo = activeFilter === 'todos' || activeFilter === 'passadas' || r.tipo === activeFilter;
     // Busca também por localizador (pnr/conf), id da reserva e PDF (bilhetes)
-    var matchQ = !q || String(r.cliente||'').toLowerCase().includes(q) || resTitle(r).toLowerCase().includes(q)
-      || String(r.pnr||'').toLowerCase().includes(q) || String(r.conf||'').toLowerCase().includes(q)
-      || String(r.id||'').toLowerCase().includes(q);
+    var matchQ = !q || [r.cliente, resTitle(r), r.pnr, r.conf, r.id].some(function(v){ return _nb(v).includes(q); });
     // Datas de inicio e fim (helper resDatas).
     // Uma reserva so e "passada" quando a data FINAL ja passou.
     var _dt     = resDatas(r);
