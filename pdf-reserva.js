@@ -147,11 +147,11 @@
   var CSS = [
     '.pdf-res,.pdf-res *{box-sizing:border-box;margin:0;padding:0}',
     '.pdf-res{--ink:#1c2130;--ink2:#4a5163;--muted:#8a8f9c;--cream:#F4EFE7;--paper:#FBF9F5;--line:#E4DCCD;--gold:#C8A45C;--gold2:#9A7B36;--night:#12151f}',
-    '.pdf-res{width:210mm;background:var(--paper);font-family:Manrope,Arial,sans-serif;color:var(--ink);font-size:9.5pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
+    '.pdf-res{-webkit-text-size-adjust:100%;text-size-adjust:100%;width:210mm;background:var(--paper);font-family:Manrope,Arial,sans-serif;color:var(--ink);font-size:9.5pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact}',
     '.pdf-res .serif{font-family:"Instrument Serif",Georgia,serif;font-weight:400}',
     '.pdf-res .capa{background:var(--night);color:#f4efe7;padding:11mm 15mm 9mm;position:relative;overflow:hidden}',
-    '.pdf-res .capa:after{content:"";position:absolute;right:-40mm;top:-40mm;width:120mm;height:120mm;border-radius:50%;border:1px solid rgba(200,164,92,.22)}',
-    '.pdf-res .capa:before{content:"";position:absolute;right:-20mm;top:-20mm;width:80mm;height:80mm;border-radius:50%;border:1px solid rgba(200,164,92,.14)}',
+    '.pdf-res .capa .c1{position:absolute;right:-40mm;top:-40mm;width:120mm;height:120mm;border-radius:50%;border:1px solid rgba(200,164,92,.22)}',
+    '.pdf-res .capa .c2{position:absolute;right:-20mm;top:-20mm;width:80mm;height:80mm;border-radius:50%;border:1px solid rgba(200,164,92,.14)}',
     '.pdf-res .marca{display:flex;align-items:center;gap:10px}',
     '.pdf-res .marca img{width:34px;height:34px;border-radius:7px}',
     '.pdf-res .marca span{font-size:8pt;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);font-weight:600}',
@@ -165,7 +165,7 @@
     '.pdf-res .faixa{height:2.2mm;background:linear-gradient(90deg,var(--gold2),var(--gold),#e6cf9a,var(--gold))}',
     '.pdf-res main{padding:6mm 15mm 0}',
     '.pdf-res .rotulo{font-size:7pt;letter-spacing:.22em;text-transform:uppercase;color:var(--gold2);font-weight:700;margin-bottom:2.4mm;display:flex;align-items:center;gap:8px}',
-    '.pdf-res .rotulo:after{content:"";flex:1;height:1px;background:var(--line)}',
+    '.pdf-res .rotulo .rl{flex:1;height:1px;background:var(--line);display:block}',
     '.pdf-res section{margin-bottom:4.5mm;break-inside:avoid;page-break-inside:avoid}',
     '.pdf-res .trecho{background:#fff;border:1px solid var(--line);border-radius:4mm;overflow:hidden;break-inside:avoid;page-break-inside:avoid}',
     '.pdf-res .trecho+.trecho{margin-top:3.5mm}',
@@ -183,8 +183,8 @@
     '.pdf-res .card{word-break:break-word}',
     '.pdf-res .linha{position:relative;height:18mm}',
     '.pdf-res .linha .arco{position:absolute;left:4mm;right:4mm;top:9mm;border-top:1.5px dashed var(--gold)}',
-    '.pdf-res .linha .arco:before,.pdf-res .linha .arco:after{content:"";position:absolute;top:-3.5px;width:6px;height:6px;border-radius:50%;background:var(--gold)}',
-    '.pdf-res .linha .arco:before{left:-3px}.pdf-res .linha .arco:after{right:-3px}',
+    '.pdf-res .linha .arco .a1,.pdf-res .linha .arco .a2{position:absolute;top:-3.5px;width:6px;height:6px;border-radius:50%;background:var(--gold);display:block}',
+    '.pdf-res .linha .arco .a1{left:-3px}.pdf-res .linha .arco .a2{right:-3px}',
     '.pdf-res .linha .esc{position:absolute;top:9mm;transform:translate(-50%,-50%);background:#fff;border:1.2px solid var(--gold);border-radius:6px;padding:0 4px;font-size:7pt;font-weight:700;color:var(--gold2);letter-spacing:.06em}',
     '.pdf-res .linha .ico{position:absolute;left:50%;top:9mm;margin:-13px 0 0 -13px;width:26px;height:26px;background:#fff;padding:2px;display:block}',
     '.pdf-res .linha .dur{position:absolute;left:0;right:0;top:12.5mm;text-align:center;font-size:8pt;color:var(--muted)}',
@@ -196,7 +196,7 @@
     '.pdf-res.compacto .card{padding:3.2mm 5.5mm}',
     '.pdf-res.compacto section{margin-bottom:3.5mm}',
     '.pdf-res.compacto ul.regras li{padding:.5mm 0 .5mm 6mm}',
-    '.pdf-res.compacto ul.regras li:before{top:2.2mm}',
+    '.pdf-res.compacto ul.regras li .bl{top:2.2mm}',
     '.pdf-res.compacto .trecho+.trecho{margin-top:2.5mm}',
     '.pdf-res.compacto .rota{padding:3mm 6mm 2.5mm}',
     '.pdf-res.compacto .ponto .iata{font-size:26pt}',
@@ -233,7 +233,7 @@
     '.pdf-res .mala span{font-size:8pt;color:var(--ink2)}',
     '.pdf-res ul.regras{list-style:none}',
     '.pdf-res ul.regras li{position:relative;padding:.8mm 0 .8mm 6mm;color:var(--ink2)}',
-    '.pdf-res ul.regras li:before{content:"";position:absolute;left:0;top:2.6mm;width:2.2mm;height:2.2mm;border-radius:50%;border:1.2px solid var(--gold)}',
+    '.pdf-res ul.regras li .bl{position:absolute;left:0;top:2.6mm;width:2.2mm;height:2.2mm;border-radius:50%;border:1.2px solid var(--gold);display:block}',
     '.pdf-res ul.regras li b{color:var(--ink);font-weight:600}',
     '.pdf-res .recado{background:var(--cream);border-left:2px solid var(--gold);border-radius:0 3mm 3mm 0;padding:3.5mm 5mm;color:var(--ink);white-space:pre-line}',
     '.pdf-res footer{margin:1mm 15mm 0;padding:3.5mm 0 6mm;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:flex-end;gap:6mm;font-size:7.5pt;color:var(--muted);break-inside:avoid;page-break-inside:avoid}',
@@ -429,7 +429,7 @@
   }
 
   function capa(ctx, chamada, destaque, sub, codigos, rotuloCod) {
-    return '<div class="capa">' +
+    return '<div class="capa"><i class="c1"></i><i class="c2"></i>' +
       '<div class="marca">' + (ctx.logo ? '<img src="' + esc(ctx.logo) + '" alt="">' : '') + '<span>Travel Concierge</span></div>' +
       '<h1 class="serif">' + esc(chamada) + (destaque ? '<br><em>' + esc(destaque) + '</em>' : '') + '</h1>' +
       '<div class="sub">' + esc(sub) + '</div>' +
@@ -645,10 +645,20 @@
     return { compacto: false, corpo: corpo, arquivo: conf[0] || r.id || '' };
   }
 
+  // Linha do rótulo, bolinhas da lista e pontas do arco como elementos de verdade
+  // (o html2canvas do iPhone/Safari perde ::before/::after).
+  function semPseudo(h) {
+    return h
+      .replace(/(<div class="rotulo"[^>]*>)([^<]*)<\/div>/g, '$1$2<i class="rl"></i></div>')
+      .replace(/<li>/g, '<li><i class="bl"></i>')
+      .replace(/<div class="arco"><\/div>/g, '<div class="arco"><i class="a1"></i><i class="a2"></i></div>');
+  }
+
   function montarHTML(r, op, ctx) {
     r = r || {}; ctx = ctx || {};
     op = op || opcoesPadrao(r);
     var m = txt(r.tipo) === 'voo' ? montarVoo(r, op, ctx) : montarOutro(r, op, ctx);
+    m.corpo = semPseudo(m.corpo);
     var abre = '<div class="pdf-res' + (m.compacto ? ' compacto' : '') + '">';
     var rotTipo = { voo: 'Reserva', hotel: 'Hotel', carro: 'Transporte', transfer: 'Transfer', passeio: 'Passeio', seguro: 'Seguro' }[txt(r.tipo)] || 'Reserva';
     return {
@@ -665,56 +675,81 @@
   // html2pdf vem do cdnjs na primeira vez; as fontes vêm do Google Fonts.
   var URL_HTML2PDF = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
   var URL_FONTES = 'https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@300;400;500;600;700&display=swap';
-  var _libPromessa = null;
-  function carregarLib() {
-    if (raiz.html2pdf) return Promise.resolve(raiz.html2pdf);
-    if (_libPromessa) return _libPromessa;
-    _libPromessa = new Promise(function (ok, falha) {
-      var sc = document.createElement('script');
-      sc.src = URL_HTML2PDF;
-      sc.onload = function () { raiz.html2pdf ? ok(raiz.html2pdf) : falha(new Error('html2pdf não carregou')); };
-      sc.onerror = function () { _libPromessa = null; falha(new Error('não foi possível baixar o gerador de PDF')); };
-      document.head.appendChild(sc);
-    });
-    return _libPromessa;
-  }
-  function carregarFontes() {
-    if (!document.querySelector('link[data-pdf-res-fontes]')) {
-      var l = document.createElement('link');
+  // Fontes num documento (o do painel, para a prévia, ou o do iframe do PDF)
+  function carregarFontes(doc) {
+    doc = doc || document;
+    if (!doc.querySelector('link[data-pdf-res-fontes]')) {
+      var l = doc.createElement('link');
       l.rel = 'stylesheet'; l.href = URL_FONTES; l.setAttribute('data-pdf-res-fontes', '1');
-      document.head.appendChild(l);
+      doc.head.appendChild(l);
     }
-    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    if (!doc.fonts || !doc.fonts.load) return Promise.resolve();
     var pesos = ['400 20px "Instrument Serif"', 'italic 400 20px "Instrument Serif"', '300 12px Manrope', '400 12px Manrope', '600 12px Manrope', '700 12px Manrope'];
-    var espera = Promise.all(pesos.map(function (f) { return document.fonts.load(f).catch(function () {}); }));
+    var espera = Promise.all(pesos.map(function (f) { return doc.fonts.load(f).catch(function () {}); }));
     // Sem internet para as fontes, segue com as de reserva depois de 4 s
     return Promise.race([espera, new Promise(function (ok) { setTimeout(ok, 4000); })]);
   }
+
+  // O PDF é montado dentro de um iframe próprio, com 794 px (A4) de largura:
+  // fica isolado do CSS do painel e da tela do celular (no iPhone/Android a
+  // página estreita fazia o navegador aumentar o texto e o html2pdf errava as
+  // quebras de página, deixando buracos e uma página em branco no fim).
+  var LARG_PX = 794, ALT_PX = 1123;
+  function abrirIframe(m) {
+    return new Promise(function (ok, falha) {
+      var fr = document.createElement('iframe');
+      fr.setAttribute('aria-hidden', 'true');
+      fr.tabIndex = -1;
+      fr.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + LARG_PX + 'px;height:' + ALT_PX + 'px;border:0;opacity:0;pointer-events:none';
+      var html = m.documento
+        .replace('<head>', '<head><meta name="viewport" content="width=' + LARG_PX + ',initial-scale=1">')
+        .replace('</style>', 'html,body{width:' + LARG_PX + 'px;-webkit-text-size-adjust:100%;text-size-adjust:100%}.pdf-res{min-height:296mm}</style>')
+        .replace('rel="stylesheet">', 'rel="stylesheet" data-pdf-res-fontes="1">');
+      var pronto = false;
+      var tempo = setTimeout(function () { if (!pronto) { fr.remove(); falha(new Error('não foi possível preparar o PDF')); } }, 20000);
+      fr.onload = function () {
+        if (pronto) return;
+        pronto = true; clearTimeout(tempo);
+        var w = fr.contentWindow;
+        var sc = w.document.createElement('script');
+        sc.src = URL_HTML2PDF;
+        sc.onload = function () { w.html2pdf ? ok(fr) : (fr.remove(), falha(new Error('html2pdf não carregou'))); };
+        sc.onerror = function () { fr.remove(); falha(new Error('não foi possível baixar o gerador de PDF')); };
+        w.document.head.appendChild(sc);
+      };
+      fr.srcdoc = html;
+      document.body.appendChild(fr);
+    });
+  }
   function gerarPDF(r, op, ctx) {
     var m = montarHTML(r, op, ctx);
-    return Promise.all([carregarLib(), carregarFontes()]).then(function (res) {
-      var h2p = res[0];
-      var caixa = document.createElement('div');
-      caixa.style.cssText = 'position:fixed;left:0;top:0;width:210mm;z-index:-1;pointer-events:none';
-      caixa.innerHTML = '<style>' + m.css + '.pdf-res{min-height:296mm}</style>' + m.corpo;
-      document.body.appendChild(caixa);
-      var alvo = caixa.querySelector('.pdf-res');
-      var opcoes = {
-        margin: 0,
-        filename: m.nomeArquivo,
-        image: { type: 'jpeg', quality: 0.95 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#FBF9F5', scrollX: 0, scrollY: 0 },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['css', 'legacy'], avoid: ['.trecho', 'section', 'footer', '.capa', '.card'] }
-      };
-      return h2p().set(opcoes).from(alvo).outputPdf('blob').then(function (blob) {
-        caixa.remove();
-        return new Promise(function (ok) {
-          var fr = new FileReader();
-          fr.onload = function () { ok({ blob: blob, base64: String(fr.result).split(',')[1], nome: m.nomeArquivo, tamanho: blob.size }); };
-          fr.readAsDataURL(blob);
+    return abrirIframe(m).then(function (fr) {
+      var w = fr.contentWindow, doc = w.document;
+      return carregarFontes(doc).then(function () {
+        var alvo = doc.querySelector('.pdf-res');
+        var imgs = [].slice.call(doc.images).map(function (im) {
+          return im.complete ? null : new Promise(function (ok) { im.onload = im.onerror = ok; setTimeout(ok, 5000); });
+        }).filter(Boolean);
+        return Promise.all(imgs).then(function () {
+          var opcoes = {
+            margin: 0,
+            filename: m.nomeArquivo,
+            image: { type: 'jpeg', quality: 0.95 },
+            html2canvas: { scale: 2, useCORS: true, backgroundColor: '#FBF9F5', scrollX: 0, scrollY: 0, windowWidth: LARG_PX, windowHeight: ALT_PX },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+            pagebreak: { mode: ['css', 'legacy'], avoid: ['.trecho', 'section', 'footer', '.capa', '.card'] }
+          };
+          return w.html2pdf().set(opcoes).from(alvo).outputPdf('blob');
         });
-      }, function (e) { caixa.remove(); throw e; });
+      }).then(function (b) {
+        var blob = new Blob([b], { type: 'application/pdf' }); // cópia no painel, antes de fechar o iframe
+        fr.remove();
+        return new Promise(function (ok) {
+          var leitor = new FileReader();
+          leitor.onload = function () { ok({ blob: blob, base64: String(leitor.result).split(',')[1], nome: m.nomeArquivo, tamanho: blob.size }); };
+          leitor.readAsDataURL(blob);
+        });
+      }, function (e) { fr.remove(); throw e; });
     });
   }
 
