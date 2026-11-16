@@ -37,6 +37,13 @@
     });
   } catch (e) {}
 
+  // "Add Another" é um link javascript:__doPostBack(...): clicado pelo content
+  // script (outro contexto) ele não roda. Aqui, no contexto da página, roda.
+  addOrig.call(window, 'ds160cdv-clicar', function (e) {
+    var el = e && e.detail && document.getElementById(e.detail);
+    if (el) el.click();
+  });
+
   // Sinal mandado pelo content.js logo antes do Next do modo automático.
   addOrig.call(window, 'ds160cdv-livre', function () {
     livre = true;

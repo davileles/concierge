@@ -230,7 +230,17 @@ function acharAba() {
   });
 }
 
+// Nenhuma espera pode travar o painel: tudo tem prazo.
+function comPrazo(p, ms, msg) {
+  return new Promise(function (ok, falha) {
+    var t = setTimeout(function () { falha(new Error(msg)); }, ms);
+    p.then(function (v) { clearTimeout(t); ok(v); }, function (e) { clearTimeout(t); falha(e); });
+  });
+}
 function enviar(msg) {
+  return comPrazo(enviarSemPrazo(msg), 20000, 'A página do DS-160 não respondeu (' + msg.tipo + ').');
+}
+function enviarSemPrazo(msg) {
   if (abaId == null) return Promise.reject(new Error('Abra o DS-160 (ceac.state.gov) na aba ativa.'));
   return chrome.tabs.sendMessage(abaId, msg).catch(function () {
     // Aba aberta antes de instalar a extensão: injeta o script e tenta de novo.
@@ -430,7 +440,8 @@ function rodadasAuto(n) {
     p = p.then(function () {
       if (auto.parar) return;
       statusAuto('▶ Página ' + auto.paginas + ' · preenchendo ' + (i + 1) + '/' + fila.length + ': ' + esc(it.r));
-      return preencherItem(it).then(function (ok) { if (ok) auto.feitos[it.id] = true; else auto.falhou[it.id] = true; });
+      return comPrazo(preencherItem(it), 90000, 'Demorou demais para preencher — confira no site.').catch(function (e) { erros[it.id] = e.message; return false; })
+        .then(function (ok) { if (!auto) return; if (ok) auto.feitos[it.id] = true; else auto.falhou[it.id] = true; });
     });
   });
   return p.then(sondar).then(function () { return rodadasAuto(n + 1); });
@@ -522,6 +533,7 @@ function baixarInventario() {
 }
 function preencherTudo() {
   if (auto && !auto.pausado) { auto.parar = true; statusAuto('■ Parando depois do campo atual…'); return; }
+  if (abaId != null) enviar({ tipo: 'ds160-limpar-add' }).catch(function () {});
   if (auto && auto.pausado) {                                        // Continuar
     (auto.pendentes || []).forEach(function (id) { if (id) auto.feitos[id] = true; });
     auto.pausado = false; auto.pendentes = []; ocupado = true; botoesAuto();

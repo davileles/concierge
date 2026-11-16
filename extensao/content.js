@@ -134,7 +134,8 @@ function adicionarLinha(sufixo) {
   var link = links[links.length - 1];
   if (!link) return false;
   try { sessionStorage.setItem(chave, String(n + 1)); } catch (e) {}
-  link.click();
+  // Clica pelo contexto da página (pagina.js); se ele não estiver lá, tenta direto.
+  try { window.dispatchEvent(new CustomEvent('ds160cdv-clicar', { detail: link.id })); } catch (e) { link.click(); }
   return true;
 }
 
@@ -264,6 +265,9 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
       responder(Object.assign({ ok: true, existentes: existe, url: location.href, titulo: h ? h.textContent.trim() : document.title }, infoPagina()));
     } else if (msg.tipo === 'ds160-preencher') {
       responder(Object.assign({ ok: true, carga: CARGA }, preencher(msg.campos || [])));
+    } else if (msg.tipo === 'ds160-limpar-add') {
+      try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf('ds160cdv-add:') === 0) sessionStorage.removeItem(k); }); } catch (e) {}
+      responder({ ok: true });
     } else if (msg.tipo === 'ds160-inventario') {
       responder(Object.assign({ ok: true }, inventario()));
     } else if (msg.tipo === 'ds160-avancar') {
