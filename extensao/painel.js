@@ -274,6 +274,33 @@ function aguardarCarga(ms) {
     esperaCarga = function () { clearTimeout(t); esperaCarga = null; setTimeout(function () { resolve(true); }, 350); };
   });
 }
+// Além do aviso do content.js (que pode não chegar, ex.: janela anônima),
+// pergunta à aba de tempos em tempos: terminou quando a carga mudou
+// (página nova) ou, num postback parcial, quando o campo esperado apareceu.
+function pingAba(sufixo) {
+  if (abaId == null) return Promise.resolve(null);
+  return chrome.tabs.sendMessage(abaId, { tipo: 'ds160-ping', sufixo: sufixo || null }).catch(function () { return null; });
+}
+function esperarPagina(cargaAntes, sufixo, ms) {
+  var inicio = Date.now(), limite = ms || 20000, falhas = 0, feito = false;
+  return new Promise(function (resolve) {
+    function fim(v) { if (feito) return; feito = true; esperaCarga = null; setTimeout(function () { resolve(v); }, 450); }
+    esperaCarga = function () { fim(true); };
+    (function volta() {
+      if (feito) return;
+      if (Date.now() - inicio > limite) return fim(false);
+      pingAba(sufixo).then(function (r) {
+        if (feito) return;
+        if (!r) {
+          // Página nova ainda sem o script: injeta (o content.js ignora se já estiver lá).
+          if (++falhas % 4 === 0 && abaId != null) chrome.scripting.executeScript({ target: { tabId: abaId }, files: ['content.js'] }).catch(function () {});
+        } else if (r.pronto && cargaAntes && r.carga && r.carga !== cargaAntes) return fim(true);
+        else if (r.pronto && sufixo && r.existe && Date.now() - inicio > 2500) return fim(true);
+        setTimeout(volta, 600);
+      });
+    })();
+  });
+}
 chrome.runtime.onMessage.addListener(function (msg, rem) {
   if (!msg || msg.tipo !== 'ds160-pagina') return;
   if (rem.tab && abaId != null && rem.tab.id !== abaId) return;
@@ -291,7 +318,7 @@ function preencherItem(it) {
       if (!r || !r.ok) throw new Error((r && r.erro) || 'Falha ao preencher.');
       (r.resultados || []).forEach(function (x) { if (!x.ok) falhas.push(x.erro || x.s); });
       if (r.postback) {
-        return aguardarCarga().then(function () {
+        return esperarPagina(r.carga, r.pendentes && r.pendentes[0] && r.pendentes[0].s, 20000).then(function () {
           if (r.pendentes && r.pendentes.length && tentativas < 8) return passo(r.pendentes, tentativas + 1);
         });
       }
@@ -433,12 +460,11 @@ function passoAuto(forcar) {
         if (!tinha) return pausarAuto('Esta página ("' + (sonda.titulo || 'sem título') + '") não tem respostas do cliente. Confira e clique em Continuar.', []);
       }
       statusAuto('▶ Página ' + auto.paginas + ' pronta · clicando em Next…');
-      var espera = aguardarCarga(25000);
       return enviar({ tipo: 'ds160-avancar' }).then(function (r) {
         if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui clicar em Next.');
-        return espera;
+        return esperarPagina(r.carga, null, 45000);
       }).then(function (carregou) {
-        if (!carregou) return pausarAuto('A próxima página demorou para carregar.', []);
+        if (!carregou) return pausarAuto('A próxima página demorou para carregar. Se o site já mostra a página seguinte, clique em Continuar.', []);
         auto.paginas++;
         return passoAuto(false);
       });

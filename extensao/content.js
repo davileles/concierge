@@ -16,6 +16,8 @@ if (window.__ds160CdvCarregado) return;
 window.__ds160CdvCarregado = true;
 
 var PREFIXO = 'ctl00_SiteContentPlaceHolder_FormView1_';
+// Identifica esta carga da página: muda a cada recarregamento (postback ou Next).
+var CARGA = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 var ultimoCampo = null;
 
 function norm(s) {
@@ -203,19 +205,20 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
   if (!msg || !msg.tipo) return;
   try {
     if (msg.tipo === 'ds160-ping') {
-      responder({ ok: true, pronto: document.readyState !== 'loading', url: location.href });
+      responder({ ok: true, pronto: document.readyState === 'complete', carga: CARGA, url: location.href,
+        existe: msg.sufixo ? !!acharCampo(msg.sufixo) : undefined });
     } else if (msg.tipo === 'ds160-sondar') {
       var existe = (msg.sufixos || []).filter(function (s) { var el = acharCampo(s); return el && visivel(el); });
       var h = document.querySelector('#ctl00_SiteContentPlaceHolder_ucNavigateOption_ucNavPanel_ctl00_lblHeader, h2, .PageHeader');
       responder(Object.assign({ ok: true, existentes: existe, url: location.href, titulo: h ? h.textContent.trim() : document.title }, infoPagina()));
     } else if (msg.tipo === 'ds160-preencher') {
-      responder(Object.assign({ ok: true }, preencher(msg.campos || [])));
+      responder(Object.assign({ ok: true, carga: CARGA }, preencher(msg.campos || [])));
     } else if (msg.tipo === 'ds160-avancar') {
       var b = botaoNext();
       if (!b) responder({ ok: false, erro: 'Botão "Next" não encontrado nesta página.' });
       else {
         try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf('ds160cdv-add:') === 0) sessionStorage.removeItem(k); }); } catch (e) {}
-        responder({ ok: true, texto: String(b.value || b.textContent || '').trim() });
+        responder({ ok: true, carga: CARGA, url: location.href, texto: String(b.value || b.textContent || '').trim() });
         setTimeout(function () { b.click(); }, 80);
       }
     } else if (msg.tipo === 'ds160-manual') {
