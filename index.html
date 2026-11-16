@@ -804,6 +804,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
   <button class="main-tab" onclick="switchTab('seats')">✈️ Alertas seats.aero<span class="sa-tab-badge" id="sa-tab-badge" style="display:none"></span></button>
   <div class="side-group">Relacionamento</div>
   <button class="main-tab" onclick="switchTab('clientes')">👤 Clientes</button>
+  <button class="main-tab" onclick="switchTab('ds160')">🇺🇸 DS-160<span class="sa-tab-badge" id="ds160-tab-badge" style="display:none"></span></button>
   <button class="main-tab" onclick="switchTab('mensagens')">💬 Mensagens</button>
   <div class="side-group">Equipe</div>
   <button class="main-tab" onclick="switchTab('pops')">📘 Manuais (POPs)</button>
@@ -1627,8 +1628,25 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
     </div>
   </div>
   <div id="pend-box"></div>
-  <div id="ds160-box"></div>
   <div id="cli-grid"></div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     ABA: DS-160 (formulários do visto americano)
+══════════════════════════════════════════ -->
+<div class="main-panel" id="panel-ds160">
+  <div class="reservas-header">
+    <span class="reservas-count" id="ds160-count-label">0 formulários</span>
+    <div class="search-bar">
+      <input type="text" id="ds160-search" placeholder="🔍 Buscar por nome, e-mail, telefone ou consulado…" oninput="renderDs160()"/>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:1rem">
+    <div id="ds160-filtros" style="display:flex;gap:6px;flex-wrap:wrap"></div>
+    <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="carregarDs160()">🔄 Atualizar</button>
+    <button class="btn btn-ghost btn-sm" onclick="copiarLinkDs160()">🔗 Copiar link do formulário</button>
+  </div>
+  <div id="ds160-box"></div>
 </div>
 
 <!-- ══════════════════════════════════════════
@@ -3297,22 +3315,52 @@ function _ds160Cliente(r) {
   return null;
 }
 
+var ds160Filtro = 'aberto';
+var DS160_FILTROS = [
+  ['aberto', 'Em aberto'], ['novo', 'Novos'], ['rascunho', 'Aguardando a pessoa'],
+  ['preenchido', 'Preenchidos'], ['todos', 'Todos']
+];
+function setFiltroDs160(f) { ds160Filtro = f; renderDs160(); }
+function _ds160Bate(r, q) {
+  if (!q) return true;
+  var s = r.resumo || {};
+  return _ds160Norm([s.nome, s.email, s.tel, s.consulado, r.relacao, r.rotulo].join(' ')).indexOf(q) >= 0;
+}
 function renderDs160() {
+  var novosTot = ds160Lista.filter(function(r){ return r.status === 'novo'; }).length;
+  var badge = document.getElementById('ds160-tab-badge');
+  if (badge) { badge.textContent = novosTot; badge.style.display = novosTot ? '' : 'none'; }
   var box = document.getElementById('ds160-box');
   if (!box) return;
-  var rascunhos = ds160Lista.filter(function(r){ return r.status === 'rascunho'; });
-  var lista = ds160Lista.filter(function(r){ return r.status !== 'rascunho'; }).sort(function(a, b){
+  var qEl = document.getElementById('ds160-search');
+  var q = _ds160Norm(qEl ? qEl.value : '');
+  var buscados = ds160Lista.filter(function(r){ return _ds160Bate(r, q); });
+  var cont = { aberto: 0, novo: 0, rascunho: 0, preenchido: 0, todos: buscados.length };
+  buscados.forEach(function(r){
+    if (cont[r.status] !== undefined) cont[r.status]++;
+    if (r.status === 'novo' || r.status === 'rascunho') cont.aberto++;
+  });
+  var fEl = document.getElementById('ds160-filtros');
+  if (fEl) fEl.innerHTML = DS160_FILTROS.map(function(f){
+    return '<button class="btn btn-sm ' + (ds160Filtro === f[0] ? 'btn-accent' : 'btn-ghost') + '" onclick="setFiltroDs160(\'' + f[0] + '\')">'
+      + f[1] + ' (' + cont[f[0]] + ')</button>';
+  }).join('');
+  var lbl = document.getElementById('ds160-count-label');
+  if (lbl) lbl.textContent = ds160Lista.length + ' formulário' + (ds160Lista.length !== 1 ? 's' : '');
+  var mostra = function(r){
+    if (ds160Filtro === 'todos') return true;
+    if (ds160Filtro === 'aberto') return r.status === 'novo' || r.status === 'rascunho';
+    return r.status === ds160Filtro;
+  };
+  var rascunhos = buscados.filter(function(r){ return r.status === 'rascunho' && mostra(r); });
+  var lista = buscados.filter(function(r){ return r.status !== 'rascunho' && mostra(r); }).sort(function(a, b){
     if ((a.status === 'novo') !== (b.status === 'novo')) return a.status === 'novo' ? -1 : 1;
     return String(b.recebidoEm).localeCompare(String(a.recebidoEm));
   });
-  var novos = lista.filter(function(r){ return r.status === 'novo'; }).length;
-  box.innerHTML = '<div class="card" style="margin-bottom:1rem' + (novos ? ';border-color:var(--yellow)' : '') + '">'
-    + '<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
-    +   '<div class="card-title" style="margin:0">🇺🇸 Formulários DS-160'
-    +     (novos ? ' · ' + novos + ' novo' + (novos !== 1 ? 's' : '') : '') + '</div>'
-    +   '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="copiarLinkDs160()">🔗 Copiar link do formulário</button>'
-    + '</div>'
-    + (lista.length ? '' : '<div style="font-size:12px;color:var(--muted);margin-top:8px">Nenhum formulário recebido ainda.</div>')
+  var vazio = !ds160Lista.length ? 'Nenhum formulário recebido ainda.'
+    : (q ? 'Nenhum formulário encontrado para essa busca.' : 'Nenhum formulário neste filtro.');
+  box.innerHTML = '<div class="card" style="margin-bottom:1rem">'
+    + ((lista.length || rascunhos.length) ? '' : '<div style="font-size:12px;color:var(--muted)">' + vazio + '</div>')
     + rascunhos.map(function(r){
         var s = r.resumo || {};
         return '<div id="ds160-row-' + r.id + '" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">'
@@ -6652,6 +6700,7 @@ function switchTab(name) {
   if (name==='demandas') renderDemandas();
   if (name==='seats') saAbrirAba();
   if (name==='pops') renderPops();
+  if (name==='ds160') renderDs160();
 }
 
 // ══════════════════════════════════════════
