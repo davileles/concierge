@@ -274,6 +274,11 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
         setTimeout(function () {
           ['mousedown', 'mouseup'].forEach(function (t) { b.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })); });
           b.click();
+          // Aplicação já completa: o site pergunta se volta à revisão ou segue para a próxima página.
+          setTimeout(function () {
+            var seguir = document.getElementById('ctl00_ucNavigateOption_ucNavPanel_ctl01_btnNextPageComplete');
+            if (seguir && visivel(seguir)) seguir.click();
+          }, 1500);
         }, 80);
       }
     } else if (msg.tipo === 'ds160-manual') {

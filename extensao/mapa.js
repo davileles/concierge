@@ -410,8 +410,8 @@ function montarItens(dados) {
   }
   var hosp = enderecoEUA(d.hospedagem);
   if (hosp) {
-    var cHosp = [{ s: 'tbxStreetAdd1', t: 'text', v: hosp.l1, bloco: 'tbxCity', pos: 0 }];
-    if (hosp.l2) cHosp.push({ s: 'tbxStreetAdd2', t: 'text', v: hosp.l2, bloco: 'tbxCity', pos: 1 });
+    var cHosp = [{ s: 'tbxStreetAddress1', t: 'text', v: hosp.l1, bloco: 'tbxCity', pos: 0 }];
+    if (hosp.l2) cHosp.push({ s: 'tbxStreetAddress2', t: 'text', v: hosp.l2, bloco: 'tbxCity', pos: 1 });
     cHosp.push({ s: 'tbxCity', t: 'text', v: hosp.cidade }, { s: 'ddlTravelState', t: 'select', v: [hosp.uf, UF_EUA[hosp.uf]] }, { s: 'tbZIPCode', t: 'text', v: hosp.zip });
     add({ id: 'hospedagem', r: 'Address Where You Will Stay in the U.S.', pt: 'Endereço de hospedagem' + (hosp.nome ? ' (' + hosp.nome + ')' : ''),
       mostra: [hosp.l1, hosp.l2, hosp.cidade, hosp.uf + ' ' + hosp.zip].filter(Boolean).join(', '), origem: d.hospedagem, campos: cHosp });
