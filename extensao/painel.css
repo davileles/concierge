@@ -73,3 +73,12 @@ input:focus { border-color: var(--blue); }
 .toast.on { opacity: 1; transform: translateX(-50%); }
 .toast.err { border-color: var(--err); } .toast.ok { border-color: var(--ok); }
 .vazio-lista { text-align: center; color: var(--muted); padding: 24px 8px; }
+
+.btn-auto { width: 100%; margin-top: 10px; padding: 9px 11px; }
+.appid { margin-top: 6px; font-size: 12px; color: var(--muted); cursor: copy; }
+.appid b { color: var(--text); letter-spacing: .04em; }
+.auto-status { margin-top: 8px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); font-size: 12px; }
+.auto-status.pausa { border-color: var(--warn); }
+.auto-status.ok { border-color: var(--ok); }
+.auto-status ul { margin: 6px 0; padding-left: 18px; }
+.auto-status li { margin-bottom: 3px; }

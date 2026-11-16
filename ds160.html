@@ -380,7 +380,9 @@ var ETAPAS = [
     { id: 'chegada', r: 'Data prevista de chegada', t: 'date', req: 1, meia: 1 },
     { id: 'saida', r: 'Data prevista de saída', t: 'date', req: 1, meia: 1 },
     { id: 'cidadeDestino', r: 'Cidade(s) que vai visitar', t: 'text', req: 1, ph: 'Ex.: Miami e Orlando' },
-    { id: 'hospedagem', r: 'Endereço de hospedagem nos EUA', t: 'area', h: 'Hotel, Airbnb ou casa de amigo/parente. Se ainda não tiver, deixe em branco que definimos juntos.' },
+    { id: 'hospedagem', r: 'Endereço de hospedagem nos EUA', t: 'area', h: 'Hotel, Airbnb ou casa de amigo/parente, com cidade, estado e ZIP (ex.: 1901 W Buena Vista Dr, Lake Buena Vista, FL 32830). Se ainda não tiver, deixe em branco que definimos juntos.' },
+    { id: 'hotelNome', r: 'Nome do hotel ou da hospedagem', t: 'text', meia: 1, ph: "Ex.: Disney's All-Star Movies Resort" },
+    { id: 'hotelTel', r: 'Telefone da hospedagem', t: 'text', meia: 1, ph: '+1 …', h: 'Se souber.' },
     { id: 'pagador', r: 'Quem vai pagar a viagem?', t: 'select', req: 1, op: ['Cônjuge', 'Empresa / empregador', 'Eu mesmo(a)', 'Outra pessoa', 'Pais'] },
     { se: function (d) { return d.pagador && d.pagador !== 'Eu mesmo(a)'; }, campos: [
       { id: 'pagadorNome', r: 'Nome completo (ou nome da empresa)', t: 'text', req: 1 },
@@ -494,6 +496,9 @@ var ETAPAS = [
     { se: eq('ocupacao', 'Aposentado(a)'), campos: [
       { id: 'ocupacaoAnterior', r: 'Última profissão antes de se aposentar', t: 'text' },
       { id: 'rendaAposentadoria', r: 'Renda mensal aproximada (R$)', t: 'text', meia: 1, ph: 'Ex.: 8.000' }
+    ]},
+    { se: function (d) { return d.ocupacao && ['Aposentado(a)', 'Do lar', 'Estudante', 'Sem ocupação no momento'].indexOf(d.ocupacao) === -1; }, campos: [
+      { id: 'area', r: 'Área de atuação', t: 'select', req: 1, op: ['Agricultura / agronegócio', 'Artes / entretenimento', 'Ciências exatas (física, química, matemática)', 'Ciências naturais (biologia, meio ambiente)', 'Ciências sociais (psicologia, economia, sociologia)', 'Comunicação / marketing / jornalismo', 'Direito', 'Educação / ensino', 'Engenharia', 'Forças Armadas', 'Gastronomia / alimentação', 'Governo / setor público', 'Negócios (administração, comércio, finanças, vendas)', 'Outra', 'Pesquisa', 'Religião', 'Saúde', 'Tecnologia / informática'] }
     ]},
     { se: function (d) { return d.ocupacao && ['Aposentado(a)', 'Do lar', 'Sem ocupação no momento'].indexOf(d.ocupacao) === -1; }, campos: [
       { id: 'empresaNome', r: 'Nome da empresa ou instituição de ensino', t: 'text', req: 1, h: 'Empresário ou autônomo: nome da sua empresa ou do seu negócio.' },

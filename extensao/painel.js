@@ -22,6 +22,8 @@ var erros = {};             // itemId → última mensagem de erro
 var existentes = {};        // sufixo → true (campos da página aberta)
 var abaId = null;
 var ocupado = false;
+var sonda = {};             // última resposta do content.js (título, erros, appId…)
+var auto = null;            // modo automático em andamento
 
 function $(id) { return document.getElementById(id); }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
@@ -136,9 +138,12 @@ function abrirCliente(id) {
   if (!atual.dados) { toast('Este formulário não tem os dados estruturados.', 'err'); return; }
   itens = M.montarItens(atual.dados);
   erros = {}; existentes = {};
-  Promise.all([lerLocal('feitos:' + id), lerSessao('tr:' + id)]).then(function (v) {
+  auto = null; statusAuto('');
+  Promise.all([lerLocal('feitos:' + id), lerSessao('tr:' + id), lerLocal('appid:' + id)]).then(function (v) {
     feitos = v[0] || {};
     traducoes = v[1] || {};
+    atual._appId = v[2] || null;
+    mostrarAppId(); botoesAuto();
     var s = atual.resumo || {};
     $('cliente-nome').textContent = s.nome || '—';
     $('cliente-info').textContent = [s.passaporte ? 'Passaporte ' + s.passaporte : '', s.consulado || '', s.chegada ? '🛫 ' + s.chegada.split('-').reverse().join('/') : ''].filter(Boolean).join(' · ');
@@ -164,8 +169,11 @@ function podePreencher(it) {
   if (it.tr && !traducoes[it.id]) return false;
   return true;
 }
+// Linha 2, 3… de uma lista (acompanhantes, escolas…) conta como "desta página"
+// quando a 1ª linha existe: a extensão clica em "Add Another" sozinha.
+function linha0(s) { return String(s).replace(/_ctl(\d{2})_/, '_ctl00_'); }
 function naPagina(it) {
-  return (it.campos || []).some(function (c) { return existentes[c.s]; });
+  return (it.campos || []).some(function (c) { return existentes[c.s] || (/_ctl(?!00)\d{2}_/.test(c.s) && existentes[linha0(c.s)]); });
 }
 
 function htmlItem(it) {
@@ -242,6 +250,12 @@ function sondar() {
       return;
     }
     return enviar({ tipo: 'ds160-sondar', sufixos: M.sufixos(itens) }).then(function (r) {
+      sonda = r || {};
+      if (sonda.appId && atual && sonda.appId !== atual._appId) {
+        atual._appId = sonda.appId;
+        gravarLocal('appid:' + atual.id, sonda.appId);
+        mostrarAppId();
+      }
       existentes = {};
       (r && r.existentes || []).forEach(function (s) { existentes[s] = true; });
       var n = itens.filter(naPagina).length;
@@ -332,6 +346,126 @@ function preencherPagina() {
   }).then(function () { ocupado = false; return sondar(); });
 }
 
+// ── modo automático: preenche e avança página por página até a revisão ──
+// Para (e explica) quando: o site aponta erro; falta resposta que só dá para
+// completar à mão (alerta, endereço que não separou, item sem campo); um campo
+// não foi encontrado; ou a página não tem nenhuma resposta do cliente.
+// "Continuar" considera resolvido o que estava pendente e segue com o Next.
+function statusAuto(html, tipo) {
+  var b = $('auto-status');
+  b.hidden = !html;
+  b.className = 'auto-status ' + (tipo || '');
+  b.innerHTML = html || '';
+}
+function botoesAuto() {
+  var rodando = !!(auto && !auto.pausado);
+  $('btn-auto').textContent = rodando ? '■ Parar' : (auto && auto.pausado ? '▶ Continuar' : '▶ Preencher tudo até a revisão');
+  $('btn-auto').disabled = !!(ocupado && !auto);
+  $('btn-auto-sair').hidden = !(auto && auto.pausado);
+}
+function sairAuto(msg, tipo) {
+  auto = null; ocupado = false;
+  if (msg) statusAuto(msg, tipo); else statusAuto('');
+  botoesAuto();
+  return sondar();
+}
+function pausarAuto(msg, pend) {
+  if (!auto) return Promise.resolve();
+  auto.pausado = true; auto.pendentes = (pend || []).map(function (it) { return it.id; });
+  ocupado = false;
+  var h = '<b>⏸ ' + esc(msg) + '</b>';
+  if (pend && pend.length) h += '<ul>' + pend.map(function (it) {
+    return '<li><b>' + esc(it.r) + '</b>' + (it.alerta ? ' — ' + esc(it.alerta) : erros[it.id] ? ' — ' + esc(erros[it.id]) : it.nota ? ' — ' + esc(it.nota) : '') + '</li>';
+  }).join('') + '</ul>';
+  h += '<div class="muted">Resolva no site e clique em <b>▶ Continuar</b> (a extensão clica em Next e segue).</div>';
+  statusAuto(h, 'pausa');
+  botoesAuto();
+  return sondar();
+}
+function bloqueiosDaPagina() {
+  var secoes = {};
+  itens.forEach(function (it) { if (naPagina(it)) secoes[it.secao] = 1; });
+  return itens.filter(function (it) {
+    if (!secoes[it.secao] || auto.feitos[it.id] || it.info) return false;
+    if (naPagina(it)) return true;                                   // ficou sem preencher
+    return !(it.campos && it.campos.length);                         // só dá à mão
+  });
+}
+function rodadasAuto(n) {
+  if (!auto) return Promise.resolve();
+  var fila = itens.filter(function (it) {
+    return naPagina(it) && !auto.feitos[it.id] && !auto.falhou[it.id] && podePreencher(it) && !it.alerta;
+  });
+  if (!fila.length || n > 5 || auto.parar) return Promise.resolve();
+  var p = Promise.resolve();
+  fila.forEach(function (it, i) {
+    p = p.then(function () {
+      if (auto.parar) return;
+      statusAuto('▶ Página ' + auto.paginas + ' · preenchendo ' + (i + 1) + '/' + fila.length + ': ' + esc(it.r));
+      return preencherItem(it).then(function (ok) { if (ok) auto.feitos[it.id] = true; else auto.falhou[it.id] = true; });
+    });
+  });
+  return p.then(sondar).then(function () { return rodadasAuto(n + 1); });
+}
+function passoAuto(forcar) {
+  if (!auto) return Promise.resolve();
+  if (auto.parar) return sairAuto('■ Parado. O que já foi preenchido continua no site.', '');
+  if (auto.paginas >= 40) return pausarAuto('Parei por segurança depois de 40 páginas.', []);
+  return acharAba().then(sondar).then(function () {
+    if (abaId == null) return pausarAuto('Abra o DS-160 (ceac.state.gov) na aba ativa.', []);
+    if (sonda.revisao) {
+      return sairAuto('<b>✅ Chegou na revisão.</b><div class="muted">' + (sonda.appId ? 'Application ID <b>' + esc(sonda.appId) + '</b>. ' : '') +
+        'Confira cada página no site antes de assinar e enviar. A foto e a assinatura ficam com você.</div>', 'ok');
+    }
+    if (!forcar && sonda.erros && sonda.erros.length) {
+      return pausarAuto('O site apontou erro nesta página:', sonda.erros.map(function (e) { return { id: '', r: e }; }));
+    }
+    var chave = sonda.url + '|' + (sonda.titulo || '');
+    if (!forcar && chave === auto.ultima) auto.repeticoes++; else auto.repeticoes = 0;
+    auto.ultima = chave;
+    if (auto.repeticoes >= 1) return pausarAuto('A página não mudou depois do Next. Confira o que o site está pedindo.', []);
+    var tinha = itens.some(naPagina);
+    return rodadasAuto(1).then(function () {
+      if (auto.parar) return passoAuto(false);
+      if (!forcar) {
+        var bloq = bloqueiosDaPagina();
+        if (bloq.length) return pausarAuto('Falta completar nesta página:', bloq);
+        if (!tinha) return pausarAuto('Esta página ("' + (sonda.titulo || 'sem título') + '") não tem respostas do cliente. Confira e clique em Continuar.', []);
+      }
+      statusAuto('▶ Página ' + auto.paginas + ' pronta · clicando em Next…');
+      var espera = aguardarCarga(25000);
+      return enviar({ tipo: 'ds160-avancar' }).then(function (r) {
+        if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui clicar em Next.');
+        return espera;
+      }).then(function (carregou) {
+        if (!carregou) return pausarAuto('A próxima página demorou para carregar.', []);
+        auto.paginas++;
+        return passoAuto(false);
+      });
+    });
+  }).catch(function (e) { return pausarAuto(e.message, []); });
+}
+function preencherTudo() {
+  if (auto && !auto.pausado) { auto.parar = true; statusAuto('■ Parando depois do campo atual…'); return; }
+  if (auto && auto.pausado) {                                        // Continuar
+    (auto.pendentes || []).forEach(function (id) { if (id) auto.feitos[id] = true; });
+    auto.pausado = false; auto.pendentes = []; ocupado = true; botoesAuto();
+    passoAuto(true);
+    return;
+  }
+  if (ocupado) return;
+  auto = { parar: false, pausado: false, paginas: 1, feitos: {}, falhou: {}, ultima: '', repeticoes: 0, pendentes: [] };
+  ocupado = true; botoesAuto();
+  var semTr = itens.filter(function (it) { return it.tr && !traducoes[it.id]; });
+  statusAuto(semTr.length ? '🌐 Traduzindo ' + semTr.length + ' texto(s) antes de começar…' : '▶ Começando…');
+  (semTr.length ? traduzir(semTr) : Promise.resolve()).then(function () { return passoAuto(false); });
+}
+function mostrarAppId() {
+  var el = $('cliente-appid');
+  el.hidden = !(atual && atual._appId);
+  el.innerHTML = atual && atual._appId ? 'Application ID <b data-copiar-appid>' + esc(atual._appId) + '</b>' : '';
+}
+
 function colarManual(it) {
   var v = valorItem(it);
   if (!v) return;
@@ -380,8 +514,11 @@ $('btn-sair').addEventListener('click', function () { sair(false); });
 $('btn-recarregar').addEventListener('click', abrirLista);
 $('busca').addEventListener('input', renderLista);
 $('lista').addEventListener('click', function (e) { var r = e.target.closest('.form-row'); if (r) abrirCliente(r.getAttribute('data-id')); });
-$('btn-voltar').addEventListener('click', function () { atual = null; renderLista(); mostrar('v-lista'); });
+$('btn-voltar').addEventListener('click', function () { if (auto) { auto.parar = true; auto = null; ocupado = false; } atual = null; renderLista(); mostrar('v-lista'); });
 $('btn-pagina').addEventListener('click', preencherPagina);
+$('btn-auto').addEventListener('click', preencherTudo);
+$('btn-auto-sair').addEventListener('click', function () { sairAuto('', ''); });
+$('cliente-appid').addEventListener('click', function () { if (atual && atual._appId) navigator.clipboard.writeText(atual._appId).then(function () { toast('📋 Application ID copiado', 'ok'); }); });
 $('btn-traduzir').addEventListener('click', function () { traduzir(itens); });
 $('btn-concluir').addEventListener('click', alternarStatus);
 document.getElementById('v-cliente').addEventListener('click', function (e) {

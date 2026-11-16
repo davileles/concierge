@@ -17,7 +17,9 @@
       "obrigatorio": [
         "function preencher(",
         "function colarManual(",
-        "function fazPostback("
+        "function fazPostback(",
+        "function adicionarLinha(",
+        "function botaoNext("
       ]
     },
     "extensao/mapa.js": {
@@ -25,7 +27,9 @@
       "obrigatorio": [
         "function montarItens(",
         "function sufixos(",
-        "function camposData("
+        "function camposData(",
+        "function enderecoEUA(",
+        "function linhas40("
       ]
     },
     "extensao/painel.js": {
@@ -33,7 +37,9 @@
       "obrigatorio": [
         "function preencherItem(",
         "function preencherPagina(",
-        "function traduzir("
+        "function traduzir(",
+        "function preencherTudo(",
+        "function passoAuto("
       ]
     },
     "index.html": {

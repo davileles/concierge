@@ -5,6 +5,9 @@
 //    ds160-preencher { campos[] }   → preenche; para no primeiro que recarrega a página
 //    ds160-manual    { valor }      → cola o valor no último campo clicado
 //    ds160-ping                     → responde se a página está pronta
+//    ds160-avancar                  → clica em "Next" (o site salva a página)
+//  Linha que ainda não existe (2º acompanhante, 2ª escola…): clica sozinho
+//  em "Add Another" daquela lista e continua depois do recarregamento.
 //  Ao carregar, avisa o painel (a página do DS-160 recarrega a cada postback).
 // ══════════════════════════════════════════════════════════════════════════
 (function () {
@@ -99,11 +102,32 @@ function aplicar(el, campo) {
   return { ok: el.value === val };
 }
 
+// "Add Another" da lista a que o sufixo pertence (ex.: DListAlias_ctl01_… → link
+// InsertButton da lista DListAlias). Tenta no máximo 2 vezes por linha.
+function adicionarLinha(sufixo) {
+  var m = /^(.*?)_ctl(\d{2})_(.*)$/.exec(sufixo);
+  if (!m || m[2] === '00') return false;
+  var chave = 'ds160cdv-add:' + m[1] + ':' + m[2];
+  var n = 0;
+  try { n = Number(sessionStorage.getItem(chave)) || 0; } catch (e) {}
+  if (n >= 2) return false;
+  var links = Array.prototype.slice.call(document.querySelectorAll('a[id^="' + PREFIXO + m[1] + '_ctl"]'))
+    .filter(function (a) { return visivel(a) && (/InsertButton/i.test(a.id) || /add\s*another/i.test(a.textContent)); });
+  var link = links[links.length - 1];
+  if (!link) return false;
+  try { sessionStorage.setItem(chave, String(n + 1)); } catch (e) {}
+  link.click();
+  return true;
+}
+
 function preencher(campos) {
   var res = [];
   for (var i = 0; i < campos.length; i++) {
     var c = campos[i];
     var el = acharCampo(c.s);
+    if (!el && adicionarLinha(c.s)) {
+      return { resultados: res, postback: true, pendentes: campos.slice(i), adicionou: true };
+    }
     if (!el) { res.push({ s: c.s, ok: false, erro: 'campo não está nesta página' }); continue; }
     var pb = fazPostback(el);
     var antes = el.type === 'radio' || el.type === 'checkbox' ? el.checked : el.value;
@@ -117,6 +141,42 @@ function preencher(campos) {
     }
   }
   return { resultados: res, postback: false, pendentes: [] };
+}
+
+// Botão "Next" do rodapé de cada página.
+function botaoNext() {
+  var b = document.getElementById('ctl00_SiteContentPlaceHolder_UpdateButton3');
+  if (b && visivel(b)) return b;
+  var l = document.querySelectorAll('input[type=submit], input[type=button], button, a');
+  for (var i = 0; i < l.length; i++) {
+    var t = String(l[i].value || l[i].textContent || '').trim();
+    if (/^next\b/i.test(t) && visivel(l[i])) return l[i];
+  }
+  return null;
+}
+
+// Mensagens de validação que o site mostra depois do Next.
+function errosDaPagina() {
+  var sel = '[id*="ValidationSummary"], .validation-summary-errors, .error-message';
+  var out = [];
+  Array.prototype.forEach.call(document.querySelectorAll(sel), function (el) {
+    if (!visivel(el)) return;
+    var t = String(el.innerText || el.textContent || '').replace(/\s+\n/g, '\n').trim();
+    if (t) t.split(/\n+/).forEach(function (x) { x = x.trim(); if (x && out.indexOf(x) < 0) out.push(x); });
+  });
+  return out.slice(0, 12);
+}
+
+function infoPagina() {
+  var txt = String((document.body && (document.body.innerText || document.body.textContent)) || '');
+  var m = /Application ID\s*:?\s*([A-Z]{2}[0-9A-Z]{8})\b/.exec(txt);
+  var p = location.pathname + location.search;
+  return {
+    appId: m ? m[1] : null,
+    erros: errosDaPagina(),
+    revisao: /\/review\/|review_|Photo|SignCertify|Sign_Certify|Confirmation/i.test(p),
+    temNext: !!botaoNext()
+  };
 }
 
 function colarManual(valor) {
@@ -147,9 +207,17 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
     } else if (msg.tipo === 'ds160-sondar') {
       var existe = (msg.sufixos || []).filter(function (s) { var el = acharCampo(s); return el && visivel(el); });
       var h = document.querySelector('#ctl00_SiteContentPlaceHolder_ucNavigateOption_ucNavPanel_ctl00_lblHeader, h2, .PageHeader');
-      responder({ ok: true, existentes: existe, url: location.href, titulo: h ? h.textContent.trim() : document.title });
+      responder(Object.assign({ ok: true, existentes: existe, url: location.href, titulo: h ? h.textContent.trim() : document.title }, infoPagina()));
     } else if (msg.tipo === 'ds160-preencher') {
       responder(Object.assign({ ok: true }, preencher(msg.campos || [])));
+    } else if (msg.tipo === 'ds160-avancar') {
+      var b = botaoNext();
+      if (!b) responder({ ok: false, erro: 'Botão "Next" não encontrado nesta página.' });
+      else {
+        try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf('ds160cdv-add:') === 0) sessionStorage.removeItem(k); }); } catch (e) {}
+        responder({ ok: true, texto: String(b.value || b.textContent || '').trim() });
+        setTimeout(function () { b.click(); }, 80);
+      }
     } else if (msg.tipo === 'ds160-manual') {
       responder(colarManual(String(msg.valor || '')));
     }

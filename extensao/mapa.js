@@ -26,7 +26,7 @@ var SECOES = [
 
 // ── utilidades ─────────────────────────────────────────────────────────────
 function semAcento(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, ''); }
-function up(s) { return semAcento(s).toUpperCase().replace(/\s+/g, ' ').trim(); }
+function up(s) { return semAcento(s).replace(/[ºª°]/g, '').toUpperCase().replace(/\s+/g, ' ').trim(); }
 function digitos(s) { return String(s || '').replace(/\D/g, ''); }
 function sim(v) { return v === 'Sim'; }
 function temValor(v) { return v != null && String(v).trim() !== ''; }
@@ -138,6 +138,80 @@ function estadoBR(v) {
   return u;
 }
 
+// ── linhas de endereço (o DS-160 aceita 40 caracteres por linha) ────────────
+// Quebra na última vírgula/espaço antes do limite; o resto vai para a linha 2.
+function linhas40(v, max) {
+  max = max || 40;
+  var t = up(v).replace(/\s*,\s*/g, ', ');
+  if (t.length <= max) return [t, ''];
+  var corte = -1;
+  for (var i = Math.min(max, t.length - 1); i > 10; i--) {
+    if (t.charAt(i) === ',') { corte = i; break; }
+  }
+  if (corte < 0) corte = t.lastIndexOf(' ', max);
+  if (corte < 10) corte = max;
+  var l1 = t.slice(0, corte).replace(/[,\s]+$/, '');
+  var l2 = t.slice(corte).replace(/^[,\s]+/, '');
+  return [l1, l2.slice(0, max)];
+}
+
+// ── estados americanos ─────────────────────────────────────────────────────
+var UF_EUA = { AL:'ALABAMA', AK:'ALASKA', AZ:'ARIZONA', AR:'ARKANSAS', CA:'CALIFORNIA', CO:'COLORADO', CT:'CONNECTICUT',
+  DE:'DELAWARE', DC:'DISTRICT OF COLUMBIA', FL:'FLORIDA', GA:'GEORGIA', HI:'HAWAII', ID:'IDAHO', IL:'ILLINOIS', IN:'INDIANA',
+  IA:'IOWA', KS:'KANSAS', KY:'KENTUCKY', LA:'LOUISIANA', ME:'MAINE', MD:'MARYLAND', MA:'MASSACHUSETTS', MI:'MICHIGAN',
+  MN:'MINNESOTA', MS:'MISSISSIPPI', MO:'MISSOURI', MT:'MONTANA', NE:'NEBRASKA', NV:'NEVADA', NH:'NEW HAMPSHIRE',
+  NJ:'NEW JERSEY', NM:'NEW MEXICO', NY:'NEW YORK', NC:'NORTH CAROLINA', ND:'NORTH DAKOTA', OH:'OHIO', OK:'OKLAHOMA',
+  OR:'OREGON', PA:'PENNSYLVANIA', PR:'PUERTO RICO', RI:'RHODE ISLAND', SC:'SOUTH CAROLINA', SD:'SOUTH DAKOTA',
+  TN:'TENNESSEE', TX:'TEXAS', UT:'UTAH', VT:'VERMONT', VA:'VIRGINIA', WA:'WASHINGTON', WV:'WEST VIRGINIA',
+  WI:'WISCONSIN', WY:'WYOMING' };
+function ufEUA(v) {
+  var u = up(v).replace(/\./g, '');
+  if (UF_EUA[u]) return u;
+  for (var k in UF_EUA) if (UF_EUA[k] === u) return k;
+  if (u === 'FLÓRIDA' || u === 'NOVA YORK') return u === 'NOVA YORK' ? 'NY' : 'FL';
+  return null;
+}
+// "Disney's All-Star Movies Resort, 1901 W Buena Vista Dr, Lake Buena Vista, FL 32830"
+// → { nome, l1, l2, cidade, uf, zip }. Devolve null se não achar estado + ZIP.
+function enderecoEUA(v) {
+  if (!temValor(v)) return null;
+  var t = semAcento(v).replace(/\r/g, '').replace(/\n+/g, ', ').replace(/\s+/g, ' ').trim();
+  t = t.replace(/,?\s*(USA|EUA|UNITED STATES( OF AMERICA)?|ESTADOS UNIDOS)\s*$/i, '');
+  var m = /^(.*?)[,\s]+([A-Za-z .]{2,20}?)[,\s]+(\d{5})(?:-\d{4})?\s*$/.exec(t);
+  if (!m) return null;
+  var uf = ufEUA(m[2]);
+  if (!uf) return null;
+  var partes = m[1].split(/\s*,\s*/).filter(Boolean);
+  if (partes.length < 2) return null;
+  var cidade = partes.pop();
+  var nome = '';
+  if (partes.length > 1 && !/\d/.test(partes[0]) && /^\d/.test(partes[1])) nome = partes.shift();
+  var ln = linhas40(partes.join(', '));
+  return { nome: up(nome), l1: ln[0], l2: ln[1], cidade: up(cidade), uf: uf, zip: m[3] };
+}
+
+// ── área de atuação (pergunta "area" do ds160.html) → Primary Occupation ────
+var AREAS = {
+  'Agricultura / agronegócio': ['A', '~AGRICULTURE'],
+  'Artes / entretenimento': ['AP', '~ARTIST'],
+  'Ciências naturais (biologia, meio ambiente)': ['NS', '~NATURAL SCIENCE'],
+  'Ciências exatas (física, química, matemática)': ['PS', '~PHYSICAL SCIENCE'],
+  'Ciências sociais (psicologia, economia, sociologia)': ['SS', '~SOCIAL SCIENCE'],
+  'Comunicação / marketing / jornalismo': ['CM', '~COMMUNICATIONS'],
+  'Direito': ['LP', '~LEGAL PROFESSION'],
+  'Educação / ensino': ['ED', '~EDUCATION'],
+  'Engenharia': ['EN', '~ENGINEERING'],
+  'Forças Armadas': ['M', '~MILITARY'],
+  'Gastronomia / alimentação': ['C', '~CULINARY'],
+  'Governo / setor público': ['G', '~GOVERNMENT'],
+  'Negócios (administração, comércio, finanças, vendas)': ['B', '~BUSINESS'],
+  'Pesquisa': ['R', '~RESEARCH'],
+  'Religião': ['RV', '~RELIGIOUS'],
+  'Saúde': ['MH', '~MEDICAL'],
+  'Tecnologia / informática': ['CS', '~COMPUTER SCIENCE'],
+  'Outra': ['O', '~OTHER']
+};
+
 // ── relações / status ──────────────────────────────────────────────────────
 function relacao(pt, opcoes) {
   var t = semAcento(pt).toLowerCase();
@@ -227,6 +301,23 @@ function montarItens(dados) {
   function naoSeAplica(id, r, sufixoCheck, nota) {
     return add({ id: id, r: r, pt: '—', mostra: 'DOES NOT APPLY', campos: [check(sufixoCheck)], nota: nota || null });
   }
+  function enderecoContato(id, pt, v) {
+    if (!temValor(v)) return add({ id: id, r: 'U.S. Contact Address', pt: pt, mostra: '', alerta: 'Endereço não informado — preencha no site.' });
+    var e = enderecoEUA(v);
+    if (!e) return add({ id: id, r: 'U.S. Contact Address', pt: pt, mostra: up(v), origem: v, alerta: 'Não consegui separar rua, cidade, estado e ZIP — preencha no site (↘ ajuda).' });
+    var cs = [{ s: 'tbxUS_POC_ADDR_LN1', t: 'text', v: e.l1 }];
+    if (e.l2) cs.push({ s: 'tbxUS_POC_ADDR_LN2', t: 'text', v: e.l2 });
+    cs.push({ s: 'tbxUS_POC_ADDR_CITY', t: 'text', v: e.cidade }, { s: 'ddlUS_POC_ADDR_STATE', t: 'select', v: [e.uf, UF_EUA[e.uf]] }, { s: 'tbxUS_POC_ADDR_POSTAL_CD', t: 'text', v: e.zip });
+    return add({ id: id, r: 'U.S. Contact Address', pt: pt, mostra: [e.l1, e.l2, e.cidade, e.uf + ' ' + e.zip].filter(Boolean).join(', '), origem: v, campos: cs });
+  }
+  // Endereço em duas linhas de até 40 caracteres.
+  function endereco2(id, r, pt, v, s1, s2) {
+    if (!temValor(v)) return null;
+    var ln = linhas40(v);
+    var cs = [{ s: s1, t: 'text', v: ln[0] }];
+    if (ln[1]) cs.push({ s: s2, t: 'text', v: ln[1] });
+    return add({ id: id, r: r, pt: pt, mostra: ln.filter(Boolean).join(' / '), origem: v, campos: cs });
+  }
 
   // ── PERSONAL 1 ──────────────────────────────────────────────────────────
   S('Personal 1');
@@ -242,7 +333,7 @@ function montarItens(dados) {
         var ctl = 'DListAlias_ctl' + pad2(i) + '_';
         add({ id: 'alias' + i, r: 'Other Name ' + (i + 1), pt: 'Outro nome usado', mostra: dv.surname + ' / ' + dv.given, origem: nm,
           campos: [{ s: ctl + 'tbxSURNAME', t: 'text', v: dv.surname }, { s: ctl + 'tbxGIVEN_NAME', t: 'text', v: dv.given }],
-          nota: 'Confira a divisão sobrenome / nome.' + (i > 0 ? ' Se a linha não existir, clique em "Add Another" no site.' : '') });
+          nota: 'Confira a divisão sobrenome / nome.' });
       });
     }
   }
@@ -308,7 +399,7 @@ function montarItens(dados) {
       if (cid.length) texto('saidaCidade', 'Departure City', 'Cidade de partida', cid[cid.length - 1], 'tbxDepartCity');
       cid.slice(0, 5).forEach(function (c, i) {
         texto('local' + i, 'Location you plan to visit ' + (i + 1), 'Cidade(s) que vai visitar', c, 'dtlTravelLoc_ctl' + pad2(i) + '_tbxSPECTRAVEL_LOCATION',
-          i > 0 ? { nota: 'Se a linha não existir, clique em "Add Another" no site.' } : null);
+          null);
       });
     } else {
       data('chegadaPrev', 'Intended Date of Arrival', 'Data prevista de chegada', d.chegada, 'ddlTRAVEL_DTEDay', 'ddlTRAVEL_DTEMonth', 'tbxTRAVEL_DTEYear');
@@ -317,8 +408,15 @@ function montarItens(dados) {
         campos: [{ s: 'tbxTRAVEL_LOS', t: 'text', v: String(dias) }, { s: 'ddlTRAVEL_LOS_CD', t: 'select', v: ['D', '~DAY'] }] });
     }
   }
-  if (temValor(d.hospedagem)) add({ id: 'hospedagem', r: 'Address Where You Will Stay in the U.S.', pt: 'Endereço de hospedagem',
-    mostra: up(d.hospedagem), origem: d.hospedagem, nota: 'Separe rua, cidade, estado e ZIP: clique em cada campo do site e use ↘ com o trecho certo, ou digite.' });
+  var hosp = enderecoEUA(d.hospedagem);
+  if (hosp) {
+    var cHosp = [{ s: 'tbxStreetAdd1', t: 'text', v: hosp.l1 }];
+    if (hosp.l2) cHosp.push({ s: 'tbxStreetAdd2', t: 'text', v: hosp.l2 });
+    cHosp.push({ s: 'tbxCity', t: 'text', v: hosp.cidade }, { s: 'ddlTravelState', t: 'select', v: [hosp.uf, UF_EUA[hosp.uf]] }, { s: 'tbZIPCode', t: 'text', v: hosp.zip });
+    add({ id: 'hospedagem', r: 'Address Where You Will Stay in the U.S.', pt: 'Endereço de hospedagem' + (hosp.nome ? ' (' + hosp.nome + ')' : ''),
+      mostra: [hosp.l1, hosp.l2, hosp.cidade, hosp.uf + ' ' + hosp.zip].filter(Boolean).join(', '), origem: d.hospedagem, campos: cHosp });
+  } else if (temValor(d.hospedagem)) add({ id: 'hospedagem', r: 'Address Where You Will Stay in the U.S.', pt: 'Endereço de hospedagem',
+    mostra: up(d.hospedagem), origem: d.hospedagem, alerta: 'Não consegui separar rua, cidade, estado e ZIP — preencha no site (↘ ajuda).' });
   else add({ id: 'hospedagem', r: 'Address Where You Will Stay in the U.S.', pt: 'Endereço de hospedagem', mostra: '',
     alerta: 'Cliente não informou a hospedagem — definir o hotel antes.' });
 
@@ -356,7 +454,7 @@ function montarItens(dados) {
         add({ id: 'acomp' + i, r: 'Companion ' + (i + 1), pt: 'Acompanhante: ' + a.nome + (a.parentesco ? ' (' + a.parentesco + ')' : ''),
           mostra: n.surname + ' / ' + n.given + ' · ' + rel[0], origem: a.nome,
           campos: [{ s: ctl + 'tbxSurname', t: 'text', v: n.surname }, { s: ctl + 'tbxGivenName', t: 'text', v: n.given }, { s: ctl + 'ddlRelationship', t: 'select', v: rel }],
-          nota: 'Confira a divisão sobrenome / nome.' + (i > 0 ? ' Se a linha não existir, clique em "Add Another" no site.' : '') });
+          nota: 'Confira a divisão sobrenome / nome.' });
       });
     }
   }
@@ -376,7 +474,7 @@ function montarItens(dados) {
       if (!campos.length) return;
       add({ id: 'visita' + i, r: 'Previous visit ' + (i + 1), pt: 'Viagem: ' + fmtData(v.chegada) + ' · ' + (v.duracao || ''),
         mostra: fmtData(v.chegada) + (mm ? ' · ' + mm[1] + ' ' + cod[1].replace('~', '') + '(S)' : ''), origem: v.duracao, campos: campos,
-        nota: i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : null });
+        nota: null });
     });
     simNao('cnhEUA', 'Do you or did you ever hold a U.S. Driver\'s License?', 'Carteira americana?', d.cnhEUA, 'rblPREV_US_DRIVER_LIC_IND');
     if (sim(d.cnhEUA)) {
@@ -405,9 +503,10 @@ function montarItens(dados) {
 
   // ── ADDRESS AND PHONE ───────────────────────────────────────────────────
   S('Address and Phone');
-  if (temValor(d.logradouro)) texto('end1', 'Home Address: Street Address (Line 1)', 'Logradouro e número', d.logradouro + (d.numero ? ', ' + d.numero : ''), 'tbxAPP_ADDR_LN1');
-  var l2 = [d.complemento, d.bairro].filter(temValor).join(' - ');
-  if (l2) texto('end2', 'Street Address (Line 2)', 'Complemento e bairro', l2, 'tbxAPP_ADDR_LN2');
+  var e1 = temValor(d.logradouro) ? linhas40(d.logradouro + (d.numero ? ', ' + d.numero : '')) : ['', ''];
+  if (e1[0]) texto('end1', 'Home Address: Street Address (Line 1)', 'Logradouro e número', e1[0], 'tbxAPP_ADDR_LN1');
+  var l2 = [e1[1], d.complemento, d.bairro].filter(temValor).join(' - ');
+  if (l2) texto('end2', 'Street Address (Line 2)', 'Complemento e bairro', linhas40(l2)[0], 'tbxAPP_ADDR_LN2');
   texto('endCidade', 'City', 'Cidade', d.cidade, 'tbxAPP_ADDR_CITY');
   if (temValor(d.estado)) texto('endEstado', 'State/Province', 'Estado', estadoBR(d.estado), 'tbxAPP_ADDR_STATE');
   if (temValor(d.cep)) texto('endCep', 'Postal Zone/ZIP Code', 'CEP', d.cep, 'tbxAPP_ADDR_POSTAL_CD');
@@ -429,7 +528,7 @@ function montarItens(dados) {
   outrosTel.slice(0, 5).forEach(function (t, i) {
     add({ id: 'outroTel' + i, r: 'Additional Phone Number ' + (i + 1), pt: 'Outro telefone', mostra: telefoneBR(t),
       campos: [{ s: 'dtlAddPhone_ctl' + pad2(i) + '_tbxAddPhoneInfo', t: 'text', v: telefoneBR(t) }],
-      nota: i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : null });
+      nota: null });
   });
   if (temValor(d.email)) add({ id: 'email', r: 'Email Address', pt: 'E-mail', mostra: String(d.email).trim(), campos: [{ s: 'tbxAPP_EMAIL_ADDR', t: 'text', v: String(d.email).trim() }] });
   var outrosEm = lista(d.outrosEmails).filter(function (x) { return x.indexOf('@') > 0; });
@@ -438,7 +537,7 @@ function montarItens(dados) {
   outrosEm.slice(0, 5).forEach(function (e, i) {
     add({ id: 'outroEmail' + i, r: 'Additional Email Address ' + (i + 1), pt: 'Outro e-mail', mostra: e,
       campos: [{ s: 'dtlAddEmail_ctl' + pad2(i) + '_tbxAddEmailInfo', t: 'text', v: e }],
-      nota: i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : null });
+      nota: null });
   });
   var REDE = { 'Facebook': ['FCBK', '~FACEBOOK'], 'Instagram': ['INST', '~INSTAGRAM'], 'LinkedIn': ['LINK', '~LINKEDIN'],
     'Pinterest': ['PTST', '~PINTEREST'], 'TikTok': ['~TIKTOK', '~TIK TOK'], 'Twitter / X': ['TWIT', '~TWITTER'], 'YouTube': ['YTUB', '~YOUTUBE'] };
@@ -451,7 +550,7 @@ function montarItens(dados) {
     var c = REDE[r.plataforma];
     add({ id: 'rede' + i, r: 'Social Media ' + (i + 1), pt: (r.plataforma || 'Rede') + ': ' + r.usuario, mostra: (c ? c[c.length - 1].replace('~', '') : up(r.plataforma)) + ' · ' + usuario,
       campos: (c ? [{ s: ctl + 'ddlSocialMedia', t: 'select', v: c }] : []).concat([{ s: ctl + 'tbxSocialMediaIdent', t: 'text', v: usuario }]),
-      nota: (c ? '' : 'Plataforma "' + (r.plataforma || '') + '": escolha na lista do site. ') + (i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : '') || null });
+      nota: (c ? '' : 'Plataforma "' + (r.plataforma || '') + '": escolha na lista do site. ') || null });
   });
   add({ id: 'outrasRedes', r: 'Do you wish to provide information about your presence on any other websites?', pt: '—', mostra: 'NO', campos: [radio('rblAddSocial', false)] });
 
@@ -480,18 +579,23 @@ function montarItens(dados) {
     add({ id: 'contatoNome', r: 'Contact Person: Surnames / Given Names', pt: 'Contato: ' + (d.contatoNome || ''), mostra: cn.surname + ' / ' + cn.given, origem: d.contatoNome,
       campos: [{ s: 'tbxUS_POC_SURNAME', t: 'text', v: cn.surname }, { s: 'tbxUS_POC_GIVEN_NAME', t: 'text', v: cn.given }],
       nota: 'Se o contato for uma empresa, use o campo Organization Name (↘) e marque "Do Not Know" no nome.' });
-    texto('contatoOrg', 'Organization Name', 'Nome da empresa (se for empresa)', d.contatoNome, null, { nota: 'Só se o contato for empresa/hotel.' });
+    texto('contatoOrg', 'Organization Name', 'Nome da empresa (se for empresa)', d.contatoNome, null, { nota: 'Só se o contato for empresa/hotel.', info: true });
     var cr = relacao(d.contatoParentesco, 'contato');
     add({ id: 'contatoRel', r: 'Relationship to You', pt: 'Relação: ' + (d.contatoParentesco || ''), mostra: cr[0].replace('~', ''), campos: [{ s: 'ddlUS_POC_REL_TO_APP', t: 'select', v: cr }] });
-    texto('contatoEnd', 'U.S. Street Address', 'Endereço do contato', d.contatoEndereco, null, { nota: 'Separe rua, cidade, estado e ZIP nos campos do site.' });
+    enderecoContato('contatoEnd', 'Endereço do contato', d.contatoEndereco);
     if (temValor(d.contatoTel)) add({ id: 'contatoTel', r: 'Phone Number', pt: 'Telefone do contato', mostra: digitos(d.contatoTel), campos: [{ s: 'tbxUS_POC_HOME_TEL', t: 'text', v: digitos(d.contatoTel) }] });
     if (temValor(d.contatoEmail)) add({ id: 'contatoEmail', r: 'Email Address', pt: 'E-mail do contato', mostra: String(d.contatoEmail).trim(), campos: [{ s: 'tbxUS_POC_EMAIL_ADDR', t: 'text', v: String(d.contatoEmail).trim() }] });
     else naoSeAplica('contatoEmailNA', 'Email Address', 'cbexUS_POC_EMAIL_ADDR_NA');
   } else if (temValor(d.contatoEUA)) {
-    add({ id: 'contatoHotel', r: 'U.S. Point of Contact', pt: 'Sem contato nos EUA — usar o hotel', mostra: up(d.hospedagem || ''),
-      campos: [check('cbxUS_POC_NAME_NA')],
-      nota: 'Marca "Do Not Know" no nome da pessoa. Depois: Organization = nome do hotel, Relationship = OTHER, endereço e telefone do hotel.' });
+    var hotelNome = up(d.hotelNome || (hosp && hosp.nome) || '');
+    add({ id: 'contatoHotel', r: 'U.S. Point of Contact: Organization', pt: 'Sem contato nos EUA — usar o hotel', mostra: hotelNome ? 'DO NOT KNOW / ' + hotelNome : '',
+      campos: hotelNome ? [check('cbxUS_POC_NAME_NA'), { s: 'tbxUS_POC_ORGANIZATION', t: 'text', v: hotelNome }] : undefined,
+      alerta: hotelNome ? null : 'Falta o nome do hotel (pergunta "Nome do hotel" do formulário) — preencha Organization Name no site.' });
     add({ id: 'contatoHotelRel', r: 'Relationship to You', pt: '—', mostra: 'OTHER', campos: [{ s: 'ddlUS_POC_REL_TO_APP', t: 'select', v: ['O', 'OTHER'] }] });
+    enderecoContato('contatoHotelEnd', 'Endereço do hotel', d.hospedagem);
+    if (temValor(d.hotelTel)) add({ id: 'contatoHotelTel', r: 'Phone Number', pt: 'Telefone do hotel', mostra: digitos(d.hotelTel), campos: [{ s: 'tbxUS_POC_HOME_TEL', t: 'text', v: digitos(d.hotelTel) }] });
+    else add({ id: 'contatoHotelTel', r: 'Phone Number', pt: 'Telefone do hotel', mostra: '', alerta: 'Falta o telefone do hotel — preencha no site.' });
+    naoSeAplica('contatoHotelEmail', 'Email Address', 'cbexUS_POC_EMAIL_ADDR_NA');
   }
 
   // ── FAMILY: RELATIVES ───────────────────────────────────────────────────
@@ -581,10 +685,12 @@ function montarItens(dados) {
     var OC = { 'Aposentado(a)': ['RT', 'RETIRED'], 'Do lar': ['H', 'HOMEMAKER'], 'Estudante': ['S', 'STUDENT'],
       'Sem ocupação no momento': ['N', 'NOT EMPLOYED'], 'Servidor(a) público(a)': ['G', 'GOVERNMENT'], 'Empresário(a)': ['B', 'BUSINESS'] };
     var oc = OC[d.ocupacao];
+    if (AREAS[d.area] && ['Aposentado(a)', 'Do lar', 'Estudante', 'Sem ocupação no momento'].indexOf(d.ocupacao) === -1) oc = AREAS[d.area];
     add({ id: 'ocupacao', r: 'Primary Occupation', pt: 'Ocupação: ' + d.ocupacao + (d.ocupacaoOutra ? ' (' + d.ocupacaoOutra + ')' : ''),
-      mostra: oc ? oc[1] : '', campos: oc ? [{ s: 'ddlPresentOccupation', t: 'select', v: oc }] : undefined,
-      nota: oc ? (d.ocupacao === 'Empresário(a)' ? 'BUSINESS é o padrão para empresário — troque se a área for outra (ex.: COMPUTER SCIENCE, MEDICAL/HEALTH).' : null)
-        : 'Escolha a área no site (ex.: BUSINESS, COMPUTER SCIENCE, EDUCATION, ENGINEERING, LEGAL PROFESSION, MEDICAL/HEALTH). Cargo: ' + (d.cargo || '—') });
+      mostra: oc ? oc[1].replace(/^~/, '') : '', campos: oc ? [{ s: 'ddlPresentOccupation', t: 'select', v: oc }] : undefined,
+      nota: oc ? (d.ocupacao === 'Empresário(a)' && !AREAS[d.area] ? 'BUSINESS é o padrão para empresário — troque se a área for outra (ex.: COMPUTER SCIENCE, MEDICAL/HEALTH).' : null)
+        : null,
+      alerta: oc ? null : 'Cliente não informou a área de atuação — escolha no site (ex.: BUSINESS, COMPUTER SCIENCE, ENGINEERING, MEDICAL/HEALTH). Cargo: ' + (d.cargo || '—') });
     if (d.ocupacao === 'Aposentado(a)' || d.ocupacao === 'Sem ocupação no momento' || d.ocupacao === 'Outro') {
       var expl = d.ocupacao === 'Aposentado(a)' ? 'Aposentado(a)' + (d.ocupacaoAnterior ? '. Última profissão: ' + d.ocupacaoAnterior : '') + (d.rendaAposentadoria ? '. Renda mensal aproximada: R$ ' + d.rendaAposentadoria : '')
         : d.ocupacao === 'Outro' ? (d.ocupacaoOutra || '') : 'Sem ocupação no momento';
@@ -593,7 +699,7 @@ function montarItens(dados) {
   }
   if (temValor(d.empresaNome)) {
     texto('empNome', 'Present Employer or School Name', 'Empresa / instituição', d.empresaNome, 'tbxEmpSchName');
-    texto('empEnd', 'Street Address (Line 1)', 'Endereço do trabalho', d.empresaEndereco, 'tbxEmpSchAddr1');
+    endereco2('empEnd', 'Street Address (Lines 1 and 2)', 'Endereço do trabalho', d.empresaEndereco, 'tbxEmpSchAddr1', 'tbxEmpSchAddr2');
     texto('empCidade', 'City', 'Cidade do trabalho', d.empresaCidade, 'tbxEmpSchCity');
     if (temValor(d.empresaEstado)) texto('empEstado', 'State/Province', 'Estado do trabalho', estadoBR(d.empresaEstado), 'tbxWORK_EDUC_ADDR_STATE');
     if (temValor(d.empresaCep)) texto('empCep', 'Postal Zone/ZIP Code', 'CEP do trabalho', d.empresaCep, 'tbxWORK_EDUC_ADDR_POSTAL_CD');
@@ -618,10 +724,11 @@ function montarItens(dados) {
       var sup = dividirNome(e.supervisor);
       var campos = [
         { s: ctl + 'tbEmployerName', t: 'text', v: up(e.empresa) },
-        { s: ctl + 'tbEmployerStreetAddress1', t: 'text', v: up(e.endereco) },
+        { s: ctl + 'tbEmployerStreetAddress1', t: 'text', v: linhas40(e.endereco)[0] },
         { s: ctl + 'DropDownList2', t: 'select', v: ['BRZL', 'BRAZIL'] },
         { s: ctl + 'tbJobTitle', t: 'text', v: up(e.cargo) }
       ];
+      if (linhas40(e.endereco)[1]) campos.push({ s: ctl + 'tbEmployerStreetAddress2', t: 'text', v: linhas40(e.endereco)[1] });
       if (temValor(e.telefone)) campos.push({ s: ctl + 'tbEmployerPhone', t: 'text', v: telefoneBR(e.telefone) });
       if (temValor(e.supervisor)) campos.push({ s: ctl + 'tbSupervisorSurname', t: 'text', v: sup.surname }, { s: ctl + 'tbSupervisorGivenName', t: 'text', v: sup.given });
       else campos.push(check(ctl + 'cbxSupervisorSurname_NA'), check(ctl + 'cbxSupervisorGivenName_NA'));
@@ -629,7 +736,7 @@ function montarItens(dados) {
       campos = campos.concat(camposData(ctl + 'ddlEmpDateToDay', ctl + 'ddlEmpDateToMonth', ctl + 'tbxEmpDateToYear', e.fim));
       add({ id: 'empAnt' + i, r: 'Previous Employer ' + (i + 1), pt: e.empresa + ' · ' + (e.cargo || '') + ' · ' + fmtData(e.inicio) + ' a ' + fmtData(e.fim),
         mostra: up(e.empresa) + ' · ' + up(e.cargo), campos: campos,
-        nota: 'Cidade, estado e CEP ficam para completar (endereço veio junto: "' + (e.endereco || '') + '").' + (i > 0 ? ' Se a linha não existir, clique em "Add Another" no site.' : '') });
+        nota: 'Cidade, estado e CEP ficam para completar (endereço veio junto: "' + (e.endereco || '') + '").' });
       if (temValor(e.funcoes)) traduzivel('empAntFun' + i, 'Previous Employer ' + (i + 1) + ': Briefly describe your duties', 'O que fazia', e.funcoes, ctl + 'tbDescribeDuties');
     });
   }
@@ -640,7 +747,11 @@ function montarItens(dados) {
     var ctl = 'dtlPrevEduc_ctl' + pad2(i) + '_';
     var cidUf = String(x.cidade || '').split(/\s*[\/\-–,]\s*/);
     var campos = [{ s: ctl + 'tbxSchoolName', t: 'text', v: up(x.nome) }];
-    if (temValor(x.endereco)) campos.push({ s: ctl + 'tbxSchoolAddr1', t: 'text', v: up(x.endereco) });
+    if (temValor(x.endereco)) {
+      var lx = linhas40(x.endereco);
+      campos.push({ s: ctl + 'tbxSchoolAddr1', t: 'text', v: lx[0] });
+      if (lx[1]) campos.push({ s: ctl + 'tbxSchoolAddr2', t: 'text', v: lx[1] });
+    }
     if (cidUf[0]) campos.push({ s: ctl + 'tbxSchoolCity', t: 'text', v: up(cidUf[0]) });
     if (cidUf[1]) campos.push({ s: ctl + 'tbxEDUC_INST_ADDR_STATE', t: 'text', v: estadoBR(cidUf[1]) });
     campos.push(check(ctl + 'cbxEDUC_INST_POSTAL_CD_NA'));
@@ -649,7 +760,7 @@ function montarItens(dados) {
     campos = campos.concat(camposData(ctl + 'ddlSchoolToDay', ctl + 'ddlSchoolToMonth', ctl + 'tbxSchoolToYear', x.fim));
     add({ id: 'inst' + i, r: 'Educational Institution ' + (i + 1), pt: x.nome + ' · ' + (x.curso || '') + ' · ' + (x.cidade || ''),
       mostra: up(x.nome), campos: campos,
-      nota: (temValor(x.endereco) ? '' : 'Endereço da instituição não informado — complete no site. ') + (i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : '') || null });
+      nota: (temValor(x.endereco) ? '' : 'Endereço da instituição não informado — complete no site. ') || null });
     if (temValor(x.curso)) traduzivel('instCurso' + i, 'Institution ' + (i + 1) + ': Course of Study', 'Curso', x.curso, ctl + 'tbxSchoolCourseOfStudy');
   });
 
@@ -660,7 +771,7 @@ function montarItens(dados) {
     var en = idiomaDs(l);
     add({ id: 'idioma' + i, r: 'Language ' + (i + 1), pt: 'Idioma: ' + l, mostra: en || up(l),
       campos: [{ s: 'dtlLANGUAGES_ctl' + pad2(i) + '_tbxLANGUAGE_NAME', t: 'text', v: en || null }], tr: en ? undefined : l,
-      nota: i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : null });
+      nota: null });
   });
   var paises = lista(d.paisesVisitados).filter(function (p) { return !/^(nenhum|nao|não)$/i.test(p); });
   add({ id: 'paisesInd', r: 'Have you traveled to any countries/regions within the last five years?', pt: 'Países visitados (5 anos)',
@@ -669,7 +780,7 @@ function montarItens(dados) {
     var c = candidatosPais(p);
     add({ id: 'paisVis' + i, r: 'Country/Region ' + (i + 1), pt: 'País visitado: ' + p, mostra: c ? c[c.length - 1].replace('~', '') : up(p),
       campos: c ? [{ s: 'dtlCountriesVisited_ctl' + pad2(i) + '_ddlCOUNTRIES_VISITED', t: 'select', v: c }] : undefined,
-      nota: (c ? '' : 'País não reconhecido — escolha na lista do site. ') + (i > 0 ? 'Se a linha não existir, clique em "Add Another" no site.' : '') || null });
+      nota: (c ? '' : 'País não reconhecido — escolha na lista do site. ') || null });
   });
   simNao('org', 'Have you belonged to, contributed to, or worked for any professional, social, or charitable organization?', 'Organizações?', d.organizacoes, 'rblORGANIZATION_IND');
   if (sim(d.organizacoes)) lista(d.organizacoesQuais).slice(0, 5).forEach(function (o, i) {
@@ -721,7 +832,8 @@ function sufixos(itens) {
   return Object.keys(set);
 }
 
-var api = { SECOES: SECOES, montarItens: montarItens, sufixos: sufixos, semAcento: semAcento, up: up };
+var api = { SECOES: SECOES, montarItens: montarItens, sufixos: sufixos, semAcento: semAcento, up: up,
+  linhas40: linhas40, enderecoEUA: enderecoEUA, AREAS: AREAS };
 if (typeof module !== 'undefined' && module.exports) module.exports = api;
 else raiz.DS160Mapa = api;
 })(this);

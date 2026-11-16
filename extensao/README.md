@@ -19,7 +19,16 @@ Para atualizar: substitua os arquivos da pasta e clique em ↻ no card da extens
 6. **Modo manual (↘):** clique no campo do site e depois no ↘ do valor. Clique no valor para copiar.
 7. No fim, **✓ Marcar como preenchido** atualiza o status no painel do concierge.
 
-Itens em vermelho = o cliente respondeu "não sei" ou algo que exige conversa (ex.: segurança). Itens com nota amarela pedem conferência (divisão de nome/sobrenome, linhas extras que precisam do "Add Another").
+## Modo automático (▶ Preencher tudo até a revisão)
+Com o DS-160 aberto na primeira página do formulário (depois do CAPTCHA e da pergunta de segurança), clique em **▶ Preencher tudo até a revisão**:
+1. Traduz de uma vez os textos livres que ainda não estão em inglês.
+2. Em cada página: preenche tudo o que o cliente respondeu, clica sozinho em **Add Another** quando precisa de mais uma linha (acompanhantes, escolas, redes, países) e clica em **Next** (o site salva a página).
+3. Para e explica quando: o site aponta erro; falta algo que só dá para completar à mão (item vermelho, endereço que não separou, hotel sem nome/telefone, área de atuação não informada); um campo não foi encontrado; ou a página não tem respostas do cliente. Resolva no site e clique em **▶ Continuar** — ele clica em Next e segue.
+4. Para na **revisão** (ou na foto). A conferência, a foto, a assinatura e o envio ficam com você.
+
+O **Application ID** que aparece no topo do site fica salvo na extensão (só nesse navegador) e aparece abaixo do nome do cliente; clique para copiar.
+
+Itens em vermelho = o cliente respondeu "não sei", faltou informação ou algo exige conversa (ex.: segurança). Itens com nota amarela pedem conferência (ex.: divisão de nome/sobrenome).
 
 ## Arquivos
 - `manifest.json` — MV3; permissões só para `ceac.state.gov` e o proxy CDV.
