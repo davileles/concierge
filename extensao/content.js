@@ -198,6 +198,39 @@ function infoPagina() {
   };
 }
 
+// Inventário dos campos da página (sem nenhum valor preenchido): id, tipo,
+// rótulo e opções — para conferir o mapa.js com o site real.
+function rotuloDe(el) {
+  var l = el.id && document.querySelector('label[for="' + CSS.escape(el.id) + '"]');
+  if (l && l.textContent.trim()) return l.textContent.replace(/\s+/g, ' ').trim().slice(0, 140);
+  var proprio = String(el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+  var no = el.parentElement;
+  for (var n = 0; no && n < 5; n++, no = no.parentElement) {
+    var t = String(no.innerText || no.textContent || '').replace(/\s+/g, ' ').trim();
+    if (proprio) t = t.replace(proprio, '').trim();
+    if (t.length > 2) return t.slice(0, 140);
+  }
+  return '';
+}
+function inventario() {
+  var out = [];
+  Array.prototype.forEach.call(document.querySelectorAll('input, select, textarea, a[id*="InsertButton"], a[id*="DeleteButton"]'), function (el) {
+    var tipo = el.tagName === 'INPUT' ? (el.type || 'text') : el.tagName.toLowerCase();
+    if (tipo === 'hidden' || !el.id) return;
+    var o = { id: el.id.indexOf(PREFIXO) === 0 ? el.id.slice(PREFIXO.length) : el.id, tipo: tipo, visivel: visivel(el),
+      rotulo: tipo === 'a' ? el.textContent.trim() : rotuloDe(el) };
+    if (el.maxLength > 0) o.max = el.maxLength;
+    if (tipo === 'radio' || tipo === 'checkbox') o.valor = el.value;
+    if (tipo === 'select') {
+      o.nOpcoes = el.options.length;
+      o.opcoes = Array.prototype.slice.call(el.options, 0, 40).map(function (x) { return x.value + '=' + x.text; });
+    }
+    if (fazPostback(el)) o.postback = true;
+    out.push(o);
+  });
+  return { url: location.pathname + location.search, titulo: (document.querySelector('h2') || {}).textContent || document.title, campos: out };
+}
+
 function colarManual(valor) {
   var el = ultimoCampo;
   if (!el || !document.contains(el)) return { ok: false, erro: 'Clique primeiro no campo do site.' };
@@ -230,6 +263,8 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
       responder(Object.assign({ ok: true, existentes: existe, url: location.href, titulo: h ? h.textContent.trim() : document.title }, infoPagina()));
     } else if (msg.tipo === 'ds160-preencher') {
       responder(Object.assign({ ok: true, carga: CARGA }, preencher(msg.campos || [])));
+    } else if (msg.tipo === 'ds160-inventario') {
+      responder(Object.assign({ ok: true }, inventario()));
     } else if (msg.tipo === 'ds160-avancar') {
       var b = botaoNext();
       if (!b) responder({ ok: false, erro: 'Botão "Next" não encontrado nesta página.' });

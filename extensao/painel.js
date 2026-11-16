@@ -251,6 +251,7 @@ function sondar() {
     }
     return enviar({ tipo: 'ds160-sondar', sufixos: M.sufixos(itens) }).then(function (r) {
       sonda = r || {};
+      guardarInventario();
       if (sonda.appId && atual && sonda.appId !== atual._appId) {
         atual._appId = sonda.appId;
         gravarLocal('appid:' + atual.id, sonda.appId);
@@ -488,6 +489,37 @@ function semAvisoDeSaida() {
     }
   }).catch(function () {});
 }
+// Guarda o inventário de cada página visitada (só ids/rótulos/opções, sem valores).
+var invVisto = {};
+function guardarInventario() {
+  if (!sonda.url) return;
+  var chave = sonda.url.replace(/^https?:\/\/[^/]+/, '') + '|' + (sonda.carga || '');
+  if (invVisto[chave]) return;
+  invVisto[chave] = true;
+  enviar({ tipo: 'ds160-inventario' }).then(function (inv) {
+    if (!inv || !inv.ok) return;
+    return lerLocal('inventario').then(function (tudo) {
+      tudo = tudo || {};
+      var k = inv.url.split('?')[0] + (/node=([^&]+)/.exec(inv.url) ? '?node=' + /node=([^&]+)/.exec(inv.url)[1] : '');
+      var antes = tudo[k] && tudo[k].campos || [];
+      var ids = {}; antes.forEach(function (x) { ids[x.id] = x; });
+      inv.campos.forEach(function (x) { ids[x.id] = x; });     // junta (linhas que só aparecem depois de um "Yes")
+      tudo[k] = { url: inv.url, titulo: inv.titulo, campos: Object.keys(ids).map(function (i) { return ids[i]; }), em: new Date().toISOString() };
+      return gravarLocal('inventario', tudo).then(function () { $('btn-inventario').textContent = '⬇ Baixar campos do site (' + Object.keys(tudo).length + ' páginas)'; });
+    });
+  }).catch(function () {});
+}
+function baixarInventario() {
+  lerLocal('inventario').then(function (tudo) {
+    if (!tudo || !Object.keys(tudo).length) { toast('Nenhuma página registrada ainda.', 'err'); return; }
+    var blob = new Blob([JSON.stringify({ versao: chrome.runtime.getManifest().version, paginas: tudo }, null, 1)], { type: 'application/json' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ds160-campos.json';
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 5000);
+  });
+}
 function preencherTudo() {
   if (auto && !auto.pausado) { auto.parar = true; statusAuto('■ Parando depois do campo atual…'); return; }
   if (auto && auto.pausado) {                                        // Continuar
@@ -560,6 +592,8 @@ $('lista').addEventListener('click', function (e) { var r = e.target.closest('.f
 $('btn-voltar').addEventListener('click', function () { if (auto) { auto.parar = true; auto = null; ocupado = false; } atual = null; renderLista(); mostrar('v-lista'); });
 $('btn-pagina').addEventListener('click', preencherPagina);
 $('btn-auto').addEventListener('click', preencherTudo);
+$('btn-inventario').addEventListener('click', baixarInventario);
+lerLocal('inventario').then(function (t) { var n = t ? Object.keys(t).length : 0; if (n) $('btn-inventario').textContent = '⬇ Baixar campos do site (' + n + ' páginas)'; });
 $('btn-auto-sair').addEventListener('click', function () { sairAuto('', ''); });
 $('cliente-appid').addEventListener('click', function () { if (atual && atual._appId) navigator.clipboard.writeText(atual._appId).then(function () { toast('📋 Application ID copiado', 'ok'); }); });
 $('btn-traduzir').addEventListener('click', function () { traduzir(itens); });
