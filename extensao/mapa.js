@@ -305,8 +305,8 @@ function montarItens(dados) {
     if (!temValor(v)) return add({ id: id, r: 'U.S. Contact Address', pt: pt, mostra: '', alerta: 'Endereço não informado — preencha no site.' });
     var e = enderecoEUA(v);
     if (!e) return add({ id: id, r: 'U.S. Contact Address', pt: pt, mostra: up(v), origem: v, alerta: 'Não consegui separar rua, cidade, estado e ZIP — preencha no site (↘ ajuda).' });
-    var cs = [{ s: 'tbxUS_POC_ADDR_LN1', t: 'text', v: e.l1 }];
-    if (e.l2) cs.push({ s: 'tbxUS_POC_ADDR_LN2', t: 'text', v: e.l2 });
+    var cs = [{ s: 'tbxUS_POC_ADDR_LN1', t: 'text', v: e.l1, bloco: 'tbxUS_POC_ADDR_CITY', pos: 0 }];
+    if (e.l2) cs.push({ s: 'tbxUS_POC_ADDR_LN2', t: 'text', v: e.l2, bloco: 'tbxUS_POC_ADDR_CITY', pos: 1 });
     cs.push({ s: 'tbxUS_POC_ADDR_CITY', t: 'text', v: e.cidade }, { s: 'ddlUS_POC_ADDR_STATE', t: 'select', v: [e.uf, UF_EUA[e.uf]] }, { s: 'tbxUS_POC_ADDR_POSTAL_CD', t: 'text', v: e.zip });
     return add({ id: id, r: 'U.S. Contact Address', pt: pt, mostra: [e.l1, e.l2, e.cidade, e.uf + ' ' + e.zip].filter(Boolean).join(', '), origem: v, campos: cs });
   }
@@ -410,8 +410,8 @@ function montarItens(dados) {
   }
   var hosp = enderecoEUA(d.hospedagem);
   if (hosp) {
-    var cHosp = [{ s: 'tbxStreetAdd1', t: 'text', v: hosp.l1 }];
-    if (hosp.l2) cHosp.push({ s: 'tbxStreetAdd2', t: 'text', v: hosp.l2 });
+    var cHosp = [{ s: 'tbxStreetAdd1', t: 'text', v: hosp.l1, bloco: 'tbxCity', pos: 0 }];
+    if (hosp.l2) cHosp.push({ s: 'tbxStreetAdd2', t: 'text', v: hosp.l2, bloco: 'tbxCity', pos: 1 });
     cHosp.push({ s: 'tbxCity', t: 'text', v: hosp.cidade }, { s: 'ddlTravelState', t: 'select', v: [hosp.uf, UF_EUA[hosp.uf]] }, { s: 'tbZIPCode', t: 'text', v: hosp.zip });
     add({ id: 'hospedagem', r: 'Address Where You Will Stay in the U.S.', pt: 'Endereço de hospedagem' + (hosp.nome ? ' (' + hosp.nome + ')' : ''),
       mostra: [hosp.l1, hosp.l2, hosp.cidade, hosp.uf + ' ' + hosp.zip].filter(Boolean).join(', '), origem: d.hospedagem, campos: cHosp });

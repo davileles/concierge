@@ -24,12 +24,28 @@ function norm(s) {
   return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/\s+/g, ' ').trim();
 }
 
-function acharCampo(sufixo) {
+function acharCampo(sufixo, campo) {
   var el = document.getElementById(PREFIXO + sufixo);
   if (el) return el;
   // Algumas páginas usam outro contêiner (ex.: FormView1 → outro prefixo).
   var lista = document.querySelectorAll('[id$="_' + CSS.escape(sufixo) + '"]');
-  return lista.length === 1 ? lista[0] : null;
+  if (lista.length === 1) return lista[0];
+  return campo && campo.bloco ? pelaPosicao(campo) : null;
+}
+
+// Plano B para linhas de endereço cujo id não bate: acha o bloco pelo campo
+// vizinho conhecido (ex.: City) e pega a caixa de texto na posição pedida
+// (0 = linha 1, 1 = linha 2), sempre antes do vizinho.
+function pelaPosicao(campo) {
+  var ancora = document.getElementById(PREFIXO + campo.bloco);
+  if (!ancora) return null;
+  var no = ancora.parentElement;
+  for (var n = 0; no && n < 8; n++, no = no.parentElement) {
+    var caixas = Array.prototype.filter.call(no.querySelectorAll('input[type=text], input:not([type])'), function (x) { return visivel(x) && !x.disabled; });
+    var i = caixas.indexOf(ancora);
+    if (i >= 2 && campo.pos < i) return caixas[campo.pos] || null;
+  }
+  return null;
 }
 
 function visivel(el) {
@@ -126,7 +142,7 @@ function preencher(campos) {
   var res = [];
   for (var i = 0; i < campos.length; i++) {
     var c = campos[i];
-    var el = acharCampo(c.s);
+    var el = acharCampo(c.s, c);
     if (!el && adicionarLinha(c.s)) {
       return { resultados: res, postback: true, pendentes: campos.slice(i), adicionou: true };
     }
@@ -136,6 +152,7 @@ function preencher(campos) {
     var r = aplicar(el, c);
     marcar(el, r.ok);
     r.s = c.s;
+    if (el.id !== PREFIXO + c.s) r.id = el.id;
     res.push(r);
     var depois = el.type === 'radio' || el.type === 'checkbox' ? el.checked : el.value;
     if (pb && r.ok && antes !== depois) {
