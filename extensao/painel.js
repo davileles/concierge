@@ -113,6 +113,7 @@ function renderLista() {
     if ((a.status === 'novo') !== (b.status === 'novo')) return a.status === 'novo' ? -1 : 1;
     return String(b.recebidoEm).localeCompare(String(a.recebidoEm));
   }).filter(function (r) {
+    if (r.status === 'rascunho') return false;   // link de familiar ainda não preenchido
     if (!q) return true;
     var s = r.resumo || {};
     return M.semAcento((s.nome || '') + ' ' + (s.email || '') + ' ' + (s.passaporte || '')).toLowerCase().indexOf(q) > -1;
