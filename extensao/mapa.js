@@ -394,9 +394,13 @@ function montarItens(dados) {
     if (sim(d.passagemComprada)) {
       data('chegadaEsp', 'Date of Arrival in U.S.', 'Data de chegada', d.chegada, 'ddlARRIVAL_US_DTEDay', 'ddlARRIVAL_US_DTEMonth', 'tbxARRIVAL_US_DTEYear');
       var cid = lista(d.cidadeDestino);
-      if (cid[0]) texto('chegadaCidade', 'Arrival City', 'Cidade de chegada', cid[0], 'tbxArriveCity');
+      var cidCheg = temValor(d.cidadeChegada) ? d.cidadeChegada : cid[0];
+      var cidSai = temValor(d.cidadeSaida) ? d.cidadeSaida : cid[cid.length - 1];
+      if (temValor(d.vooChegada)) texto('chegadaVoo', 'Arrival Flight', 'Voo de chegada', d.vooChegada, 'tbxArriveFlight');
+      if (cidCheg) texto('chegadaCidade', 'Arrival City', 'Cidade de chegada', cidCheg, 'tbxArriveCity');
       data('saidaEsp', 'Date of Departure from U.S.', 'Data de saída', d.saida, 'ddlDEPARTURE_US_DTEDay', 'ddlDEPARTURE_US_DTEMonth', 'tbxDEPARTURE_US_DTEYear');
-      if (cid.length) texto('saidaCidade', 'Departure City', 'Cidade de partida', cid[cid.length - 1], 'tbxDepartCity');
+      if (temValor(d.vooSaida)) texto('saidaVoo', 'Departure Flight', 'Voo de saída', d.vooSaida, 'tbxDepartFlight');
+      if (cidSai) texto('saidaCidade', 'Departure City', 'Cidade de partida', cidSai, 'tbxDepartCity');
       cid.slice(0, 5).forEach(function (c, i) {
         texto('local' + i, 'Location you plan to visit ' + (i + 1), 'Cidade(s) que vai visitar', c, 'dtlTravelLoc_ctl' + pad2(i) + '_tbxSPECTRAVEL_LOCATION',
           null);
@@ -493,8 +497,15 @@ function montarItens(dados) {
     simNao('vistoDig', 'Have you been ten-printed?', 'Colheu as 10 digitais?', d.vistoDigitais, 'rblPREV_VISA_TEN_PRINT_IND');
     simNao('vistoPerd', 'Has your U.S. Visa ever been lost or stolen?', 'Perdido ou roubado?', d.vistoPerdido, 'rblPREV_VISA_LOST_IND');
     simNao('vistoCanc', 'Has your U.S. Visa ever been cancelled or revoked?', 'Cancelado ou revogado?', d.vistoCancelado, 'rblPREV_VISA_CANCELLED_IND');
-    if (sim(d.vistoPerdido) || sim(d.vistoCancelado)) add({ id: 'vistoProb', r: 'Explain (lost/cancelled visa)', pt: 'Visto perdido/cancelado', mostra: '',
-      alerta: 'Visto perdido ou cancelado — explicação e ano precisam ser confirmados com o cliente.' });
+    if (sim(d.vistoPerdido)) {
+      if (temValor(d.vistoPerdidoAno)) texto('vistoPerdAno', 'Year visa was lost or stolen', 'Ano em que perdeu', d.vistoPerdidoAno, 'tbxPREV_VISA_LOST_YEAR');
+      if (temValor(d.vistoPerdidoDet)) traduzivel('vistoPerdExp', 'Explain (lost/stolen visa)', 'O que aconteceu', d.vistoPerdidoDet, 'tbxPREV_VISA_LOST_EXPL');
+      else add({ id: 'vistoPerdExp', r: 'Explain (lost/stolen visa)', pt: 'Visto perdido', mostra: '', alerta: 'Visto perdido sem explicação — confirmar com o cliente.' });
+    }
+    if (sim(d.vistoCancelado)) {
+      if (temValor(d.vistoCanceladoDet)) traduzivel('vistoCancExp', 'Explain (cancelled/revoked visa)', 'Quando e por que', d.vistoCanceladoDet, 'tbxPREV_VISA_CANCELLED_EXPL');
+      else add({ id: 'vistoCancExp', r: 'Explain (cancelled/revoked visa)', pt: 'Visto cancelado', mostra: '', alerta: 'Visto cancelado sem explicação — confirmar com o cliente.' });
+    }
   }
   simNao('negado', 'Have you ever been refused a U.S. Visa, or been refused admission?', 'Já teve visto negado?', d.vistoNegado, 'rblPREV_VISA_REFUSED_IND');
   if (sim(d.vistoNegado)) traduzivel('negadoDet', 'Explain (refusal)', 'Ano, consulado e motivo', d.vistoNegadoDet, 'tbxPREV_VISA_REFUSED_EXPL');
@@ -541,9 +552,11 @@ function montarItens(dados) {
   });
   var REDE = { 'Facebook': ['FCBK', '~FACEBOOK'], 'Instagram': ['INST', '~INSTAGRAM'], 'LinkedIn': ['LINK', '~LINKEDIN'],
     'Pinterest': ['PTST', '~PINTEREST'], 'TikTok': ['~TIKTOK', '~TIK TOK'], 'Twitter / X': ['TWIT', '~TWITTER'], 'YouTube': ['YTUB', '~YOUTUBE'] };
-  var redes = (Array.isArray(d.redes) ? d.redes : []).filter(function (r) { return r && temValor(r.usuario); });
+  var listaRedes = Array.isArray(d.redes) ? d.redes : [];
+  var semRedes = listaRedes.some(function (r) { return r && r.plataforma === 'Não uso redes sociais'; });
+  var redes = listaRedes.filter(function (r) { return r && r.plataforma !== 'Não uso redes sociais' && temValor(r.usuario); });
   if (!redes.length) add({ id: 'redesNenhuma', r: 'Social Media', pt: 'Redes sociais', mostra: 'NONE',
-    campos: [{ s: 'dtlSocial_ctl00_ddlSocialMedia', t: 'select', v: ['NONE', '~NONE'] }], nota: 'Cliente não informou redes sociais — confirme.' });
+    campos: [{ s: 'dtlSocial_ctl00_ddlSocialMedia', t: 'select', v: ['NONE', '~NONE'] }], nota: semRedes ? null : 'Cliente não informou redes sociais — confirme.' });
   redes.slice(0, 8).forEach(function (r, i) {
     var ctl = 'dtlSocial_ctl' + pad2(i) + '_';
     var usuario = String(r.usuario).trim().replace(/^@/, '').replace(/^https?:\/\/(www\.)?[^/]+\//i, '').replace(/\/$/, '');

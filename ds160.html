@@ -112,7 +112,7 @@ select option { background: var(--surface); color: var(--text); }
 .hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; line-height: 1.65; }
 .err-msg { font-size: 11.5px; color: var(--red); margin-top: 6px; display: none; }
 .field.bad input, .field.bad select { border-color: rgba(255,88,94,.55); }
-.field.bad .err-msg { display: block; }
+.field.bad > .err-msg { display: block; }
 
 /* honeypot — invisível para humanos, irresistível para bots */
 .hp { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
@@ -377,13 +377,18 @@ var ETAPAS = [
 
   { titulo: 'A viagem', h: 'Sobre a viagem', d: 'Se ainda não tem datas definidas, informe uma estimativa.', campos: [
     { id: 'motivo', r: 'Motivo principal', t: 'select', req: 1, op: ['Negócios', 'Tratamento médico', 'Turismo / lazer', 'Turismo e negócios', 'Visita a familiares ou amigos'] },
-    { id: 'passagemComprada', r: 'Já tem passagem comprada?', t: 'simnao', req: 1 },
+    { id: 'passagemComprada', r: 'Já tem passagem comprada?', t: 'simnao', req: 1, sub: [
+      { id: 'cidadeChegada', r: 'Cidade onde chega nos EUA', t: 'text', req: 1, meia: 1, ph: 'Ex.: Orlando' },
+      { id: 'vooChegada', r: 'Nº do voo de chegada', t: 'text', meia: 1, ph: 'Ex.: AD 8710', h: 'Se souber.' },
+      { id: 'cidadeSaida', r: 'Cidade de onde sai dos EUA', t: 'text', req: 1, meia: 1, ph: 'Ex.: Miami' },
+      { id: 'vooSaida', r: 'Nº do voo de saída', t: 'text', meia: 1, ph: 'Ex.: AD 8711', h: 'Se souber.' }
+    ]},
     { id: 'chegada', r: 'Data prevista de chegada', t: 'date', req: 1, meia: 1 },
     { id: 'saida', r: 'Data prevista de saída', t: 'date', req: 1, meia: 1 },
     { id: 'cidadeDestino', r: 'Cidade(s) que vai visitar', t: 'text', req: 1, ph: 'Ex.: Miami e Orlando' },
-    { id: 'hospedagem', r: 'Endereço de hospedagem nos EUA', t: 'area', h: 'Hotel, Airbnb ou casa de amigo/parente, com cidade, estado e ZIP (ex.: 1901 W Buena Vista Dr, Lake Buena Vista, FL 32830). Se ainda não tiver, deixe em branco que definimos juntos.' },
-    { id: 'hotelNome', r: 'Nome do hotel ou da hospedagem', t: 'text', meia: 1, ph: "Ex.: Disney's All-Star Movies Resort" },
-    { id: 'hotelTel', r: 'Telefone da hospedagem', t: 'text', meia: 1, ph: '+1 …', h: 'Se souber.' },
+    { id: 'hospedagem', r: 'Endereço de hospedagem nos EUA', t: 'area', req: 1, h: 'Hotel, Airbnb ou casa de amigo/parente, com cidade, estado e ZIP (ex.: 1901 W Buena Vista Dr, Lake Buena Vista, FL 32830). O DS-160 exige um endereço: se ainda não reservou, informe onde pretende ficar.' },
+    { id: 'hotelNome', r: 'Nome do hotel ou da hospedagem', t: 'text', req: 1, meia: 1, ph: "Ex.: Disney's All-Star Movies Resort" },
+    { id: 'hotelTel', r: 'Telefone da hospedagem', t: 'text', req: 1, meia: 1, ph: '+1 …', h: 'Está no site do hotel ou na reserva. Casa de amigo: o telefone dele.' },
     { id: 'pagador', r: 'Quem vai pagar a viagem?', t: 'select', req: 1, op: ['Cônjuge', 'Empresa / empregador', 'Eu mesmo(a)', 'Outra pessoa', 'Pais'] },
     { se: function (d) { return d.pagador && d.pagador !== 'Eu mesmo(a)'; }, campos: [
       { id: 'pagadorNome', r: 'Nome completo (ou nome da empresa)', t: 'text', req: 1 },
@@ -396,30 +401,30 @@ var ETAPAS = [
       ]}
     ]},
     { id: 'acompanhado', r: 'Vai viajar com outras pessoas?', t: 'simnao', req: 1, sub: [
-      { id: 'acompanhantes', r: 'Acompanhantes', t: 'lista', max: 10, rotuloItem: 'Pessoa', itens: [
-        { id: 'nome', r: 'Nome completo', t: 'text', meia: 1 },
-        { id: 'parentesco', r: 'Relação com você', t: 'text', meia: 1, ph: 'Ex.: cônjuge, filho, amigo' }
+      { id: 'acompanhantes', r: 'Acompanhantes', t: 'lista', req: 1, max: 10, rotuloItem: 'Pessoa', itens: [
+        { id: 'nome', r: 'Nome completo', t: 'text', req: 1, meia: 1 },
+        { id: 'parentesco', r: 'Relação com você', t: 'text', req: 1, meia: 1, ph: 'Ex.: cônjuge, filho, amigo' }
       ]}
     ]},
     { id: 'contatoEUA', r: 'Conhece alguém ou alguma empresa nos EUA?', t: 'simnao', req: 1, h: 'O DS-160 pede um contato nos EUA. Se não houver, usamos o hotel.', sub: [
       { id: 'contatoNome', r: 'Nome da pessoa ou da empresa', t: 'text', req: 1 },
       { id: 'contatoParentesco', r: 'Relação do contato com você', t: 'text', req: 1, meia: 1, ph: 'Ex.: prima, amigo, fornecedor' },
-      { id: 'contatoTel', r: 'Telefone do contato', t: 'text', meia: 1, ph: '+1 …' },
+      { id: 'contatoTel', r: 'Telefone do contato', t: 'text', req: 1, meia: 1, ph: '+1 …' },
       { id: 'contatoEmail', r: 'E-mail do contato', t: 'email', meia: 1 },
-      { id: 'contatoEndereco', r: 'Endereço do contato nos EUA', t: 'area' }
+      { id: 'contatoEndereco', r: 'Endereço do contato nos EUA', t: 'area', req: 1, ph: 'Rua e número, cidade, estado e ZIP' }
     ]}
   ]},
 
   { titulo: 'Histórico', h: 'Histórico com os EUA', d: 'Se você já teve visto, envie depois uma foto dele pelo WhatsApp.', campos: [
     { id: 'esteveEUA', r: 'Já esteve nos EUA?', t: 'simnao', req: 1, sub: [
-      { id: 'visitas', r: 'Últimas viagens (até 5)', t: 'lista', max: 5, rotuloItem: 'Viagem', itens: [
-        { id: 'chegada', r: 'Data de chegada', t: 'date', meia: 1 },
-        { id: 'duracao', r: 'Quanto tempo ficou', t: 'text', meia: 1, ph: 'Ex.: 12 dias' }
+      { id: 'visitas', r: 'Últimas viagens (até 5)', t: 'lista', req: 1, max: 5, rotuloItem: 'Viagem', h: 'Datas aproximadas servem: confira no passaporte antigo ou nas passagens.', itens: [
+        { id: 'chegada', r: 'Data de chegada', t: 'date', req: 1, meia: 1 },
+        { id: 'duracao', r: 'Quanto tempo ficou', t: 'text', req: 1, meia: 1, ph: 'Ex.: 12 dias' }
       ]},
       { id: 'cnhEUA', r: 'Já teve carteira de motorista americana?', t: 'simnao', req: 1 },
       { se: eq('cnhEUA', 'Sim'), campos: [
-        { id: 'cnhEUANumero', r: 'Número da carteira', t: 'text', meia: 1 },
-        { id: 'cnhEUAEstado', r: 'Estado americano', t: 'text', meia: 1 }
+        { id: 'cnhEUANumero', r: 'Número da carteira', t: 'text', req: 1, meia: 1, ph: 'Se não souber, escreva "não sei"' },
+        { id: 'cnhEUAEstado', r: 'Estado americano', t: 'text', req: 1, meia: 1 }
       ]}
     ]},
     { id: 'teveVisto', r: 'Já teve visto americano emitido?', t: 'simnao', req: 1, sub: [
@@ -429,7 +434,14 @@ var ETAPAS = [
       { id: 'vistoMesmoPais', r: 'Foi emitido no Brasil?', t: 'simnao', req: 1, meia: 1 },
       { id: 'vistoDigitais', r: 'Colheu as digitais dos 10 dedos?', t: 'simnao', req: 1, meia: 1 },
       { id: 'vistoPerdido', r: 'Já foi perdido ou roubado?', t: 'simnao', req: 1, meia: 1 },
-      { id: 'vistoCancelado', r: 'Já foi cancelado ou revogado?', t: 'simnao', req: 1, meia: 1 }
+      { id: 'vistoCancelado', r: 'Já foi cancelado ou revogado?', t: 'simnao', req: 1, meia: 1 },
+      { se: eq('vistoPerdido', 'Sim'), campos: [
+        { id: 'vistoPerdidoAno', r: 'Ano em que o visto foi perdido ou roubado', t: 'text', req: 1, meia: 1, ph: 'Ex.: 2019' },
+        { id: 'vistoPerdidoDet', r: 'O que aconteceu', t: 'area', req: 1 }
+      ]},
+      { se: eq('vistoCancelado', 'Sim'), campos: [
+        { id: 'vistoCanceladoDet', r: 'Quando e por que o visto foi cancelado', t: 'area', req: 1 }
+      ]}
     ]},
     { id: 'vistoNegado', r: 'Já teve visto americano negado?', t: 'simnao', req: 1, sub: [
       { id: 'vistoNegadoDet', r: 'Ano, consulado e motivo informado', t: 'area', req: 1 }
@@ -480,10 +492,10 @@ var ETAPAS = [
       ]}
     ]},
     { id: 'parentesEUA', r: 'Pais, cônjuge, noivo(a), filhos ou irmãos morando nos EUA?', t: 'simnao', req: 1, sub: [
-      { id: 'parentes', r: 'Parentes nos EUA', t: 'lista', max: 8, rotuloItem: 'Parente', itens: [
-        { id: 'nome', r: 'Nome completo', t: 'text' },
-        { id: 'parentesco', r: 'Parentesco', t: 'text', meia: 1 },
-        { id: 'status', r: 'Situação nos EUA', t: 'select', meia: 1, op: STATUS_EUA }
+      { id: 'parentes', r: 'Parentes nos EUA', t: 'lista', req: 1, max: 8, rotuloItem: 'Parente', itens: [
+        { id: 'nome', r: 'Nome completo', t: 'text', req: 1 },
+        { id: 'parentesco', r: 'Parentesco', t: 'text', req: 1, meia: 1 },
+        { id: 'status', r: 'Situação nos EUA', t: 'select', req: 1, meia: 1, op: STATUS_EUA }
       ]}
     ]},
     { id: 'outrosParentesEUA', r: 'Outros parentes (tios, primos…) morando nos EUA?', t: 'simnao', req: 1 }
@@ -503,37 +515,37 @@ var ETAPAS = [
     ]},
     { se: function (d) { return d.ocupacao && ['Aposentado(a)', 'Do lar', 'Sem ocupação no momento'].indexOf(d.ocupacao) === -1; }, campos: [
       { id: 'empresaNome', r: 'Nome da empresa ou instituição de ensino', t: 'text', req: 1, h: 'Empresário ou autônomo: nome da sua empresa ou do seu negócio.' },
-      { id: 'cargo', r: 'Cargo / função', t: 'text', req: 1, meia: 1 },
+      { id: 'cargo', r: 'Cargo / função', t: 'text', req: 1, meia: 1, h: 'Estudante: escreva o curso e a série.' },
       { id: 'empresaInicio', r: 'Data de início no trabalho atual', t: 'date', req: 1, meia: 1 },
       { id: 'empresaEndereco', r: 'Endereço do trabalho', t: 'text', req: 1, ph: 'Rua, número, bairro' },
       { id: 'empresaCidade', r: 'Cidade do trabalho', t: 'text', req: 1, meia: 1 },
       { id: 'empresaEstado', r: 'Estado do trabalho', t: 'uf', req: 1, meia: 1 },
       { id: 'empresaCep', r: 'CEP do trabalho', t: 'text', meia: 1 },
       { id: 'empresaTel', r: 'Telefone do trabalho', t: 'tel', req: 1, meia: 1 },
-      { id: 'renda', r: 'Renda mensal aproximada (R$)', t: 'text', req: 1, meia: 1, ph: 'Ex.: 12.000' },
+      { id: 'renda', r: 'Renda mensal aproximada (R$)', t: 'text', req: 1, meia: 1, ph: 'Ex.: 12.000', h: 'Estudante sem renda: escreva 0.' },
       { id: 'funcoes', r: 'Descreva o que você faz', t: 'area', req: 1, ph: 'Em poucas linhas: suas atividades e responsabilidades.' }
     ]},
     { id: 'empregosAnteriores', r: 'Trabalhou em outras empresas nos últimos 5 anos?', t: 'simnao', req: 1, sub: [
-      { id: 'anteriores', r: 'Empregos anteriores', t: 'lista', max: 5, rotuloItem: 'Emprego', itens: [
-        { id: 'empresa', r: 'Empresa', t: 'text', meia: 1 },
-        { id: 'cargo', r: 'Cargo', t: 'text', meia: 1 },
+      { id: 'anteriores', r: 'Empregos anteriores', t: 'lista', req: 1, max: 5, rotuloItem: 'Emprego', itens: [
+        { id: 'empresa', r: 'Empresa', t: 'text', req: 1, meia: 1 },
+        { id: 'cargo', r: 'Cargo', t: 'text', req: 1, meia: 1 },
         { id: 'endereco', r: 'Endereço (rua e número)', t: 'text', req: 1 },
         { id: 'cidade', r: 'Cidade', t: 'text', meia: 1, req: 1 },
         { id: 'estado', r: 'Estado', t: 'text', meia: 1, ph: 'Ex.: MG' },
         { id: 'cep', r: 'CEP', t: 'text', meia: 1, ph: 'Se souber' },
-        { id: 'telefone', r: 'Telefone', t: 'text', meia: 1 },
+        { id: 'telefone', r: 'Telefone', t: 'text', req: 1, meia: 1 },
         { id: 'supervisor', r: 'Nome do supervisor', t: 'text', meia: 1, ph: 'Se lembrar' },
         { id: 'inicio', r: 'Início', t: 'date', meia: 1, req: 1 },
         { id: 'fim', r: 'Saída', t: 'date', meia: 1, req: 1 },
-        { id: 'funcoes', r: 'O que fazia', t: 'area' }
+        { id: 'funcoes', r: 'O que fazia', t: 'area', req: 1 }
       ]}
     ]},
     { t: 'titulo', r: 'Estudos' },
     { id: 'escolaridade', r: 'Maior nível de escolaridade', t: 'select', req: 1, op: ['Doutorado', 'Ensino fundamental', 'Ensino médio', 'Mestrado', 'Pós-graduação / MBA', 'Superior (graduação)', 'Superior incompleto', 'Técnico'] },
     { se: function (d) { return d.escolaridade && d.escolaridade !== 'Ensino fundamental'; }, campos: [
-      { id: 'instituicoes', r: 'Instituições em que estudou (do ensino médio em diante)', t: 'lista', max: 6, rotuloItem: 'Instituição', itens: [
-        { id: 'nome', r: 'Nome da instituição', t: 'text' },
-        { id: 'curso', r: 'Curso', t: 'text', meia: 1, ph: 'Ex.: Administração, Ensino médio' },
+      { id: 'instituicoes', r: 'Instituições em que estudou (do ensino médio em diante)', t: 'lista', req: 1, max: 6, rotuloItem: 'Instituição', itens: [
+        { id: 'nome', r: 'Nome da instituição', t: 'text', req: 1 },
+        { id: 'curso', r: 'Curso', t: 'text', req: 1, meia: 1, ph: 'Ex.: Administração, Ensino médio' },
         { id: 'cidade', r: 'Cidade / estado', t: 'text', meia: 1, req: 1 },
         { id: 'endereco', r: 'Endereço (rua e número)', t: 'text', req: 1, ph: 'O DS-160 exige — procure no site da instituição' },
         { id: 'inicio', r: 'Início', t: 'date', meia: 1, req: 1 },
@@ -544,8 +556,8 @@ var ETAPAS = [
   ]},
 
   { titulo: 'Complementares', h: 'Informações complementares', d: 'Perguntas que o DS-160 faz a todos os solicitantes.', campos: [
-    { id: 'redes', r: 'Redes sociais usadas nos últimos 5 anos', t: 'lista', max: 8, rotuloItem: 'Rede', h: 'Obrigatório no DS-160. Informe o nome de usuário (sem senha).', itens: [
-      { id: 'plataforma', r: 'Rede', t: 'select', meia: 1, op: ['Facebook', 'Instagram', 'LinkedIn', 'Outra', 'Pinterest', 'TikTok', 'Twitter / X', 'YouTube'] },
+    { id: 'redes', r: 'Redes sociais usadas nos últimos 5 anos', t: 'lista', req: 1, max: 8, rotuloItem: 'Rede', h: 'Obrigatório no DS-160. Informe o nome de usuário (sem senha).', itens: [
+      { id: 'plataforma', r: 'Rede', t: 'select', req: 1, meia: 1, op: ['Facebook', 'Instagram', 'LinkedIn', 'Não uso redes sociais', 'Outra', 'Pinterest', 'TikTok', 'Twitter / X', 'YouTube'] },
       { id: 'usuario', r: 'Usuário', t: 'text', meia: 1, ph: '@usuario' }
     ]},
     { id: 'organizacoes', r: 'Participa ou participou de alguma organização?', t: 'simnao', req: 1, h: 'Associações profissionais, clubes, igrejas, ONGs, entidades de classe.', sub: [
@@ -553,11 +565,11 @@ var ETAPAS = [
     ]},
     { id: 'militar', r: 'Já serviu às Forças Armadas?', t: 'simnao', req: 1, h: 'Inclui o serviço militar obrigatório (Tiro de Guerra, Exército, Marinha, Aeronáutica).', sub: [
       { id: 'militarForca', r: 'Força', t: 'text', req: 1, meia: 1, ph: 'Ex.: Exército' },
-      { id: 'militarPatente', r: 'Patente / posto', t: 'text', meia: 1 },
-      { id: 'militarEspecialidade', r: 'Especialidade', t: 'text', meia: 1 },
+      { id: 'militarPatente', r: 'Patente / posto', t: 'text', req: 1, meia: 1, ph: 'Ex.: soldado' },
+      { id: 'militarEspecialidade', r: 'Especialidade', t: 'text', req: 1, meia: 1, ph: 'Ex.: infantaria' },
       { id: 'militarPais', r: 'País', t: 'text', meia: 1, v: 'Brasil' },
-      { id: 'militarInicio', r: 'Início do serviço', t: 'date', meia: 1 },
-      { id: 'militarFim', r: 'Fim do serviço', t: 'date', meia: 1 }
+      { id: 'militarInicio', r: 'Início do serviço', t: 'date', req: 1, meia: 1 },
+      { id: 'militarFim', r: 'Fim do serviço', t: 'date', req: 1, meia: 1 }
     ]},
     { id: 'habilidades', r: 'Tem conhecimento especializado em armas, explosivos ou materiais nucleares, biológicos ou químicos?', t: 'simnao', req: 1, sub: [
       { id: 'habilidadesDet', r: 'Descreva', t: 'text', req: 1 }
@@ -631,7 +643,8 @@ function montarCampos(lista, host) {
 
     if (c.t === 'lista') {
       f.innerHTML = '<label>' + esc(c.r) + '</label>' + (c.h ? '<p class="hint" style="margin:-2px 0 10px">' + esc(c.h) + '</p>' : '') +
-        '<div class="lista-host"></div><button type="button" class="btn-add">+ Adicionar ' + esc(c.rotuloItem.toLowerCase()) + '</button>';
+        '<div class="lista-host"></div><button type="button" class="btn-add">+ Adicionar ' + esc(c.rotuloItem.toLowerCase()) + '</button>' +
+        '<p class="err-msg">Preencha pelo menos um item.</p>';
       var hostL = f.querySelector('.lista-host');
       f.querySelector('.btn-add').addEventListener('click', function () { addItem(c, hostL); });
       addItem(c, hostL);
@@ -815,6 +828,21 @@ function validarEtapa(n) {
       var x = f.querySelector('[data-sub]');
       if (x && !x.value.trim()) { f.classList.add('bad'); ok = false; if (!primeiro) primeiro = x; }
     });
+  });
+  // Listas obrigatórias (visitas, empregos, escolas…): pelo menos um item preenchido
+  Array.prototype.forEach.call(sec.querySelectorAll('.field[data-campo][data-req]'), function (f) {
+    var hostL = f.querySelector(':scope > .lista-host');
+    if (!hostL || !visivel(f)) return;
+    f.classList.remove('bad');
+    var algum = Array.prototype.some.call(hostL.querySelectorAll('[data-sub]'), function (x) { return x.value.trim(); });
+    if (!algum) { f.classList.add('bad'); ok = false; if (!primeiro) primeiro = hostL.querySelector('[data-sub]'); }
+  });
+  // Rede social escolhida (que não seja "Não uso") precisa do usuário
+  Array.prototype.forEach.call(sec.querySelectorAll('.field[data-campo="redes"] .lista-item'), function (item) {
+    var pl = item.querySelector('[data-sub="plataforma"]'), us = item.querySelector('[data-sub="usuario"]');
+    if (pl && us && pl.value && pl.value !== 'Não uso redes sociais' && !us.value.trim()) {
+      us.closest('.field').classList.add('bad'); ok = false; if (!primeiro) primeiro = us;
+    }
   });
   // Coerências que o consulado cobra
   if (ok && n === 3 && valor('passaporteVal') && valor('passaporteEmissao') && valor('passaporteVal') <= valor('passaporteEmissao')) {

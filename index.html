@@ -3528,7 +3528,7 @@ function montarDadosFamiliar(base, rel, nome) {
   function copia(ids) { ids.forEach(function (k) { if (d[k] != null && d[k] !== '') o[k] = d[k]; }); }
 
   // Viagem, hospedagem, contato nos EUA e agendamento: iguais para todos.
-  copia(['motivo', 'passagemComprada', 'chegada', 'saida', 'cidadeDestino', 'hospedagem', 'hotelNome', 'hotelTel',
+  copia(['motivo', 'passagemComprada', 'cidadeChegada', 'vooChegada', 'cidadeSaida', 'vooSaida', 'chegada', 'saida', 'cidadeDestino', 'hospedagem', 'hotelNome', 'hotelTel',
          'contatoEUA', 'contatoNome', 'contatoTel', 'contatoEmail', 'contatoEndereco', 'consulado', 'disponibilidade']);
   // Mesma casa (cônjuge e filhos).
   if (rel === 'Cônjuge' || rel === 'Filho(a)') {
