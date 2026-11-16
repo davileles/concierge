@@ -140,6 +140,8 @@ function adicionarLinha(sufixo) {
 }
 
 function preencher(campos) {
+  // Preenchimento da extensão: os postbacks que ele causa não devem perguntar "Sair do site?".
+  try { window.dispatchEvent(new CustomEvent('ds160cdv-livre')); } catch (e) {}
   var res = [];
   for (var i = 0; i < campos.length; i++) {
     var c = campos[i];

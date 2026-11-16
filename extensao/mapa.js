@@ -825,7 +825,19 @@ function montarItens(dados) {
   }
 
   // "não sei" em qualquer resposta do cliente vira alerta do item.
+  // Campos de nome (pessoa, empresa, escola, organização) só aceitam A-Z, 0-9,
+  // hífen, apóstrofo, & e espaço simples: "S.A." vira "SA", "Ltda." vira "LTDA".
+  var NOME = /(SURNAME|GIVEN_NAME|Surname|GivenName|EmpSchName|EmployerName|SchoolName|ORGANIZATION)/;
+  itens.forEach(function (it) {
+    (it.campos || []).forEach(function (c) {
+      if (c.t === 'text' && typeof c.v === 'string' && NOME.test(c.s)) c.v = limparNome(c.v);
+    });
+    if (it.campos && it.campos.length && NOME.test(it.campos[0].s) && typeof it.mostra === 'string') it.mostra = limparNome(it.mostra.split(' · ')[0]) + (it.mostra.indexOf(' · ') > -1 ? ' · ' + it.mostra.split(' · ').slice(1).join(' · ') : '');
+  });
   return itens;
+}
+function limparNome(v) {
+  return up(v).replace(/\./g, '').replace(/[^A-Z0-9 '&\-]/g, ' ').replace(/\s+/g, ' ').replace(/\s*-\s*/g, '-').trim();
 }
 
 // Todos os sufixos citados (para o content script sondar a página).
