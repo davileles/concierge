@@ -172,7 +172,24 @@ function podePreencher(it) {
 // Linha 2, 3… de uma lista (acompanhantes, escolas…) conta como "desta página"
 // quando a 1ª linha existe: a extensão clica em "Add Another" sozinha.
 function linha0(s) { return String(s).replace(/_ctl(\d{2})_/, '_ctl00_'); }
+// Cada seção do mapa pertence a uma página do site (parâmetro node= da URL).
+// Sem isso, campos com o mesmo id em páginas diferentes se misturam — ex.:
+// a data de nascimento do cônjuge (ddlDOBDay…) caía na Personal 1.
+var NO_DA_SECAO = {
+  'Personal 1': /^Personal1$/i, 'Personal 2': /^Personal2$/i, 'Travel': /^Travel$/i,
+  'Travel Companions': /^TravelCompanions$/i, 'Previous U.S. Travel': /^PreviousUSTravel$/i,
+  'Address and Phone': /^AddressPhone$/i, 'Passport': /^PptVisa$/i, 'U.S. Contact': /^USContact$/i,
+  'Family: Relatives': /^Relatives$/i, 'Family: Spouse': /Spouse/i,
+  'Work / Education: Present': /^WorkEducation1$/i, 'Work / Education: Previous': /^WorkEducation2$/i,
+  'Work / Education: Additional': /^WorkEducation3$/i, 'Security and Background': /^SecurityandBackground/i
+};
+function noAtual() { var m = /[?&]node=([^&#]+)/i.exec(sonda.url || ''); return m ? m[1] : null; }
+function daPaginaAtual(it) {
+  var no = noAtual(), re = NO_DA_SECAO[it.secao];
+  return !no || !re || re.test(no);
+}
 function naPagina(it) {
+  if (!daPaginaAtual(it)) return false;
   return (it.campos || []).some(function (c) { return existentes[c.s] || (/_ctl(?!00)\d{2}_/.test(c.s) && existentes[linha0(c.s)]); });
 }
 
