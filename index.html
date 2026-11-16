@@ -3300,7 +3300,8 @@ function _ds160Cliente(r) {
 function renderDs160() {
   var box = document.getElementById('ds160-box');
   if (!box) return;
-  var lista = ds160Lista.slice().sort(function(a, b){
+  var rascunhos = ds160Lista.filter(function(r){ return r.status === 'rascunho'; });
+  var lista = ds160Lista.filter(function(r){ return r.status !== 'rascunho'; }).sort(function(a, b){
     if ((a.status === 'novo') !== (b.status === 'novo')) return a.status === 'novo' ? -1 : 1;
     return String(b.recebidoEm).localeCompare(String(a.recebidoEm));
   });
@@ -3312,6 +3313,17 @@ function renderDs160() {
     +   '<button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="copiarLinkDs160()">🔗 Copiar link do formulário</button>'
     + '</div>'
     + (lista.length ? '' : '<div style="font-size:12px;color:var(--muted);margin-top:8px">Nenhum formulário recebido ainda.</div>')
+    + rascunhos.map(function(r){
+        var s = r.resumo || {};
+        return '<div id="ds160-row-' + r.id + '" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">'
+          + '<div style="flex:1;min-width:200px">'
+          +   '<div style="font-size:13px;font-weight:700">⏳ ' + escHtml(s.nome || 'Familiar') + ' <span style="font-size:10px;font-weight:600;color:var(--muted)">· aguardando a pessoa preencher</span></div>'
+          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(r.relacao || '') + ' · link criado ' + escHtml(String(r.criadoEm || '').slice(0, 10).split('-').reverse().join('/')) + '</div>'
+          + '</div>'
+          + '<button class="btn btn-ghost btn-sm" onclick="copiarLinkRascunhoDs160(\'' + r.id + '\')">🔗 Copiar link</button>'
+          + '<button class="btn btn-ghost btn-sm" title="Excluir" onclick="statusDs160(\'' + r.id + '\',\'excluir\')">🗑</button>'
+          + '</div>';
+      }).join('')
     + lista.map(function(r){
         var s = r.resumo || {};
         var cli = _ds160Cliente(r);
@@ -3329,6 +3341,7 @@ function renderDs160() {
           +   '</div>'
           + '</div>'
           + '<button class="btn btn-accent btn-sm" onclick="abrirDs160(\'' + r.id + '\')">📄 Ver ficha</button>'
+          + '<button class="btn btn-ghost btn-sm" title="Gerar o formulário de outra pessoa da família já com a viagem preenchida" onclick="abrirFamiliarDs160(\'' + r.id + '\')">👥 Familiar</button>'
           + (feito
               ? '<button class="btn btn-ghost btn-sm" onclick="statusDs160(\'' + r.id + '\',\'novo\')">↺ Reabrir</button>'
               : '<button class="btn btn-ghost btn-sm" onclick="statusDs160(\'' + r.id + '\',\'preenchido\')">✓ Preenchido</button>')
@@ -3409,6 +3422,201 @@ function statusDs160(id, acao) {
       if (row) row.style.opacity = '';
       showToast('❌ ' + e.message, 'err');
     });
+}
+
+// ── DS-160 de familiar ────────────────────────────────────────────────
+// A partir do formulário de um cliente, monta as respostas comuns para outra
+// pessoa da família (viagem, hotel, contato nos EUA, consulado, endereço,
+// acompanhantes e, conforme o parentesco, cônjuge/pais/nome/nascimento) e cria
+// um rascunho no proxy. O familiar recebe o link, confere e completa o resto.
+var DS160_RELACOES = ['Cônjuge', 'Filho(a)', 'Mãe', 'Outro familiar', 'Pai'];
+
+function _ds160Norm(s) { return _ds160SemAcento(s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+function _ds160Divide(nome) {
+  var p = String(nome || '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return { nomes: '', sobrenome: '' };
+  return { nomes: p[0], sobrenome: p.slice(1).join(' ') };
+}
+function _ds160MesmaPessoa(a, b) {
+  var x = _ds160Norm(a).split(' '), y = _ds160Norm(b).split(' ');
+  if (!x[0] || !y[0]) return false;
+  return x[0] === y[0] && x[x.length - 1] === y[y.length - 1];
+}
+
+// Parentesco de cada acompanhante, visto pelo familiar (rel = relação do
+// familiar com a pessoa-base; p = relação do acompanhante com a pessoa-base).
+function _ds160RelAcomp(rel, p, baseFem) {
+  var t = _ds160Norm(p);
+  var conj = /conjuge|marido|esposa|companheir/.test(t), filho = /\bfilh/.test(t),
+      mae = /\bmae\b/.test(t), pai = /\bpai\b/.test(t), irmao = /\birma/.test(t);
+  if (rel === 'Cônjuge') {
+    if (filho) return p;
+    if (mae) return 'Sogra'; if (pai) return 'Sogro';
+    if (irmao) return 'Cunhado(a)';
+    return p;
+  }
+  if (rel === 'Filho(a)') {
+    if (conj) return baseFem ? 'Pai' : 'Mãe';
+    if (filho) return 'Irmão(ã)';
+    if (mae) return 'Avó'; if (pai) return 'Avô';
+    if (irmao) return baseFem ? 'Tia/Tio (materno)' : 'Tia/Tio (paterno)';
+    return p;
+  }
+  if (rel === 'Mãe' || rel === 'Pai') {
+    if (conj) return baseFem ? 'Genro' : 'Nora';
+    if (filho) return 'Neto(a)';
+    if (mae || pai) return 'Cônjuge';
+    if (irmao) return baseFem ? 'Filha/Filho' : 'Filho/Filha';
+    return p;
+  }
+  return p;
+}
+
+function montarDadosFamiliar(base, rel, nome) {
+  var d = base.dados || {};
+  var baseNome = ((d.nomes || '') + ' ' + (d.sobrenome || '')).trim() || (base.resumo || {}).nome || '';
+  var baseFem = d.sexo === 'Feminino';
+  var o = {};
+  function copia(ids) { ids.forEach(function (k) { if (d[k] != null && d[k] !== '') o[k] = d[k]; }); }
+
+  // Viagem, hospedagem, contato nos EUA e agendamento: iguais para todos.
+  copia(['motivo', 'passagemComprada', 'chegada', 'saida', 'cidadeDestino', 'hospedagem', 'hotelNome', 'hotelTel',
+         'contatoEUA', 'contatoNome', 'contatoTel', 'contatoEmail', 'contatoEndereco', 'consulado', 'disponibilidade']);
+  // Mesma casa (cônjuge e filhos).
+  if (rel === 'Cônjuge' || rel === 'Filho(a)') {
+    copia(['cep', 'numero', 'logradouro', 'complemento', 'bairro', 'cidade', 'estado', 'correspDiferente', 'correspEndereco']);
+  }
+
+  // Quem paga.
+  if (d.pagador === 'Eu mesmo(a)') {
+    o.pagador = rel === 'Cônjuge' ? 'Cônjuge' : rel === 'Filho(a)' ? 'Pais' : 'Outra pessoa';
+    o.pagadorNome = baseNome; o.pagadorTel = d.tel || ''; o.pagadorEmail = d.email || '';
+    o.pagadorParentesco = rel === 'Cônjuge' ? (baseFem ? 'esposa' : 'marido') : rel === 'Filho(a)' ? (baseFem ? 'mãe' : 'pai')
+      : (rel === 'Mãe' || rel === 'Pai') ? (baseFem ? 'filha' : 'filho') : '';
+    o.pagadorMesmoEndereco = (rel === 'Cônjuge' || rel === 'Filho(a)') ? 'Sim' : '';
+  } else if (d.pagador === 'Cônjuge' && rel === 'Cônjuge') {
+    o.pagador = 'Eu mesmo(a)';
+  } else if (d.pagador) {
+    o.pagador = d.pagador === 'Cônjuge' ? (rel === 'Filho(a)' ? 'Pais' : 'Outra pessoa') : d.pagador;
+    copia(['pagadorNome', 'pagadorTel', 'pagadorEmail']);
+    if (d.pagador === 'Cônjuge') o.pagadorParentesco = rel === 'Filho(a)' ? (baseFem ? 'pai' : 'mãe') : (rel === 'Mãe' || rel === 'Pai') ? (baseFem ? 'genro' : 'nora') : '';
+    if (rel === 'Cônjuge' || rel === 'Filho(a)') copia(['pagadorMesmoEndereco', 'pagadorEndereco']);
+  }
+
+  // Acompanhantes: sai a própria pessoa, entra a pessoa-base.
+  var quem = nome || (rel === 'Cônjuge' ? d.conjugeNome : rel === 'Mãe' ? d.maeNome : rel === 'Pai' ? d.paiNome : '') || '';
+  var acomp = (Array.isArray(d.acompanhantes) ? d.acompanhantes : []).filter(function (a) {
+    if (!a || !a.nome) return false;
+    if (quem && _ds160MesmaPessoa(a.nome, quem)) return false;
+    if (!quem && rel === 'Cônjuge' && /conjuge|marido|esposa/.test(_ds160Norm(a.parentesco))) return false;
+    return true;
+  }).map(function (a) { return { nome: a.nome, parentesco: _ds160RelAcomp(rel, a.parentesco || '', baseFem) }; });
+  var relBase = rel === 'Cônjuge' ? 'Cônjuge' : rel === 'Filho(a)' ? (baseFem ? 'Mãe' : 'Pai')
+    : (rel === 'Mãe' || rel === 'Pai') ? (baseFem ? 'Filha' : 'Filho') : '';
+  acomp.unshift({ nome: baseNome, parentesco: relBase });
+  o.acompanhado = 'Sim';
+  o.acompanhantes = acomp;
+
+  // Pessoa e família, conforme o parentesco.
+  var proprio = nome || '';
+  if (rel === 'Cônjuge') {
+    proprio = proprio || d.conjugeNome || '';
+    if (d.conjugeNasc) o.nasc = d.conjugeNasc;
+    if (d.conjugeCidadeNasc) o.cidadeNasc = d.conjugeCidadeNasc;
+    if (d.conjugePaisNasc) o.paisNasc = d.conjugePaisNasc;
+    if (d.conjugeNacionalidade) o.nacionalidade = d.conjugeNacionalidade;
+    if (d.estadoCivil) o.estadoCivil = d.estadoCivil;
+    if (d.sexo) o.sexo = baseFem ? 'Masculino' : 'Feminino';
+    o.conjugeNome = baseNome; o.conjugeNasc = d.nasc || ''; o.conjugeNacionalidade = d.nacionalidade || '';
+    o.conjugeCidadeNasc = d.cidadeNasc || ''; o.conjugePaisNasc = d.paisNasc || ''; o.conjugeMesmoEndereco = 'Sim';
+  } else if (rel === 'Filho(a)') {
+    o.estadoCivil = 'Solteiro(a)';
+    o.ocupacao = 'Estudante';
+    var mae = baseFem ? { n: baseNome, d: d.nasc } : { n: d.conjugeNome, d: d.conjugeNasc };
+    var pai = baseFem ? { n: d.conjugeNome, d: d.conjugeNasc } : { n: baseNome, d: d.nasc };
+    if (mae.n) { o.maeNome = mae.n; o.maeNasc = mae.d || ''; o.maeEUA = 'Não'; }
+    if (pai.n) { o.paiNome = pai.n; o.paiNasc = pai.d || ''; o.paiEUA = 'Não'; }
+  } else if (rel === 'Mãe' || rel === 'Pai') {
+    var eu = rel === 'Mãe' ? { n: d.maeNome, d: d.maeNasc } : { n: d.paiNome, d: d.paiNasc };
+    var outro = rel === 'Mãe' ? { n: d.paiNome, d: d.paiNasc } : { n: d.maeNome, d: d.maeNasc };
+    proprio = proprio || eu.n || '';
+    if (eu.d) o.nasc = eu.d;
+    o.sexo = rel === 'Mãe' ? 'Feminino' : 'Masculino';
+    if (outro.n) { o.conjugeNome = outro.n; o.conjugeNasc = outro.d || ''; o.conjugeMesmoEndereco = 'Sim'; }
+  }
+  if (proprio) { var dv = _ds160Divide(proprio); o.nomes = dv.nomes; o.sobrenome = dv.sobrenome; }
+  o.grupoVisto = [baseNome].concat(acomp.slice(1).map(function (a) { return a.nome; })).join(', ');
+  return { dados: o, rotulo: proprio || (rel + ' de ' + (baseNome.split(' ')[0] || 'cliente')) };
+}
+
+function abrirFamiliarDs160(id) {
+  var r = null;
+  for (var i = 0; i < ds160Lista.length; i++) if (ds160Lista[i].id === id) r = ds160Lista[i];
+  if (!r) return;
+  ds160Aberto = r;
+  var acomp = ((r.dados || {}).acompanhantes || []).filter(function (a) { return a && a.nome; });
+  document.getElementById('ds160-titulo').textContent = '👥 DS-160 de familiar';
+  document.getElementById('ds160-corpo').innerHTML =
+      '<div style="font-size:12px;color:var(--muted);margin-bottom:12px">Base: <b>' + escHtml((r.resumo || {}).nome || '') + '</b>. '
+    + 'O formulário novo já vem com a viagem, o hotel, o contato nos EUA, o consulado, os acompanhantes e — conforme o parentesco — endereço, cônjuge, pais, nome e nascimento. '
+    + 'A pessoa confere tudo e completa documentos, trabalho e estudos.</div>'
+    + (acomp.length ? '<div class="field"><label>Acompanhante da viagem</label><select id="dsf-acomp" onchange="dsfAcomp()">'
+        + '<option value="">Escolher da lista…</option>'
+        + acomp.slice().sort(function (a, b) { return a.nome.localeCompare(b.nome, 'pt-BR'); }).map(function (a) {
+            return '<option value="' + escHtml(a.nome) + '" data-par="' + escHtml(a.parentesco || '') + '">' + escHtml(a.nome) + (a.parentesco ? ' · ' + escHtml(a.parentesco) : '') + '</option>';
+          }).join('') + '</select></div>' : '')
+    + '<div class="field"><label>Parentesco com ' + escHtml(((r.resumo || {}).nome || '').split(' ')[0]) + '</label><select id="dsf-rel">'
+    + DS160_RELACOES.map(function (x) { return '<option>' + x + '</option>'; }).join('') + '</select></div>'
+    + '<div class="field"><label>Nome completo (opcional)</label><input id="dsf-nome" placeholder="Ex.: Alice Ildefonso de Ávila"/></div>'
+    + '<button class="btn btn-accent" id="dsf-btn" onclick="gerarFamiliarDs160()">🔗 Gerar link do formulário</button>'
+    + '<div id="dsf-saida" style="margin-top:14px"></div>';
+  document.getElementById('modal-ds160').classList.add('open');
+}
+
+function dsfAcomp() {
+  var sel = document.getElementById('dsf-acomp');
+  var op = sel.options[sel.selectedIndex];
+  if (!op || !op.value) return;
+  document.getElementById('dsf-nome').value = op.value;
+  var p = _ds160Norm(op.getAttribute('data-par'));
+  var rel = /conjuge|marido|esposa|companheir/.test(p) ? 'Cônjuge' : /\bfilh/.test(p) ? 'Filho(a)' : /\bmae\b/.test(p) ? 'Mãe' : /\bpai\b/.test(p) ? 'Pai' : 'Outro familiar';
+  document.getElementById('dsf-rel').value = rel;
+}
+
+function gerarFamiliarDs160() {
+  if (!ds160Aberto) return;
+  var rel = document.getElementById('dsf-rel').value;
+  var nome = document.getElementById('dsf-nome').value.trim();
+  var m = montarDadosFamiliar(ds160Aberto, rel, nome);
+  var btn = document.getElementById('dsf-btn');
+  btn.disabled = true; btn.textContent = 'Gerando…';
+  fetch('https://cdv-proxy-production.up.railway.app/concierge/ds160/familiar', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ baseId: ds160Aberto.id, relacao: rel, rotulo: m.rotulo, dados: m.dados })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      btn.disabled = false; btn.textContent = '🔗 Gerar outro';
+      if (!d.ok) throw new Error(d.erro || 'falha');
+      var primeiro = (m.rotulo.split(' ')[0] || '');
+      var msg = 'Olá' + (primeiro && nome ? ', ' + primeiro : '') + '! Segue o formulário do seu visto americano. '
+        + 'Ele já vem com os dados da viagem da família — confira tudo e complete o que é seu (documentos, trabalho e estudos): ' + d.link;
+      document.getElementById('dsf-saida').innerHTML =
+          '<div style="font-size:12px;font-weight:700;margin-bottom:6px">Link de ' + escHtml(m.rotulo) + '</div>'
+        + '<div style="display:flex;gap:8px;flex-wrap:wrap"><input readonly value="' + escHtml(d.link) + '" style="flex:1;min-width:220px" onclick="this.select()"/>'
+        + '<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(' + escHtml(JSON.stringify(d.link)) + ').then(function(){showToast(\'🔗 Link copiado!\',\'ok\')})">Copiar link</button>'
+        + '<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(' + escHtml(JSON.stringify(msg)) + ').then(function(){showToast(\'💬 Mensagem copiada!\',\'ok\')})">Copiar mensagem</button></div>'
+        + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Vale por 60 dias. Aparece na lista como "aguardando" até a pessoa enviar.</div>';
+      carregarDs160();
+    })
+    .catch(function (e) { btn.disabled = false; btn.textContent = '🔗 Gerar link do formulário'; showToast('❌ ' + e.message, 'err'); });
+}
+
+function copiarLinkRascunhoDs160(id) {
+  for (var i = 0; i < ds160Lista.length; i++) if (ds160Lista[i].id === id && ds160Lista[i].token) {
+    var link = DS160_LINK + '?r=' + ds160Lista[i].token;
+    navigator.clipboard.writeText(link).then(function () { showToast('🔗 Link copiado!', 'ok'); });
+  }
 }
 
 function populateClienteSelect() {

@@ -250,6 +250,7 @@ footer .by { font-style: italic; opacity: .72; }
   <div class="step-label" id="step-label"></div>
 
   <div class="banner err" id="banner"></div>
+  <div class="aviso-doc" id="faixa-familia" hidden style="margin-bottom:14px"></div>
 
   <form id="form" autocomplete="on" onsubmit="return false">
     <div class="hp" aria-hidden="true">
@@ -878,7 +879,7 @@ function montarPayload() {
   });
   dados.cpf = digitos(dados.cpf);
   dados.tel = digitos(dados.tel);
-  return { website: $('website').value.trim(), consentimento: $('consentimento').checked, dados: dados, ficha: ficha };
+  return { website: $('website').value.trim(), consentimento: $('consentimento').checked, dados: dados, ficha: ficha, rascunho: RASCUNHO || undefined };
 }
 
 // ── NAVEGAÇÃO ─────────────────────────────────────────────
@@ -955,6 +956,65 @@ $('btn-avancar').addEventListener('click', function () {
   if (etapa < TOTAL - 1) { etapa++; render(); return; }
   enviar();
 });
+
+// ── FORMULÁRIO DE FAMILIAR (?r=<token>) ───────────────────
+// A equipe gera, a partir do formulário de outra pessoa da família, um link já
+// com as respostas comuns (viagem, hotel, endereço, acompanhantes, cônjuge/pais).
+// Tudo fica editável; ao enviar, o rascunho do servidor vira o formulário desta pessoa.
+function acharCampoSchema(lista, id) {
+  for (var i = 0; i < lista.length; i++) {
+    var c = lista[i], r = null;
+    if (c.se) r = acharCampoSchema(c.campos, id);
+    else if (c.id === id) return c;
+    if (!r && c.sub) r = acharCampoSchema(c.sub, id);
+    if (r) return r;
+  }
+  return null;
+}
+function aplicarRascunho(d) {
+  var n = 0;
+  Object.keys(d || {}).forEach(function (id) {
+    var v = d[id];
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return;
+    var c = null;
+    ETAPAS.some(function (e) { c = acharCampoSchema(e.campos, id); return !!c; });
+    if (!c) return;
+    if (c.t === 'lista') {
+      var f = document.querySelector('.field[data-campo="' + id + '"]');
+      var host = f && f.querySelector('.lista-host');
+      if (!host || !Array.isArray(v)) return;
+      host.innerHTML = '';
+      v.slice(0, c.max || 10).forEach(function (item) {
+        addItem(c, host);
+        var it = host.lastElementChild;
+        c.itens.forEach(function (s) {
+          var el = it.querySelector('[data-sub="' + s.id + '"]');
+          if (el && item && item[s.id] != null) el.value = item[s.id];
+        });
+      });
+      n++;
+      return;
+    }
+    var el = document.querySelector('[data-id="' + id + '"]');
+    if (el) { el.value = v; n++; }
+  });
+  atualizarCondicoes();
+  return n;
+}
+var RASCUNHO = (/[?&]r=([a-f0-9]{32})/.exec(location.search) || [])[1] || '';
+if (RASCUNHO) {
+  fetch(PROXY + '/concierge/ds160/rascunho?t=' + RASCUNHO, { cache: 'no-store' })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) { aviso(d.erro || 'Não foi possível abrir este link.'); RASCUNHO = ''; return; }
+      var n = aplicarRascunho(d.dados || {});
+      var fx = $('faixa-familia');
+      fx.innerHTML = '<b>Formulário de ' + esc(d.rotulo || 'familiar') + '.</b> ' + n + ' resposta(s) já vieram preenchidas com os dados da viagem da família. ' +
+        'Confira cada etapa — tudo pode ser alterado — e complete o que é só seu (documentos, trabalho, estudos).';
+      fx.hidden = false;
+    })
+    .catch(function () { aviso('Falha de conexão ao abrir o formulário. Recarregue a página.'); });
+}
 
 // Sem rascunho local (convenção do concierge): avisa antes de perder o que foi digitado.
 window.onbeforeunload = function () { return etapa > 1 ? 'Os dados preenchidos serão perdidos.' : undefined; };
