@@ -460,7 +460,7 @@ function passoAuto(forcar) {
         if (!tinha) return pausarAuto('Esta página ("' + (sonda.titulo || 'sem título') + '") não tem respostas do cliente. Confira e clique em Continuar.', []);
       }
       statusAuto('▶ Página ' + auto.paginas + ' pronta · clicando em Next…');
-      return enviar({ tipo: 'ds160-avancar' }).then(function (r) {
+      return semAvisoDeSaida().then(function () { return enviar({ tipo: 'ds160-avancar' }); }).then(function (r) {
         if (!r || !r.ok) throw new Error((r && r.erro) || 'Não consegui clicar em Next.');
         return esperarPagina(r.carga, null, 45000);
       }).then(function (carregou) {
@@ -470,6 +470,23 @@ function passoAuto(forcar) {
       });
     });
   }).catch(function (e) { return pausarAuto(e.message, []); });
+}
+// O DS-160 pergunta "Sair do site?" (beforeunload) quando o Next não vem de um
+// clique "humano" e a página fica parada esperando confirmação. Antes do Next,
+// desliga esse aviso no contexto da própria página (só nesta carga; o Next é um
+// envio de formulário, então nada se perde).
+function semAvisoDeSaida() {
+  if (abaId == null) return Promise.resolve();
+  return chrome.scripting.executeScript({
+    target: { tabId: abaId }, world: 'MAIN',
+    func: function () {
+      try { window.onbeforeunload = null; } catch (e) {}
+      if (!window.__ds160SemAviso) {
+        window.__ds160SemAviso = true;
+        window.addEventListener('beforeunload', function (e) { e.stopImmediatePropagation(); try { delete e.returnValue; } catch (x) {} }, true);
+      }
+    }
+  }).catch(function () {});
 }
 function preencherTudo() {
   if (auto && !auto.pausado) { auto.parar = true; statusAuto('■ Parando depois do campo atual…'); return; }

@@ -219,7 +219,10 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
       else {
         try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf('ds160cdv-add:') === 0) sessionStorage.removeItem(k); }); } catch (e) {}
         responder({ ok: true, carga: CARGA, url: location.href, texto: String(b.value || b.textContent || '').trim() });
-        setTimeout(function () { b.click(); }, 80);
+        setTimeout(function () {
+          ['mousedown', 'mouseup'].forEach(function (t) { b.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })); });
+          b.click();
+        }, 80);
       }
     } else if (msg.tipo === 'ds160-manual') {
       responder(colarManual(String(msg.valor || '')));
