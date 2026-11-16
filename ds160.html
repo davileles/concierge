@@ -516,11 +516,14 @@ var ETAPAS = [
       { id: 'anteriores', r: 'Empregos anteriores', t: 'lista', max: 5, rotuloItem: 'Emprego', itens: [
         { id: 'empresa', r: 'Empresa', t: 'text', meia: 1 },
         { id: 'cargo', r: 'Cargo', t: 'text', meia: 1 },
-        { id: 'endereco', r: 'Endereço (rua, cidade, estado)', t: 'text' },
+        { id: 'endereco', r: 'Endereço (rua e número)', t: 'text', req: 1 },
+        { id: 'cidade', r: 'Cidade', t: 'text', meia: 1, req: 1 },
+        { id: 'estado', r: 'Estado', t: 'text', meia: 1, ph: 'Ex.: MG' },
+        { id: 'cep', r: 'CEP', t: 'text', meia: 1, ph: 'Se souber' },
         { id: 'telefone', r: 'Telefone', t: 'text', meia: 1 },
         { id: 'supervisor', r: 'Nome do supervisor', t: 'text', meia: 1, ph: 'Se lembrar' },
-        { id: 'inicio', r: 'Início', t: 'date', meia: 1 },
-        { id: 'fim', r: 'Saída', t: 'date', meia: 1 },
+        { id: 'inicio', r: 'Início', t: 'date', meia: 1, req: 1 },
+        { id: 'fim', r: 'Saída', t: 'date', meia: 1, req: 1 },
         { id: 'funcoes', r: 'O que fazia', t: 'area' }
       ]}
     ]},
@@ -530,10 +533,10 @@ var ETAPAS = [
       { id: 'instituicoes', r: 'Instituições em que estudou (do ensino médio em diante)', t: 'lista', max: 6, rotuloItem: 'Instituição', itens: [
         { id: 'nome', r: 'Nome da instituição', t: 'text' },
         { id: 'curso', r: 'Curso', t: 'text', meia: 1, ph: 'Ex.: Administração, Ensino médio' },
-        { id: 'cidade', r: 'Cidade / estado', t: 'text', meia: 1 },
-        { id: 'endereco', r: 'Endereço', t: 'text', ph: 'Se souber' },
-        { id: 'inicio', r: 'Início', t: 'date', meia: 1 },
-        { id: 'fim', r: 'Conclusão', t: 'date', meia: 1 }
+        { id: 'cidade', r: 'Cidade / estado', t: 'text', meia: 1, req: 1 },
+        { id: 'endereco', r: 'Endereço (rua e número)', t: 'text', req: 1, ph: 'O DS-160 exige — procure no site da instituição' },
+        { id: 'inicio', r: 'Início', t: 'date', meia: 1, req: 1 },
+        { id: 'fim', r: 'Conclusão (ou previsão)', t: 'date', meia: 1, req: 1 }
       ]}
     ]},
     { id: 'idiomas', r: 'Idiomas que você fala', t: 'text', req: 1, v: 'Português' }
@@ -661,7 +664,8 @@ function addItem(c, hostL) {
   c.itens.forEach(function (s) {
     var f = document.createElement('div');
     f.className = 'field' + (s.meia ? ' meia' : '');
-    f.innerHTML = '<label>' + esc(s.r) + '</label>' + htmlInput(s, 'data-sub="' + s.id + '"');
+    f.innerHTML = '<label>' + esc(s.r) + '</label>' + htmlInput(s, 'data-sub="' + s.id + '"') + '<p class="err-msg">Campo obrigatório.</p>';
+    if (s.req) f.setAttribute('data-req', '');
     grid.appendChild(f);
   });
   d.querySelector('.acomp-rm').addEventListener('click', function () { d.remove(); renumerar(c, hostL); });
@@ -799,6 +803,18 @@ function validarEtapa(n) {
     else if (v && tipo === 'tel') bom = digitos(v).length >= 10;
     if (!bom) { f.classList.add('bad'); ok = false; if (!primeiro) primeiro = inp; }
   }
+  // Itens de lista (escolas, empregos…): se a pessoa começou a preencher um, os obrigatórios dele valem.
+  Array.prototype.forEach.call(sec.querySelectorAll('.lista-item'), function (item) {
+    if (!visivel(item)) return;
+    var subs = item.querySelectorAll('[data-sub]');
+    var algum = Array.prototype.some.call(subs, function (x) { return x.value.trim(); });
+    if (!algum) return;
+    Array.prototype.forEach.call(item.querySelectorAll('.field[data-req]'), function (f) {
+      f.classList.remove('bad');
+      var x = f.querySelector('[data-sub]');
+      if (x && !x.value.trim()) { f.classList.add('bad'); ok = false; if (!primeiro) primeiro = x; }
+    });
+  });
   // Coerências que o consulado cobra
   if (ok && n === 3 && valor('passaporteVal') && valor('passaporteEmissao') && valor('passaporteVal') <= valor('passaporteEmissao')) {
     aviso('A validade do passaporte precisa ser posterior à emissão.'); return false;

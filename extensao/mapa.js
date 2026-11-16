@@ -449,11 +449,11 @@ function montarItens(dados) {
       add({ id: 'grupo', r: 'Are you traveling as part of a group or organization?', pt: '—', mostra: 'NO', campos: [radio('rblGroupTravel', false)] });
       (Array.isArray(d.acompanhantes) ? d.acompanhantes : []).slice(0, 10).forEach(function (a, i) {
         if (!a || !temValor(a.nome)) return;
-        var n = dividirNome(a.nome), ctl = 'dtlTravelCompanions_ctl' + pad2(i) + '_';
+        var n = dividirNome(a.nome), ctl = 'dlTravelCompanions_ctl' + pad2(i) + '_';
         var rel = relacao(a.parentesco, 'acompanhante');
         add({ id: 'acomp' + i, r: 'Companion ' + (i + 1), pt: 'Acompanhante: ' + a.nome + (a.parentesco ? ' (' + a.parentesco + ')' : ''),
           mostra: n.surname + ' / ' + n.given + ' · ' + rel[0], origem: a.nome,
-          campos: [{ s: ctl + 'tbxSurname', t: 'text', v: n.surname }, { s: ctl + 'tbxGivenName', t: 'text', v: n.given }, { s: ctl + 'ddlRelationship', t: 'select', v: rel }],
+          campos: [{ s: ctl + 'tbxSurname', t: 'text', v: n.surname }, { s: ctl + 'tbxGivenName', t: 'text', v: n.given }, { s: ctl + 'ddlTCRelationship', t: 'select', v: rel }],
           nota: 'Confira a divisão sobrenome / nome.' });
       });
     }
@@ -647,7 +647,6 @@ function montarItens(dados) {
     data('cjNasc', 'Spouse\'s Date of Birth', 'Nascimento do cônjuge', d.conjugeNasc, 'ddlDOBDay', 'ddlDOBMonth', 'tbxDOBYear');
     pais('cjNac', 'Spouse\'s Nationality', 'Nacionalidade do cônjuge', d.conjugeNacionalidade || 'Brasil', 'ddlSpouseNatDropDownList');
     texto('cjCidade', 'Spouse\'s Place of Birth: City', 'Cidade de nascimento', d.conjugeCidadeNasc, 'tbxSpousePOBCity');
-    naoSeAplica('cjEstadoNA', 'Spouse\'s Place of Birth: State — Does Not Apply', 'cbxSpousePOBStateProvinceNA', 'Opcional: se preferir, digite o estado de nascimento.');
     pais('cjPais', 'Spouse\'s Place of Birth: Country', 'País de nascimento', d.conjugePaisNasc || 'Brasil', 'ddlSpousePOBCountry');
     if (temValor(d.conjugeMesmoEndereco)) {
       var mesmo = !sim(d.conjugeMesmoEndereco) ? false : true;
@@ -728,6 +727,10 @@ function montarItens(dados) {
         { s: ctl + 'DropDownList2', t: 'select', v: ['BRZL', 'BRAZIL'] },
         { s: ctl + 'tbJobTitle', t: 'text', v: up(e.cargo) }
       ];
+      if (temValor(e.cidade)) campos.push({ s: ctl + 'tbEmployerCity', t: 'text', v: up(e.cidade) });
+      if (temValor(e.estado)) campos.push({ s: ctl + 'tbxPREV_EMPL_ADDR_STATE', t: 'text', v: estadoBR(e.estado) });
+      if (temValor(e.cep)) campos.push({ s: ctl + 'tbxPREV_EMPL_ADDR_POSTAL_CD', t: 'text', v: e.cep });
+      else campos.push(check(ctl + 'cbxPREV_EMPL_ADDR_POSTAL_CD_NA'));
       if (linhas40(e.endereco)[1]) campos.push({ s: ctl + 'tbEmployerStreetAddress2', t: 'text', v: linhas40(e.endereco)[1] });
       if (temValor(e.telefone)) campos.push({ s: ctl + 'tbEmployerPhone', t: 'text', v: telefoneBR(e.telefone) });
       if (temValor(e.supervisor)) campos.push({ s: ctl + 'tbSupervisorSurname', t: 'text', v: sup.surname }, { s: ctl + 'tbSupervisorGivenName', t: 'text', v: sup.given });
@@ -736,7 +739,7 @@ function montarItens(dados) {
       campos = campos.concat(camposData(ctl + 'ddlEmpDateToDay', ctl + 'ddlEmpDateToMonth', ctl + 'tbxEmpDateToYear', e.fim));
       add({ id: 'empAnt' + i, r: 'Previous Employer ' + (i + 1), pt: e.empresa + ' · ' + (e.cargo || '') + ' · ' + fmtData(e.inicio) + ' a ' + fmtData(e.fim),
         mostra: up(e.empresa) + ' · ' + up(e.cargo), campos: campos,
-        nota: 'Cidade, estado e CEP ficam para completar (endereço veio junto: "' + (e.endereco || '') + '").' });
+        nota: temValor(e.cidade) ? null : 'Cidade, estado e CEP ficam para completar (endereço veio junto: "' + (e.endereco || '') + '").' });
       if (temValor(e.funcoes)) traduzivel('empAntFun' + i, 'Previous Employer ' + (i + 1) + ': Briefly describe your duties', 'O que fazia', e.funcoes, ctl + 'tbDescribeDuties');
     });
   }
@@ -800,7 +803,6 @@ function montarItens(dados) {
   }
   add({ id: 'insurgente', r: 'Have you ever served in, been a member of, or been involved with a paramilitary unit, vigilante unit, rebel group, guerrilla group, or insurgent organization?',
     pt: '—', mostra: 'NO', campos: [radio('rblINSURGENT_ORG_IND', false)] });
-  add({ id: 'taliban', r: 'Taliban', pt: '—', mostra: 'NO', campos: [radio('rblTALIBAN_IND', false)] });
 
   // ── SECURITY AND BACKGROUND ─────────────────────────────────────────────
   S('Security and Background');
@@ -814,7 +816,8 @@ function montarItens(dados) {
     ];
     GRUPOS.forEach(function (g, i) {
       add({ id: 'seg' + (i + 1), r: 'Security and Background ' + g[0] + ': todas as perguntas', pt: 'Nenhuma situação se aplica', mostra: 'NO (todas)',
-        campos: g[1].map(function (s) { return radio(s, false); }), opcional: true });
+        // opc: pergunta que algumas versões do site não têm — se faltar, não trava.
+        campos: g[1].map(function (s) { var r = radio(s, false); r.opc = true; return r; }), opcional: true });
     });
   } else if (sim(d.seguranca)) {
     add({ id: 'segAlerta', r: 'Security and Background', pt: 'Alguma situação se aplica', mostra: '',

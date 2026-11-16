@@ -40,4 +40,4 @@ Itens em vermelho = o cliente respondeu "não sei", faltou informação ou algo 
 Nenhum dado de cliente fica gravado no navegador: só o token de sessão, quais itens já foram preenchidos e as traduções da sessão.
 
 ## Inventário de campos (para manter o mapa em dia)
-A cada página do DS-160 que o painel enxerga, a extensão anota os campos do site — id, tipo, rótulo e opções, **sem nenhum valor preenchido**. O botão **⬇ Baixar campos do site** gera o `ds160-campos.json`; com ele dá para conferir e corrigir os ids do `mapa.js`. Para um inventário completo, passe por todas as páginas, inclusive marcando "Yes" onde abre campos novos (pode desfazer depois).
+A cada página do DS-160 aberta (e a cada "Yes" que abre campos novos), a extensão anota sozinha os campos do site — id, tipo, rótulo e opções, **sem nenhum valor preenchido**. O botão **⬇ Baixar campos do site** gera o `ds160-campos.json`; com ele dá para conferir e corrigir os ids do `mapa.js`. Para um inventário completo, passe por todas as páginas, inclusive marcando "Yes" onde abre campos novos (pode desfazer depois).

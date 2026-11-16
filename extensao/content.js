@@ -146,6 +146,7 @@ function preencher(campos) {
     if (!el && adicionarLinha(c.s)) {
       return { resultados: res, postback: true, pendentes: campos.slice(i), adicionou: true };
     }
+    if (!el && c.opc) { res.push({ s: c.s, ok: true, ausente: true }); continue; }
     if (!el) { res.push({ s: c.s, ok: false, erro: 'campo não está nesta página' }); continue; }
     var pb = fazPostback(el);
     var antes = el.type === 'radio' || el.type === 'checkbox' ? el.checked : el.value;
@@ -290,7 +291,29 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
   return true;
 });
 
+// Guarda o inventário sozinho a cada carga e a cada mudança da página (ex.: um
+// "Yes" que abre campos novos), sem depender do painel estar acompanhando.
+function guardarInventarioLocal() {
+  try {
+    var inv = inventario();
+    var m = /node=([^&]+)/.exec(inv.url);
+    var k = inv.url.split('?')[0] + (m ? '?node=' + m[1] : '');
+    chrome.storage.local.get('inventario').then(function (o) {
+      var tudo = o.inventario || {};
+      var ids = {};
+      ((tudo[k] && tudo[k].campos) || []).forEach(function (x) { ids[x.id] = x; });
+      inv.campos.forEach(function (x) { ids[x.id] = x; });
+      tudo[k] = { url: inv.url, titulo: inv.titulo, campos: Object.keys(ids).map(function (i) { return ids[i]; }), em: new Date().toISOString() };
+      return chrome.storage.local.set({ inventario: tudo });
+    }).catch(function () {});
+  } catch (e) {}
+}
+var _invT = null;
+function agendarInventario() { clearTimeout(_invT); _invT = setTimeout(guardarInventarioLocal, 1200); }
+try { new MutationObserver(agendarInventario).observe(document.documentElement, { childList: true, subtree: true }); } catch (e) {}
+
 function avisarCarregou() {
+  agendarInventario();
   try { chrome.runtime.sendMessage({ tipo: 'ds160-pagina', url: location.href }).catch(function () {}); } catch (e) {}
 }
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', avisarCarregou);
