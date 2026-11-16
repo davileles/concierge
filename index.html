@@ -3601,21 +3601,42 @@ function gerarFamiliarDs160() {
       var primeiro = (m.rotulo.split(' ')[0] || '');
       var msg = 'Olá' + (primeiro && nome ? ', ' + primeiro : '') + '! Segue o formulário do seu visto americano. '
         + 'Ele já vem com os dados da viagem da família — confira tudo e complete o que é seu (documentos, trabalho e estudos): ' + d.link;
+      window._dsfCopia = { link: d.link, msg: msg };
       document.getElementById('dsf-saida').innerHTML =
           '<div style="font-size:12px;font-weight:700;margin-bottom:6px">Link de ' + escHtml(m.rotulo) + '</div>'
         + '<div style="display:flex;gap:8px;flex-wrap:wrap"><input readonly value="' + escHtml(d.link) + '" style="flex:1;min-width:220px" onclick="this.select()"/>'
-        + '<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(' + escHtml(JSON.stringify(d.link)) + ').then(function(){showToast(\'🔗 Link copiado!\',\'ok\')})">Copiar link</button>'
-        + '<button class="btn btn-ghost btn-sm" onclick="navigator.clipboard.writeText(' + escHtml(JSON.stringify(msg)) + ').then(function(){showToast(\'💬 Mensagem copiada!\',\'ok\')})">Copiar mensagem</button></div>'
+        + '<button class="btn btn-ghost btn-sm" onclick="dsfCopiar(\'link\')">Copiar link</button>'
+        + '<button class="btn btn-ghost btn-sm" onclick="dsfCopiar(\'msg\')">Copiar mensagem</button></div>'
         + '<div style="font-size:11px;color:var(--muted);margin-top:6px">Vale por 60 dias. Aparece na lista como "aguardando" até a pessoa enviar.</div>';
       carregarDs160();
     })
     .catch(function (e) { btn.disabled = false; btn.textContent = '🔗 Gerar link do formulário'; showToast('❌ ' + e.message, 'err'); });
 }
 
+// Copia texto com plano B (textarea + execCommand) quando a API da área de transferência é recusada
+function copiarTextoDs160(txt, aviso) {
+  function planoB() {
+    var t = document.createElement('textarea');
+    t.value = txt; t.setAttribute('readonly', ''); t.style.position = 'fixed'; t.style.opacity = '0';
+    document.body.appendChild(t); t.select();
+    var ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(t);
+    showToast(ok ? aviso : '⚠️ Não consegui copiar — selecione o link e copie', ok ? 'ok' : 'err');
+  }
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(txt).then(function () { showToast(aviso, 'ok'); }, planoB);
+  } else planoB();
+}
+
+function dsfCopiar(qual) {
+  var c = window._dsfCopia || {};
+  if (qual === 'msg') copiarTextoDs160(c.msg || '', '💬 Mensagem copiada!');
+  else copiarTextoDs160(c.link || '', '🔗 Link copiado!');
+}
+
 function copiarLinkRascunhoDs160(id) {
   for (var i = 0; i < ds160Lista.length; i++) if (ds160Lista[i].id === id && ds160Lista[i].token) {
-    var link = DS160_LINK + '?r=' + ds160Lista[i].token;
-    navigator.clipboard.writeText(link).then(function () { showToast('🔗 Link copiado!', 'ok'); });
+    copiarTextoDs160(DS160_LINK + '?r=' + ds160Lista[i].token, '🔗 Link copiado!');
   }
 }
 
