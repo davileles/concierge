@@ -1515,7 +1515,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
     </div>
 
     <div class="btn-row">
-      <button class="btn btn-accent" id="btn-salvar-reserva" onclick="salvarReserva()" style="flex:1">💾 Salvar Reserva</button>
+      <button class="btn btn-accent" id="btn-salvar-reserva" onclick="salvarReserva()" style="flex:1" title="Só grava a reserva. Para avisar o cliente, use o botão verde “Salvar Reserva e Enviar” na mensagem acima.">💾 Salvar sem enviar</button>
       <button class="btn btn-ghost" id="btn-cancelar-edicao" style="display:none" onclick="cancelarEdicaoReserva()">✕ Cancelar Edição</button>
       <button class="btn btn-ghost" onclick="limparForm()">🗑 Limpar</button>
     </div>
@@ -4917,6 +4917,18 @@ function salvarReserva(cb) {
   var _cb = (typeof cb === 'function') ? cb : function(){};
   var _btnSalvar = document.getElementById('btn-salvar-reserva');
   if (_btnSalvar && _btnSalvar.disabled) { _cb(false); return; } // evita duplo clique / duplo envio (causa de conflito de SHA no GitHub)
+
+  // Botao principal ("Salvar sem enviar") com mensagem escrita na secao do
+  // WhatsApp: em 16/11 duas reservas foram salvas por esse botao achando que
+  // a mensagem ia junto (o "Salvar Reserva e Enviar" e o botao verde da secao).
+  if (typeof cb !== 'function') {
+    var _secMsg = document.getElementById('nf-msg-section');
+    var _txtMsg = _mel('nf', 'texto');
+    var _temMsg = _secMsg && _secMsg.style.display !== 'none' && _txtMsg && _txtMsg.value.trim();
+    if (_temMsg && !confirm('⚠️ Salvar a reserva SEM enviar a mensagem ao cliente?\n\n'
+        + 'OK = só salvar (a mensagem não vai para o WhatsApp).\n'
+        + 'Cancelar = voltar e usar o botão verde “Salvar Reserva e Enviar”.')) { _cb(false); return; }
+  }
 
   var tipo = getVal('f-tipo');
   var cliente = toTitleCase(getVal('f-cliente'));
