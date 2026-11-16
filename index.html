@@ -3480,10 +3480,17 @@ function statusDs160(id, acao) {
 var DS160_RELACOES = ['Cônjuge', 'Filho(a)', 'Mãe', 'Outro familiar', 'Pai'];
 
 function _ds160Norm(s) { return _ds160SemAcento(s).toLowerCase().replace(/\s+/g, ' ').trim(); }
+// Mesma regra do dividirNome da extensão (mapa.js): 2º prenome comum entra no nome.
+var DS160_PRENOMES_2 = ('ALBERTO ALEXANDRE ANA ANDRE ANTONIO AUGUSTO BEATRIZ CAROLINA CECILIA CLARA CRISTINA DANIEL DANIELA EDUARDA EDUARDO ' +
+  'ELISA EMANUEL EMANUELE FELIPE FERNANDA FERNANDO FRANCISCO GABRIEL GABRIELA GUILHERME GUSTAVO HELENA HENRIQUE ISABEL ISABELA ' +
+  'ISABELLA JOSE JULIA JULIANA LAURA LETICIA LUCAS LUCIA LUIS LUIZ LUIZA LUISA MANUELA MARCELO MARCOS MARIA MARIANA MIGUEL PAULA ' +
+  'PAULO PEDRO RAFAEL RAFAELA REGINA RICARDO ROBERTO SOFIA TERESA TEREZA VALERIA VICTOR VINICIUS VITOR VITORIA').split(' ');
 function _ds160Divide(nome) {
   var p = String(nome || '').trim().split(/\s+/).filter(Boolean);
   if (!p.length) return { nomes: '', sobrenome: '' };
-  return { nomes: p[0], sobrenome: p.slice(1).join(' ') };
+  var seg = p[1] ? p[1].normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase() : '';
+  var n = (p.length >= 3 && DS160_PRENOMES_2.indexOf(seg) !== -1) ? 2 : 1;
+  return { nomes: p.slice(0, n).join(' '), sobrenome: p.slice(n).join(' ') };
 }
 function _ds160MesmaPessoa(a, b) {
   var x = _ds160Norm(a).split(' '), y = _ds160Norm(b).split(' ');

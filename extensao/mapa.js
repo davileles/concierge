@@ -62,11 +62,17 @@ function diasEntre(a, b) {
   return Math.round((tb - ta) / 86400000);
 }
 // Nome brasileiro → DS-160: primeiro nome em "given", o resto em "surname".
+// Segundo prenome comum (Larissa FERNANDA, Carlos ALBERTO): com 3+ palavras, entra no nome, não no sobrenome.
+var PRENOMES_2 = ('ALBERTO ALEXANDRE ANA ANDRE ANTONIO AUGUSTO BEATRIZ CAROLINA CECILIA CLARA CRISTINA DANIEL DANIELA EDUARDA EDUARDO ' +
+  'ELISA EMANUEL EMANUELE FELIPE FERNANDA FERNANDO FRANCISCO GABRIEL GABRIELA GUILHERME GUSTAVO HELENA HENRIQUE ISABEL ISABELA ' +
+  'ISABELLA JOSE JULIA JULIANA LAURA LETICIA LUCAS LUCIA LUIS LUIZ LUIZA LUISA MANUELA MARCELO MARCOS MARIA MARIANA MIGUEL PAULA ' +
+  'PAULO PEDRO RAFAEL RAFAELA REGINA RICARDO ROBERTO SOFIA TERESA TEREZA VALERIA VICTOR VINICIUS VITOR VITORIA').split(' ');
 function dividirNome(nome) {
   var p = up(nome).split(' ').filter(Boolean);
   if (!p.length) return { given: '', surname: '' };
   if (p.length === 1) return { given: p[0], surname: p[0] };
-  return { given: p[0], surname: p.slice(1).join(' ') };
+  var n = (p.length >= 3 && PRENOMES_2.indexOf(p[1]) !== -1) ? 2 : 1;
+  return { given: p.slice(0, n).join(' '), surname: p.slice(n).join(' ') };
 }
 function lista(v) {
   return String(v || '').split(/\s*(?:,|;|\/|\n|\s+e\s+)\s*/i).map(function (x) { return x.trim(); }).filter(Boolean);
