@@ -272,6 +272,7 @@ chrome.runtime.onMessage.addListener(function (msg, _rem, responder) {
       else {
         try { Object.keys(sessionStorage).forEach(function (k) { if (k.indexOf('ds160cdv-add:') === 0) sessionStorage.removeItem(k); }); } catch (e) {}
         responder({ ok: true, carga: CARGA, url: location.href, texto: String(b.value || b.textContent || '').trim() });
+        try { window.dispatchEvent(new CustomEvent('ds160cdv-livre')); } catch (e) {}
         setTimeout(function () {
           ['mousedown', 'mouseup'].forEach(function (t) { b.dispatchEvent(new MouseEvent(t, { bubbles: true, cancelable: true, view: window })); });
           b.click();
