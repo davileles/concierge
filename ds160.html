@@ -153,6 +153,19 @@ select option { background: var(--surface); color: var(--text); }
 .btn-primary { background: var(--gold); color: #16130c; }
 .btn-ghost { background: transparent; border-color: var(--border2); color: var(--text); flex: 0 0 110px; }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
+.salvar-depois { display: block; width: 100%; margin-top: 12px; padding: 11px; background: transparent; border: 1px dashed var(--gold-border);
+  border-radius: 10px; color: var(--gold); font-family: var(--font); font-size: 13px; font-weight: 500; cursor: pointer; }
+.salvar-depois:hover { background: var(--gold-dim); }
+.salvar-depois:disabled { opacity: .5; cursor: wait; }
+.salvar-depois[hidden] { display: none; }
+.salvo-status { text-align: center; font-size: 11.5px; color: var(--muted2); margin-top: 8px; min-height: 14px; }
+.salvo-box { margin-bottom: 14px; }
+.salvo-box .linha { display: flex; gap: 8px; margin-top: 10px; }
+.salvo-box input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 9px; border: 1px solid var(--border2);
+  background: var(--card); color: var(--text); font-family: var(--font); font-size: 12.5px; }
+.salvo-box button { padding: 10px 14px; border-radius: 9px; border: 0; background: var(--gold); color: #16130c;
+  font-family: var(--font); font-size: 12.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.salvo-box .fechar { background: transparent; color: var(--muted); padding: 10px 6px; }
 .acomp-item {
   border: 1px solid var(--border); border-radius: 11px;
   padding: 14px 15px; margin-bottom: 10px; background: var(--surface);
@@ -251,6 +264,7 @@ footer .by { font-style: italic; opacity: .72; }
 
   <div class="banner err" id="banner"></div>
   <div class="aviso-doc" id="faixa-familia" hidden style="margin-bottom:14px"></div>
+  <div class="aviso-doc salvo-box" id="salvo-box" hidden></div>
 
   <form id="form" autocomplete="on" onsubmit="return false">
     <div class="hp" aria-hidden="true">
@@ -283,6 +297,8 @@ footer .by { font-style: italic; opacity: .72; }
       <button type="button" class="btn btn-ghost" id="btn-voltar">Voltar</button>
       <button type="button" class="btn btn-primary" id="btn-avancar">Continuar</button>
     </div>
+    <button type="button" class="salvar-depois" id="btn-salvar" hidden>Salvar e continuar depois</button>
+    <div class="salvo-status" id="salvo-status"></div>
   </form>
 
   <div class="card done-box fade" id="done" hidden>
@@ -925,6 +941,7 @@ function render() {
   $('step-label').textContent = (etapa + 1) + ' de ' + TOTAL + ' · ' + TITULOS[etapa];
   $('btn-voltar').style.display = etapa === 0 ? 'none' : '';
   $('btn-avancar').textContent = etapa === TOTAL - 1 ? 'Enviar formulário' : 'Continuar';
+  $('btn-salvar').hidden = etapa === 0;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -944,6 +961,7 @@ function enviar() {
       $('form').hidden = true; $('prog').hidden = true; $('step-label').hidden = true;
       $('banner').classList.remove('show');
       $('done').hidden = false;
+      $('btn-salvar').hidden = true; $('salvo-status').textContent = ''; $('salvo-box').hidden = true;
       window.onbeforeunload = null;
       window.scrollTo({ top: 0, behavior: 'smooth' });
     })
@@ -981,9 +999,13 @@ $('btn-avancar').addEventListener('click', function () {
   if (enviando) return;
   if (!validarEtapa(etapa)) return;
   $('banner').classList.remove('show');
-  if (etapa < TOTAL - 1) { etapa++; render(); return; }
+  if (etapa < TOTAL - 1) { etapa++; render(); if (RASCUNHO && sujo) salvarRascunho(false); return; }
   enviar();
 });
+$('btn-voltar').addEventListener('click', function () { if (RASCUNHO && sujo) salvarRascunho(false); });
+$('btn-salvar').addEventListener('click', function () { salvarRascunho(true); });
+$('form').addEventListener('input', function () { sujo = true; });
+$('form').addEventListener('change', function () { sujo = true; });
 
 // ── FORMULÁRIO DE FAMILIAR (?r=<token>) ───────────────────
 // A equipe gera, a partir do formulário de outra pessoa da família, um link já
@@ -1037,15 +1059,89 @@ if (RASCUNHO) {
       if (!d.ok) { aviso(d.erro || 'Não foi possível abrir este link.'); RASCUNHO = ''; return; }
       var n = aplicarRascunho(d.dados || {});
       var fx = $('faixa-familia');
-      fx.innerHTML = '<b>Formulário de ' + esc(d.rotulo || 'familiar') + '.</b> ' + n + ' resposta(s) já vieram preenchidas com os dados da viagem da família. ' +
-        'Confira cada etapa — tudo pode ser alterado — e complete o que é só seu (documentos, trabalho, estudos).';
+      if (d.proprio || d.salvoEm) {
+        $('consentimento').checked = true; $('consent-box').classList.add('on');
+        etapa = Math.max(1, Math.min(TOTAL - 1, Number(d.etapa) || 1));
+        fx.innerHTML = '<b>Continuando de onde você parou.</b> Suas respostas foram salvas ' + quandoSalvo(d.salvoEm) + '. ' +
+          'Confira e siga preenchendo — a cada etapa concluída, gravamos de novo.';
+        render();
+      } else {
+        fx.innerHTML = '<b>Formulário de ' + esc(d.rotulo || 'familiar') + '.</b> ' + n + ' resposta(s) já vieram preenchidas com os dados da viagem da família. ' +
+          'Confira cada etapa — tudo pode ser alterado — e complete o que é só seu (documentos, trabalho, estudos).';
+      }
       fx.hidden = false;
+      sujo = false;
     })
     .catch(function () { aviso('Falha de conexão ao abrir o formulário. Recarregue a página.'); });
 }
 
 // Sem rascunho local (convenção do concierge): avisa antes de perder o que foi digitado.
-window.onbeforeunload = function () { return etapa > 1 ? 'Os dados preenchidos serão perdidos.' : undefined; };
+// ── SALVAR E CONTINUAR DEPOIS (desde 17/11/2026) ──────────
+// Grava as respostas no servidor (rascunho com token, no repo privado de dados) e
+// devolve um link ds160.html?r=<token> que abre o formulário de onde parou, em
+// qualquer aparelho. Nada fica guardado no navegador. Depois da 1ª gravação, cada
+// etapa concluída grava de novo sozinha.
+var sujo = false, salvando = false;
+function quandoSalvo(iso) {
+  var t = Date.parse(iso || '');
+  if (!t) return 'anteriormente';
+  var d = new Date(t);
+  return 'em ' + d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }) + ' às ' +
+    d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+}
+function mostrarLinkSalvo(d) {
+  var box = $('salvo-box');
+  box.innerHTML = '<b>Respostas salvas.</b> ' +
+    (d.emailEnviado ? 'Enviamos o link para <b>' + esc(d.email) + '</b>. ' : '') +
+    'Para continuar depois, em qualquer celular ou computador, abra este link (ele é pessoal — não compartilhe):' +
+    '<div class="linha"><input id="salvo-link" readonly value="' + esc(d.link) + '"/>' +
+    '<button type="button" id="salvo-copiar">Copiar link</button><button type="button" class="fechar" id="salvo-fechar">✕</button></div>';
+  box.hidden = false;
+  $('salvo-copiar').onclick = function () {
+    var inp = $('salvo-link'); inp.select();
+    var ok = function () { $('salvo-copiar').textContent = 'Copiado!'; };
+    if (navigator.clipboard) navigator.clipboard.writeText(inp.value).then(ok, function () { document.execCommand('copy'); ok(); });
+    else { document.execCommand('copy'); ok(); }
+  };
+  $('salvo-fechar').onclick = function () { box.hidden = true; };
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function salvarRascunho(manual) {
+  if (salvando || enviando) return;
+  if (!$('consentimento').checked) { if (manual) aviso('Aceite o tratamento dos dados na primeira etapa para poder salvar.'); return; }
+  salvando = true;
+  var btn = $('btn-salvar'), st = $('salvo-status');
+  if (manual) { btn.disabled = true; btn.textContent = 'Salvando…'; }
+  st.textContent = 'Salvando…';
+  var p = montarPayload();
+  fetch(PROXY + '/concierge/ds160/rascunho', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: RASCUNHO || undefined, etapa: etapa, dados: p.dados, consentimento: true, website: p.website })
+  })
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d.ok) throw new Error(d.erro || 'Não foi possível salvar agora.');
+      if (d.token) {
+        RASCUNHO = d.token;
+        try { history.replaceState(null, '', location.pathname + '?r=' + d.token); } catch (e) {}
+      }
+      sujo = false;
+      st.textContent = 'Salvo ' + quandoSalvo(d.salvoEm) + '.';
+      if (manual || d.novo) mostrarLinkSalvo(d);
+    })
+    .catch(function (e) {
+      st.textContent = '';
+      if (manual) aviso(e.message || 'Falha de conexão. Tente salvar de novo.');
+    })
+    .then(function () { salvando = false; btn.disabled = false; btn.textContent = 'Salvar e continuar depois'; });
+}
+
+// Avisa antes de sair só quando há algo que não foi salvo no servidor.
+window.onbeforeunload = function () {
+  if (enviando || etapa < 1) return undefined;
+  if (RASCUNHO && !sujo) return undefined;
+  return 'Os dados preenchidos serão perdidos. Use "Salvar e continuar depois" para não perder nada.';
+};
 
 atualizarCondicoes();
 render();

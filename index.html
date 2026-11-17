@@ -3366,8 +3366,9 @@ function renderDs160() {
         var s = r.resumo || {};
         return '<div id="ds160-row-' + r.id + '" style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap">'
           + '<div style="flex:1;min-width:200px">'
-          +   '<div style="font-size:13px;font-weight:700">⏳ ' + escHtml(s.nome || 'Familiar') + ' <span style="font-size:10px;font-weight:600;color:var(--muted)">· aguardando a pessoa preencher</span></div>'
-          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(r.relacao || '') + ' · link criado ' + escHtml(String(r.criadoEm || '').slice(0, 10).split('-').reverse().join('/')) + '</div>'
+          +   '<div style="font-size:13px;font-weight:700">⏳ ' + escHtml(s.nome || 'Familiar') + ' <span style="font-size:10px;font-weight:600;color:var(--muted)">· ' + (r.origem === 'pessoa' ? 'preenchimento em andamento' : 'aguardando a pessoa preencher') + '</span></div>'
+          +   '<div style="font-size:11px;color:var(--muted);margin-top:2px">' + escHtml(r.origem === 'pessoa' ? 'Começou e salvou para continuar depois' + (s.email ? ' · ' + s.email : '') : (r.relacao || '')) + ' · ' + (r.origem === 'pessoa' ? 'começou ' : 'link criado ') + escHtml(String(r.criadoEm || '').slice(0, 10).split('-').reverse().join('/'))
+          +     (r.salvoEm ? ' · salvo ' + escHtml(String(r.salvoEm).slice(0, 10).split('-').reverse().join('/')) + (r.etapa ? ' (etapa ' + escHtml(String(Number(r.etapa) + 1)) + ')' : '') : '') + '</div>'
           + '</div>'
           + '<button class="btn btn-ghost btn-sm" onclick="copiarLinkRascunhoDs160(\'' + r.id + '\')">🔗 Copiar link</button>'
           + '<button class="btn btn-ghost btn-sm" title="Excluir" onclick="statusDs160(\'' + r.id + '\',\'excluir\')">🗑</button>'
