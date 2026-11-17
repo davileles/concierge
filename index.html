@@ -6532,9 +6532,10 @@ function carregarGruposConcierge(forcar) {
       _gruposConciergeCache = lista
         .filter(function(g){ return g && g.id && _ehGrupoConcierge(g.nome); })
         .filter(function(g){ if (vistos[g.id]) return false; vistos[g.id] = 1; return true; })
-        .map(function(g){ return { id: g.id, nome: String(g.nome).trim() }; })
+        .map(function(g){ return { id: g.id, nome: String(g.nome).trim(), criadoEm: g.criadoEm || null }; })
         .sort(function(a, b){ return a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }); });
       _preencherSelectsGrupo();
+      _atualizarCriacaoGrupoContratos();
       setInfo(_gruposConciergeCache.length + ' grupos "Consultoria" / "Travel Concierge" encontrados.');
       return _gruposConciergeCache;
     })
@@ -6608,6 +6609,48 @@ function _contratoResumoLinha(c) {
     + (a.vigente ? 'até ' : 'venceu ') + _dataBRc(a.periodo.fim).slice(0, 6) + _dataBRc(a.periodo.fim).slice(8) + '</div>';
 }
 
+// Data de criação do grupo do WhatsApp do cliente (AAAA-MM-DD no fuso de SP),
+// lida da lista de grupos do Baileys (campo criadoEm de GET /grupos). '' se o
+// cliente não tem grupo, a lista ainda não carregou ou o Baileys não informou.
+function _criacaoGrupoCliente(c) {
+  if (!c || !c.grupo || !_gruposConciergeCache) return '';
+  for (var i = 0; i < _gruposConciergeCache.length; i++) {
+    var g = _gruposConciergeCache[i];
+    if (g.id === c.grupo && g.criadoEm) {
+      var t = Date.parse(g.criadoEm);
+      return isNaN(t) ? '' : new Date(t - 3 * 3600000).toISOString().slice(0, 10);
+    }
+  }
+  return '';
+}
+function _textoCriacaoGrupo(c, criado, semContrato) {
+  if (!c || !c.grupo) return '';
+  if (!criado) return _gruposConciergeCache ? '' : 'Carregando a data de criação do grupo…';
+  return 'Grupo do WhatsApp criado em <b>' + _dataBRc(criado) + '</b>'
+    + (semContrato ? ' · usado como início sugerido (confira antes de registrar)' : '');
+}
+// Chamado quando a lista de grupos termina de carregar: mostra a data de criação
+// e, em cliente sem contrato, troca o início sugerido (se ninguém mexeu no campo).
+function _atualizarCriacaoGrupoContratos() {
+  var els = document.querySelectorAll('.ctr-grupo-criado');
+  for (var i = 0; i < els.length; i++) {
+    var cid = els[i].getAttribute('data-cliente');
+    var idx = _idxCliente(cid);
+    if (idx === -1) continue;
+    var c = clientes[idx];
+    var semContrato = els[i].getAttribute('data-sem-contrato') === '1';
+    var criado = _criacaoGrupoCliente(c);
+    els[i].innerHTML = _textoCriacaoGrupo(c, criado, semContrato);
+    if (!semContrato || !criado) continue;
+    var elI = document.getElementById('ctr-ini-' + cid);
+    if (!elI || (elI.getAttribute('data-auto') !== 'grupo' && elI.value !== _hojeSP())) continue;
+    elI.value = criado;
+    elI.setAttribute('data-auto', 'grupo');
+    var elF = document.getElementById('ctr-fim-' + cid);
+    if (elF) elF.value = _somarMeses(criado, 12);
+  }
+}
+
 function _blocoContrato(c) {
   var id = String(c.id || '').split("'").join("\\'");
   var idH = escHtml(c.id);
@@ -6635,17 +6678,23 @@ function _blocoContrato(c) {
           + '</div>';
       }).join('') + '</div>'
     : '';
-  // Sugestão: renovação começa no fim do período atual; sem período, hoje.
-  var ini = a ? a.periodo.fim : _hojeSP();
+  // Sugestão: renovação começa no fim do período atual; sem período, a data de
+  // criação do grupo do cliente (quase sempre o início da 1ª assinatura); sem
+  // grupo/data, hoje. A data do grupo chega por _atualizarCriacaoGrupoContratos
+  // quando a lista de grupos do Baileys termina de carregar.
+  var criadoGrupo = _criacaoGrupoCliente(c);
+  var ini = a ? a.periodo.fim : (criadoGrupo || _hojeSP());
   var fim = _somarMeses(ini, 12);
   var formas = '<option value="">—</option>' + CONTRATO_FORMAS.map(function(f){
     return '<option value="' + _attr(f) + '"' + (f === 'Transferência bancária' && a ? ' selected' : '') + '>' + escHtml(f) + '</option>';
   }).join('');
   return _tituloSecao('📄 Validade do contrato')
     + status + hist
+    + '<div class="ctr-grupo-criado" data-cliente="' + idH + '" data-sem-contrato="' + (a ? '0' : '1') + '" style="font-size:11px;color:var(--muted2);margin-top:6px">'
+    +   _textoCriacaoGrupo(c, criadoGrupo, !a) + '</div>'
     + '<div class="cli-gest-grid" style="margin-top:12px">'
     +   '<div class="field" style="margin:0"><label>' + (a ? 'Início da renovação' : 'Início do contrato') + '</label>'
-    +     '<input type="date" id="ctr-ini-' + idH + '" value="' + ini + '" onchange="contratoIniChange(\'' + id + '\')"/></div>'
+    +     '<input type="date" id="ctr-ini-' + idH + '" value="' + ini + '" data-auto="' + (!a && criadoGrupo ? 'grupo' : '') + '" onchange="this.removeAttribute(\'data-auto\');contratoIniChange(\'' + id + '\')"/></div>'
     +   '<div class="field" style="margin:0"><label>Fim <span class="tag">12 meses</span></label>'
     +     '<input type="date" id="ctr-fim-' + idH + '" value="' + fim + '" data-data-de="ctr-ini-' + idH + '"/></div>'
     +   '<div class="field" style="margin:0"><label>Pagamento em <span class="tag">opcional</span></label>'
