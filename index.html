@@ -3074,7 +3074,8 @@ function syncClientes() {
           acompanhantes: String(c.acompanhantes || '').trim(),
           grupo:         String(c.grupo         || '').trim(),
           ativo:         c.ativo === true,
-          origem:        c.origem || 'planilha'
+          origem:        c.origem || 'planilha',
+          contratos:     Array.isArray(c.contratos) ? c.contratos : []
         };
       }).filter(function(c){ return c.nome; });
       dot.className = 'sync-dot ok';
@@ -6196,7 +6197,8 @@ function renderClientes() {
           ? '<div class="sep" style="margin:12px 0"></div><div style="font-size:10px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px">👨‍👩‍👧 Quem Viaja Junto</div>'
             + '<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--muted);white-space:pre-wrap;line-height:1.7">' + escHtml(c.acompanhantes) + '</div>' : '')
         + _blocoPerfilViagem(perfilDe(c.id))
-        + _blocoGestaoCliente(c);
+        + _blocoGestaoCliente(c)
+        + _blocoContrato(c);
 
       return '<tr class="dem-linha' + (editando ? ' aberto' : '') + '" onclick="toggleLinha(this)">'
         + '<td class="cli-c-nome"><div class="dem-td-titulo">' + escHtml(toTitleCase(c.nome)) + '</div>'
@@ -6215,6 +6217,7 @@ function renderClientes() {
         +   (c.ativo
               ? '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.35)">ATIVO</span>'
               : '<span style="display:inline-block;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:800;background:var(--surface2);color:var(--muted2);border:1px solid var(--border)">INATIVO</span>')
+        +   _contratoResumoLinha(c)
         + '</td>'
         + '<td class="cli-c-abrir" style="text-align:center"><span class="dem-td-abrir">▼</span></td>'
         + '</tr>'
@@ -6558,6 +6561,152 @@ function gestGrupoChange(sel) {
   var v = (prompt('ID do grupo (termina em @g.us):', atual) || '').trim();
   if (v) sel.setAttribute('data-atual', v);
   sel.innerHTML = _opcoesGrupoCliente(v || atual, sel.getAttribute('data-cliente') || '', _gruposConciergeCache);
+}
+
+// ══════════════════════════════════════════
+//  VALIDADE DO CONTRATO (desde 17/11/2026)
+// ══════════════════════════════════════════
+// O Travel Concierge é pago fora da Hubla (link de cartão, Pix, transferência),
+// então a validade de cada cliente é registrada aqui: clientes[].contratos =
+// [{id, inicio, fim, pagoEm, forma, obs, registradoEm}] (datas AAAA-MM-DD; o fim
+// vale até o fim do dia). O período mais recente (maior fim) é a validade atual.
+// Renovar = novo período que começa no fim do anterior, sem novo formulário.
+// O proxy usa esses períodos no nome do Google Contatos ("Nome TRC dd/mm/aa") e
+// para não tirar o painel de quem está com contrato vigente.
+var CONTRATO_FORMAS = ['Hubla', 'Link de cartão', 'Pix', 'Transferência bancária'];
+
+function _hojeSP() { return new Date(Date.now() - 3 * 3600000).toISOString().slice(0, 10); }
+function _isoData(v) { return /^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : ''; }
+function _somarMeses(iso, n) {
+  var p = iso.split('-').map(Number);
+  var d = new Date(Date.UTC(p[0], p[1] - 1 + n, p[2]));
+  // 31/01 + 1 mês = último dia de fevereiro (não 03/03)
+  if (d.getUTCDate() !== p[2]) d = new Date(Date.UTC(p[0], p[1] - 1 + n + 1, 0));
+  return d.toISOString().slice(0, 10);
+}
+function _dataBRc(iso) { var s = _isoData(iso); return s ? s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4) : '—'; }
+function _diasEntre(a, b) { return Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000); }
+
+function contratosDe(c) {
+  return ((c && c.contratos) || []).filter(function(k){ return k && _isoData(k.fim); })
+    .slice().sort(function(a, b){ return b.fim.localeCompare(a.fim) || String(b.inicio || '').localeCompare(String(a.inicio || '')); });
+}
+// {periodo, vigente, dias} — dias = faltam (vigente) ou passaram (vencido)
+function contratoAtual(c) {
+  var k = contratosDe(c)[0];
+  if (!k) return null;
+  var hoje = _hojeSP();
+  var vigente = k.fim >= hoje;
+  return { periodo: k, vigente: vigente, dias: vigente ? _diasEntre(hoje, k.fim) : _diasEntre(k.fim, hoje) };
+}
+
+function _contratoResumoLinha(c) {
+  var a = contratoAtual(c);
+  if (!a) return '';
+  var cor = !a.vigente ? '#ff585e' : (a.dias <= 30 ? 'var(--yellow)' : 'var(--muted2)');
+  return '<div style="font-size:10px;margin-top:4px;color:' + cor + ';white-space:nowrap" title="Validade do contrato">'
+    + (a.vigente ? 'até ' : 'venceu ') + _dataBRc(a.periodo.fim).slice(0, 6) + _dataBRc(a.periodo.fim).slice(8) + '</div>';
+}
+
+function _blocoContrato(c) {
+  var id = String(c.id || '').split("'").join("\\'");
+  var idH = escHtml(c.id);
+  var a = contratoAtual(c);
+  var lista = contratosDe(c);
+  var status;
+  if (!a) {
+    status = '<div style="font-size:12px;color:var(--muted)">Nenhum período cadastrado. Registre o contrato atual (início e fim) para controlar a validade.</div>';
+  } else {
+    var cor = a.vigente ? (a.dias <= 30 ? 'var(--yellow)' : '#22c55e') : '#ff585e';
+    var txt = a.vigente
+      ? 'Vigente até <b>' + _dataBRc(a.periodo.fim) + '</b> · ' + (a.dias === 0 ? 'vence hoje' : 'faltam ' + a.dias + ' dia' + (a.dias !== 1 ? 's' : ''))
+      : 'Vencido em <b>' + _dataBRc(a.periodo.fim) + '</b> · há ' + a.dias + ' dia' + (a.dias !== 1 ? 's' : '');
+    status = '<div style="font-size:13px;color:' + cor + '">' + txt + '</div>';
+  }
+  var hist = lista.length
+    ? '<div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">' + lista.map(function(k, i){
+        var kid = String(k.id || '').split("'").join("\\'");
+        var extra = [k.forma, k.pagoEm ? 'pago em ' + _dataBRc(k.pagoEm) : '', k.obs].filter(Boolean).map(escHtml).join(' · ');
+        return '<div style="display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px">'
+          + '<span style="flex:1;min-width:0"><b>' + (i === lista.length - 1 && lista.length > 1 ? 'Contrato' : (lista.length === 1 ? 'Contrato' : 'Renovação')) + '</b> · '
+          + _dataBRc(k.inicio) + ' → ' + _dataBRc(k.fim)
+          + (extra ? '<span style="color:var(--muted2)"> · ' + extra + '</span>' : '') + '</span>'
+          + '<button type="button" class="btn btn-ghost btn-sm" title="Excluir este período" onclick="event.stopPropagation();excluirPeriodoContrato(\'' + id + '\',\'' + kid + '\')">✕</button>'
+          + '</div>';
+      }).join('') + '</div>'
+    : '';
+  // Sugestão: renovação começa no fim do período atual; sem período, hoje.
+  var ini = a ? a.periodo.fim : _hojeSP();
+  var fim = _somarMeses(ini, 12);
+  var formas = '<option value="">—</option>' + CONTRATO_FORMAS.map(function(f){
+    return '<option value="' + _attr(f) + '"' + (f === 'Transferência bancária' && a ? ' selected' : '') + '>' + escHtml(f) + '</option>';
+  }).join('');
+  return _tituloSecao('📄 Validade do contrato')
+    + status + hist
+    + '<div class="cli-gest-grid" style="margin-top:12px">'
+    +   '<div class="field" style="margin:0"><label>' + (a ? 'Início da renovação' : 'Início do contrato') + '</label>'
+    +     '<input type="date" id="ctr-ini-' + idH + '" value="' + ini + '" onchange="contratoIniChange(\'' + id + '\')"/></div>'
+    +   '<div class="field" style="margin:0"><label>Fim <span class="tag">12 meses</span></label>'
+    +     '<input type="date" id="ctr-fim-' + idH + '" value="' + fim + '" data-data-de="ctr-ini-' + idH + '"/></div>'
+    +   '<div class="field" style="margin:0"><label>Pagamento em <span class="tag">opcional</span></label>'
+    +     '<input type="date" id="ctr-pago-' + idH + '" value="' + (a ? _hojeSP() : '') + '"/></div>'
+    +   '<div class="field" style="margin:0"><label>Forma de pagamento <span class="tag">opcional</span></label>'
+    +     '<select id="ctr-forma-' + idH + '">' + formas + '</select></div>'
+    + '</div>'
+    + '<div class="field" style="margin:10px 0 0"><label>Observação <span class="tag">opcional</span></label>'
+    +   '<input type="text" id="ctr-obs-' + idH + '" placeholder="Ex.: renovou com desconto de fidelidade"/></div>'
+    + '<div style="display:flex;gap:8px;margin-top:12px">'
+    +   '<button class="btn btn-accent btn-sm" onclick="event.stopPropagation();registrarPeriodoContrato(\'' + id + '\')">🔁 ' + (a ? 'Registrar renovação' : 'Registrar contrato') + '</button>'
+    + '</div>'
+    + '<p style="font-size:11px;color:var(--muted2);margin-top:8px;line-height:1.6">'
+    +   'A validade vale para o nome na agenda do Google ("Nome TRC dd/mm/aa", na próxima sincronização) e mantém o acesso ao painel do Clube enquanto o contrato estiver vigente. Os dados do cadastro não mudam.'
+    + '</p>';
+}
+
+function contratoIniChange(id) {
+  var ini = (document.getElementById('ctr-ini-' + id) || {}).value;
+  var elF = document.getElementById('ctr-fim-' + id);
+  if (_isoData(ini) && elF) elF.value = _somarMeses(ini, 12);
+}
+
+function _idxCliente(id) {
+  for (var i = 0; i < clientes.length; i++) if (clientes[i].id === id) return i;
+  return -1;
+}
+
+function registrarPeriodoContrato(id) {
+  var idx = _idxCliente(id);
+  if (idx === -1) { showToast('❌ Cliente não encontrado', 'err'); return; }
+  var g = function(k){ var el = document.getElementById('ctr-' + k + '-' + id); return el ? String(el.value || '').trim() : ''; };
+  var ini = _isoData(g('ini')), fim = _isoData(g('fim'));
+  if (!ini || !fim) { showToast('⚠️ Informe início e fim', 'err'); return; }
+  if (fim <= ini) { showToast('⚠️ O fim precisa ser depois do início', 'err'); return; }
+  var c = clientes[idx];
+  var ja = contratosDe(c).some(function(k){ return k.inicio === ini && k.fim === fim; });
+  if (ja) { showToast('⚠️ Esse período já está cadastrado', 'err'); return; }
+  var novo = { id: 'CT-' + Date.now(), inicio: ini, fim: fim, pagoEm: _isoData(g('pago')), forma: g('forma'), obs: g('obs'), registradoEm: new Date().toISOString() };
+  var antes = (c.contratos || []).slice();
+  c.contratos = antes.concat([novo]);
+  // Contrato vigente = cliente ativo (lembretes e disparos voltam a valer).
+  var ativoAntes = c.ativo;
+  if (fim >= _hojeSP()) c.ativo = true;
+  salvarClientesRemoto()
+    .then(function(){ showToast('✅ Validade atualizada até ' + _dataBRc(fim), 'ok'); renderClientes(); })
+    .catch(function(e){ c.contratos = antes; c.ativo = ativoAntes; showToast('❌ ' + e.message, 'err'); });
+}
+
+function excluirPeriodoContrato(id, periodoId) {
+  var idx = _idxCliente(id);
+  if (idx === -1) return;
+  var c = clientes[idx];
+  var k = (c.contratos || []).filter(function(x){ return x && x.id === periodoId; })[0];
+  if (!k) return;
+  if (!confirm('Excluir o período ' + _dataBRc(k.inicio) + ' → ' + _dataBRc(k.fim) + ' de ' + c.nome + '?')) return;
+  var antes = (c.contratos || []).slice();
+  c.contratos = antes.filter(function(x){ return !x || x.id !== periodoId; });
+  salvarClientesRemoto()
+    .then(function(){ showToast('🗑 Período excluído', 'ok'); renderClientes(); })
+    .catch(function(e){ c.contratos = antes; showToast('❌ ' + e.message, 'err'); });
 }
 
 function salvarClientesRemoto() {
