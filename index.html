@@ -6758,17 +6758,34 @@ function excluirPeriodoContrato(id, periodoId) {
   if (!confirm('Excluir o período ' + _dataBRc(k.inicio) + ' → ' + _dataBRc(k.fim) + ' de ' + c.nome + '?')) return;
   var antes = (c.contratos || []).slice();
   c.contratos = antes.filter(function(x){ return !x || x.id !== periodoId; });
-  salvarClientesRemoto()
+  salvarClientesRemoto([periodoId])
     .then(function(){ showToast('🗑 Período excluído', 'ok'); renderClientes(); })
     .catch(function(e){ c.contratos = antes; showToast('❌ ' + e.message, 'err'); });
 }
 
-function salvarClientesRemoto() {
+// O proxy mantém os períodos de contrato que já estão no arquivo (uma aba
+// antiga não apaga os registrados depois que ela abriu); só some o período
+// listado em removerContratos. Depois de salvar, os contratos voltam do
+// servidor para esta aba mostrar também os registrados em outra.
+function salvarClientesRemoto(removerContratos) {
   return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: clientes })
+    body: JSON.stringify({ data: clientes, removerContratos: removerContratos || [] })
   }).then(function(r){ return r.json(); })
-    .then(function(d){ if (!d.ok) throw new Error(d.erro || 'falha ao salvar'); return d; });
+    .then(function(d){
+      if (!d.ok) throw new Error(d.erro || 'falha ao salvar');
+      return _recarregarContratos().then(function(){ return d; }, function(){ return d; });
+    });
+}
+function _recarregarContratos() {
+  return fetch('https://cdv-proxy-production.up.railway.app/concierge/clientes', { cache: 'no-store' })
+    .then(function(r){ return r.json(); })
+    .then(function(d){
+      if (!d || !d.ok || !Array.isArray(d.data)) return;
+      var porId = {};
+      d.data.forEach(function(s){ if (s && s.id) porId[s.id] = s; });
+      clientes.forEach(function(c){ var s = porId[c.id]; if (s) c.contratos = Array.isArray(s.contratos) ? s.contratos : []; });
+    });
 }
 
 function salvarGestaoCliente(id) {
