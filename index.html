@@ -2499,6 +2499,7 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
         <label>Tipo <span class="tag required">*</span></label>
         <select id="df-tipo" onchange="demandaTipoChange()">
           <option value="💳 Ativação Seguro Cartão">💳 Ativação Seguro Cartão</option>
+          <option value="🛫 Check-in de Voo">🛫 Check-in de Voo</option>
           <option value="🏨 Hotel">🏨 Hotel</option>
           <option value="✈️ Passagem Doméstica">✈️ Passagem Doméstica</option>
           <option value="🌍 Passagem Internacional">🌍 Passagem Internacional</option>
@@ -5288,15 +5289,11 @@ function salvarReserva(cb) {
   if (demandaSelId && typeof demandas !== 'undefined') {
     var dSel = demandas.find(function(x){ return x.id === demandaSelId; });
     if (dSel) {
-      dSel.reservaId = res.id;
-      dSel.status = 'concluida';
-      if (dSel.viagemId && dSel.atividadeRef) {
-        var vD = viagens.find(function(x){ return x.id === dSel.viagemId; });
-        if (vD) {
-          var aD = (vD.atividades || []).find(function(x){ return x.id === dSel.atividadeRef; });
-          if (aD) { aD.reservaId = res.id; aD.status = 'concluida'; }
-        }
-      }
+      concluirDemandaPorReserva(dSel, res.id);
+      // Antes só mudava em memória: a demanda avulsa voltava aberta ao recarregar.
+      if (!dSel.viagemId) salvarDemandasAvulsas();
+      else if (dSel.viagemId !== getVal('f-viagem-assoc')) saveViagens(); // o bloco da viagem abaixo não grava essa
+      if (typeof renderDemandas === 'function') renderDemandas();
       showToast('✅ Demanda #' + String(dSel.numero||'').padStart(3,'0') + ' concluída', 'ok');
     }
   }
@@ -5316,6 +5313,7 @@ function salvarReserva(cb) {
         if (realIdx !== -1) {
           v.atividades[realIdx].reservaId = res.id;
           v.atividades[realIdx].status = 'concluida';
+          concluirDemandaDaAtividade(v.id, v.atividades[realIdx], res.id);
           // Sobrescrever título com dados da reserva (igual ao fluxo pela tela de viagem)
           var tituloGerado = (function(r) {
             if (!r) return '';
@@ -6924,7 +6922,7 @@ function switchTab(name) {
   if (name==='clientes') renderClientes();
   if (name==='reservas') renderReservas();
   if (name==='roteiro-gen') rgPopularSelect();
-  if (name==='demandas') renderDemandas();
+  if (name==='demandas') { renderDemandas(); syncDemandasAvulsas(); }
   if (name==='seats') saAbrirAba();
   if (name==='pops') renderPops();
   if (name==='ds160') renderDs160();
@@ -10513,6 +10511,7 @@ function confirmarVinculo() {
       v.atividades[realIdx].reservaId = reservaId || null;
       if (reservaId) {
         v.atividades[realIdx].status = 'concluida';
+        concluirDemandaDaAtividade(v.id, v.atividades[realIdx], reservaId);
         var res = reservas.find(function(r){ return r.id === reservaId; });
         if (res) v.atividades[realIdx].titulo = (function(r){
             if (!r) return '';
@@ -12636,6 +12635,9 @@ var demandaEditandoId = null;
 var _demandaCounter = 0;
 // Barreira de sessão: vale mesmo que a gravação no servidor falhe
 var _demandasExcluidas = [];
+// Ids de demandas avulsas excluídas nesta sessão: vão no POST para o proxy não
+// "ressuscitar" demanda automática (check-in) e o sync não trazê-la de volta.
+var _demandasAvulsasRemovidas = [];
 
 function demandaEstaOculta(v, a) {
   if (!a || !a.id) return false;
@@ -12897,7 +12899,7 @@ function salvarDemandasAvulsas() {
   return fetch('https://cdv-proxy-production.up.railway.app/concierge/demandas', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ data: avulsas })
+    body: JSON.stringify({ data: avulsas, removidos: _demandasAvulsasRemovidas })
   })
   .then(function(r){ if (!r.ok) throw new Error('HTTP ' + r.status); return r; })
   .catch(function(e){ console.error('[salvarDemandasAvulsas]', e.message); });
@@ -12911,6 +12913,7 @@ function syncDemandasAvulsas() {
       if (!d.ok) throw new Error(d.erro || 'proxy retornou ok=false');
       (d.data || []).forEach(function(dem) {
         if (!dem || !dem.id) return;
+        if (_demandasAvulsasRemovidas.indexOf(dem.id) !== -1) return;
         if (demandas.some(function(x){ return x.id === dem.id; })) return;
         demandas.push(dem);
         if (dem.numero && dem.numero > _demandaCounter) _demandaCounter = dem.numero;
@@ -13227,10 +13230,33 @@ function excluirDemanda(id) {
 
   if (!confirm('Remover a demanda ' + num + '?')) return;
   cancelarAgendaDemanda(d);
+  if (_demandasAvulsasRemovidas.indexOf(id) === -1) _demandasAvulsasRemovidas.push(id);
   demandas = demandas.filter(function(x){ return x.id !== id; });
   saveDemandas();
   renderDemandas();
   showToast('🗑️ Demanda ' + num + ' removida', 'ok');
+}
+
+// Reserva vinculada a uma demanda = demanda concluída. Atualiza a demanda em
+// memória e a atividade espelhada; quem chama grava (saveViagens / avulsas).
+function concluirDemandaPorReserva(d, resId) {
+  if (!d) return;
+  d.reservaId = resId || d.reservaId || null;
+  d.status = 'concluida';
+  if (demandaEstaAgendada(d)) cancelarAgendaDemanda(d);
+  if (d.viagemId && d.atividadeRef) {
+    var v = viagens.find(function(x){ return x.id === d.viagemId; });
+    var a = v ? (v.atividades || []).find(function(x){ return x.id === d.atividadeRef; }) : null;
+    if (a) { a.reservaId = d.reservaId; a.status = 'concluida'; }
+  }
+}
+
+// Atividade de viagem recebeu reserva (Nova Reserva ou "Vincular reserva"):
+// a demanda espelhada dela também conclui, sem esperar recarregar a página.
+function concluirDemandaDaAtividade(viagemId, ativ, resId) {
+  if (!ativ || !ativ.id || typeof demandas === 'undefined') return;
+  var d = demandas.find(function(x){ return x.viagemId === viagemId && x.atividadeRef === ativ.id; });
+  if (d && d.status !== 'concluida') concluirDemandaPorReserva(d, resId);
 }
 
 function alterarStatusDemanda(id, novoStatus) {

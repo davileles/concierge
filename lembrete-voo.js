@@ -23,6 +23,8 @@
  * 26h antes de cada perna (ida e volta) de toda reserva tipo 'voo', avisando
  * no grupo de alertas (cfg.grupoAlertas) que aquela reserva precisa de
  * check-in. Não depende de modelo cadastrado e não vai para o cliente.
+ * Cada alerta de check-in enviado também cria uma demanda (kanban do painel)
+ * em demandas.json — ver demandaCheckinVoo().
  */
 
 const fs   = require('fs');
@@ -841,6 +843,88 @@ function msgCheckinVoo(res, t, horas) {
   return l.join('\n');
 }
 
+// ── demanda de check-in no kanban ────────────────────────────────────────────
+// Todo alerta de check-in enviado ao grupo de gestão também vira uma demanda
+// avulsa em demandas.json (aba Demandas do painel → coluna Pendente, prazo = dia
+// da partida). Id determinístico (DEM-CHK-<PERNA>-<RES-id>): rodar de novo nunca
+// duplica. `auto: true` faz o proxy preservar a demanda se o painel aberto
+// salvar a lista antiga dele por cima (POST /concierge/demandas).
+// Fica sem viagemId de propósito: demanda com viagemId vive em viagens.json e
+// o painel a descartaria de demandas.json no próximo save.
+const TIPO_DEMANDA_CHECKIN = '🛫 Check-in de Voo';
+
+function hojeSP() {
+  return new Date().toLocaleDateString('en-CA', { timeZone: TZ_SP }); // AAAA-MM-DD
+}
+
+function demandaCheckinVoo(res, t, perna) {
+  const voo = [t.nvoo, t.cia].filter(Boolean).join(' · ');
+  const desc = [];
+  if (voo) desc.push(`Voo: ${voo} (${t.rotulo})`);
+  desc.push(`Trecho: ${localDe(t.origem)} → ${localDe(t.destino)}`);
+  desc.push(`Partida: ${fmtDateBR(t.data)}${(t.hora && t.hora !== '00:00') ? ' às ' + t.hora : ''}`);
+  if (res.pnr) desc.push(`Localizador: ${res.pnr}`);
+  const nomes = nomesPassageiros(res);
+  if (nomes.length) desc.push('', 'Passageiros (grafia da emissão):', ...nomes.map(n => `• ${n}`));
+  return {
+    id: `DEM-CHK-${perna.toUpperCase()}-${res.id}`,
+    tipo: TIPO_DEMANDA_CHECKIN,
+    titulo: `Check-in ${t.rotulo.toLowerCase()} · ${t.origem || '?'}→${t.destino || '?'} · ${fmtDateBR(t.data).slice(0, 5)}`,
+    clientes: res.cliente || '',
+    descricao: desc.join('\n'),
+    status: 'pendente',
+    prioridade: 'alta',
+    prazo: t.data,
+    responsavel: '',
+    viagemId: null,
+    viagemNome: '',
+    atividadeRef: null,
+    reservaId: res.id || null,
+    agendadaPara: '',
+    agendamentoId: '',
+    criadoEm: hojeSP(),
+    auto: true,
+    origem: 'checkin_voo'
+  };
+}
+
+// Grava as demandas novas numa única escrita, com SHA fresco e retry em 409.
+async function gravarDemandasCheckin(novas, resultados) {
+  if (!novas.length) return;
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      let lista = [], sha;
+      try {
+        const r = await githubGet('demandas.json');
+        lista = Array.isArray(r.data) ? r.data : [];
+        sha = r.sha;
+      } catch (e) {
+        if (e.status !== 404 || await arquivoExisteNoRepo('demandas.json')) throw e;
+      }
+      let maxNum = lista.reduce((mx, d) => Math.max(mx, Number(d && d.numero) || 0), 0);
+      const add = [];
+      for (const d of novas) {
+        if (lista.some(x => x && x.id === d.id)) continue;
+        add.push({ ...d, numero: ++maxNum });
+      }
+      if (!add.length) return;
+      await githubPut('demandas.json', [...add, ...lista], sha,
+        `concierge: demanda de check-in — ${add.map(d => d.clientes).join(', ')}`);
+      add.forEach(d => {
+        resultados.push(`✅ [demanda check-in] #${String(d.numero).padStart(3, '0')} "${d.clientes}" — ${d.titulo}`);
+        logDebug({ bloco: 'checkin_voo_demanda', demandaId: d.id, numero: d.numero, reservaId: d.reservaId, tentativa: 'sucesso' });
+      });
+      return;
+    } catch (e) {
+      if (tentativa < 3 && /→ (409|422)/.test(e.message)) { await new Promise(ok => setTimeout(ok, 1500 * tentativa)); continue; }
+      resultados.push(`❌ [demanda check-in] ${e.message}`);
+      console.error('  ❌ demanda check-in:', e.message);
+      logDebug({ bloco: 'checkin_voo_demanda', tentativa: 'erro', erro: e.message });
+      return;
+    }
+  }
+}
+
 // Dedup pelo mesmo ledger dos modelos, com IDs sintéticos que não colidem com
 // os MOD-xxx: CHECKIN24-IDA|RES-xxx e CHECKIN24-VOLTA|RES-xxx.
 async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
@@ -851,6 +935,7 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
   }
   console.log(`\n[check-in voo] janela=${CHECKIN_JANELA_H}h → grupo ${grupoAlertas}`);
   let enviados = 0;
+  const demandasNovas = [];
   for (const res of reservas) {
     if (res.tipo !== 'voo') continue;
     for (const perna of ['ida', 'volta']) {
@@ -872,6 +957,7 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
         await enviarWhatsApp(grupoAlertas, msgCheckinVoo(res, t, horas));
         await registrarEnvio(modId, res.id);
         enviados++;
+        demandasNovas.push(demandaCheckinVoo(res, t, perna));
         resultados.push(`✅ [check-in ${perna}] "${res.cliente}" — ${t.origem}→${t.destino} ${t.data}`);
         logDebug({ bloco: 'checkin_voo', perna, reservaId: res.id, cliente: res.cliente, grupo: grupoAlertas, tentativa: 'sucesso' });
       } catch (e) {
@@ -881,6 +967,8 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
       }
     }
   }
+  // Falha aqui só fica no log: o alerta no grupo já foi enviado.
+  await gravarDemandasCheckin(demandasNovas, resultados);
   return enviados;
 }
 
