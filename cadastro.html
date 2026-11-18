@@ -264,7 +264,7 @@ footer .by { font-style: italic; opacity: .72; }
         <div class="field" data-req>
           <label>Telefone com DDD</label>
           <input type="tel" id="tel" autocomplete="tel" inputmode="numeric" placeholder="(31) 99999-0000"/>
-          <p class="err-msg">Telefone inválido.</p>
+          <p class="err-msg">Informe o celular com DDD, ex.: (31) 99999-0000.</p>
         </div>
         <div class="field" data-req>
           <label>E-mail</label>
@@ -434,6 +434,17 @@ var enviando = false;
 function $(id) { return document.getElementById(id); }
 function val(id) { var e = $(id); return e ? e.value.trim() : ''; }
 function digitos(v) { return String(v || '').replace(/\D/g, ''); }
+// Telefone digitado/colado: tira +55 e zeros de operadora (0xx) antes de cortar em 11 dígitos.
+// Antes, "+55 31 99580-8303" virava "55319958083" (cortava o fim do número).
+function telDigitos(v) {
+  var d = digitos(v);
+  if (d.length > 11 && d.indexOf('55') === 0) d = d.slice(2);
+  d = d.replace(/^0+/, '');
+  return d.slice(0, 11);
+}
+// Celular: DDD + 9 + 8 dígitos. Fixo: DDD + 8 dígitos começando de 2 a 8.
+function celularValido(v) { var d = digitos(v); return d.length === 11 && /^[1-9][1-9]9/.test(d); }
+function telefoneValido(v) { var d = digitos(v); return celularValido(d) || (d.length === 10 && /^[1-9][1-9][2-8]/.test(d)); }
 
 // ── MONTAGEM ──────────────────────────────────────────────
 UF.forEach(function (uf) {
@@ -546,7 +557,7 @@ $('cpf').addEventListener('input', function () {
                 .replace(/\.(\d{3})(\d{1,2})$/, '.$1-$2');
 });
 $('tel').addEventListener('input', function () {
-  var v = digitos(this.value).slice(0, 11);
+  var v = telDigitos(this.value);
   if (v.length > 10)      this.value = v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
   else if (v.length > 6)  this.value = v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
   else if (v.length > 2)  this.value = v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
@@ -605,7 +616,7 @@ function validarEtapa(n) {
   }
   if (n === 1) {
     ok = marcar('nome',  val('nome').split(/\s+/).length >= 2) && ok;
-    ok = marcar('tel',   digitos(val('tel')).length >= 10) && ok;
+    ok = marcar('tel',   celularValido(val('tel'))) && ok;
     ok = marcar('aparelho', val('aparelho') === 'Android' || val('aparelho') === 'iPhone') && ok;
     ok = marcar('email', /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val('email'))) && ok;
     ok = marcar('cpf',   cpfValido(val('cpf'))) && ok;
@@ -676,7 +687,7 @@ function montarPayload() {
     website:       val('website'),
     consentimento: $('consentimento').checked,
     nome:          val('nome'),
-    tel:           digitos(val('tel')),
+    tel:           telDigitos(val('tel')),
     aparelho:      val('aparelho'),
     email:         val('email'),
     cpf:           digitos(val('cpf')),

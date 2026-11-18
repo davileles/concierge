@@ -325,6 +325,17 @@ var MESES = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','
 
 function $(id) { return document.getElementById(id); }
 function digitos(v) { return String(v || '').replace(/\D/g, ''); }
+// Telefone digitado/colado: tira +55 e zeros de operadora (0xx) antes de cortar em 11 dígitos.
+// Antes, "+55 31 99580-8303" virava "55319958083" (cortava o fim do número).
+function telDigitos(v) {
+  var d = digitos(v);
+  if (d.length > 11 && d.indexOf('55') === 0) d = d.slice(2);
+  d = d.replace(/^0+/, '');
+  return d.slice(0, 11);
+}
+// Celular: DDD + 9 + 8 dígitos. Fixo: DDD + 8 dígitos começando de 2 a 8.
+function celularValido(v) { var d = digitos(v); return d.length === 11 && /^[1-9][1-9]9/.test(d); }
+function telefoneValido(v) { var d = digitos(v); return celularValido(d) || (d.length === 10 && /^[1-9][1-9][2-8]/.test(d)); }
 function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 // ── SCHEMA ────────────────────────────────────────────────
@@ -714,7 +725,7 @@ function renumerar(c, hostL) {
 
 // ── MÁSCARAS ──────────────────────────────────────────────
 function mascaraTel(v) {
-  v = digitos(v).slice(0, 11);
+  v = telDigitos(v);
   if (v.length > 10) return v.replace(/(\d{2})(\d{5})(\d{0,4})/, '($1) $2-$3');
   if (v.length > 6)  return v.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
   if (v.length > 2)  return v.replace(/(\d{2})(\d{0,5})/, '($1) $2');
@@ -830,7 +841,7 @@ function validarEtapa(n) {
     if (f.hasAttribute('data-req') && !v) bom = false;
     else if (v && tipo === 'cpf') bom = cpfValido(v);
     else if (v && tipo === 'email') bom = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v);
-    else if (v && tipo === 'tel') bom = digitos(v).length >= 10;
+    else if (v && tipo === 'tel') bom = telefoneValido(v);
     if (!bom) { f.classList.add('bad'); ok = false; if (!primeiro) primeiro = inp; }
   }
   // Itens de lista (escolas, empregos…): se a pessoa começou a preencher um, os obrigatórios dele valem.
