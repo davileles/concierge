@@ -15,6 +15,9 @@
 
   // Ouvintes de beforeunload registrados pelo site passam a respeitar o sinal.
   EventTarget.prototype.addEventListener = function (tipo, fn, opc) {
+    // O CEAC proíbe 'unload' (Permissions-Policy): o Chrome recusaria de qualquer
+    // jeito e atribuiria o aviso à extensão. Descartar aqui evita o erro.
+    if (this === window && tipo === 'unload') return;
     if (this === window && tipo === 'beforeunload' && typeof fn === 'function') {
       var original = fn;
       fn = function () { if (livre) return; return original.apply(this, arguments); };
