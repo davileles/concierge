@@ -6649,6 +6649,8 @@ function _atualizarCriacaoGrupoContratos() {
     elI.setAttribute('data-auto', 'grupo');
     var elF = document.getElementById('ctr-fim-' + cid);
     if (elF) elF.value = _somarMeses(criado, 12);
+    var elP = document.getElementById('ctr-pago-' + cid);
+    if (elP && !elP.getAttribute('data-mexido')) elP.value = criado;
   }
 }
 
@@ -6687,7 +6689,7 @@ function _blocoContrato(c) {
   var ini = a ? a.periodo.fim : (criadoGrupo || _hojeSP());
   var fim = _somarMeses(ini, 12);
   var formas = '<option value="">—</option>' + CONTRATO_FORMAS.map(function(f){
-    return '<option value="' + _attr(f) + '"' + (f === 'Transferência bancária' && a ? ' selected' : '') + '>' + escHtml(f) + '</option>';
+    return '<option value="' + _attr(f) + '"' + (f === 'Link de cartão' ? ' selected' : '') + '>' + escHtml(f) + '</option>';
   }).join('');
   return _tituloSecao('📄 Validade do contrato')
     + status + hist
@@ -6699,7 +6701,7 @@ function _blocoContrato(c) {
     +   '<div class="field" style="margin:0"><label>Fim <span class="tag">12 meses</span></label>'
     +     '<input type="date" id="ctr-fim-' + idH + '" value="' + fim + '" data-data-de="ctr-ini-' + idH + '"/></div>'
     +   '<div class="field" style="margin:0"><label>Pagamento em <span class="tag">opcional</span></label>'
-    +     '<input type="date" id="ctr-pago-' + idH + '" value="' + (a ? _hojeSP() : '') + '"/></div>'
+    +     '<input type="date" id="ctr-pago-' + idH + '" value="' + ini + '" onchange="this.setAttribute(\'data-mexido\',\'1\')"/></div>'
     +   '<div class="field" style="margin:0"><label>Forma de pagamento <span class="tag">opcional</span></label>'
     +     '<select id="ctr-forma-' + idH + '">' + formas + '</select></div>'
     + '</div>'
@@ -6717,6 +6719,8 @@ function contratoIniChange(id) {
   var ini = (document.getElementById('ctr-ini-' + id) || {}).value;
   var elF = document.getElementById('ctr-fim-' + id);
   if (_isoData(ini) && elF) elF.value = _somarMeses(ini, 12);
+  var elP = document.getElementById('ctr-pago-' + id);
+  if (_isoData(ini) && elP && !elP.getAttribute('data-mexido')) elP.value = ini;
 }
 
 function _idxCliente(id) {
