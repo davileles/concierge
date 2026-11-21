@@ -1,0 +1,27 @@
+name: Sonda — check-in Azul em segundo plano
+
+# Teste manual: a Azul deixa um Chrome headless do GitHub abrir a reserva?
+# Não faz check-in e não imprime dado de cliente (repo e logs são públicos).
+on:
+  workflow_dispatch:
+    inputs:
+      reserva_id:
+        description: 'ID da reserva (RES-...)'
+        required: true
+
+jobs:
+  sonda:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Instalar puppeteer
+        run: npm install --no-save --no-audit --no-fund puppeteer@23
+      - name: Abrir a reserva na Azul
+        env:
+          CDV_GITHUB_TOKEN: ${{ secrets.CDV_CONCIERGE_TOKEN }}
+          RESERVA_ID: ${{ inputs.reserva_id }}
+        run: node checkin/sonda-azul.js
