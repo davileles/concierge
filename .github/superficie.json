@@ -98,7 +98,9 @@
         "function localDe",
         "function logDebug",
         "function msgCheckinVoo",
-        "function normalizarModelo"
+        "function normalizarModelo",
+        "function gravarFilaCheckin(",
+        "function itemFilaCheckin("
       ]
     },
     "pdf-reserva.js": {
@@ -107,7 +109,9 @@
         "function montarHTML(",
         "function montarVoo(",
         "function montarOutro(",
-        "function gerarPDF("
+        "function gerarPDF(",
+        "function montarCartaoEmbarque(",
+        "function gerarPDFDe("
       ]
     },
     "portal.html": {
@@ -124,6 +128,20 @@
         "function toTitleCase(",
         "function toggleTema(",
         "function toggleViagem("
+      ]
+    },
+    "extensao/checkin-azul.js": {
+      "minLinhas": 200,
+      "obrigatorio": [
+        "function passoCartao(",
+        "function lerBcbp("
+      ]
+    },
+    "extensao/checkin-robo.js": {
+      "minLinhas": 150,
+      "obrigatorio": [
+        "function roboRodada(",
+        "function roboProcessar("
       ]
     }
   }

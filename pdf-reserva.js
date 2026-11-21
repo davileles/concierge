@@ -671,6 +671,54 @@
     };
   }
 
+  // ── Cartão de embarque (check-in automático da extensão) ──
+  // Mesmo layout do comprovante. d = {cliente, pnr, origem, destino, data, hp, hc,
+  // cia, voo, classe, sentido, embarqueIni, embarqueFim, portao,
+  // passageiros:[{nome, categoria, assento, secao, seq, qr (data URI do QR)}]}.
+  // Uma página por passageiro. O QR vem pronto de quem chama (o módulo não
+  // gera QR); o conteúdo dele é o BCBP lido da página da companhia.
+  function montarCartaoEmbarque(d, ctx) {
+    d = d || {}; ctx = ctx || {};
+    var t = { sentido: d.sentido === 'volta' ? 'volta' : 'ida', data: d.data, dataCheg: d.data, origem: d.origem, destino: d.destino,
+      hp: d.hp, hc: d.hc, cia: d.cia, voos: listaVoos(d.voo), conexao: '' };
+    var r = { classe: d.classe, dataVolta: t.sentido === 'volta' ? d.data : '' };
+    var pax = (d.passageiros || []).filter(function (p) { return p && p.qr; });
+    var paginas = pax.map(function (p, i) {
+      var nome = nomePax(p.nome) || titulo(p.nome);
+      var det = [['Seção', p.secao], ['Sequência', p.seq], ['Início do embarque', d.embarqueIni], ['Fim do embarque', d.embarqueFim],
+        ['Terminal / portão', txt(d.portao) || 'Ver no aeroporto']].filter(function (x) { return txt(x[1]); });
+      var op = { assentoIda: t.sentido === 'ida' ? p.assento : '', assentoVolta: t.sentido === 'volta' ? p.assento : '' };
+      var embarque = '<section><div class="rotulo">Embarque</div>' +
+        '<div class="trecho" style="display:grid;grid-template-columns:1fr 62mm;align-items:stretch">' +
+        '<div style="display:flex;flex-direction:column">' +
+        '<div class="pax" style="padding:4mm 5.5mm;border-bottom:1px solid var(--line)"><div class="ini">' + esc(nome.charAt(0)) + '</div><div><b>' + esc(nome) + '</b><span>' + esc(p.categoria || 'Passageiro') + '</span></div></div>' +
+        det.map(function (x) { return '<div class="kv" style="padding:2.4mm 5.5mm"><span>' + esc(x[0]) + '</span><b>' + esc(x[1]) + '</b></div>'; }).join('') +
+        '</div>' +
+        '<div style="border-left:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4mm;background:#fff">' +
+        '<img src="' + esc(p.qr) + '" style="width:50mm;height:50mm;display:block;image-rendering:pixelated" alt="">' +
+        '<div style="margin-top:2mm;font-size:7pt;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:700">' + esc(d.pnr || '') + (p.seq ? ' · SEQ ' + esc(p.seq) : '') + '</div>' +
+        '</div></div></section>' +
+        '<section><div class="recado">Apresente este QR code na segurança e no portão de embarque, junto com um documento de identificação com foto. Confira terminal e portão nos painéis do aeroporto.</div></section>';
+      var sub = 'Check-in realizado · ' + txt(d.origem).toUpperCase() + ' → ' + txt(d.destino).toUpperCase() + ' · ' + nome +
+        (pax.length > 1 ? ' · ' + (i + 1) + ' de ' + pax.length : '');
+      return '<div class="cartao-pag"' + (i ? ' style="page-break-before:always;break-before:page"' : '') + '>' +
+        capa(ctx, 'Cartão de', 'embarque', sub, d.pnr ? [d.pnr] : [], 'Localizador') +
+        '<main><section><div class="rotulo">Voo</div>' + htmlTrecho(t, r, op, ctx) + '</section>' + embarque + '</main>' +
+        rodape(ctx, nome.split(' ')[0]) + '</div>';
+    });
+    var corpo = semPseudo(paginas.join(''));
+    var abre = '<div class="pdf-res">';
+    return {
+      css: CSS,
+      corpo: abre + corpo + '</div>',
+      documento: '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">' +
+        '<link href="' + URL_FONTES + '" rel="stylesheet">' +
+        '<style>@page{size:A4;margin:0}html,body{margin:0;background:#FBF9F5}' + CSS + '.pdf-res .cartao-pag{min-height:296mm;display:flex;flex-direction:column}.pdf-res .cartao-pag main{flex:1}</style></head><body>' + abre + corpo + '</div></body></html>',
+      nomeArquivo: ('Cartão de embarque ' + (d.pnr || '') + ' - ' + (pax.length === 1 ? nomePax(pax[0].nome) : titulo(d.cliente))).replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim() + '.pdf',
+      paginas: pax.length
+    };
+  }
+
   // ── Geração do arquivo (só no navegador) ──
   // html2pdf vem do cdnjs na primeira vez; as fontes vêm do Google Fonts.
   var URL_HTML2PDF = 'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js';
@@ -712,7 +760,7 @@
         pronto = true; clearTimeout(tempo);
         var w = fr.contentWindow;
         var sc = w.document.createElement('script');
-        sc.src = URL_HTML2PDF;
+        sc.src = (m.html2pdfSrc || URL_HTML2PDF);
         sc.onload = function () { w.html2pdf ? ok(fr) : (fr.remove(), falha(new Error('html2pdf não carregou'))); };
         sc.onerror = function () { fr.remove(); falha(new Error('não foi possível baixar o gerador de PDF')); };
         w.document.head.appendChild(sc);
@@ -722,7 +770,11 @@
     });
   }
   function gerarPDF(r, op, ctx) {
-    var m = montarHTML(r, op, ctx);
+    return gerarPDFDe(montarHTML(r, op, ctx));
+  }
+  // Gera o PDF de um documento já montado (montarHTML ou montarCartaoEmbarque).
+  // m.html2pdfSrc troca o endereço do html2pdf (a extensão usa a cópia local).
+  function gerarPDFDe(m) {
     return abrirIframe(m).then(function (fr) {
       var w = fr.contentWindow, doc = w.document;
       return carregarFontes(doc).then(function () {
@@ -753,7 +805,7 @@
     });
   }
 
-  var api = { opcoesPadrao: opcoesPadrao, montarHTML: montarHTML, gerarPDF: gerarPDF, carregarFontes: carregarFontes, nomePax: nomePax, _num: num };
+  var api = { opcoesPadrao: opcoesPadrao, montarHTML: montarHTML, montarCartaoEmbarque: montarCartaoEmbarque, gerarPDF: gerarPDF, gerarPDFDe: gerarPDFDe, carregarFontes: carregarFontes, nomePax: nomePax, _num: num };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.PdfReserva = api;
 })(typeof window !== 'undefined' ? window : this);

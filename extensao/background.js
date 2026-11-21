@@ -5,3 +5,6 @@ chrome.runtime.onInstalled.addListener(function () {
 chrome.runtime.onStartup.addListener(function () {
   chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(function () {});
 });
+
+// Robô de check-in automático (Azul): ver checkin-robo.js
+importScripts('checkin-robo.js');

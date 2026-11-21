@@ -839,8 +839,99 @@ function msgCheckinVoo(res, t, horas) {
     l.push('', '*Passageiros — grafia da emissão:*');
     _nomes.forEach(n => l.push(`• ${n}`));
   }
-  l.push('', 'Fazer o check-in online desta reserva.');
+  if (ehAzul(t) && res.pnr) {
+    l.push('', `*Link Azul:* ${linkAzul(res, t)}`);
+    l.push('', '🤖 O robô vai tentar fazer este check-in sozinho. Aguarde o resultado aqui antes de fazer manualmente.');
+  } else {
+    l.push('', 'Fazer o check-in online desta reserva.');
+  }
   return l.join('\n');
+}
+
+// ── check-in automático (Azul) ───────────────────────────────────────────────
+// Quem faz é a extensão do Concierge no Chrome do Davi (extensao/checkin-*.js):
+// a Azul bloqueia acesso vindo de servidor (403 do Akamai, testado em
+// 21/11/2026 com checkin/sonda-azul.js). Este job só PREPARA o trabalho: no
+// mesmo momento do alerta, grava um item em dados/concierge/checkin-fila.json
+// com tudo que a extensão precisa (link, grupos, mensagem do modelo já
+// resolvida, dados do PDF). A extensão lê e atualiza a fila pelo proxy
+// (GET /concierge/checkin/fila, POST /concierge/checkin/resultado).
+function ehAzul(t) {
+  return /azul/i.test(String(t && t.cia || '')) || /^AD\s*\d/i.test(String(t && t.nvoo || ''));
+}
+function pnrPrincipal(res) {
+  return String(res && res.pnr || '').split(/[,;/\s]+/).filter(Boolean)[0] || '';
+}
+function linkAzul(res, t) {
+  return 'https://www.voeazul.com.br/br/pt/home/minhas-viagens?pnr=' +
+    encodeURIComponent(pnrPrincipal(res).toUpperCase()) + '&origin=' + encodeURIComponent(String(t.origem || '').toUpperCase());
+}
+// Modelo "Voo · Check-in realizado (ida|volta)" de modelos.json
+function modeloCheckinRealizado(modelos, perna) {
+  const lista = (modelos || []).filter(m => /check-?in realizado/i.test(m.nome || ''));
+  return lista.find(m => perna === 'volta' ? /volta/i.test(m.nome) : !/volta/i.test(m.nome)) || null;
+}
+function itemFilaCheckin(res, t, perna, horas, ctx) {
+  const cli = (ctx.clientes || []).find(c => c.nome === res.cliente);
+  const mod = modeloCheckinRealizado(ctx.modelos, perna);
+  return {
+    id: `CHK-${perna.toUpperCase()}-${res.id}`,
+    reservaId: res.id,
+    demandaId: `DEM-CHK-${perna.toUpperCase()}-${res.id}`,
+    perna,
+    cia: 'azul',
+    link: linkAzul(res, t),
+    pnr: pnrPrincipal(res).toUpperCase(),
+    origem: t.origem || '', destino: t.destino || '',
+    data: t.data, hora: t.hora,
+    partidaEm: new Date(Date.now() + horas * 3_600_000).toISOString(),
+    cliente: res.cliente || '',
+    passageiros: nomesPassageiros(res),
+    pax: Number(res.pax) || nomesPassageiros(res).length || 0,
+    grupoCliente: (cli && cli.grupo) || res.grupo || '',
+    grupoGestao: ctx.grupoAlertas || '',
+    conta: CONTA_ENVIO || '',
+    mensagem: mod ? interpolar(mod.texto, cli || { nome: res.cliente }, res, null, ctx.viagens) : '',
+    pdf: {
+      cliente: res.cliente || '', origem: t.origem || '', destino: t.destino || '', data: t.data,
+      hp: perna === 'volta' ? (res.horaPartidaVolta || '') : (res.horaPartida || ''),
+      hc: perna === 'volta' ? (res.horaChegadaVolta || '') : (res.horaChegada || ''),
+      cia: t.cia || 'Azul', voo: t.nvoo || '', classe: res.classe || '', sentido: perna
+    },
+    status: 'pendente',
+    tentativas: 0,
+    criadoEm: new Date().toISOString()
+  };
+}
+// Acrescenta itens novos sem tocar nos que já existem (o status deles é da
+// extensão, via proxy). Poda itens com partida há mais de 7 dias.
+async function gravarFilaCheckin(novos, resultados) {
+  if (!novos.length) return;
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      let lista = [], sha;
+      try {
+        const r = await githubGet('checkin-fila.json');
+        lista = Array.isArray(r.data) ? r.data : [];
+        sha = r.sha;
+      } catch (e) {
+        if (e.status !== 404 || await arquivoExisteNoRepo('checkin-fila.json')) throw e;
+      }
+      const corte = Date.now() - 7 * 86_400_000;
+      lista = lista.filter(x => x && (!x.partidaEm || Date.parse(x.partidaEm) > corte));
+      const add = novos.filter(n => !lista.some(x => x.id === n.id));
+      if (!add.length) return;
+      await githubPut('checkin-fila.json', [...lista, ...add], sha,
+        `concierge: fila de check-in automático (${add.length})`);
+      add.forEach(i => resultados.push(`🤖 [check-in automático] na fila: ${i.id}`));
+      return;
+    } catch (e) {
+      if (tentativa < 3 && /→ (409|422)/.test(e.message)) { await new Promise(ok => setTimeout(ok, 1500 * tentativa)); continue; }
+      resultados.push(`❌ [fila check-in] ${e.message}`);
+      logDebug({ bloco: 'checkin_fila', tentativa: 'erro', erro: e.message });
+      return;
+    }
+  }
 }
 
 // ── demanda de check-in no kanban ────────────────────────────────────────────
@@ -927,7 +1018,7 @@ async function gravarDemandasCheckin(novas, resultados) {
 
 // Dedup pelo mesmo ledger dos modelos, com IDs sintéticos que não colidem com
 // os MOD-xxx: CHECKIN24-IDA|RES-xxx e CHECKIN24-VOLTA|RES-xxx.
-async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
+async function alertarCheckinVoo(reservas, grupoAlertas, resultados, ctx) {
   if (!grupoAlertas) {
     console.log('\n[check-in voo] grupoAlertas não configurado em cfg.json — bloco ignorado.');
     logDebug({ bloco: 'checkin_voo', erro: 'grupoAlertas não configurado em cfg.json' });
@@ -936,6 +1027,7 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
   console.log(`\n[check-in voo] janela=${CHECKIN_JANELA_H}h → grupo ${grupoAlertas}`);
   let enviados = 0;
   const demandasNovas = [];
+  const filaNova = [];
   for (const res of reservas) {
     if (res.tipo !== 'voo') continue;
     for (const perna of ['ida', 'volta']) {
@@ -958,6 +1050,7 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
         await registrarEnvio(modId, res.id);
         enviados++;
         demandasNovas.push(demandaCheckinVoo(res, t, perna));
+        if (ehAzul(t) && res.pnr) filaNova.push(itemFilaCheckin(res, t, perna, horas, { ...(ctx || {}), grupoAlertas }));
         resultados.push(`✅ [check-in ${perna}] "${res.cliente}" — ${t.origem}→${t.destino} ${t.data}`);
         logDebug({ bloco: 'checkin_voo', perna, reservaId: res.id, cliente: res.cliente, grupo: grupoAlertas, tentativa: 'sucesso' });
       } catch (e) {
@@ -969,6 +1062,7 @@ async function alertarCheckinVoo(reservas, grupoAlertas, resultados) {
   }
   // Falha aqui só fica no log: o alerta no grupo já foi enviado.
   await gravarDemandasCheckin(demandasNovas, resultados);
+  await gravarFilaCheckin(filaNova, resultados);
   return enviados;
 }
 
@@ -1283,7 +1377,7 @@ async function main() {
   }
 
   // ── Alerta interno de check-in online (independe de modelos) ─────────────
-  totalAlteracoes += await alertarCheckinVoo(reservas, grupoAlertas, resultados);
+  totalAlteracoes += await alertarCheckinVoo(reservas, grupoAlertas, resultados, { modelos, clientes, viagens });
 
   // ── Bom dia diário do roteiro (independe de modelos) ─────────────────────
   try {

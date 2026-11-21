@@ -1,4 +1,4 @@
-# Extensão DS-160 — Concierge Estratégico
+# Extensão do Concierge Estratégico — DS-160 e check-in automático
 
 Painel lateral do Chrome que preenche o DS-160 (ceac.state.gov) com as respostas que o cliente mandou pelo `ds160.html`.
 
@@ -41,3 +41,12 @@ Nenhum dado de cliente fica gravado no navegador: só o token de sessão, quais 
 
 ## Inventário de campos (para manter o mapa em dia)
 A cada página do DS-160 aberta (e a cada "Yes" que abre campos novos), a extensão anota sozinha os campos do site — id, tipo, rótulo e opções, **sem nenhum valor preenchido**. O botão **⬇ Baixar campos do site** gera o `ds160-campos.json`; com ele dá para conferir e corrigir os ids do `mapa.js`. Para um inventário completo, passe por todas as páginas, inclusive marcando "Yes" onde abre campos novos (pode desfazer depois).
+
+## Robô de check-in da Azul (desde 21/11/2026, v1.4.0)
+Com o Chrome aberto, a extensão confere a cada 10 minutos a fila de check-in do Concierge e faz sozinha o check-in dos voos da Azul: abre a reserva numa aba em segundo plano, passa pelas telas, aceita a declaração dos termos, lê o QR code de cada cartão, gera o PDF no layout do Concierge e manda o modelo "Check-in realizado" + o cartão no grupo do cliente. No grupo de gestão aparece "✅ Check-in feito (automático)" ou, se não der, "⚠️ … fazer manualmente" com o motivo.
+
+**Configurar (uma vez):** `chrome://extensions` → card da extensão → **Detalhes** → **Opções da extensão** → cole a **chave do robô** (começa com `robo_`) → Salvar. Ali também dá para desligar o robô, "Conferir agora" e ver as últimas rodadas.
+
+**Precisa:** Mac ligado e Chrome aberto (pode estar minimizado). Mac dormindo = o check-in daquele voo fica para a equipe, pelo POP.
+
+Arquivos: `checkin-robo.js` (background), `checkin-azul.js` (site da Azul), `cartao.html/js` (gera o PDF), `opcoes.html/js`, `pdf-reserva.js` (**cópia** do `pdf-reserva.js` da raiz do repo — mudou um, copie no outro), `vendor/` (qrcode-generator e html2pdf.js, MIT), `icones/logo-concierge.png`.

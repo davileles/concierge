@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Robô de check-in — Concierge CDV</title>
+<style>
+body{font:14px system-ui,-apple-system,sans-serif;color:#1c2130;background:#FBF9F5;margin:0;padding:28px;max-width:720px}
+h1{font-size:20px;margin:0 0 4px}p{color:#4a5163;line-height:1.5}
+.card{background:#fff;border:1px solid #E4DCCD;border-radius:12px;padding:18px;margin:16px 0}
+label{display:block;font-weight:600;margin:10px 0 6px}
+input[type=password],input[type=text]{width:100%;box-sizing:border-box;padding:10px;border:1px solid #E4DCCD;border-radius:8px;font:inherit}
+button{background:#12151f;color:#F4EFE7;border:0;border-radius:8px;padding:10px 16px;font:600 14px inherit;cursor:pointer;margin-top:10px}
+button.sec{background:#fff;color:#1c2130;border:1px solid #E4DCCD}
+.ok{color:#3F6B45}.erro{color:#9A4A2E}small{color:#8a8f9c}
+ul{padding-left:18px;margin:6px 0}li{margin:3px 0;font-size:13px}
+</style>
+</head>
+<body>
+<h1>Robô de check-in (Azul)</h1>
+<p>Com o Chrome aberto, a extensão confere a cada 10 minutos se há check-in da Azul liberado para clientes do Concierge. Quando há, faz o check-in numa aba em segundo plano, manda o cartão de embarque no grupo do cliente e avisa o grupo de gestão.</p>
+<div class="card">
+  <label for="chave">Chave do robô</label>
+  <input id="chave" type="password" placeholder="cole aqui a chave que começa com robo_" autocomplete="off">
+  <label><input id="ativo" type="checkbox" checked> Robô ligado</label>
+  <button id="salvar">Salvar</button>
+  <button id="rodar" class="sec">Conferir agora</button>
+  <p id="msg"></p>
+</div>
+<div class="card">
+  <b>Situação</b>
+  <p id="sit"><small>carregando…</small></p>
+  <b>Últimos registros</b>
+  <ul id="log"></ul>
+</div>
+<script src="opcoes.js"></script>
+</body>
+</html>
