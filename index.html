@@ -8257,9 +8257,15 @@ function populateDispararReservas(nome, mod) {
   var sel = document.getElementById('d-reserva');
   var cur = sel.value;
   var tipos = tiposReservaDoModelo(mod);
+  var hoje = _hojeSP();
   sel.innerHTML = '<option value="">Nenhuma</option>';
   var list = reservas.filter(function(r){
     if (nome && !mesmoCliente(r.cliente, nome)) return false;
+    // So reservas de hoje em diante: some quando a ultima data (volta,
+    // check-out, devolucao, fim do seguro ou o proprio inicio) ja passou.
+    // Reserva sem data continua aparecendo.
+    var d = resDatas(r), ult = d.fim || d.inicio;
+    if (ult && ult < hoje) return false;
     return !tipos || !!tipos[tipoChaveReserva(r)];
   });
   // Ordem pela data da reserva (inicio); sem data vai para o fim.
