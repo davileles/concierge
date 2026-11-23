@@ -355,7 +355,116 @@
     }).catch(function (e) { res.erro = e.message; return res; });
   }
 
+  // ── roteiro externo (gerador de roteiros) ───────────────────────────────
+  // A viagem guarda uma CÓPIA dos dias (roteiroDias) feita no "Vincular" /
+  // "Reimportar". Se a página mudar depois, a cópia fica velha. Estas funções
+  // leem o ROTEIRO_DATA da página e montam os dias de novo — usadas pelo
+  // painel (importar) e pelo job (relê a página antes de cada bom dia).
+  var MESES = {janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
+  var RAW_ROTEIROS = 'https://raw.githubusercontent.com/davileles/roteiros/main/';
+
+  // Recorta o literal atribuído a ROTEIRO_DATA (respeitando strings) e faz
+  // JSON.parse — nunca executa código da página.
+  function extrairRoteiroData(html) {
+    var i = html.indexOf('const ROTEIRO_DATA = ');
+    if (i < 0) i = html.search(/ROTEIRO_DATA\s*=\s*\{/);
+    if (i < 0) throw new Error('A página não tem ROTEIRO_DATA (não é do modelo de roteiro).');
+    var j = html.indexOf('{', i), prof = 0, str = null, esc = false;
+    for (var k = j; k < html.length; k++) {
+      var ch = html[k];
+      if (str) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === str) str = null; continue; }
+      if (ch === '"' || ch === "'") { str = ch; continue; }
+      if (ch === '{') prof++;
+      else if (ch === '}') { prof--; if (prof === 0) return JSON.parse(html.slice(j, k + 1)); }
+    }
+    throw new Error('ROTEIRO_DATA incompleto na página.');
+  }
+
+  // Data do dia em AAAA-MM-DD: aceita ISO, "14/07", "14/07/2026" e "14 de julho".
+  function dataIsoDia(txt, anoBase) {
+    var s = String(txt || '').trim();
+    var m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
+    if (m) return m[0];
+    var p2 = function (n) { return ('0' + n).slice(-2); };
+    m = s.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
+    if (m) { var a = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : anoBase; return a ? a + '-' + p2(m[2]) + '-' + p2(m[1]) : ''; }
+    var n = semAcento(s).toLowerCase();
+    m = n.match(/(\d{1,2})\s*(?:de\s+)?([a-z]+)(?:\s*(?:de\s+)?(\d{4}))?/);
+    if (m && MESES[m[2]]) { var a2 = m[3] || anoBase; return a2 ? a2 + '-' + p2(MESES[m[2]]) + '-' + p2(m[1]) : ''; }
+    return '';
+  }
+
+  function somarDias(iso, n) {
+    var d = new Date(iso + 'T12:00:00Z');
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  }
+
+  // Títulos do gerador são criativos ("¡Hola, Madrid!"): infere a cidade pela
+  // hospedagem e, sem hotel, pela origem do primeiro voo do dia.
+  function cidadePorRoteiro(data, iso) {
+    if (!iso) return '';
+    var limpa = function (s) { return String(s || '').split('·')[0].split(',')[0].trim(); };
+    var hs = Array.isArray(data.hospedagem) ? data.hospedagem : [];
+    var acorda = '', chega = '';
+    hs.forEach(function (h) {
+      if (!h || !h.cidade) return;
+      if (h.checkin && h.checkout && h.checkin < iso && iso <= h.checkout) acorda = limpa(h.cidade);
+      if (h.checkin === iso) chega = limpa(h.cidade);
+    });
+    if (!acorda) {
+      var voo = (Array.isArray(data.voos) ? data.voos : []).filter(function (x) { return x && x.data === iso; })
+        .sort(function (a, b) { return String(a.horaPartida || '').localeCompare(String(b.horaPartida || '')); })[0];
+      if (voo && voo.origemNome) acorda = limpa(voo.origemNome);
+    }
+    if (!acorda) return chega;
+    return chega && chega !== acorda ? acorda + ' → ' + chega : acorda;
+  }
+
+  // ROTEIRO_DATA → dias no formato de viagem.roteiroDias. Mantém as cidades
+  // corrigidas à mão (por data) que já estavam na viagem.
+  // Devolve { dias, semData, titulo }.
+  function diasDoRoteiroData(data, viagem) {
+    viagem = viagem || {};
+    var origem = Array.isArray(data.dias) ? data.dias : [];
+    if (!origem.length) throw new Error('O roteiro não tem dias.');
+    var anoBase = (viagem.inicio || '').slice(0, 4) || ((data.voos || [])[0] && String(data.voos[0].data || '').slice(0, 4)) || String(new Date().getFullYear());
+    var cidadesAntes = {};
+    (viagem.roteiroDias || []).forEach(function (d) { if (d && d.data && d.cidade) cidadesAntes[d.data] = d.cidade; });
+    var semData = 0;
+    var dias = origem.map(function (d, idx) {
+      var x = JSON.parse(JSON.stringify(d || {}));
+      var iso = dataIsoDia(x.data, anoBase);
+      if (!iso && viagem.inicio) iso = somarDias(viagem.inicio, idx);
+      if (!iso) semData++;
+      x.data = iso;
+      if (!Array.isArray(x.atividades)) x.atividades = [];
+      if (!x.cidade && iso && cidadesAntes[iso]) x.cidade = cidadesAntes[iso];
+      if (!x.cidade) { var cid = cidadePorRoteiro(data, iso); if (cid) x.cidade = cid; }
+      return x;
+    });
+    return { dias: dias, semData: semData, titulo: data.titulo || '' };
+  }
+
+  // Lê a página publicada AGORA (raw do GitHub, sem cache) e devolve os dias
+  // atualizados. Falhou? Rejeita — quem chama decide manter a cópia salva.
+  // opts = { fetch }
+  function atualizarDiasExternos(viagem, opts) {
+    opts = opts || {};
+    var f = opts.fetch || (typeof fetch !== 'undefined' ? fetch : null);
+    if (!f) return Promise.reject(new Error('fetch indisponível'));
+    var slug = viagem && viagem.slugRoteiro;
+    if (!slug) return Promise.reject(new Error('viagem sem slugRoteiro'));
+    return f(RAW_ROTEIROS + slug + '/index.html?t=' + Date.now(), { cache: 'no-store' }).then(function (r) {
+      if (!r.ok) throw new Error('roteiro ' + slug + ' → HTTP ' + r.status);
+      return r.text();
+    }).then(function (html) { return diasDoRoteiroData(extrairRoteiroData(html), viagem); });
+  }
+
   return {
+    extrairRoteiroData: extrairRoteiroData, dataIsoDia: dataIsoDia, somarDias: somarDias,
+    cidadePorRoteiro: cidadePorRoteiro, diasDoRoteiroData: diasDoRoteiroData,
+    atualizarDiasExternos: atualizarDiasExternos,
     HORA_ENVIO: HORA_ENVIO, HORA_LIMITE: HORA_LIMITE,
     cidadesDoTexto: cidadesDoTexto, cidadesDoDia: cidadesDoDia, candidatosBusca: candidatosBusca,
     geocodificar: geocodificar, previsaoDia: previsaoDia, condicao: condicao,

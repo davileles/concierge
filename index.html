@@ -11905,7 +11905,6 @@ function rgCarregarViagem() {
 // grava na viagem slugRoteiro/urlRoteiro/roteiroDias + roteiroExterno. Com isso
 // o bom dia, o {{link_roteiro}} e os gatilhos de viagem passam a valer. O
 // "Publicar" do concierge pede confirmação para não sobrescrever a página.
-var RG_MESES = {janeiro:1,fevereiro:2,marco:3,abril:4,maio:5,junho:6,julho:7,agosto:8,setembro:9,outubro:10,novembro:11,dezembro:12};
 
 function rgExternoRender(v) {
   var el = document.getElementById('rg-externo');
@@ -11941,64 +11940,12 @@ function rgSlugDoLink(txt) {
   return /^[a-z0-9][a-z0-9\/_-]*$/i.test(s) ? s : '';
 }
 
-// Recorta o literal do objeto atribuído a ROTEIRO_DATA (andando pelas chaves,
-// respeitando strings) e faz JSON.parse — nunca executa código da página.
-function rgExtrairRoteiroData(html) {
-  var i = html.indexOf('const ROTEIRO_DATA = ');
-  if (i < 0) i = html.search(/ROTEIRO_DATA\s*=\s*\{/);
-  if (i < 0) throw new Error('A página não tem ROTEIRO_DATA (não é do modelo de roteiro).');
-  var j = html.indexOf('{', i), prof = 0, str = null, esc = false;
-  for (var k = j; k < html.length; k++) {
-    var ch = html[k];
-    if (str) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === str) str = null; continue; }
-    if (ch === '"' || ch === "'") { str = ch; continue; }
-    if (ch === '{') prof++;
-    else if (ch === '}') { prof--; if (prof === 0) return JSON.parse(html.slice(j, k + 1)); }
-  }
-  throw new Error('ROTEIRO_DATA incompleto na página.');
-}
-
-// Data do dia em AAAA-MM-DD: aceita ISO, "14/07", "14/07/2026" e "14 de julho".
-function rgDataIsoDia(txt, anoBase) {
-  var s = String(txt || '').trim();
-  var m = s.match(/(\d{4})-(\d{2})-(\d{2})/);
-  if (m) return m[0];
-  var p2 = function(n){ return ('0' + n).slice(-2); };
-  m = s.match(/(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?/);
-  if (m) { var a = m[3] ? (m[3].length === 2 ? '20' + m[3] : m[3]) : anoBase; return a ? a + '-' + p2(m[2]) + '-' + p2(m[1]) : ''; }
-  var n = s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  m = n.match(/(\d{1,2})\s*(?:de\s+)?([a-z]+)(?:\s*(?:de\s+)?(\d{4}))?/);
-  if (m && RG_MESES[m[2]]) { var a2 = m[3] || anoBase; return a2 ? a2 + '-' + p2(RG_MESES[m[2]]) + '-' + p2(m[1]) : ''; }
-  return '';
-}
-
-function rgSomarDias(iso, n) {
-  var d = new Date(iso + 'T12:00:00Z');
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-// Títulos do gerador costumam ser criativos ("¡Hola, Madrid!") e não servem
-// para achar a cidade. Infere pela hospedagem (onde dormiu na noite anterior e
-// onde faz check-in no dia) e, sem hotel, pela origem do primeiro voo do dia.
-function rgCidadePorRoteiro(data, iso) {
-  if (!iso) return '';
-  var limpa = function(s){ return String(s || '').split('·')[0].split(',')[0].trim(); };
-  var hs = Array.isArray(data.hospedagem) ? data.hospedagem : [];
-  var acorda = '', chega = '';
-  hs.forEach(function(h){
-    if (!h || !h.cidade) return;
-    if (h.checkin && h.checkout && h.checkin < iso && iso <= h.checkout) acorda = limpa(h.cidade);
-    if (h.checkin === iso) chega = limpa(h.cidade);
-  });
-  if (!acorda) {
-    var voo = (Array.isArray(data.voos) ? data.voos : []).filter(function(x){ return x && x.data === iso; })
-      .sort(function(a, b){ return String(a.horaPartida || '').localeCompare(String(b.horaPartida || '')); })[0];
-    if (voo && voo.origemNome) acorda = limpa(voo.origemNome);
-  }
-  if (!acorda) return chega;
-  return chega && chega !== acorda ? acorda + ' → ' + chega : acorda;
-}
+// Leitura do ROTEIRO_DATA, datas e cidades: lógica em bom-dia.js (a mesma
+// que o job usa para reler a página antes de cada bom dia).
+function rgExtrairRoteiroData(html) { return BomDia.extrairRoteiroData(html); }
+function rgDataIsoDia(txt, anoBase) { return BomDia.dataIsoDia(txt, anoBase); }
+function rgSomarDias(iso, n) { return BomDia.somarDias(iso, n); }
+function rgCidadePorRoteiro(data, iso) { return BomDia.cidadePorRoteiro(data, iso); }
 
 async function rgExternoImportar(reimportar) {
   var v = _rgViagemAtual();
@@ -12019,23 +11966,8 @@ async function rgExternoImportar(reimportar) {
     }
     if (!html) throw new Error('Roteiro não encontrado (' + (ultimoErro ? ultimoErro.message : '?') + '). Confira o link.');
     var data = rgExtrairRoteiroData(html);
-    var origem = Array.isArray(data.dias) ? data.dias : [];
-    if (!origem.length) throw new Error('O roteiro não tem dias.');
-    var anoBase = (v.inicio || '').slice(0, 4) || ((data.voos || [])[0] && String(data.voos[0].data || '').slice(0, 4)) || String(new Date().getFullYear());
-    var cidadesAntes = {};
-    (v.roteiroDias || []).forEach(function(d){ if (d && d.data && d.cidade) cidadesAntes[d.data] = d.cidade; });
-    var semData = 0;
-    var dias = origem.map(function(d, idx){
-      var x = JSON.parse(JSON.stringify(d || {}));
-      var iso = rgDataIsoDia(x.data, anoBase);
-      if (!iso && v.inicio) { iso = rgSomarDias(v.inicio, idx); }
-      if (!iso) semData++;
-      x.data = iso;
-      if (!Array.isArray(x.atividades)) x.atividades = [];
-      if (!x.cidade && iso && cidadesAntes[iso]) x.cidade = cidadesAntes[iso];
-      if (!x.cidade) { var cid = rgCidadePorRoteiro(data, iso); if (cid) x.cidade = cid; }
-      return x;
-    });
+    var conv = BomDia.diasDoRoteiroData(data, v);
+    var dias = conv.dias, semData = conv.semData;
     v.slugRoteiro = slug;
     v.urlRoteiro = 'https://roteiros.clubedoviajante.com.br/' + slug + '/';
     v.roteiroDias = dias;

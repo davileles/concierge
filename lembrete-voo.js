@@ -1110,8 +1110,27 @@ async function enviarBomDia(viagens, clientes, grupoPorCliente, resultados) {
   const cache  = {};
   let enviados = 0;
 
-  for (const viagem of ativas) {
-    const dias = viagem.roteiroDias;
+  for (const salva of ativas) {
+    let viagem = salva;
+    let dias = salva.roteiroDias;
+    // Roteiro feito no gerador: a viagem guarda uma cópia dos dias tirada no
+    // "Vincular"/"Reimportar". Se a página foi editada depois, essa cópia está
+    // velha — então relê a página publicada quando houver bom dia na janela.
+    // Só em memória (não regrava viagens.json); falhou a leitura → usa a cópia.
+    const temDiaPerto = dias.some(d => d && d.data && d.data >= ontem && d.data <= amanha);
+    if (salva.roteiroExterno && salva.slugRoteiro && temDiaPerto) {
+      try {
+        const r = await BomDia.atualizarDiasExternos(salva);
+        if (r.dias.length) {
+          dias = r.dias;
+          viagem = { ...salva, roteiroDias: dias };
+          console.log(`  🔄 "${salva.nome}": roteiro relido da página (${dias.length} dias)`);
+        }
+      } catch (e) {
+        console.warn(`  ⚠️ "${salva.nome}": não consegui reler o roteiro (${e.message}) — usando a cópia salva`);
+        logDebug({ bloco: 'bom_dia', viagem: salva.nome, erro: 'releitura do roteiro: ' + e.message });
+      }
+    }
     for (let i = 0; i < dias.length; i++) {
       const d = dias[i];
       if (!d || !d.data || d.data < ontem || d.data > amanha) continue;
