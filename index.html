@@ -11927,7 +11927,49 @@ function rgExternoRender(v) {
       + '<button class="btn btn-accent btn-sm" onclick="rgExternoImportar(false)">🔗 Vincular</button></div>';
   }
   h += '<div id="rg-ext-status" style="font-size:12px;margin-top:8px"></div>';
+  if (v.slugRoteiro) {
+    h += '<div style="border-top:1px solid var(--border);margin-top:12px;padding-top:10px">'
+      + '<div style="font-size:12px;font-weight:700;margin-bottom:4px">📎 Documentos do roteiro</div>'
+      + '<div style="font-size:11px;color:var(--muted2);margin-bottom:8px">Os anexos das reservas ligadas a esta viagem (vouchers, bilhetes, apólices) vão sozinhos para a pasta de documentos da página, a cada 30 min. Os arquivos ficam abertos para quem tem o link do roteiro.</div>'
+      + '<button class="btn btn-ghost btn-sm" onclick="rgAnexosRoteiro(false)">📎 Levar anexos agora</button>'
+      + '<div id="rg-anexos-status" style="font-size:12px;margin-top:8px"></div></div>';
+  }
   el.innerHTML = h;
+}
+
+// Copia os anexos das reservas da viagem para a pasta de documentos do roteiro
+// (proxy: POST /concierge/roteiro/anexos → painel-cdv/roteiro-anexos.js).
+async function rgAnexosRoteiro(silencioso, vidForcado) {
+  var vid = vidForcado || (document.getElementById('rg-viagem') || {}).value;
+  var st = document.getElementById('rg-anexos-status');
+  var msg = function(t, cor){ if (st) st.innerHTML = '<span style="color:' + (cor || 'var(--muted)') + '">' + t + '</span>'; };
+  if (!vid) { if (!silencioso) msg('⚠️ Selecione uma viagem.', 'var(--accent)'); return; }
+  msg('⏳ Levando os anexos das reservas para o roteiro…');
+  try {
+    var r = await fetch('https://cdv-proxy-production.up.railway.app/concierge/roteiro/anexos', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ viagemId: vid })
+    });
+    var d = await r.json().catch(function(){ return {}; });
+    if (!r.ok || !d.ok) throw new Error(d.erro || ('HTTP ' + r.status));
+    var res = (d.resultados || [])[0] || {};
+    if (res.erro) throw new Error(res.erro);
+    if (res.pulado) { msg('⚠️ Não deu para levar os anexos: ' + escHtml(res.pulado) + '.', 'var(--accent)'); return; }
+    var copiados = res.copiados || [];
+    var ign = (res.ignorados || []).length;
+    if (copiados.length) {
+      var porCartao = {};
+      copiados.forEach(function(x){ porCartao[x.cartao] = (porCartao[x.cartao] || 0) + 1; });
+      msg('✅ ' + copiados.length + ' anexo(s) levado(s) para o roteiro: ' + Object.keys(porCartao).map(function(k){ return escHtml(k) + ' (' + porCartao[k] + ')'; }).join(', ')
+        + (ign ? ' · ' + ign + ' ignorado(s)' : '') + '. A página mostra na hora.', 'var(--green)');
+      if (!silencioso) showToast('📎 Anexos levados para o roteiro', 'ok');
+    } else if (res.semAnexos) {
+      msg('Nenhuma reserva ligada a esta viagem tem anexo. Anexe os arquivos na reserva e ligue a reserva a uma atividade da viagem.');
+    } else {
+      msg('Tudo em dia: os anexos das reservas desta viagem já estão no roteiro' + (ign ? ' (' + ign + ' ignorado(s))' : '') + '.');
+    }
+  } catch (e) {
+    msg('❌ ' + escHtml(e.message), 'var(--accent)');
+  }
 }
 
 function rgSlugDoLink(txt) {
@@ -11979,6 +12021,7 @@ async function rgExternoImportar(reimportar) {
     try { rgRenderDias(); } catch(e) {}
     rgBomDiaRender(v);
     rgExternoRender(v);
+    rgAnexosRoteiro(true, v.id);
     msg('✅ ' + dias.length + ' dias importados' + (semData ? ' — ' + semData + ' sem data (o bom dia pula esses dias)' : '') + '. Confira as cidades no bloco do bom dia e ligue o envio.', 'var(--green)');
     showToast(reimportar ? '🔄 Roteiro reimportado' : '🔗 Roteiro vinculado à viagem', 'ok');
   } catch (e) {
@@ -12538,6 +12581,7 @@ async function rgPublicar() {
     document.getElementById('rg-link-publicado').href=url;
     document.getElementById('rg-link-publicado').style.display='inline';
     showToast('✅ Roteiro publicado!','ok');
+    if (v) { rgExternoRender(v); rgAnexosRoteiro(true, vid); }
   } catch(e) { rgSetStatus('❌ Erro ao publicar: '+e.message,'err'); }
 }
 
