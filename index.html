@@ -1489,6 +1489,10 @@ header.topo{position:sticky;top:0;z-index:150;height:var(--topo-h);display:flex;
         <span>Lendo arquivo com IA…</span>
       </div>
       <p id="upload-ok" style="font-size:12px;font-weight:700;margin-top:8px;min-height:14px;color:#22c55e"></p>
+      <label class="bd-toggle" style="margin:4px 0 0" title="Os anexos das reservas ligadas a uma viagem são copiados para a pasta de documentos do roteiro publicado (público).">
+        <input type="checkbox" id="f-anexos-roteiro" checked/><span class="bd-switch"></span>
+        <span class="bd-toggle-txt">📎 Levar os arquivos para a pasta de documentos do roteiro</span>
+      </label>
     </div>
 
     <!-- TEXTO COLADO — extração com IA a partir de texto puro -->
@@ -4114,6 +4118,7 @@ function limparForm() {
   });
   window._reservaEditandoId = null;
   window._reservaEditandoOriginal = null;
+  var _anxRot = document.getElementById('f-anexos-roteiro'); if (_anxRot) _anxRot.checked = true;
   var btnCancelar = document.getElementById('btn-cancelar-edicao');
   if (btnCancelar) btnCancelar.style.display = 'none';
   onTipoChange(false);
@@ -5021,6 +5026,9 @@ function coletarReservaDoForm(id) {
     res.arquivoAnexo = res.arquivosAnexos[0];
     res.temArquivo = _anexosMeta.some(function(a){ return !!a.base64; });
   }
+  // Anexos na pasta de documentos do roteiro (painel-cdv/roteiro-anexos.js pula quando false)
+  var _anxRotEl = document.getElementById('f-anexos-roteiro');
+  if (_anxRotEl && !_anxRotEl.checked) res.anexosNoRoteiro = false;
 
   if (tipo === 'voo') {
     Object.assign(res, {
@@ -6044,6 +6052,8 @@ function preencherFormReserva(r, modo) {
     setVal('f-seguro-milhas-acumulo',r.milhasAcumulo||'');
     setVal('f-seguro-parceiro-acumulo',r.parceiroAcumulo||'');
   }
+  var _anxRotF = document.getElementById('f-anexos-roteiro');
+  if (_anxRotF) _anxRotF.checked = _dup ? true : (r.anexosNoRoteiro !== false);
   // Se a reserva já tem arquivo salvo no servidor, mostrar indicação
   var _anexosSalvos = (r.arquivosAnexos && r.arquivosAnexos.length)
     ? r.arquivosAnexos
