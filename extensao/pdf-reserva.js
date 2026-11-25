@@ -268,7 +268,7 @@
     if (txt(assento)) det.push(['Assento', assento]);
     if (txt(t.cia)) det.push(['Companhia', t.cia]);
 
-    var sigla = txt(t.cia).replace(/[^A-Za-zÀ-ú ]/g, '').split(/\s+/).filter(Boolean);
+    var sigla = txt(t.cia).split('+')[0].replace(/[^A-Za-zÀ-ú ]/g, '').split(/\s+/).filter(Boolean);
     sigla = (sigla.length > 1 ? sigla.map(function (w) { return w.charAt(0); }).join('') : (sigla[0] || '✈').slice(0, 2)).toUpperCase().slice(0, 3);
 
     return '<div class="trecho">' +
