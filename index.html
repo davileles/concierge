@@ -7808,6 +7808,14 @@ var VARS_RESERVA = [
   { label: '{{seguro_acumulo_valor}}',   desc: 'Valor pago no seguro com acumulo de pontos (R$)' },
   { label: '{{seguro_milhas}}',          desc: 'Quantidade total de milhas gastas (seguro)' },
   { label: '{{seguro_valor_tarifa}}',    desc: 'Valor da tarifa pagante do seguro (R$)' },
+  { label: '{{passeio_nome}}',           desc: 'Nome do passeio / atividade' },
+  { label: '{{passeio_local}}',          desc: 'Destino / cidade do passeio' },
+  { label: '{{passeio_data}}',           desc: 'Data do passeio' },
+  { label: '{{passeio_hora}}',           desc: 'Horario do passeio' },
+  { label: '{{passeio_operadora}}',      desc: 'Fornecedor / operadora do passeio' },
+  { label: '{{passeio_pax}}',            desc: 'Numero de participantes do passeio' },
+  { label: '{{passeio_conf}}',           desc: 'Voucher / confirmacao do passeio' },
+  { label: '{{passeio_valor}}',          desc: 'Valor total do passeio (R$)' },
   { label: '{{economia}}',               desc: 'Economia gerada na reserva (R$, sem prefixo)' },
   { label: '{{economia_detalhe}}',       desc: 'Memoria de calculo da economia gerada' },
   { label: '{{status_cia}}',             desc: 'Status do voo: cia aerea do trecho' },
@@ -8256,6 +8264,7 @@ function tiposReservaDoModelo(mod) {
   if (/\{\{loc_[a-z_]+\}\}/.test(t)) s.locacao = 1;
   if (/\{\{trem_[a-z_]+\}\}/.test(t)) s.trem = 1;
   if (/\{\{ferry_[a-z_]+\}\}/.test(t)) s.ferry = 1;
+  if (/\{\{passeio_[a-z_]+\}\}/.test(t)) s.passeio = 1;
   return Object.keys(s).length ? s : null;
 }
 
@@ -8894,6 +8903,17 @@ function resolverVariaveis(texto, cli, res, extras) {
     txt = rv(txt, 'seguro_acumulo_valor', _seg ? (res.valorAcumulo||'') : '');
     txt = rv(txt, 'seguro_milhas',        _seg ? (res.valorMilhas||'') : '');
     txt = rv(txt, 'seguro_valor_tarifa',  _seg ? (res.valorTarifaPagante||res.valorAcumulo||'') : '');
+    // ── Passeio / atividade ──
+    var _pas = res.tipo === 'passeio';
+    var _pasData = res.dataPasseio || res.passeioData || '';
+    txt = rv(txt, 'passeio_nome',      _pas ? (res.passeioNome||'') : '');
+    txt = rv(txt, 'passeio_local',     _pas ? localDe(res.destino||'') : '');
+    txt = rv(txt, 'passeio_data',      _pas && _pasData ? fmtDate(_pasData) : '');
+    txt = rv(txt, 'passeio_hora',      _pas ? (res.hora||res.passeioHora||'') : '');
+    txt = rv(txt, 'passeio_operadora', _pas ? (res.operadora||'') : '');
+    txt = rv(txt, 'passeio_pax',       _pas ? (res.pax||'') : '');
+    txt = rv(txt, 'passeio_conf',      _pas ? (res.conf||'') : '');
+    txt = rv(txt, 'passeio_valor',     _pas ? (res.valor||'') : '');
     // Nome da viagem associada a esta reserva
     var viagemAssoc = (viagens||[]).find(function(v){
       return (v.atividades||[]).some(function(a){ return a.reservaId === res.id; });
