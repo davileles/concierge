@@ -4339,12 +4339,16 @@ function populateViagemAssocSelect(reservadoParaId) {
   preencherSelectViagem(sel, clienteSel ? [clienteSel] : [], reservadoParaId || '', 'Não associar a nenhuma viagem');
   onViagemAssocChange();
 }
-// Exibe até 3 palavras do nome (2 espaços) — 2 palavras cortava nomes como
-// "Rodolpho Junior Sanz" em "Rodolpho Junior"
+// Nome completo, sem cortar (antes cortava em 3 palavras e, como os clientes
+// passam por aqui ao carregar, o corte voltava para o arquivo ao salvar).
+// Cada palavra com inicial maiúscula; de/da/do/dos/das/e em minúsculo.
+var _NOME_PARTICULAS = { de:1, da:1, do:1, dos:1, das:1, e:1, van:1, von:1, del:1, di:1 };
 function toTitleCase(str) {
   if (!str) return '';
-  return str.trim().split(/\s+/).slice(0, 3).map(function(w) {
-    return w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  return String(str).trim().split(/\s+/).map(function(w, i) {
+    var lw = w.toLowerCase();
+    if (i > 0 && _NOME_PARTICULAS[lw]) return lw;
+    return lw.charAt(0).toUpperCase() + lw.slice(1);
   }).join(' ');
 }
 
@@ -9351,13 +9355,8 @@ function syncViagens() {
 // ── MULTI-SELECT CLIENTES ──
 
 function normalizarNome(nome) {
-  if (!nome) return '';
-  // Normalizar: primeira letra de cada palavra maiúscula, resto minúsculo
-  var partes = nome.trim().split(/\s+/).map(function(p){
-    return p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
-  });
-  // Exibir até 3 palavras do nome (primeiro nome + 2 sobrenomes)
-  return partes.slice(0, 3).join(' ');
+  // Mesmo padrão de toTitleCase: nome completo, sem cortar
+  return toTitleCase(nome);
 }
 
 // ── MULTI-SELECT CLIENTES ──────────────────────────────────────
